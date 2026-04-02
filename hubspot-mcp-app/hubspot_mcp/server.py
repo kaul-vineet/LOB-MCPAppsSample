@@ -304,14 +304,14 @@ def show_marketing() -> list[PromptMessage]:
 
 def main():
     port = int(os.environ.get("PORT", 3003))
-    app = mcp.app
+    cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
 
+    app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=cors_origins,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
     )
 
     uvicorn.run(app, host="0.0.0.0", port=port)

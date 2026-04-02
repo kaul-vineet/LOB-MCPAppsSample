@@ -67,7 +67,7 @@ You need three values: `SF_INSTANCE_URL`, `SF_CLIENT_ID`, `SF_CLIENT_SECRET`.
    - **Contact Email:** your email
 5. Scroll down → check ✅ **Enable OAuth Settings**
    - **Callback URL:** `https://localhost` (we won't use this, but it's required)
-   - **Selected OAuth Scopes:** add `Access and manage your data (api)`
+   - **Selected OAuth Scopes:** add `Manage user data via APIs (api)` (may also appear as `Access and manage your data (api)` on older orgs)
    - Check ✅ **Enable Client Credentials Flow**
 6. Click **Save** → then **Continue**
 
