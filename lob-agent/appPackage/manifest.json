@@ -19,7 +19,7 @@
     },
     "description": {
         "short": "Manage Salesforce CRM, ServiceNow ITSM, SAP ERP, and HubSpot CRM from one command post",
-        "full": "A unified MCP Apps agent that connects to Salesforce (Leads, Opportunities), ServiceNow (Incidents, Requests), SAP S/4HANA (Purchase Orders, Materials, Business Partners), and HubSpot (Contacts, Deals) — rendering interactive widgets directly in M365 Copilot chat with full CRUD capability."
+        "full": "A unified MCP Apps agent that connects to Salesforce (Leads, Opportunities), ServiceNow (Incidents, Requests), SAP S/4HANA (Purchase Orders, Materials, Business Partners), and HubSpot (Marketing Emails, Lists, Contacts) — rendering interactive widgets directly in M365 Copilot chat with full CRUD capability."
     },
     "accentColor": "#C9A84C",
     "composeExtensions": [],

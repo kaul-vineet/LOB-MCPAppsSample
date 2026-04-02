@@ -1,7 +1,7 @@
 [project]
 name = "hubspot-mcp"
 version = "0.1.0"
-description = "HubSpot CRM MCP server for Contacts and Deals"
+description = "HubSpot Marketing MCP server for Emails, Lists, and Contacts"
 requires-python = ">=3.11"
 dependencies = [
     "mcp[cli]>=1.1.3",

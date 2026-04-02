@@ -66,11 +66,11 @@
 │                            M365 Copilot                                │
 │                                                                        │
 │  "Show leads" ──┐    ┌── "Show incidents"    ┌── "Show POs"           │
-│                 ▼    ▼                       ▼       ┌── "Show deals" │
+│                 ▼    ▼                       ▼     ┌── "Show emails" │
 │            ┌─────────────────────────────────────────┐▼               │
 │            │     The Great Trading Company            │                │
 │            │      (Declarative Agent)                 │                │
-│            │      26 tools · 4 runtimes               │                │
+│            │      27 tools · 4 runtimes               │                │
 │            └──┬─────────┬──────────┬──────────┬──────┘                │
 └───────────────┼─────────┼──────────┼──────────┼───────────────────────┘
                 │         │          │          │
@@ -79,10 +79,11 @@
 ┌──────────┐  ┌───────────┐  ┌────────┐  ┌─────────┐
 │ SF MCP   │  │ SN MCP    │  │SAP MCP │  │ HS MCP  │
 │ Port 3000│  │ Port 3001 │  │Port 3002│  │Port 3003│
-│ 6 tools  │  │ 8 tools   │  │6 tools │  │6 tools  │
-│ Leads    │  │ Incidents │  │POs     │  │Contacts │
-│ Opps     │  │ Requests  │  │BPs     │  │Deals    │
-└────┬─────┘  └─────┬─────┘  │Matls   │  └────┬────┘
+│ 6 tools  │  │ 8 tools   │  │6 tools │  │7 tools  │
+│ Leads    │  │ Incidents │  │POs     │  │Emails  │
+│ Opps     │  │ Requests  │  │BPs     │  │Lists   │
+└────┬─────┘  └─────┬─────┘  │Matls   │  │Contacts│
+     │              │        └───┬────┘  └────┬────┘
      │              │        └───┬────┘       │
      ▼              ▼            ▼            ▼
  Salesforce    ServiceNow    SAP API      HubSpot
@@ -129,7 +130,7 @@ lob-mcp-apps/
 │   ├── .env.example                   # HubSpot private app token
 │   ├── pyproject.toml
 │   ├── hubspot_mcp/
-│   │   ├── server.py                  # 6 tools — Contacts & Deals CRUD
+│   │   ├── server.py                  # 7 tools — Emails, Lists & Contacts
 │   │   ├── hubspot_client.py          # HubSpot REST client
 │   │   └── web/widget.html            # HubSpot-branded widget
 │   └── tests/                         # Widget test harness
@@ -139,7 +140,7 @@ lob-mcp-apps/
     │   ├── declarativeAgent.json      # Agent identity & conversation starters
     │   ├── manifest.json              # Teams/M365 app manifest
     │   ├── ai-plugin.json             # 4 runtimes (SF:3000, SN:3001, SAP:3002, HS:3003)
-    │   ├── mcp-tools.json             # 26 tools with _meta + widget URIs
+    │   ├── mcp-tools.json             # 27 tools with _meta + widget URIs
     │   └── instruction.txt            # Combined CRM + ITSM + ERP persona
     ├── env/.env.dev
     └── m365agents.yml
@@ -297,7 +298,7 @@ Then open M365 Copilot, find **The Great Trading Company** in the agent side pan
 - *"Show me the latest leads"* → Salesforce widget
 - *"Show me the latest incidents"* → ServiceNow widget
 - *"Show me the latest purchase orders"* → SAP widget
-- *"Show me the latest contacts"* → HubSpot widget
+- *"Show me marketing email performance"* → HubSpot widget
 
 ---
 

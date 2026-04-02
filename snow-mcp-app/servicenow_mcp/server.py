@@ -29,6 +29,15 @@ WIDGET_URI = "ui://widget/servicenow.html"
 RESOURCE_MIME_TYPE = "text/html;profile=mcp-app"
 WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding="utf-8")
 
+
+def _error_result(message: str) -> types.CallToolResult:
+    """Return a structured error result the widget can display."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=message)],
+        structuredContent={"error": True, "message": message},
+    )
+
+
 # ── MCP Server ────────────────────────────────────────────────────────────────
 
 mcp = FastMCP("servicenow-tracker")
@@ -146,13 +155,9 @@ async def get_incidents(limit: int = 5) -> types.CallToolResult:
         )
         records = resp.json().get("result", [])
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"ServiceNow API error: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error fetching incidents: {e}")],
-        )
+        return _error_result(f"Error fetching incidents: {e}")
 
     incidents = [
         {
@@ -207,13 +212,9 @@ async def get_requests(limit: int = 5) -> types.CallToolResult:
         )
         records = resp.json().get("result", [])
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"ServiceNow API error: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error fetching requests: {e}")],
-        )
+        return _error_result(f"Error fetching requests: {e}")
 
     requests_list = [
         {
@@ -268,13 +269,9 @@ async def get_request_items(request_sys_id: str) -> types.CallToolResult:
         )
         records = resp.json().get("result", [])
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"ServiceNow API error: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error fetching request items: {e}")],
-        )
+        return _error_result(f"Error fetching request items: {e}")
 
     items = [
         {
@@ -342,13 +339,9 @@ async def create_incident(
         resp = await servicenow_request("POST", "/api/now/table/incident", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Failed to create incident: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"Failed to create incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error creating incident: {e}")],
-        )
+        return _error_result(f"Error creating incident: {e}")
 
     structured = {
         "type": "created",
@@ -391,13 +384,9 @@ async def create_request(
         resp = await servicenow_request("POST", "/api/now/table/sc_request", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Failed to create request: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"Failed to create request: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error creating request: {e}")],
-        )
+        return _error_result(f"Error creating request: {e}")
 
     structured = {
         "type": "created",
@@ -442,21 +431,15 @@ async def update_incident(
         body["priority"] = priority
 
     if not body:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text="No fields to update. Provide description or priority.")],
-        )
+        return _error_result("No fields to update. Provide description or priority.")
 
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Failed to update incident: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"Failed to update incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error updating incident: {e}")],
-        )
+        return _error_result(f"Error updating incident: {e}")
 
     structured = {
         "type": "updated",
@@ -493,21 +476,15 @@ async def update_request(
         body["approval"] = approval
 
     if not body:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text="No fields to update. Provide approval.")],
-        )
+        return _error_result("No fields to update. Provide approval.")
 
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/sc_request/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Failed to update request: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"Failed to update request: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error updating request: {e}")],
-        )
+        return _error_result(f"Error updating request: {e}")
 
     structured = {
         "type": "updated",
@@ -544,21 +521,15 @@ async def update_request_item(
         body["quantity"] = quantity
 
     if not body:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text="No fields to update. Provide quantity.")],
-        )
+        return _error_result("No fields to update. Provide quantity.")
 
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/sc_req_item/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Failed to update request item: {e.response.status_code} {e.response.text}")],
-        )
+        return _error_result(f"Failed to update request item: {e.response.status_code} {e.response.text}")
     except Exception as e:
-        return types.CallToolResult(
-            content=[types.TextContent(type="text", text=f"Error updating request item: {e}")],
-        )
+        return _error_result(f"Error updating request item: {e}")
 
     structured = {
         "type": "updated",
