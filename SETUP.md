@@ -137,16 +137,20 @@ SERVICENOW_PASSWORD=your-generated-password
 1. In your ServiceNow instance, go to **System Properties** → search for `glide.oauth.inbound.client.credential.grant_type.enabled`
 2. Set the value to `true` → **Save**
 
+> If the property doesn't exist: navigate to `sys_properties.list` in the navigator → click **New** → Name: `glide.oauth.inbound.client.credential.grant_type.enabled`, Type: `true | false`, Value: `true` → **Submit**. On newer releases (Zurich+), this may already be enabled by default.
+
 #### Step 3: Create an OAuth Application
 
 1. Navigate to **System OAuth** → **Application Registry**
 2. Click **New**
-3. Select **Create an OAuth API endpoint for external clients**
-4. Fill in:
+3. You may see a prompt: *"Introducing New Inbound Integration Experience!"* — you can use either the new or classic experience
+4. **Classic experience:** Select **Create an OAuth API endpoint for external clients**
+5. **New experience:** Click **Create New** → choose **OAuth 2.0 Client Credentials**
+6. Fill in:
    - **Name:** `MCP Integration`
-   - Leave Client ID and Secret as auto-generated (or set your own)
-5. Click **Submit**
-6. Open the record you just created → copy the **Client ID** and **Client Secret**
+   - Leave Client ID and Secret as auto-generated
+7. Click **Submit**
+8. Open the record you just created → copy the **Client ID** and **Client Secret**
 
 #### Step 4: Fill in your .env file
 
