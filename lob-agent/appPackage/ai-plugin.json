@@ -1,0 +1,110 @@
+{
+    "$schema": "https://aka.ms/json-schemas/copilot-extensions/v2.1/plugin.schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "The Great Trading Company",
+    "description_for_human": "The Great Trading Company${{APP_NAME_SUFFIX}}",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "gtc",
+    "functions": [
+        {
+            "name": "get_leads",
+            "description": "Get the 5 most recent Leads from Salesforce. Returns lead name, company, email, phone, status, and lead source."
+        },
+        {
+            "name": "create_lead",
+            "description": "Create a new Lead in Salesforce. Requires last_name and company at minimum. Returns the updated list of latest 5 leads."
+        },
+        {
+            "name": "update_lead",
+            "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads."
+        },
+        {
+            "name": "get_opportunities",
+            "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability."
+        },
+        {
+            "name": "create_opportunity",
+            "description": "Create a new Opportunity in Salesforce. Requires name, stage, and close_date at minimum. Returns the updated list of latest 5 opportunities."
+        },
+        {
+            "name": "update_opportunity",
+            "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities."
+        },
+        {
+            "name": "get_incidents",
+            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending."
+        },
+        {
+            "name": "get_requests",
+            "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending."
+        },
+        {
+            "name": "get_request_items",
+            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record. Called from the widget when expanding a request row."
+        },
+        {
+            "name": "create_incident",
+            "description": "Create a new incident in ServiceNow. Requires short_description. Optional: description, priority (1-4), category."
+        },
+        {
+            "name": "create_request",
+            "description": "Create a new service request in ServiceNow. Requires short_description. Optional: description, priority (1-4). Does not create request items."
+        },
+        {
+            "name": "update_incident",
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority."
+        },
+        {
+            "name": "update_request",
+            "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval (not requested, requested, approved, rejected)."
+        },
+        {
+            "name": "update_request_item",
+            "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://gtc-tunnel-3000.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "get_leads",
+                "create_lead",
+                "update_lead",
+                "get_opportunities",
+                "create_opportunity",
+                "update_opportunity"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://gtc-tunnel-3001.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "get_incidents",
+                "get_requests",
+                "get_request_items",
+                "create_incident",
+                "create_request",
+                "update_incident",
+                "update_request",
+                "update_request_item"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        }
+    ]
+}

@@ -1,0 +1,283 @@
+{
+    "tools": [
+        {
+            "name": "get_leads",
+            "description": "Get the 5 most recent Leads from Salesforce. Returns lead name, company, email, phone, status, and lead source.",
+            "inputSchema": {
+                "properties": {},
+                "required": [],
+                "title": "get_leadsArguments",
+                "type": "object"
+            },
+            "title": "Get leads",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "create_lead",
+            "description": "Create a new Lead in Salesforce. Requires last_name and company at minimum. Returns the updated list of latest 5 leads.",
+            "inputSchema": {
+                "properties": {
+                    "last_name":   { "title": "Last Name",   "type": "string" },
+                    "company":     { "title": "Company",     "type": "string" },
+                    "first_name":  { "title": "First Name",  "type": "string", "default": "" },
+                    "email":       { "title": "Email",       "type": "string", "default": "" },
+                    "phone":       { "title": "Phone",       "type": "string", "default": "" },
+                    "status":      { "title": "Status",      "type": "string", "default": "Open - Not Contacted" },
+                    "lead_source": { "title": "Lead Source",  "type": "string", "default": "" }
+                },
+                "required": ["last_name", "company"],
+                "title": "create_leadArguments",
+                "type": "object"
+            },
+            "title": "Create lead",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "update_lead",
+            "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads.",
+            "inputSchema": {
+                "properties": {
+                    "lead_id":     { "title": "Lead ID",     "type": "string" },
+                    "first_name":  { "title": "First Name",  "type": "string", "default": "" },
+                    "last_name":   { "title": "Last Name",   "type": "string", "default": "" },
+                    "company":     { "title": "Company",     "type": "string", "default": "" },
+                    "email":       { "title": "Email",       "type": "string", "default": "" },
+                    "phone":       { "title": "Phone",       "type": "string", "default": "" },
+                    "status":      { "title": "Status",      "type": "string", "default": "" },
+                    "lead_source": { "title": "Lead Source",  "type": "string", "default": "" }
+                },
+                "required": ["lead_id"],
+                "title": "update_leadArguments",
+                "type": "object"
+            },
+            "title": "Update lead",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "get_opportunities",
+            "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability.",
+            "inputSchema": {
+                "properties": {},
+                "required": [],
+                "title": "get_opportunitiesArguments",
+                "type": "object"
+            },
+            "title": "Get opportunities",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "create_opportunity",
+            "description": "Create a new Opportunity in Salesforce. Requires name, stage, and close_date at minimum. Returns the updated list of latest 5 opportunities.",
+            "inputSchema": {
+                "properties": {
+                    "name":        { "title": "Name",        "type": "string" },
+                    "stage":       { "title": "Stage",       "type": "string" },
+                    "close_date":  { "title": "Close Date",  "type": "string" },
+                    "amount":      { "title": "Amount",      "type": "number", "default": 0 },
+                    "probability": { "title": "Probability", "type": "integer", "default": 0 }
+                },
+                "required": ["name", "stage", "close_date"],
+                "title": "create_opportunityArguments",
+                "type": "object"
+            },
+            "title": "Create opportunity",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "update_opportunity",
+            "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities.",
+            "inputSchema": {
+                "properties": {
+                    "opportunity_id": { "title": "Opportunity ID", "type": "string" },
+                    "name":           { "title": "Name",           "type": "string", "default": "" },
+                    "stage":          { "title": "Stage",          "type": "string", "default": "" },
+                    "amount":         { "title": "Amount",         "type": "number", "default": 0 },
+                    "close_date":     { "title": "Close Date",     "type": "string", "default": "" },
+                    "probability":    { "title": "Probability",    "type": "integer", "default": 0 }
+                },
+                "required": ["opportunity_id"],
+                "title": "update_opportunityArguments",
+                "type": "object"
+            },
+            "title": "Update opportunity",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "get_incidents",
+            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending.",
+            "inputSchema": {
+                "properties": {
+                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                },
+                "required": [],
+                "title": "get_incidentsArguments",
+                "type": "object"
+            },
+            "title": "Get incidents",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "get_requests",
+            "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending.",
+            "inputSchema": {
+                "properties": {
+                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                },
+                "required": [],
+                "title": "get_requestsArguments",
+                "type": "object"
+            },
+            "title": "Get requests",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "get_request_items",
+            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record.",
+            "inputSchema": {
+                "properties": {
+                    "request_sys_id": { "title": "Request Sys ID", "type": "string" }
+                },
+                "required": ["request_sys_id"],
+                "title": "get_request_itemsArguments",
+                "type": "object"
+            },
+            "title": "Get request items",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "create_incident",
+            "description": "Create a new incident in ServiceNow. Requires short_description. Optional: description, priority (1-4), category.",
+            "inputSchema": {
+                "properties": {
+                    "short_description": { "title": "Short Description", "type": "string" },
+                    "description":       { "title": "Description",       "type": "string", "default": "" },
+                    "priority":          { "title": "Priority",          "type": "string", "default": "3" },
+                    "category":          { "title": "Category",          "type": "string", "default": "" }
+                },
+                "required": ["short_description"],
+                "title": "create_incidentArguments",
+                "type": "object"
+            },
+            "title": "Create incident",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "create_request",
+            "description": "Create a new service request in ServiceNow. Requires short_description. Optional: description, priority (1-4).",
+            "inputSchema": {
+                "properties": {
+                    "short_description": { "title": "Short Description", "type": "string" },
+                    "description":       { "title": "Description",       "type": "string", "default": "" },
+                    "priority":          { "title": "Priority",          "type": "string", "default": "3" }
+                },
+                "required": ["short_description"],
+                "title": "create_requestArguments",
+                "type": "object"
+            },
+            "title": "Create request",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "update_incident",
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id":      { "title": "Sys ID",      "type": "string" },
+                    "description": { "title": "Description", "type": "string" },
+                    "priority":    { "title": "Priority",    "type": "string" }
+                },
+                "required": ["sys_id"],
+                "title": "update_incidentArguments",
+                "type": "object"
+            },
+            "title": "Update incident",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "update_request",
+            "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id":   { "title": "Sys ID",   "type": "string" },
+                    "approval": { "title": "Approval", "type": "string" }
+                },
+                "required": ["sys_id"],
+                "title": "update_requestArguments",
+                "type": "object"
+            },
+            "title": "Update request",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "update_request_item",
+            "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id":   { "title": "Sys ID",   "type": "string" },
+                    "quantity": { "title": "Quantity",  "type": "string" }
+                },
+                "required": ["sys_id"],
+                "title": "update_request_itemArguments",
+                "type": "object"
+            },
+            "title": "Update request item",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        }
+    ]
+}

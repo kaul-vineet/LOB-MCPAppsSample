@@ -1,0 +1,39 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.5/schema.json",
+    "version": "v1.5",
+    "name": "The Great Trading Company${{APP_NAME_SUFFIX}}",
+    "description": "Your colonial trading house for enterprise operations — manage Salesforce CRM ledgers and ServiceNow service manifests, all from one command post.",
+    "instructions": "$[file('instruction.txt')]",
+    "conversation_starters": [
+        {
+            "title": "Review the ledger of leads",
+            "text": "Show me the latest leads from Salesforce"
+        },
+        {
+            "title": "Inspect the trade opportunities",
+            "text": "Show me the latest opportunities from Salesforce"
+        },
+        {
+            "title": "Survey the incident log",
+            "text": "Show me the latest incidents from ServiceNow"
+        },
+        {
+            "title": "Check the service requests",
+            "text": "Show me the latest service requests from ServiceNow"
+        },
+        {
+            "title": "Log a new trade lead",
+            "text": "I want to create a new lead in Salesforce"
+        },
+        {
+            "title": "Report an incident",
+            "text": "Create a new incident in ServiceNow"
+        }
+    ],
+    "actions": [
+        {
+            "id": "action_1",
+            "file": "ai-plugin.json"
+        }
+    ]
+}

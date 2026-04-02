@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Salesforce CRM — Widget Mockup</title>
+<style>
+  :root {
+    /* Salesforce Lightning Design System colors */
+    --color-bg:         #ffffff;
+    --color-surface:    #f3f3f3;
+    --color-text:       #181818;
+    --color-text-muted: #706e6b;
+    --color-border:     #dddbda;
+    --color-header-bg:  #f3f2f2;
+    --color-hover:      #eef4ff;
+    --color-accent:     #0176d3;       /* Salesforce brand blue */
+    --color-accent-dark:#014486;       /* Salesforce dark blue */
+    --color-success:    #2e844a;       /* SLDS success green */
+    --color-success-bg: #ebf7e6;
+    --color-danger:     #ea001e;       /* SLDS error red */
+    --color-form-bg:    #f0f7ff;
+    --color-mcp-bar:    #1b96ff;       /* Salesforce astro blue */
+    --color-btn-brand:  #0176d3;
+    --radius:           4px;           /* SLDS uses subtle rounding */
+    --space-xs:         4px;
+    --space-sm:         8px;
+    --space-md:         12px;
+    --space-lg:         16px;
+    --font-family:      'Salesforce Sans', -apple-system, system-ui, sans-serif;
+  }
+  [data-theme="dark"] {
+    --color-bg:         #16325c;       /* Salesforce deep navy */
+    --color-surface:    #1a3a65;
+    --color-text:       #ecebea;
+    --color-text-muted: #b0adab;
+    --color-border:     #2b5797;
+    --color-header-bg:  #1c3f6e;
+    --color-hover:      #22466e;
+    --color-accent:     #1b96ff;       /* Salesforce astro blue (bright) */
+    --color-accent-dark:#1b96ff;
+    --color-success:    #45c65a;
+    --color-success-bg: #1a3a2a;
+    --color-danger:     #fe5c4c;
+    --color-form-bg:    #1a3050;
+    --color-mcp-bar:    #1b96ff;
+    --color-btn-brand:  #1b96ff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-family);
+    font-size: 14px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding: var(--space-md);
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-header-left { display: flex; align-items: center; gap: 6px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-header-bg);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+  }
+
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: 13px;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr.data-row { transition: background 0.15s; }
+  tr.data-row:hover { background: var(--color-hover); }
+
+  /* ── Action buttons in rows ── */
+  .row-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover {
+    border-color: var(--color-accent);
+    color: #ffffff;
+    background: var(--color-accent);
+  }
+
+  /* ── "+ New" button ── */
+  .btn-new {
+    padding: 5px 14px;
+    border: 1px solid var(--color-btn-brand);
+    border-radius: 4px;
+    background: var(--color-btn-brand);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .btn-new:hover { background: var(--color-accent-dark); border-color: var(--color-accent-dark); }
+
+  /* ── Inline form ── */
+  .inline-form {
+    background: var(--color-form-bg);
+    border-bottom: 2px solid var(--color-mcp-bar);
+    border-left: 3px solid var(--color-mcp-bar);
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .form-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+    color: var(--color-accent);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-sm) var(--space-md);
+  }
+
+  .form-field { display: flex; flex-direction: column; gap: 2px; }
+
+  .form-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+
+  .form-input {
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+
+  .form-select {
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+  }
+  .form-select:focus { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+
+  .form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: var(--space-md);
+    justify-content: flex-end;
+  }
+
+  .btn-save {
+    padding: 6px 18px;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-btn-brand);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .btn-save:hover { background: var(--color-accent-dark); }
+
+  .btn-cancel {
+    padding: 6px 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .btn-cancel:hover { background: var(--color-hover); }
+
+  /* ── Status badge (SLDS-style pill) ── */
+  .status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .status-open       { background: #eef4ff; color: #0176d3; border: 1px solid #b9d6f5; }
+  .status-contacted  { background: #fef0cd; color: #8c4b02; border: 1px solid #e4c546; }
+  .status-qualified  { background: #ebf7e6; color: #2e844a; border: 1px solid #91db8b; }
+  .status-closed     { background: #fef1ee; color: #ba0517; border: 1px solid #fe9f9b; }
+  [data-theme="dark"] .status-open       { background: #0b3573; color: #8dc7ff; border: 1px solid #2b5797; }
+  [data-theme="dark"] .status-contacted  { background: #5c3b0a; color: #f5c451; border: 1px solid #8c6e2e; }
+  [data-theme="dark"] .status-qualified  { background: #1a3a2a; color: #7cd992; border: 1px solid #2e6a3e; }
+  [data-theme="dark"] .status-closed     { background: #5c1a1a; color: #fe9f9b; border: 1px solid #9c3030; }
+
+  /* ── Amount formatting ── */
+  .amount { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .probability { color: var(--color-text-muted); font-size: 12px; }
+
+  /* ── Salesforce cloud bar ── */
+  .mcp-bar {
+    height: 4px;
+    background: linear-gradient(90deg, #0176d3 0%, #1b96ff 50%, #032d60 100%);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .mcp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-header-bg);
+  }
+
+  .mcp-badge {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  .mcp-badge strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .mcp-source {
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+
+  /* ── Toast notification ── */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #2e844a;
+    color: #ffffff;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 100;
+    letter-spacing: 0.2px;
+  }
+  .toast.visible { opacity: 1; transform: translateY(0); }
+
+  .empty {
+    padding: var(--space-lg);
+    color: var(--color-text-muted);
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .loading {
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: 12px;
+    padding: var(--space-md);
+    text-align: center;
+  }
+
+  /* ── Success row flash ── */
+  @keyframes rowFlash {
+    0%   { background: var(--color-success-bg); }
+    100% { background: transparent; }
+  }
+  tr.flash { animation: rowFlash 1.5s ease-out; }
+</style>
+</head>
+<body>
+<div id="root"><div class="empty">Loading CRM data…</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  }
+
+  // ── callTool abstraction ───────────────────────────────────────────────────
+  var pendingCalls = {};
+  var callId = 0;
+
+  function callTool(name, args) {
+    if (window.openai && window.openai.callTool) {
+      return window.openai.callTool(name, args).then(function(r) {
+        return r.structuredContent;
+      });
+    }
+    return new Promise(function(resolve, reject) {
+      var id = ++callId;
+      pendingCalls[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({
+        jsonrpc: '2.0', id: id,
+        method: 'ui/callTool',
+        params: { name: name, args: args }
+      }, '*');
+      setTimeout(function() {
+        if (pendingCalls[id]) {
+          delete pendingCalls[id];
+          reject(new Error('Timed out'));
+        }
+      }, 15000);
+    });
+  }
+
+  // ── Notify host of height ─────────────────────────────────────────────────
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(function() { t.classList.remove('visible'); }, 2500);
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  var currentData  = null;
+  var viewMode     = null;   // 'leads' | 'opportunities'
+  var editingIdx   = -1;     // row index being edited (-1 = none)
+  var isCreating   = false;  // true when create form is open
+  var lastSavedId  = null;   // highlight row after save
+
+  // ── MCP footer ─────────────────────────────────────────────────────────────
+  var MCP_FOOTER =
+    '<div class="mcp-footer">' +
+      '<span class="mcp-badge">&#9889; <strong>MCP Widget</strong> &middot; Salesforce CRM</span>' +
+      '<span class="mcp-source">&#9729; Powered by Salesforce</span>' +
+    '</div>';
+
+  // ── Status helpers ─────────────────────────────────────────────────────────
+  var LEAD_STATUSES  = ['Open - Not Contacted', 'Working - Contacted', 'Closed - Converted', 'Closed - Not Converted'];
+  var LEAD_SOURCES   = ['Web', 'Phone Inquiry', 'Partner Referral', 'Purchased List', 'Other'];
+  var OPP_STAGES     = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal/Price Quote', 'Negotiation/Review', 'Closed Won', 'Closed Lost'];
+
+  function statusClass(status) {
+    if (!status) return '';
+    var s = status.toLowerCase();
+    if (s.indexOf('open') >= 0 || s.indexOf('prospecting') >= 0 || s.indexOf('qualification') >= 0) return 'status-open';
+    if (s.indexOf('working') >= 0 || s.indexOf('needs') >= 0 || s.indexOf('proposal') >= 0 || s.indexOf('negotiation') >= 0) return 'status-contacted';
+    if (s.indexOf('converted') >= 0 || s.indexOf('won') >= 0) return 'status-qualified';
+    if (s.indexOf('not converted') >= 0 || s.indexOf('lost') >= 0) return 'status-closed';
+    return 'status-open';
+  }
+
+  function formatAmount(val) {
+    if (val == null) return '—';
+    return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ── Main render dispatcher ─────────────────────────────────────────────────
+  function render(data) {
+    currentData = data;
+    editingIdx  = -1;
+    isCreating  = false;
+    var root = document.getElementById('root');
+
+    if (!data || !data.type) {
+      root.innerHTML = '<div class="empty">No data received.</div>';
+      notifyHeight(); return;
+    }
+
+    if (data.type === 'leads') {
+      viewMode = 'leads';
+      renderLeadsView(data);
+    } else if (data.type === 'opportunities') {
+      viewMode = 'opportunities';
+      renderOpportunitiesView(data);
+    } else {
+      root.innerHTML = '<div class="empty">Unknown data type.</div>';
+      notifyHeight();
+    }
+  }
+
+  // ── Render: Leads table ────────────────────────────────────────────────────
+  function renderLeadsView(data) {
+    var root  = document.getElementById('root');
+    var count = data.items.length;
+
+    var rows = data.items.map(function(item, i) {
+      var flashClass = (lastSavedId && lastSavedId === item.id) ? ' flash' : '';
+      return '<tr class="data-row' + flashClass + '" id="row-' + i + '">' +
+        '<td>' + esc(item.first_name) + ' ' + esc(item.last_name) + '</td>' +
+        '<td>' + esc(item.company || '—') + '</td>' +
+        '<td>' + esc(item.email || '—') + '</td>' +
+        '<td>' + esc(item.phone || '—') + '</td>' +
+        '<td><span class="status-badge ' + statusClass(item.status) + '">' + esc(item.status || '—') + '</span></td>' +
+        '<td>' + esc(item.lead_source || '—') + '</td>' +
+        '<td class="row-actions">' +
+          '<button class="btn-icon" title="Edit" onclick="startEdit(' + i + ')">&#9998;</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    if (count === 0) {
+      rows = '<tr><td colspan="7" class="empty">No leads found.</td></tr>';
+    }
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">' +
+          '<div class="card-header-left">&#128101; Leads<span class="hint">' + count + ' record' + (count !== 1 ? 's' : '') + '</span></div>' +
+          '<button class="btn-new" onclick="startCreate()">+ New Lead</button>' +
+        '</div>' +
+        '<div id="form-area"></div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Status</th><th>Source</th><th style="width:50px"></th>' +
+          '</tr></thead>' +
+          '<tbody id="table-body">' + rows + '</tbody>' +
+        '</table>' +
+        MCP_FOOTER +
+      '</div>';
+
+    lastSavedId = null;
+    notifyHeight();
+  }
+
+  // ── Render: Opportunities table ────────────────────────────────────────────
+  function renderOpportunitiesView(data) {
+    var root  = document.getElementById('root');
+    var count = data.items.length;
+
+    var rows = data.items.map(function(item, i) {
+      var flashClass = (lastSavedId && lastSavedId === item.id) ? ' flash' : '';
+      return '<tr class="data-row' + flashClass + '" id="row-' + i + '">' +
+        '<td>' + esc(item.name) + '</td>' +
+        '<td>' + esc(item.account_name || '—') + '</td>' +
+        '<td><span class="status-badge ' + statusClass(item.stage) + '">' + esc(item.stage || '—') + '</span></td>' +
+        '<td class="amount">' + formatAmount(item.amount) + '</td>' +
+        '<td>' + esc(item.close_date || '—') + '</td>' +
+        '<td class="probability">' + (item.probability != null ? item.probability + '%' : '—') + '</td>' +
+        '<td class="row-actions">' +
+          '<button class="btn-icon" title="Edit" onclick="startEdit(' + i + ')">&#9998;</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    if (count === 0) {
+      rows = '<tr><td colspan="7" class="empty">No opportunities found.</td></tr>';
+    }
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">' +
+          '<div class="card-header-left">&#128176; Opportunities<span class="hint">' + count + ' record' + (count !== 1 ? 's' : '') + '</span></div>' +
+          '<button class="btn-new" onclick="startCreate()">+ New Opportunity</button>' +
+        '</div>' +
+        '<div id="form-area"></div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th>Name</th><th>Account</th><th>Stage</th><th>Amount</th><th>Close Date</th><th>Probability</th><th style="width:50px"></th>' +
+          '</tr></thead>' +
+          '<tbody id="table-body">' + rows + '</tbody>' +
+        '</table>' +
+        MCP_FOOTER +
+      '</div>';
+
+    lastSavedId = null;
+    notifyHeight();
+  }
+
+  // ── Build form fields ──────────────────────────────────────────────────────
+  function buildLeadForm(item) {
+    item = item || {};
+    return '<div class="form-grid">' +
+      formField('first_name', 'First Name', 'text', item.first_name || '') +
+      formField('last_name', 'Last Name', 'text', item.last_name || '') +
+      formField('company', 'Company', 'text', item.company || '') +
+      formField('email', 'Email', 'email', item.email || '') +
+      formField('phone', 'Phone', 'tel', item.phone || '') +
+      formSelect('status', 'Status', LEAD_STATUSES, item.status || '') +
+      formSelect('lead_source', 'Lead Source', LEAD_SOURCES, item.lead_source || '') +
+    '</div>';
+  }
+
+  function buildOppForm(item) {
+    item = item || {};
+    return '<div class="form-grid">' +
+      formField('name', 'Opportunity Name', 'text', item.name || '') +
+      formField('account_name', 'Account Name', 'text', item.account_name || '') +
+      formSelect('stage', 'Stage', OPP_STAGES, item.stage || '') +
+      formField('amount', 'Amount ($)', 'number', item.amount != null ? item.amount : '') +
+      formField('close_date', 'Close Date', 'date', item.close_date || '') +
+      formField('probability', 'Probability (%)', 'number', item.probability != null ? item.probability : '') +
+    '</div>';
+  }
+
+  function formField(name, label, type, value) {
+    return '<div class="form-field">' +
+      '<label class="form-label" for="f-' + name + '">' + label + '</label>' +
+      '<input class="form-input" id="f-' + name + '" name="' + name + '" type="' + type + '" value="' + esc(String(value)) + '"/>' +
+    '</div>';
+  }
+
+  function formSelect(name, label, options, selected) {
+    var opts = options.map(function(o) {
+      return '<option value="' + esc(o) + '"' + (o === selected ? ' selected' : '') + '>' + esc(o) + '</option>';
+    }).join('');
+    return '<div class="form-field">' +
+      '<label class="form-label" for="f-' + name + '">' + label + '</label>' +
+      '<select class="form-select" id="f-' + name + '" name="' + name + '">' +
+        '<option value="">— Select —</option>' + opts +
+      '</select>' +
+    '</div>';
+  }
+
+  // ── Start Create ───────────────────────────────────────────────────────────
+  function startCreate() {
+    if (isCreating) return;
+    isCreating = true;
+    editingIdx = -1;
+
+    var area = document.getElementById('form-area');
+    var isLead = viewMode === 'leads';
+    var title  = isLead ? '&#10133; New Lead' : '&#10133; New Opportunity';
+    var fields = isLead ? buildLeadForm() : buildOppForm();
+
+    area.innerHTML =
+      '<div class="inline-form">' +
+        '<div class="form-title">' + title + '</div>' +
+        fields +
+        '<div class="form-actions">' +
+          '<button class="btn-cancel" onclick="cancelForm()">Cancel</button>' +
+          '<button class="btn-save" onclick="saveCreate()">&#10003; Create</button>' +
+        '</div>' +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ── Start Edit ─────────────────────────────────────────────────────────────
+  function startEdit(idx) {
+    if (editingIdx === idx) return;
+    editingIdx = idx;
+    isCreating = false;
+    document.getElementById('form-area').innerHTML = '';
+
+    var item = currentData.items[idx];
+    var row  = document.getElementById('row-' + idx);
+    if (!row) return;
+
+    var isLead = viewMode === 'leads';
+    var title  = isLead ? '&#9998; Edit Lead' : '&#9998; Edit Opportunity';
+    var fields = isLead ? buildLeadForm(item) : buildOppForm(item);
+    var cols   = row.cells.length;
+
+    // Insert form row after the data row
+    var formRow = document.createElement('tr');
+    formRow.id  = 'edit-row-' + idx;
+    formRow.innerHTML =
+      '<td colspan="' + cols + '">' +
+        '<div class="inline-form">' +
+          '<div class="form-title">' + title + '</div>' +
+          fields +
+          '<div class="form-actions">' +
+            '<button class="btn-cancel" onclick="cancelForm()">Cancel</button>' +
+            '<button class="btn-save" onclick="saveEdit(' + idx + ')">&#10003; Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</td>';
+
+    row.parentNode.insertBefore(formRow, row.nextSibling);
+    row.style.background = 'var(--color-hover)';
+    notifyHeight();
+  }
+
+  // ── Cancel form ────────────────────────────────────────────────────────────
+  function cancelForm() {
+    if (isCreating) {
+      document.getElementById('form-area').innerHTML = '';
+      isCreating = false;
+    }
+    if (editingIdx >= 0) {
+      var editRow = document.getElementById('edit-row-' + editingIdx);
+      if (editRow) editRow.remove();
+      var dataRow = document.getElementById('row-' + editingIdx);
+      if (dataRow) dataRow.style.background = '';
+      editingIdx = -1;
+    }
+    notifyHeight();
+  }
+
+  // ── Gather form values ─────────────────────────────────────────────────────
+  function gatherFormValues() {
+    var inputs = document.querySelectorAll('.inline-form .form-input, .inline-form .form-select');
+    var values = {};
+    for (var i = 0; i < inputs.length; i++) {
+      var el = inputs[i];
+      values[el.name] = el.value;
+    }
+    return values;
+  }
+
+  // ── Save Create ────────────────────────────────────────────────────────────
+  function saveCreate() {
+    var vals = gatherFormValues();
+    var toolName, args;
+
+    if (viewMode === 'leads') {
+      toolName = 'create_lead';
+      args = {
+        first_name:  vals.first_name,
+        last_name:   vals.last_name,
+        company:     vals.company,
+        email:       vals.email,
+        phone:       vals.phone,
+        status:      vals.status,
+        lead_source: vals.lead_source
+      };
+    } else {
+      toolName = 'create_opportunity';
+      args = {
+        name:         vals.name,
+        account_name: vals.account_name,
+        stage:        vals.stage,
+        amount:       vals.amount ? parseFloat(vals.amount) : null,
+        close_date:   vals.close_date,
+        probability:  vals.probability ? parseInt(vals.probability) : null
+      };
+    }
+
+    // Show loading state
+    var btn = document.querySelector('.btn-save');
+    if (btn) { btn.textContent = 'Creating…'; btn.disabled = true; }
+
+    callTool(toolName, args)
+      .then(function(result) {
+        showToast('✓ Record created successfully');
+        lastSavedId = result._createdId || null;
+        render(result);
+      })
+      .catch(function(err) {
+        showToast('Error: ' + err.message);
+        if (btn) { btn.textContent = '✓ Create'; btn.disabled = false; }
+      });
+  }
+
+  // ── Save Edit ──────────────────────────────────────────────────────────────
+  function saveEdit(idx) {
+    var vals = gatherFormValues();
+    var item = currentData.items[idx];
+    var toolName, args;
+
+    if (viewMode === 'leads') {
+      toolName = 'update_lead';
+      args = {
+        lead_id:     item.id,
+        first_name:  vals.first_name,
+        last_name:   vals.last_name,
+        company:     vals.company,
+        email:       vals.email,
+        phone:       vals.phone,
+        status:      vals.status,
+        lead_source: vals.lead_source
+      };
+    } else {
+      toolName = 'update_opportunity';
+      args = {
+        opportunity_id: item.id,
+        name:           vals.name,
+        account_name:   vals.account_name,
+        stage:          vals.stage,
+        amount:         vals.amount ? parseFloat(vals.amount) : null,
+        close_date:     vals.close_date,
+        probability:    vals.probability ? parseInt(vals.probability) : null
+      };
+    }
+
+    // Show loading state
+    var btn = document.querySelector('.btn-save');
+    if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+    callTool(toolName, args)
+      .then(function(result) {
+        showToast('✓ Record updated successfully');
+        lastSavedId = item.id;
+        render(result);
+      })
+      .catch(function(err) {
+        showToast('Error: ' + err.message);
+        if (btn) { btn.textContent = '✓ Save'; btn.disabled = false; }
+      });
+  }
+
+  // ── Receive messages from host / test harness ──────────────────────────────
+  window.addEventListener('message', function(event) {
+    if (event.source !== window.parent) return;
+    var msg = event.data;
+    if (!msg) return;
+
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      render(msg.params.structuredContent);
+      return;
+    }
+
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      applyTheme(msg.params.theme);
+      return;
+    }
+
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.result) { cb.resolve(msg.result); }
+      else { cb.reject(new Error(msg.error || 'Tool call failed')); }
+      return;
+    }
+  }, { passive: true });
+
+  // ── window.openai.toolOutput (M365 + modern ChatGPT) ──────────────────────
+  var rendered = false;
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme)      { applyTheme(window.openai.theme); }
+      if (window.openai.toolOutput) {
+        var out  = window.openai.toolOutput;
+        var data = (out && out.structuredContent !== undefined) ? out.structuredContent : out;
+        render(data);
+        rendered = true;
+      }
+    }
+  }
+
+  tryRenderFromOpenAI();
+
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 30) { clearInterval(poll); }
+    }, 100);
+  }
+</script>
+</body>
+</html>

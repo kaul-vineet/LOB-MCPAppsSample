@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "sf-crm": {
+      "url": "https://sf-crm-3000.inc1.devtunnels.ms/mcp",
+      "type": "http"
+    }
+  }
+}

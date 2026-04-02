@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>ServiceNow Tracker — Widget UX Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #e8ecf0; padding: 24px; }
+  h2      { margin-bottom: 8px; color: #293e40; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; margin: 12px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #293e40; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #1c2c2e; }
+  button.green  { background: #2e8540; }
+  button.green:hover { background: #236934; }
+  button.dark   { background: #1e252e; }
+  button.dark:hover { background: #111; }
+  button.secondary { background: #6b7280; }
+  button.secondary:hover { background: #4b5563; }
+  .hint   { font-size: 12px; color: #6b7280; margin: 4px 0 16px; }
+  .log    { font-size: 11px; color: #4b5563; background: #fff; border: 1px solid #d6dbe0; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; }
+  .frame-wrapper { background: white; border: 1px solid #d6dbe0; border-radius: 10px; padding: 16px; max-width: 900px; box-shadow: 0 2px 8px rgba(41,62,64,0.1); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+</style>
+</head>
+<body>
+
+<h2>🔧 ServiceNow Tracker — Widget UX Test</h2>
+
+<div class="section-label">Incidents — get_incidents</div>
+<div class="controls">
+  <button onclick="sendIncidents()">Send Mock Incidents (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyIncidents()">Send Empty Result</button>
+</div>
+<p class="hint">Click a row to expand → edit Description &amp; Priority inline → Save. Footer has "Add Incident" form.</p>
+
+<div class="section-label">Requests — get_requests (expandable → edit Approval + request items with editable Qty)</div>
+<div class="controls">
+  <button class="green" onclick="sendRequests()">Send Mock Requests (5 rows)</button>
+</div>
+<p class="hint">Click a row → edit Approval + see Request Items with editable Quantity per item. Row turns green ✓ after items load.</p>
+
+<div class="section-label">Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper">
+  <iframe id="widget" src="widget-preview.html"></iframe>
+</div>
+
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+
+  // ── Mock: Incidents ────────────────────────────────────────────────────────
+  var MOCK_INCIDENTS = {
+    type: "incidents",
+    total: 5,
+    incidents: [
+      { sys_id: "inc001", number: "INC0010045", short_description: "Email not syncing on mobile devices", description: "Users report Outlook mobile app not syncing after the latest iOS update. Affects ~40 users in Sales.", state: "New", priority: "1", assigned_to: "Beth Anglin", sys_created_on: "2026-03-31 14:22:05" },
+      { sys_id: "inc002", number: "INC0010044", short_description: "VPN connection timeout after Windows update", description: "GlobalProtect VPN disconnects every 15 minutes since KB5034441 patch. Engineering team affected.", state: "In Progress", priority: "2", assigned_to: "Abel Tuter", sys_created_on: "2026-03-31 11:05:33" },
+      { sys_id: "inc003", number: "INC0010043", short_description: "Printer on 3rd floor not responding", description: "HP LaserJet on 3rd floor east wing shows offline. Paper and toner are fine.", state: "On Hold", priority: "3", assigned_to: "Charlie Root", sys_created_on: "2026-03-30 16:48:12" },
+      { sys_id: "inc004", number: "INC0010042", short_description: "SAP GUI crashes when generating reports", description: "SAP GUI 7.70 crashes with access violation when running FI-CO reports. Started after server migration.", state: "New", priority: "2", assigned_to: null, sys_created_on: "2026-03-30 09:15:00" },
+      { sys_id: "inc005", number: "INC0010041", short_description: "Password reset for contractor accounts", description: "Batch of 12 contractor accounts need password reset. Contractor onboarding for Project Phoenix.", state: "Resolved", priority: "4", assigned_to: "Beth Anglin", sys_created_on: "2026-03-29 13:30:45" }
+    ]
+  };
+
+  var MOCK_INCIDENTS_EMPTY = { type: "incidents", total: 0, incidents: [] };
+
+  // ── Mock: Requests ─────────────────────────────────────────────────────────
+  var MOCK_REQUESTS = {
+    type: "requests",
+    total: 5,
+    requests: [
+      { sys_id: "req001", number: "REQ0040021", short_description: "New laptop for onboarding — Engineering", request_state: "Approved", priority: "3", approval: "Approved", sys_created_on: "2026-03-31 10:00:00" },
+      { sys_id: "req002", number: "REQ0040020", short_description: "Software license — Adobe Creative Suite", request_state: "Open", priority: "4", approval: "Requested", sys_created_on: "2026-03-30 15:22:00" },
+      { sys_id: "req003", number: "REQ0040019", short_description: "Office relocation — Building B, Floor 2", request_state: "In Progress", priority: "2", approval: "Approved", sys_created_on: "2026-03-30 08:45:00" },
+      { sys_id: "req004", number: "REQ0040018", short_description: "VPN access for remote contractor team", request_state: "Approved", priority: "3", approval: "Not Yet Requested", sys_created_on: "2026-03-29 14:10:00" },
+      { sys_id: "req005", number: "REQ0040017", short_description: "Conference room AV equipment upgrade", request_state: "Closed", priority: "4", approval: "Approved", sys_created_on: "2026-03-28 11:30:00" }
+    ]
+  };
+
+  // ── Mock: Request Items (for inline drill-down) ────────────────────────────
+  var MOCK_ITEMS_BY_REQUEST = {
+    req001: {
+      type: "request_items",
+      request_sys_id: "req001",
+      total: 3,
+      items: [
+        { sys_id: "ri001", number: "RITM0050001", short_description: "MacBook Pro 16-inch M4", state: "Open", stage: "Fulfillment", quantity: "1", price: "$2,499.00" },
+        { sys_id: "ri002", number: "RITM0050002", short_description: "USB-C Docking Station", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$249.00" },
+        { sys_id: "ri003", number: "RITM0050003", short_description: "27\" 4K Monitor", state: "Open", stage: "Request Approved", quantity: "2", price: "$599.00" }
+      ]
+    },
+    req002: {
+      type: "request_items",
+      request_sys_id: "req002",
+      total: 2,
+      items: [
+        { sys_id: "ri004", number: "RITM0050004", short_description: "Adobe Creative Cloud — All Apps", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$659.88/yr" },
+        { sys_id: "ri005", number: "RITM0050005", short_description: "Adobe Stock — 40 assets/mo", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$79.99/mo" }
+      ]
+    },
+    req003: {
+      type: "request_items",
+      request_sys_id: "req003",
+      total: 1,
+      items: [
+        { sys_id: "ri006", number: "RITM0050006", short_description: "Office move — 12 workstations, Building B Floor 2", state: "Work in Progress", stage: "Fulfillment", quantity: "12", price: "$0.00" }
+      ]
+    },
+    req004: {
+      type: "request_items",
+      request_sys_id: "req004",
+      total: 2,
+      items: [
+        { sys_id: "ri007", number: "RITM0050007", short_description: "VPN client license — GlobalProtect", state: "Closed Complete", stage: "Delivery", quantity: "5", price: "$0.00" },
+        { sys_id: "ri008", number: "RITM0050008", short_description: "MFA token setup for contractors", state: "Open", stage: "Fulfillment", quantity: "5", price: "$50.00" }
+      ]
+    },
+    req005: {
+      type: "request_items",
+      request_sys_id: "req005",
+      total: 0,
+      items: []
+    }
+  };
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function sendIncidents()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_INCIDENTS } });       log('→ Sent 5 mock incidents'); }
+  function sendEmptyIncidents() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_INCIDENTS_EMPTY } }); log('→ Sent empty incidents'); }
+  function sendRequests()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_REQUESTS } });        log('→ Sent 5 mock requests'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#1a1a1a' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#f0f0f0' : '#111';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ───────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // callTool request from widget
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.args;
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+
+      setTimeout(function() {
+        var result;
+
+        if (tool === 'get_request_items') {
+          result = MOCK_ITEMS_BY_REQUEST[args.request_sys_id] || { type: "request_items", total: 0, items: [] };
+          log('→ Returned ' + (result.items ? result.items.length : 0) + ' request items for ' + args.request_sys_id);
+
+        } else if (tool === 'get_incidents') {
+          result = MOCK_INCIDENTS;
+          log('→ Returned refreshed incidents');
+
+        } else if (tool === 'get_requests') {
+          result = MOCK_REQUESTS;
+          log('→ Returned refreshed requests');
+
+        } else if (tool === 'create_incident') {
+          result = { type: "created", record_type: "incident", sys_id: "inc_new_" + Date.now(), number: "INC00100" + (46 + Math.floor(Math.random() * 10)), message: "Incident created successfully" };
+          log('→ Created mock incident: ' + result.number);
+
+        } else if (tool === 'create_request') {
+          result = { type: "created", record_type: "request", sys_id: "req_new_" + Date.now(), number: "REQ00400" + (22 + Math.floor(Math.random() * 10)), message: "Request created successfully" };
+          log('→ Created mock request: ' + result.number);
+
+        } else if (tool === 'update_incident') {
+          result = { type: "updated", record_type: "incident", sys_id: args.sys_id, message: "Incident updated" };
+          log('→ Updated incident ' + args.sys_id + ' → priority=' + args.priority + ', desc=' + (args.description || '').substring(0, 40) + '...');
+
+        } else if (tool === 'update_request') {
+          result = { type: "updated", record_type: "request", sys_id: args.sys_id, message: "Request updated" };
+          log('→ Updated request ' + args.sys_id + ' → approval=' + args.approval);
+
+        } else if (tool === 'update_request_item') {
+          result = { type: "updated", record_type: "request_item", sys_id: args.sys_id, message: "Request item updated" };
+          log('→ Updated request item ' + args.sys_id + ' → quantity=' + args.quantity);
+
+        } else {
+          result = { error: 'Unknown tool: ' + tool };
+          log('→ Unknown tool: ' + tool);
+        }
+
+        post({ jsonrpc: '2.0', id: msg.id, result: result });
+      }, 500);
+      return;
+    }
+
+    // Height notification from widget
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>
