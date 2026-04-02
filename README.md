@@ -1,4 +1,15 @@
-# The Great Trading Company — LOB MCP Apps
+# ⚓ The Great Trading Company — LOB MCP Apps
+
+<p align="center">
+  <em>A colonial trading house for enterprise operations — four LOB systems, one agent, one tunnel</em>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/🏛️_Salesforce-Trade_Ledger-00A1E0?style=for-the-badge" alt="Salesforce" />
+  <img src="https://img.shields.io/badge/🎫_ServiceNow-Service_Manifest-293E40?style=for-the-badge" alt="ServiceNow" />
+  <img src="https://img.shields.io/badge/📦_SAP-Cargo_Manifest-0FAAFF?style=for-the-badge" alt="SAP" />
+  <img src="https://img.shields.io/badge/🧡_HubSpot-Spice_Bazaar-FF7A59?style=for-the-badge" alt="HubSpot" />
+</p>
 
 | | |
 |---|---|
@@ -7,13 +18,13 @@
 | **Date** | April 2026 |
 | **Stack** | Python · FastMCP 1.26 · Salesforce REST API · ServiceNow Table API · SAP OData · HubSpot REST API · Microsoft Dev Tunnels · M365 Agents Toolkit |
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![MCP SDK](https://img.shields.io/badge/FastMCP-1.26-green)
-![M365](https://img.shields.io/badge/M365_Copilot-Public_Preview-orange)
-![Salesforce](https://img.shields.io/badge/Salesforce-v62.0-00A1E0)
-![ServiceNow](https://img.shields.io/badge/ServiceNow-Table_API-293E40)
-![SAP](https://img.shields.io/badge/SAP-S%2F4HANA-0FAAFF)
-![HubSpot](https://img.shields.io/badge/HubSpot-CRM-FF7A59)
+![M365](https://img.shields.io/badge/M365_Copilot-Public_Preview-orange?logo=microsoft&logoColor=white)
+![Salesforce](https://img.shields.io/badge/Salesforce-v62.0-00A1E0?logo=salesforce&logoColor=white)
+![ServiceNow](https://img.shields.io/badge/ServiceNow-Table_API-81B5A1?logo=servicenow&logoColor=white)
+![SAP](https://img.shields.io/badge/SAP-S%2F4HANA-0FAAFF?logo=sap&logoColor=white)
+![HubSpot](https://img.shields.io/badge/HubSpot-CRM-FF7A59?logo=hubspot&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 **Tags:** `mcp` `copilot` `python` `m365` `salesforce` `servicenow` `sap` `hubspot` `agentic-ai` `declarative-agent` `mcp-apps` `crm` `itsm` `erp`
@@ -30,10 +41,13 @@
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
-  - [1. Salesforce MCP Server](#1-salesforce-mcp-server)
-  - [2. ServiceNow MCP Server](#2-servicenow-mcp-server)
-  - [3. Dev Tunnel (single tunnel, two ports)](#3-dev-tunnel-single-tunnel-two-ports)
-  - [4. The Agent — Provision & Sideload](#4-the-agent--provision--sideload)
+  - [1. 🏛️ Salesforce](#1-️-salesforce-mcp-server--the-trade-ledger)
+  - [2. 🎫 ServiceNow](#2--servicenow-mcp-server--the-service-manifest)
+  - [3. 📦 SAP S/4HANA](#3--sap-s4hana-mcp-server--the-cargo-manifest)
+  - [4. 🧡 HubSpot](#4--hubspot-crm-mcp-server--the-spice-bazaar)
+  - [5. 🚇 Dev Tunnel](#5--dev-tunnel-single-persistent-tunnel-four-ports)
+  - [6. ⚓ The Agent](#6--the-agent--provision--sideload)
+- [Detailed Setup Guide ↗](SETUP.md)
 - [Running](#running)
 - [Test Harness](#test-harness)
 - [Tools Reference](#tools-reference)
@@ -152,7 +166,7 @@ lob-mcp-apps/
 
 ## Setup
 
-### 1. Salesforce MCP Server
+### 1. 🏛️ Salesforce MCP Server — *The Trade Ledger*
 
 ```bash
 cd sf-mcp-app
@@ -175,7 +189,7 @@ python -m venv .venv
 pip install -e .
 ```
 
-### 2. ServiceNow MCP Server
+### 2. 🎫 ServiceNow MCP Server — *The Service Manifest*
 
 ```bash
 cd snow-mcp-app
@@ -199,7 +213,7 @@ python -m venv .venv
 pip install -e .
 ```
 
-### 3. SAP S/4HANA MCP Server
+### 3. 📦 SAP S/4HANA MCP Server — *The Cargo Manifest*
 
 ```bash
 cd sap-mcp-app
@@ -223,7 +237,7 @@ python -m venv .venv
 pip install -e .
 ```
 
-### 4. HubSpot CRM MCP Server
+### 4. 🧡 HubSpot CRM MCP Server — *The Spice Bazaar*
 
 ```bash
 cd hubspot-mcp-app
@@ -246,7 +260,7 @@ python -m venv .venv
 pip install -e .
 ```
 
-### 5. Dev Tunnel (single persistent tunnel, four ports)
+### 5. 🚇 Dev Tunnel (single persistent tunnel, four ports)
 
 Create **one** named persistent tunnel. The URL stays the same across restarts — just don't delete the tunnel:
 
@@ -272,7 +286,7 @@ devtunnel host gtc-tunnel
 
 > **⚠️ The tunnel name is persistent** — as long as you only _stop_ hosting (Ctrl+C) and don't run `devtunnel delete`, the URLs remain fixed. No need to update `ai-plugin.json` after each restart. Tunnels expire after 30 days of inactivity.
 
-### 6. The Agent — Provision & Sideload
+### 6. ⚓ The Agent — Provision & Sideload
 
 ```bash
 cd lob-agent
@@ -342,7 +356,7 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 
 ## Tools Reference
 
-### Salesforce CRM (6 tools — port 3000)
+### 🏛️ Salesforce CRM (6 tools — port 3000)
 
 | Tool | Description | Required params |
 |---|---|---|
@@ -353,7 +367,7 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 | `create_opportunity` | Create an opportunity | `name`, `stage`, `close_date` |
 | `update_opportunity` | Update an opportunity by Id | `opportunity_id` |
 
-### ServiceNow ITSM (8 tools — port 3001)
+### 🎫 ServiceNow ITSM (8 tools — port 3001)
 
 | Tool | Description | Required params |
 |---|---|---|
@@ -366,7 +380,7 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 | `update_request` | Update request approval | `sys_id` |
 | `update_request_item` | Update item quantity | `sys_id` |
 
-### SAP S/4HANA (6 tools — port 3002)
+### 📦 SAP S/4HANA (6 tools — port 3002)
 
 | Tool | Description | Required params |
 |---|---|---|
@@ -379,7 +393,7 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 
 > 📡 In sandbox mode, create/update tools return mock demo data.
 
-### HubSpot CRM (6 tools — port 3003)
+### 🧡 HubSpot CRM (6 tools — port 3003)
 
 | Tool | Description | Required params |
 |---|---|---|
