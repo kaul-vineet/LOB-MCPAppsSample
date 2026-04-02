@@ -2,23 +2,25 @@
 
 | | |
 |---|---|
-| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — Salesforce CRM and ServiceNow ITSM in one agent |
+| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — Salesforce CRM, ServiceNow ITSM, SAP S/4HANA ERP, and HubSpot CRM in one agent |
 | **Author** | Vineet Kaul, PM Architect – Agentic AI, Microsoft |
 | **Date** | April 2026 |
-| **Stack** | Python · FastMCP 1.26 · Salesforce REST API · ServiceNow Table API · Microsoft Dev Tunnels · M365 Agents Toolkit |
+| **Stack** | Python · FastMCP 1.26 · Salesforce REST API · ServiceNow Table API · SAP OData · HubSpot REST API · Microsoft Dev Tunnels · M365 Agents Toolkit |
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![MCP SDK](https://img.shields.io/badge/FastMCP-1.26-green)
 ![M365](https://img.shields.io/badge/M365_Copilot-Public_Preview-orange)
 ![Salesforce](https://img.shields.io/badge/Salesforce-v62.0-00A1E0)
 ![ServiceNow](https://img.shields.io/badge/ServiceNow-Table_API-293E40)
+![SAP](https://img.shields.io/badge/SAP-S%2F4HANA-0FAAFF)
+![HubSpot](https://img.shields.io/badge/HubSpot-CRM-FF7A59)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-**Tags:** `mcp` `copilot` `python` `m365` `salesforce` `servicenow` `agentic-ai` `declarative-agent` `mcp-apps` `crm` `itsm`
+**Tags:** `mcp` `copilot` `python` `m365` `salesforce` `servicenow` `sap` `hubspot` `agentic-ai` `declarative-agent` `mcp-apps` `crm` `itsm` `erp`
 
 ---
 
-> **TL;DR** — Two Python MCP servers (Salesforce CRM + ServiceNow ITSM) behind a single dev tunnel, orchestrated by one declarative agent — *The Great Trading Company*. Each server renders interactive CRUD widgets directly inside M365 Copilot chat. The agent routes utterances to the right LOB system automatically.
+> **TL;DR** — Four Python MCP servers (Salesforce CRM + ServiceNow ITSM + SAP S/4HANA + HubSpot CRM) behind a single dev tunnel, orchestrated by one declarative agent — *The Great Trading Company*. Each server renders interactive CRUD widgets directly inside M365 Copilot chat. The agent routes utterances to the right LOB system automatically.
 
 ---
 
@@ -44,33 +46,34 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        M365 Copilot                             │
-│                                                                 │
-│  "Show my leads"  ──┐           ┌──  "Show incidents"           │
-│                     ▼           ▼                               │
-│            ┌────────────────────────────┐                       │
-│            │  The Great Trading Company │                       │
-│            │   (Declarative Agent)      │                       │
-│            │   14 tools · 2 runtimes    │                       │
-│            └────┬───────────────┬───────┘                       │
-└─────────────────┼───────────────┼───────────────────────────────┘
-                  │               │
-    ┌─────────────┘               └──────────────┐
-    ▼                                            ▼
-┌──────────────────┐                ┌──────────────────────┐
-│  SF MCP Server   │                │  ServiceNow MCP Srv  │
-│  Port 3000       │                │  Port 3001           │
-│  6 tools         │                │  8 tools             │
-│  Leads, Opps     │                │  Incidents, Requests │
-└──────┬───────────┘                └──────┬───────────────┘
-       │                                   │
-       ▼                                   ▼
-   Salesforce                         ServiceNow
-   REST API                           Table API
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            M365 Copilot                                │
+│                                                                        │
+│  "Show leads" ──┐    ┌── "Show incidents"    ┌── "Show POs"           │
+│                 ▼    ▼                       ▼       ┌── "Show deals" │
+│            ┌─────────────────────────────────────────┐▼               │
+│            │     The Great Trading Company            │                │
+│            │      (Declarative Agent)                 │                │
+│            │      26 tools · 4 runtimes               │                │
+│            └──┬─────────┬──────────┬──────────┬──────┘                │
+└───────────────┼─────────┼──────────┼──────────┼───────────────────────┘
+                │         │          │          │
+   ┌────────────┘    ┌────┘     ┌────┘     ┌────┘
+   ▼                 ▼          ▼          ▼
+┌──────────┐  ┌───────────┐  ┌────────┐  ┌─────────┐
+│ SF MCP   │  │ SN MCP    │  │SAP MCP │  │ HS MCP  │
+│ Port 3000│  │ Port 3001 │  │Port 3002│  │Port 3003│
+│ 6 tools  │  │ 8 tools   │  │6 tools │  │6 tools  │
+│ Leads    │  │ Incidents │  │POs     │  │Contacts │
+│ Opps     │  │ Requests  │  │BPs     │  │Deals    │
+└────┬─────┘  └─────┬─────┘  │Matls   │  └────┬────┘
+     │              │        └───┬────┘       │
+     ▼              ▼            ▼            ▼
+ Salesforce    ServiceNow    SAP API      HubSpot
+ REST API      Table API     Hub/OData    REST API
 ```
 
-**Single Persistent Dev Tunnel** — both servers share one named tunnel (`gtc-tunnel`) with two port mappings. The URL never changes across restarts.
+**Single Persistent Dev Tunnel** — all four servers share one named tunnel (`gtc-tunnel`) with four port mappings. The URL never changes across restarts.
 
 ---
 
@@ -97,13 +100,31 @@ lob-mcp-apps/
 │   │   └── web/widget.html            # Interactive ServiceNow widget
 │   └── tests/                         # Widget test harness
 │
+├── sap-mcp-app/                       # SAP S/4HANA MCP server
+│   ├── .env.example                   # SAP API Hub / tenant credentials
+│   ├── pyproject.toml
+│   ├── sap_s4hana_mcp/
+│   │   ├── server.py                  # 6 tools — POs, Business Partners, Materials
+│   │   ├── sap_client.py             # OData client (sandbox + tenant dual-mode)
+│   │   └── web/widget.html            # SAP Fiori-inspired widget
+│   └── tests/                         # Widget test harness
+│
+├── hubspot-mcp-app/                   # HubSpot CRM MCP server
+│   ├── .env.example                   # HubSpot private app token
+│   ├── pyproject.toml
+│   ├── hubspot_mcp/
+│   │   ├── server.py                  # 6 tools — Contacts & Deals CRUD
+│   │   ├── hubspot_client.py          # HubSpot REST client
+│   │   └── web/widget.html            # HubSpot-branded widget
+│   └── tests/                         # Widget test harness
+│
 └── lob-agent/                         # "The Great Trading Company" agent
     ├── appPackage/
     │   ├── declarativeAgent.json      # Agent identity & conversation starters
     │   ├── manifest.json              # Teams/M365 app manifest
-    │   ├── ai-plugin.json             # Two runtimes (SF:3000, SN:3001)
-    │   ├── mcp-tools.json             # 14 tools with _meta + widget URIs
-    │   └── instruction.txt            # Combined CRM + ITSM persona
+    │   ├── ai-plugin.json             # 4 runtimes (SF:3000, SN:3001, SAP:3002, HS:3003)
+    │   ├── mcp-tools.json             # 26 tools with _meta + widget URIs
+    │   └── instruction.txt            # Combined CRM + ITSM + ERP persona
     ├── env/.env.dev
     └── m365agents.yml
 ```
@@ -121,6 +142,9 @@ lob-mcp-apps/
 | Salesforce Org | Developer Edition or sandbox with a Connected App (OAuth2 client_credentials) |
 | ServiceNow Instance | Developer instance with OAuth 2.0 or Basic Auth |
 | M365 Developer Tenant | With Copilot license and sideloading enabled |
+
+| **SAP** | Free account on [api.sap.com](https://api.sap.com) for sandbox API key |
+| **HubSpot** | Free CRM account with a Private App token |
 
 ---
 
@@ -173,7 +197,54 @@ python -m venv .venv
 pip install -e .
 ```
 
-### 3. Dev Tunnel (single persistent tunnel, two ports)
+### 3. SAP S/4HANA MCP Server
+
+```bash
+cd sap-mcp-app
+cp .env.example .env          # fill in your API key
+```
+
+Edit `.env`:
+```env
+SAP_MODE=sandbox
+SAP_API_KEY=your-api-hub-api-key        # Free from api.sap.com
+PORT=3002
+CORS_ORIGINS=*
+```
+
+> **Sandbox mode** connects to SAP's free API Business Hub — read-only with demo data. Write operations return mock responses. Set `SAP_MODE=tenant` with real credentials for full CRUD.
+
+Install dependencies:
+```bash
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+pip install -e .
+```
+
+### 4. HubSpot CRM MCP Server
+
+```bash
+cd hubspot-mcp-app
+cp .env.example .env          # fill in your token
+```
+
+Edit `.env`:
+```env
+HUBSPOT_ACCESS_TOKEN=your-private-app-token
+PORT=3003
+CORS_ORIGINS=*
+```
+
+> Create a Private App at: HubSpot → Settings → Integrations → Private Apps. Required scopes: `crm.objects.contacts.read/write`, `crm.objects.deals.read/write`.
+
+Install dependencies:
+```bash
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+pip install -e .
+```
+
+### 5. Dev Tunnel (single persistent tunnel, four ports)
 
 Create **one** named persistent tunnel. The URL stays the same across restarts — just don't delete the tunnel:
 
@@ -182,11 +253,15 @@ Create **one** named persistent tunnel. The URL stays the same across restarts �
 devtunnel create gtc-tunnel --allow-anonymous
 devtunnel port create gtc-tunnel -p 3000    # Salesforce MCP server
 devtunnel port create gtc-tunnel -p 3001    # ServiceNow MCP server
+devtunnel port create gtc-tunnel -p 3002    # SAP MCP server
+devtunnel port create gtc-tunnel -p 3003    # HubSpot MCP server
 ```
 
-This gives you two **stable** URLs:
+This gives you four **stable** URLs:
 - `https://gtc-tunnel-3000.inc1.devtunnels.ms/mcp` → Salesforce
 - `https://gtc-tunnel-3001.inc1.devtunnels.ms/mcp` → ServiceNow
+- `https://gtc-tunnel-3002.inc1.devtunnels.ms/mcp` → SAP S/4HANA
+- `https://gtc-tunnel-3003.inc1.devtunnels.ms/mcp` → HubSpot
 
 To start hosting (every dev session):
 ```bash
@@ -195,7 +270,7 @@ devtunnel host gtc-tunnel
 
 > **⚠️ The tunnel name is persistent** — as long as you only _stop_ hosting (Ctrl+C) and don't run `devtunnel delete`, the URLs remain fixed. No need to update `ai-plugin.json` after each restart. Tunnels expire after 30 days of inactivity.
 
-### 4. The Agent — Provision & Sideload
+### 6. The Agent — Provision & Sideload
 
 ```bash
 cd lob-agent
@@ -205,12 +280,14 @@ teamsapp provision --env dev
 Then open M365 Copilot, find **The Great Trading Company** in the agent side panel, and start chatting:
 - *"Show me the latest leads"* → Salesforce widget
 - *"Show me the latest incidents"* → ServiceNow widget
+- *"Show me the latest purchase orders"* → SAP widget
+- *"Show me the latest contacts"* → HubSpot widget
 
 ---
 
 ## Running
 
-Start both MCP servers (two terminals):
+Start all four MCP servers (four terminals):
 
 **Terminal 1 — Salesforce (port 3000)**
 ```bash
@@ -226,7 +303,21 @@ cd snow-mcp-app
 python -m servicenow_mcp
 ```
 
-**Terminal 3 — Dev Tunnel**
+**Terminal 3 — SAP S/4HANA (port 3002)**
+```bash
+cd sap-mcp-app
+.venv\Scripts\activate
+python -m sap_s4hana_mcp
+```
+
+**Terminal 4 — HubSpot (port 3003)**
+```bash
+cd hubspot-mcp-app
+.venv\Scripts\activate
+python -m hubspot_mcp
+```
+
+**Terminal 5 — Dev Tunnel**
 ```bash
 devtunnel host gtc-tunnel
 ```
@@ -240,6 +331,8 @@ Each MCP app includes standalone HTML test files that can be opened in a browser
 - `sf-mcp-app/tests/widget_test.html` — Salesforce CRM widget test
 - `snow-mcp-app/tests/widget_test.html` — ServiceNow widget test
 - `snow-mcp-app/tests/widget-preview.html` — ServiceNow widget preview
+- `sap-mcp-app/tests/widget_test.html` — SAP S/4HANA widget test
+- `hubspot-mcp-app/tests/widget_test.html` — HubSpot CRM widget test
 
 These files mock the MCP host environment and let you iterate on widget HTML/CSS/JS independently.
 
@@ -271,6 +364,30 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 | `update_request` | Update request approval | `sys_id` |
 | `update_request_item` | Update item quantity | `sys_id` |
 
+### SAP S/4HANA (6 tools — port 3002)
+
+| Tool | Description | Required params |
+|---|---|---|
+| `get_purchase_orders` | Latest purchase orders | — |
+| `get_business_partners` | Business partners | — |
+| `get_materials` | Materials master data | — |
+| `create_purchase_order` | Create a PO | `supplier`, `purchasing_org` |
+| `update_purchase_order` | Update a PO | `purchase_order_id` |
+| `get_material_details` | Material detail by ID | `material_id` |
+
+> 📡 In sandbox mode, create/update tools return mock demo data.
+
+### HubSpot CRM (6 tools — port 3003)
+
+| Tool | Description | Required params |
+|---|---|---|
+| `get_contacts` | Latest 5 contacts | — |
+| `create_contact` | Create a contact | `email`, `firstname`, `lastname` |
+| `update_contact` | Update a contact | `contact_id` |
+| `get_deals` | Latest 5 deals | — |
+| `create_deal` | Create a deal | `dealname`, `pipeline`, `dealstage` |
+| `update_deal` | Update a deal | `deal_id` |
+
 ---
 
 ## Critical Troubleshooting
@@ -285,17 +402,19 @@ If the widget is not rendering in M365 Copilot, check these three things:
 
 4. **Tunnel URLs** — Ensure `ai-plugin.json` has the correct tunnel URLs for both runtimes. Each time you recreate the tunnel, the hostname may change.
 
-5. **Port mismatch** — Salesforce must run on port **3000** and ServiceNow on port **3001**. Verify with `curl http://localhost:3000/mcp` and `curl http://localhost:3001/mcp`.
+5. **Port mismatch** — Salesforce must run on port **3000**, ServiceNow on **3001**, SAP on **3002**, and HubSpot on **3003**. Verify with `curl http://localhost:{port}/mcp`.
+
+6. **SAP sandbox mode** — If SAP returns empty results, ensure your `SAP_API_KEY` is valid. Get one free at [api.sap.com](https://api.sap.com) → Log in → Copy API Key from your profile.
 
 ---
 
-## v2.0 Roadmap
+## v3.0 Roadmap
 
-> **v2.0 — SAP Integration** 🚢
+> **v3.0 — Jira & DocuSign** 🚢
 >
-> The next release of The Great Trading Company will add **SAP S/4HANA** as a third LOB backend — bringing purchase orders, inventory management, and material tracking into the same unified agent. The SAP MCP server will follow the same pattern: a self-contained `sap-mcp-app/` folder with its own widget, test harness, and `.env` configuration, served on a third port through the same dev tunnel.
+> The next expansion of The Great Trading Company will add **Jira** (The Shipwright's Log — epics, sprints, work items) and **DocuSign** (The Royal Seal — contract signing and approval workflows) as fifth and sixth LOB backends.
 >
-> *The Company's ledger expands — from trade leads and service manifests to the full supply chain.*
+> *The Company's dominion grows — from trade ledgers and cargo manifests to shipyard logs and royal seals.*
 
 ---
 

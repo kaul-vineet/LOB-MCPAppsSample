@@ -61,6 +61,54 @@
         {
             "name": "update_request_item",
             "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity."
+        },
+        {
+            "name": "get_purchase_orders",
+            "description": "Fetch the latest purchase orders from SAP S/4HANA. Returns PO number, supplier, purchasing org, date, and deletion code."
+        },
+        {
+            "name": "get_business_partners",
+            "description": "Fetch business partners from SAP S/4HANA. Returns partner ID, full name, category, and organization name."
+        },
+        {
+            "name": "get_materials",
+            "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit."
+        },
+        {
+            "name": "create_purchase_order",
+            "description": "Create a new Purchase Order in SAP S/4HANA. Requires supplier and purchasing_org. Returns the updated list of latest purchase orders."
+        },
+        {
+            "name": "update_purchase_order",
+            "description": "Update an existing Purchase Order in SAP S/4HANA by its PO number. Only fields provided will be updated. Returns the updated list of latest purchase orders."
+        },
+        {
+            "name": "get_material_details",
+            "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material."
+        },
+        {
+            "name": "get_contacts",
+            "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage."
+        },
+        {
+            "name": "create_contact",
+            "description": "Create a new Contact in HubSpot. Requires email at minimum. Returns the updated list of latest 5 contacts."
+        },
+        {
+            "name": "update_contact",
+            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
+        },
+        {
+            "name": "get_deals",
+            "description": "Get the 5 most recent Deals from HubSpot. Returns deal name, stage, amount, close date, and pipeline."
+        },
+        {
+            "name": "create_deal",
+            "description": "Create a new Deal in HubSpot. Requires dealname, pipeline, and dealstage at minimum. Returns the updated list of latest 5 deals."
+        },
+        {
+            "name": "update_deal",
+            "description": "Update an existing Deal in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 deals."
         }
     ],
     "runtimes": [
@@ -101,6 +149,46 @@
                 "update_incident",
                 "update_request",
                 "update_request_item"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://gtc-tunnel-3002.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "get_purchase_orders",
+                "get_business_partners",
+                "get_materials",
+                "create_purchase_order",
+                "update_purchase_order",
+                "get_material_details"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://gtc-tunnel-3003.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "get_contacts",
+                "create_contact",
+                "update_contact",
+                "get_deals",
+                "create_deal",
+                "update_deal"
             ],
             "auth": {
                 "type": "None"

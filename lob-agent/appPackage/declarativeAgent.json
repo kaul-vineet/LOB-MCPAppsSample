@@ -2,7 +2,7 @@
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.5/schema.json",
     "version": "v1.5",
     "name": "The Great Trading Company${{APP_NAME_SUFFIX}}",
-    "description": "Your colonial trading house for enterprise operations — manage Salesforce CRM ledgers and ServiceNow service manifests, all from one command post.",
+    "description": "Your colonial trading house for enterprise operations — manage Salesforce CRM ledgers, ServiceNow service manifests, SAP cargo manifests, and HubSpot spice bazaar, all from one command post.",
     "instructions": "$[file('instruction.txt')]",
     "conversation_starters": [
         {
@@ -20,6 +20,18 @@
         {
             "title": "Check the service requests",
             "text": "Show me the latest service requests from ServiceNow"
+        },
+        {
+            "title": "Inspect the cargo manifest",
+            "text": "Show me the latest purchase orders from SAP"
+        },
+        {
+            "title": "Review the spice bazaar contacts",
+            "text": "Show me the latest contacts from HubSpot"
+        },
+        {
+            "title": "Check the trade deals",
+            "text": "Show me the latest deals from HubSpot"
         },
         {
             "title": "Log a new trade lead",

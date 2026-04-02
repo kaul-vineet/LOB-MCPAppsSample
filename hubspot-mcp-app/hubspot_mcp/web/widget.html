@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HubSpot CRM</title>
+<style>
+  :root {
+    --hs-primary: #FF7A59;
+    --hs-primary-dark: #E8563D;
+    --hs-bg: #ffffff;
+    --hs-surface: #f5f8fa;
+    --hs-text: #33475b;
+    --hs-text-light: #516f90;
+    --hs-border: #cbd6e2;
+    --hs-success: #00BDA5;
+    --hs-error: #F2545B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --hs-bg: #1a1a2e;
+      --hs-surface: #16213e;
+      --hs-text: #e0e0e0;
+      --hs-text-light: #a0a0a0;
+      --hs-border: #3a3a5c;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--hs-bg); color: var(--hs-text); font-size: 14px; padding: 16px; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .header h2 { font-size: 16px; font-weight: 600; }
+  .badge { background: var(--hs-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--hs-surface); border-radius: 8px; overflow: hidden; }
+  th { background: var(--hs-primary); color: white; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--hs-border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,122,89,0.05); }
+
+  .btn { background: var(--hs-primary); color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn:hover { background: var(--hs-primary-dark); }
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-outline { background: transparent; border: 1px solid var(--hs-primary); color: var(--hs-primary); }
+
+  .error-banner { background: var(--hs-error); color: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+
+  .form-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+  .form-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .form-card { background: var(--hs-bg); padding: 20px; border-radius: 10px; width: 340px; max-width: 95vw; }
+  .form-card h3 { margin-bottom: 12px; font-size: 15px; }
+  .form-card label { display: block; font-size: 12px; color: var(--hs-text-light); margin-top: 8px; }
+  .form-card input, .form-card select { width: 100%; padding: 6px 10px; border: 1px solid var(--hs-border); border-radius: 4px; font-size: 13px; margin-top: 2px; background: var(--hs-surface); color: var(--hs-text); }
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+
+  .empty { text-align: center; padding: 24px; color: var(--hs-text-light); }
+  .loading { text-align: center; padding: 24px; color: var(--hs-text-light); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">Loading HubSpot data…</div>
+</div>
+
+<div id="formOverlay" class="form-overlay">
+  <div class="form-card" id="formCard"></div>
+</div>
+
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var overlay = document.getElementById('formOverlay');
+  var formCard = document.getElementById('formCard');
+
+  // ── Theme support ─────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    var root = document.documentElement;
+    if (theme === 'dark') {
+      root.style.setProperty('--hs-bg', '#1a1a2e');
+      root.style.setProperty('--hs-surface', '#16213e');
+      root.style.setProperty('--hs-text', '#e0e0e0');
+      root.style.setProperty('--hs-text-light', '#a0a0a0');
+      root.style.setProperty('--hs-border', '#3a3a5c');
+    } else {
+      root.style.setProperty('--hs-bg', '#ffffff');
+      root.style.setProperty('--hs-surface', '#f5f8fa');
+      root.style.setProperty('--hs-text', '#33475b');
+      root.style.setProperty('--hs-text-light', '#516f90');
+      root.style.setProperty('--hs-border', '#cbd6e2');
+    }
+  }
+
+  // ── Tool calling abstraction ──────────────────────────────────────────────
+  var pendingCalls = {};
+  var callId = 1;
+
+  function callTool(name, args) {
+    return new Promise(function (resolve, reject) {
+      // Try window.openai bridge first
+      if (window.openai && window.openai.callTool) {
+        window.openai.callTool(name, args, function (err, result) {
+          if (err) reject(err); else resolve(result);
+        });
+        return;
+      }
+      // Fallback: JSON-RPC postMessage
+      var id = callId++;
+      pendingCalls[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({
+        jsonrpc: '2.0',
+        id: id,
+        method: 'ui/callTool',
+        params: { name: name, args: args }
+      }, '*');
+      setTimeout(function () {
+        if (pendingCalls[id]) {
+          pendingCalls[id].reject(new Error('Tool call timed out'));
+          delete pendingCalls[id];
+        }
+      }, 15000);
+    });
+  }
+
+  // ── Render dispatcher ─────────────────────────────────────────────────────
+  function render(data) {
+    if (!data) return;
+    if (data.error) {
+      app.innerHTML = '<div class="error-banner">\u26A0 ' + (data.message || 'Unknown error') + '</div>';
+      return;
+    }
+    if (data.type === 'contacts') renderContacts(data);
+    else if (data.type === 'deals') renderDeals(data);
+    else app.innerHTML = '<div class="empty">Unknown data type</div>';
+    notifyHeight();
+  }
+
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── Contacts table ────────────────────────────────────────────────────────
+  function renderContacts(data) {
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = '<div class="empty">No contacts found</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var c = data.items[i];
+      var escaped = JSON.stringify(c).replace(/"/g, '&quot;');
+      rows += '<tr>'
+        + '<td>' + (c.firstname || '') + ' ' + (c.lastname || '') + '</td>'
+        + '<td>' + (c.email || '') + '</td>'
+        + '<td>' + (c.phone || '') + '</td>'
+        + '<td>' + (c.company || '') + '</td>'
+        + '<td>' + (c.lifecyclestage || '') + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_contact\', ' + escaped + ')">\u270E</button></td>'
+        + '</tr>';
+    }
+    app.innerHTML =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCC7 Contacts <span class="badge">' + data.total + '</span></h2>'
+      + '<button class="btn" onclick="window.__showForm(\'create_contact\')">+ New</button>'
+      + '</div>'
+      + '<table>'
+      + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── Deals table ───────────────────────────────────────────────────────────
+  function renderDeals(data) {
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = '<div class="empty">No deals found</div>';
+      return;
+    }
+    function fmt(v) {
+      if (!v) return '\u2014';
+      return parseFloat(v).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var d = data.items[i];
+      var escaped = JSON.stringify(d).replace(/"/g, '&quot;');
+      rows += '<tr>'
+        + '<td>' + (d.dealname || '') + '</td>'
+        + '<td>' + (d.dealstage || '') + '</td>'
+        + '<td>' + fmt(d.amount) + '</td>'
+        + '<td>' + (d.closedate || '') + '</td>'
+        + '<td>' + (d.pipeline || '') + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_deal\', ' + escaped + ')">\u270E</button></td>'
+        + '</tr>';
+    }
+    app.innerHTML =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCB0 Deals <span class="badge">' + data.total + '</span></h2>'
+      + '<button class="btn" onclick="window.__showForm(\'create_deal\')">+ New</button>'
+      + '</div>'
+      + '<table>'
+      + '<tr><th>Deal</th><th>Stage</th><th>Amount</th><th>Close Date</th><th>Pipeline</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── Form management ───────────────────────────────────────────────────────
+  function showForm(tool, existing) {
+    overlay.classList.add('active');
+    if (tool === 'create_contact') {
+      formCard.innerHTML =
+        '<h3>New Contact</h3>'
+        + '<label>First Name<input id="f_fn" /></label>'
+        + '<label>Last Name<input id="f_ln" /></label>'
+        + '<label>Email<input id="f_em" type="email" /></label>'
+        + '<label>Phone<input id="f_ph" /></label>'
+        + '<label>Company<input id="f_co" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'create_contact\')">Create</button>'
+        + '</div>';
+    } else if (tool === 'update_contact') {
+      formCard.innerHTML =
+        '<h3>Edit Contact</h3>'
+        + '<input type="hidden" id="f_id" value="' + existing.id + '" />'
+        + '<label>First Name<input id="f_fn" value="' + (existing.firstname || '') + '" /></label>'
+        + '<label>Last Name<input id="f_ln" value="' + (existing.lastname || '') + '" /></label>'
+        + '<label>Email<input id="f_em" value="' + (existing.email || '') + '" /></label>'
+        + '<label>Phone<input id="f_ph" value="' + (existing.phone || '') + '" /></label>'
+        + '<label>Company<input id="f_co" value="' + (existing.company || '') + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_contact\')">Save</button>'
+        + '</div>';
+    } else if (tool === 'create_deal') {
+      formCard.innerHTML =
+        '<h3>New Deal</h3>'
+        + '<label>Deal Name<input id="f_dn" /></label>'
+        + '<label>Pipeline<input id="f_pl" value="default" /></label>'
+        + '<label>Stage<input id="f_ds" /></label>'
+        + '<label>Amount<input id="f_am" type="number" /></label>'
+        + '<label>Close Date<input id="f_cd" type="date" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'create_deal\')">Create</button>'
+        + '</div>';
+    } else if (tool === 'update_deal') {
+      formCard.innerHTML =
+        '<h3>Edit Deal</h3>'
+        + '<input type="hidden" id="f_id" value="' + existing.id + '" />'
+        + '<label>Deal Name<input id="f_dn" value="' + (existing.dealname || '') + '" /></label>'
+        + '<label>Stage<input id="f_ds" value="' + (existing.dealstage || '') + '" /></label>'
+        + '<label>Amount<input id="f_am" type="number" value="' + (existing.amount || '') + '" /></label>'
+        + '<label>Close Date<input id="f_cd" type="date" value="' + (existing.closedate || '') + '" /></label>'
+        + '<label>Pipeline<input id="f_pl" value="' + (existing.pipeline || 'default') + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_deal\')">Save</button>'
+        + '</div>';
+    }
+  }
+
+  function submitForm(tool) {
+    var result;
+    try {
+      if (tool === 'create_contact') {
+        result = callTool('create_contact', {
+          email: document.getElementById('f_em').value,
+          firstname: document.getElementById('f_fn').value,
+          lastname: document.getElementById('f_ln').value,
+          phone: document.getElementById('f_ph').value,
+          company: document.getElementById('f_co').value,
+        });
+      } else if (tool === 'update_contact') {
+        result = callTool('update_contact', {
+          contact_id: document.getElementById('f_id').value,
+          firstname: document.getElementById('f_fn').value,
+          lastname: document.getElementById('f_ln').value,
+          email: document.getElementById('f_em').value,
+          phone: document.getElementById('f_ph').value,
+          company: document.getElementById('f_co').value,
+        });
+      } else if (tool === 'create_deal') {
+        result = callTool('create_deal', {
+          dealname: document.getElementById('f_dn').value,
+          pipeline: document.getElementById('f_pl').value,
+          dealstage: document.getElementById('f_ds').value,
+          amount: parseFloat(document.getElementById('f_am').value) || 0,
+          closedate: document.getElementById('f_cd').value,
+        });
+      } else if (tool === 'update_deal') {
+        result = callTool('update_deal', {
+          deal_id: document.getElementById('f_id').value,
+          dealname: document.getElementById('f_dn').value,
+          dealstage: document.getElementById('f_ds').value,
+          amount: parseFloat(document.getElementById('f_am').value) || 0,
+          closedate: document.getElementById('f_cd').value,
+          pipeline: document.getElementById('f_pl').value,
+        });
+      }
+      if (result && result.then) {
+        result.then(function (res) {
+          overlay.classList.remove('active');
+          if (res && res.structuredContent) render(res.structuredContent);
+          else if (res) render(res);
+        }).catch(function (e) {
+          render({ error: true, message: e.message || 'Operation failed' });
+          overlay.classList.remove('active');
+        });
+      }
+    } catch (e) {
+      render({ error: true, message: e.message || 'Operation failed' });
+      overlay.classList.remove('active');
+    }
+  }
+
+  window.__showForm = showForm;
+  window.__closeForm = function () { overlay.classList.remove('active'); };
+  window.__submitForm = submitForm;
+
+  // ── Listen for incoming messages (JSON-RPC) ───────────────────────────────
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // Tool result notification
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      render(msg.params && msg.params.structuredContent);
+      return;
+    }
+
+    // Theme change notification
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      applyTheme(msg.params && msg.params.theme);
+      return;
+    }
+
+    // JSON-RPC response (for callTool)
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.error) cb.reject(new Error(msg.error.message || 'Tool call failed'));
+      else cb.resolve(msg.result);
+      return;
+    }
+  });
+
+  // ── Detect initial theme ──────────────────────────────────────────────────
+  if (window.openai && window.openai.theme) {
+    applyTheme(window.openai.theme);
+  } else if (document.documentElement.getAttribute('data-theme')) {
+    applyTheme(document.documentElement.getAttribute('data-theme'));
+  }
+
+  // ── Initial render from toolOutput ────────────────────────────────────────
+  if (window.__toolOutput) {
+    render(window.__toolOutput);
+  } else {
+    document.addEventListener('mcpToolOutput', function (e) { render(e.detail); });
+  }
+})();
+</script>
+</body>
+</html>

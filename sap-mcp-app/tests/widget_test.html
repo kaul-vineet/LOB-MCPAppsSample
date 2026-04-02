@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>SAP S/4HANA — Widget UX Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #0070F2; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #0054B4; }
+  button.green  { background: #107E3E; }
+  button.green:hover  { background: #0a5c2d; }
+  button.orange { background: #E78C07; }
+  button.orange:hover { background: #c47806; }
+  button.dark   { background: #32363a; }
+  button.dark:hover   { background: #1c2228; }
+  button.secondary    { background: #6a6d70; }
+  button.secondary:hover { background: #4a4d50; }
+  button.error  { background: #BB0000; }
+  button.error:hover  { background: #990000; }
+  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e6f0ff; color: #0070F2; margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<h2>SAP S/4HANA — Widget UX Test <span class="badge">Interactive</span></h2>
+<p class="subtitle">Test harness simulating M365 Copilot's <code>window.openai.*</code> bridge. All CRUD operations use mock data.</p>
+
+<div class="section-label">📦 Purchase Orders — get_purchase_orders</div>
+<div class="controls">
+  <button onclick="sendPOs()">Send Mock POs (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyPOs()">Send Empty POs</button>
+</div>
+<p class="hint">Click ✎ Edit on any row to open inline edit form. Click "+ New PO" to create.</p>
+
+<div class="section-label">🤝 Business Partners — get_business_partners</div>
+<div class="controls">
+  <button class="green" onclick="sendBPs()">Send Mock Partners (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyBPs()">Send Empty Partners</button>
+</div>
+<p class="hint">Read-only table of business partners.</p>
+
+<div class="section-label">🏭 Materials — get_materials</div>
+<div class="controls">
+  <button class="orange" onclick="sendMaterials()">Send Mock Materials (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyMaterials()">Send Empty Materials</button>
+</div>
+<p class="hint">Click 🔍 on any row to view material details.</p>
+
+<div class="section-label">⚠️ Error Simulation</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Send Auth Error</button>
+</div>
+<p class="hint">Simulates a SAP authentication failure to test error display in the widget.</p>
+
+<div class="section-label">🎨 Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="../sap_s4hana_mcp/web/widget.html"></iframe>
+</div>
+
+<div class="section-label">📜 Event Log</div>
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+  var nextPOId = 4510000006;
+  var nextMatDetailCounter = 1;
+
+  // ── Mock Data: Purchase Orders ──────────────────────────────────────────
+  var MOCK_POS = {
+    type: "purchase_orders",
+    total: 5,
+    sandbox: true,
+    items: [
+      { purchase_order: "4500000001", supplier: "SUPPLIER_01", purchasing_org: "1710", order_date: "2025-06-01", deletion_code: "" },
+      { purchase_order: "4500000002", supplier: "SUPPLIER_02", purchasing_org: "1710", order_date: "2025-05-28", deletion_code: "" },
+      { purchase_order: "4500000003", supplier: "SUPPLIER_03", purchasing_org: "1010", order_date: "2025-05-25", deletion_code: "" },
+      { purchase_order: "4500000004", supplier: "SUPPLIER_04", purchasing_org: "1710", order_date: "2025-05-20", deletion_code: "X" },
+      { purchase_order: "4500000005", supplier: "SUPPLIER_05", purchasing_org: "1010", order_date: "2025-05-15", deletion_code: "" }
+    ]
+  };
+
+  var MOCK_EMPTY_POS = { type: "purchase_orders", total: 0, items: [], sandbox: true };
+
+  // ── Mock Data: Business Partners ────────────────────────────────────────
+  var MOCK_BPS = {
+    type: "business_partners",
+    total: 5,
+    sandbox: true,
+    items: [
+      { id: "BP0001", name: "Acme Corporation",       category: "2", organization: "Acme Corp" },
+      { id: "BP0002", name: "Global Trade Partners",   category: "2", organization: "GTP GmbH" },
+      { id: "BP0003", name: "Johann Schmidt",          category: "1", organization: "" },
+      { id: "BP0004", name: "Pacific Logistics Ltd",   category: "2", organization: "PacLog" },
+      { id: "BP0005", name: "Maria García",            category: "1", organization: "" }
+    ]
+  };
+
+  var MOCK_EMPTY_BPS = { type: "business_partners", total: 0, items: [], sandbox: true };
+
+  // ── Mock Data: Materials ────────────────────────────────────────────────
+  var MOCK_MATERIALS = {
+    type: "materials",
+    total: 5,
+    sandbox: true,
+    items: [
+      { product: "MZ-FG-M500", product_type: "FERT", product_group: "A001", base_unit: "EA" },
+      { product: "MZ-FG-R200", product_type: "FERT", product_group: "A001", base_unit: "EA" },
+      { product: "MZ-RM-AL01", product_type: "ROH",  product_group: "B002", base_unit: "KG" },
+      { product: "MZ-TG-PK10", product_type: "VERP", product_group: "C003", base_unit: "PC" },
+      { product: "MZ-SV-WT50", product_type: "DIEN", product_group: "D004", base_unit: "HR" }
+    ]
+  };
+
+  var MOCK_EMPTY_MATERIALS = { type: "materials", total: 0, items: [], sandbox: true };
+
+  // ── Mock Data: Material Detail ──────────────────────────────────────────
+  var MOCK_MATERIAL_DETAIL = {
+    type: "material_detail",
+    sandbox: true,
+    item: {
+      product: "MZ-FG-M500",
+      product_type: "FERT",
+      product_group: "A001",
+      base_unit: "EA",
+      gross_weight: "2.500",
+      net_weight: "2.100",
+      weight_unit: "KG",
+      industry_sector: "M",
+      material_description: "Finished Goods — Motor Assembly M500"
+    }
+  };
+
+  // ── Mock Error ──────────────────────────────────────────────────────────
+  var MOCK_ERROR = { error: true, message: "SAP authentication failed: Missing SAP_API_KEY. Set it in your .env file for sandbox mode." };
+
+  // ── Current state ───────────────────────────────────────────────────────
+  var currentPOs   = JSON.parse(JSON.stringify(MOCK_POS));
+  var currentBPs   = JSON.parse(JSON.stringify(MOCK_BPS));
+  var currentMats  = JSON.parse(JSON.stringify(MOCK_MATERIALS));
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function sendPOs()            { currentPOs = JSON.parse(JSON.stringify(MOCK_POS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentPOs } }); log('→ Sent mock purchase orders (5 rows)'); }
+  function sendEmptyPOs()       { currentPOs = JSON.parse(JSON.stringify(MOCK_EMPTY_POS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentPOs } }); log('→ Sent empty purchase orders'); }
+  function sendBPs()            { currentBPs = JSON.parse(JSON.stringify(MOCK_BPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentBPs } }); log('→ Sent mock business partners (5 rows)'); }
+  function sendEmptyBPs()       { currentBPs = JSON.parse(JSON.stringify(MOCK_EMPTY_BPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentBPs } }); log('→ Sent empty business partners'); }
+  function sendMaterials()      { currentMats = JSON.parse(JSON.stringify(MOCK_MATERIALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentMats } }); log('→ Sent mock materials (5 rows)'); }
+  function sendEmptyMaterials() { currentMats = JSON.parse(JSON.stringify(MOCK_EMPTY_MATERIALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentMats } }); log('→ Sent empty materials'); }
+  function sendError()          { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('→ Sent mock error'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#1c2228' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#ededed' : '#111';
+    document.getElementById('frame-wrapper').style.background = isDark ? '#253040' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3d4f5f' : '#ddd';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ─────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // ── callTool request from widget ──
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.args;
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+
+      setTimeout(function() {
+        var result;
+
+        // ── CREATE PURCHASE ORDER ──
+        if (tool === 'create_purchase_order') {
+          var newPO = {
+            purchase_order: "MOCK-PO-" + (nextPOId++),
+            supplier:       args.supplier       || '',
+            purchasing_org: args.purchasing_org  || '',
+            order_date:     new Date().toISOString().slice(0,10),
+            deletion_code:  ''
+          };
+          currentPOs.items.unshift(newPO);
+          if (currentPOs.items.length > 5) currentPOs.items.pop();
+          currentPOs.total = currentPOs.items.length;
+          result = JSON.parse(JSON.stringify(currentPOs));
+          result._createdId = newPO.purchase_order;
+          log('→ Created PO: ' + newPO.purchase_order + ' (supplier: ' + newPO.supplier + ')');
+        }
+
+        // ── UPDATE PURCHASE ORDER ──
+        else if (tool === 'update_purchase_order') {
+          for (var i = 0; i < currentPOs.items.length; i++) {
+            if (currentPOs.items[i].purchase_order === args.purchase_order_id) {
+              var po = currentPOs.items[i];
+              if (args.supplier)       po.supplier       = args.supplier;
+              if (args.purchasing_org) po.purchasing_org  = args.purchasing_org;
+              log('→ Updated PO: ' + po.purchase_order);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentPOs));
+        }
+
+        // ── GET MATERIAL DETAILS ──
+        else if (tool === 'get_material_details') {
+          var detail = JSON.parse(JSON.stringify(MOCK_MATERIAL_DETAIL));
+          detail.item.product = args.material_id || detail.item.product;
+          result = detail;
+          log('→ Returned detail for material: ' + detail.item.product);
+        }
+
+        // ── UNKNOWN TOOL ──
+        else {
+          result = { error: true, message: 'Unknown tool: ' + tool };
+          log('→ Unknown tool: ' + tool);
+        }
+
+        post({ jsonrpc: '2.0', id: msg.id, result: result });
+      }, 600);
+
+      return;
+    }
+
+    // ── Height notification from widget ──
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>

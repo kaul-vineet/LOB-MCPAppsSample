@@ -278,6 +278,242 @@
                     "resourceUri": "ui://widget/servicenow.html"
                 }
             }
+        },
+        {
+            "name": "get_purchase_orders",
+            "description": "Fetch the latest purchase orders from SAP S/4HANA. Returns PO number, supplier, purchasing org, date, and deletion code.",
+            "inputSchema": {
+                "properties": {
+                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                },
+                "required": [],
+                "title": "get_purchase_ordersArguments",
+                "type": "object"
+            },
+            "title": "Get purchase orders",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "get_business_partners",
+            "description": "Fetch business partners from SAP S/4HANA. Returns partner ID, full name, category, and organization name.",
+            "inputSchema": {
+                "properties": {
+                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                },
+                "required": [],
+                "title": "get_business_partnersArguments",
+                "type": "object"
+            },
+            "title": "Get business partners",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "get_materials",
+            "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit.",
+            "inputSchema": {
+                "properties": {
+                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                },
+                "required": [],
+                "title": "get_materialsArguments",
+                "type": "object"
+            },
+            "title": "Get materials",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "create_purchase_order",
+            "description": "Create a new Purchase Order in SAP S/4HANA. Requires supplier and purchasing_org. Returns the updated list of latest purchase orders.",
+            "inputSchema": {
+                "properties": {
+                    "supplier":            { "title": "Supplier",            "type": "string" },
+                    "purchasing_org":      { "title": "Purchasing Org",      "type": "string" },
+                    "purchase_order_type": { "title": "Purchase Order Type", "type": "string", "default": "NB" }
+                },
+                "required": ["supplier", "purchasing_org"],
+                "title": "create_purchase_orderArguments",
+                "type": "object"
+            },
+            "title": "Create purchase order",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "update_purchase_order",
+            "description": "Update an existing Purchase Order in SAP S/4HANA by its PO number. Only fields provided will be updated. Returns the updated list of latest purchase orders.",
+            "inputSchema": {
+                "properties": {
+                    "purchase_order_id": { "title": "Purchase Order ID", "type": "string" },
+                    "purchasing_org":    { "title": "Purchasing Org",    "type": "string", "default": "" },
+                    "supplier":          { "title": "Supplier",          "type": "string", "default": "" }
+                },
+                "required": ["purchase_order_id"],
+                "title": "update_purchase_orderArguments",
+                "type": "object"
+            },
+            "title": "Update purchase order",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "get_material_details",
+            "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material.",
+            "inputSchema": {
+                "properties": {
+                    "material_id": { "title": "Material ID", "type": "string" }
+                },
+                "required": ["material_id"],
+                "title": "get_material_detailsArguments",
+                "type": "object"
+            },
+            "title": "Get material details",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/sap.html"
+                }
+            }
+        },
+        {
+            "name": "get_contacts",
+            "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage.",
+            "inputSchema": {
+                "properties": {},
+                "required": [],
+                "title": "get_contactsArguments",
+                "type": "object"
+            },
+            "title": "Get contacts",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "create_contact",
+            "description": "Create a new Contact in HubSpot. Requires email at minimum. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "email":          { "title": "Email",           "type": "string" },
+                    "firstname":      { "title": "First Name",      "type": "string" },
+                    "lastname":       { "title": "Last Name",       "type": "string" },
+                    "phone":          { "title": "Phone",           "type": "string", "default": "" },
+                    "company":        { "title": "Company",         "type": "string", "default": "" },
+                    "lifecyclestage": { "title": "Lifecycle Stage", "type": "string", "default": "lead" }
+                },
+                "required": ["email", "firstname", "lastname"],
+                "title": "create_contactArguments",
+                "type": "object"
+            },
+            "title": "Create contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "update_contact",
+            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "contact_id":     { "title": "Contact ID",      "type": "string" },
+                    "firstname":      { "title": "First Name",      "type": "string", "default": "" },
+                    "lastname":       { "title": "Last Name",       "type": "string", "default": "" },
+                    "email":          { "title": "Email",           "type": "string", "default": "" },
+                    "phone":          { "title": "Phone",           "type": "string", "default": "" },
+                    "company":        { "title": "Company",         "type": "string", "default": "" },
+                    "lifecyclestage": { "title": "Lifecycle Stage", "type": "string", "default": "" }
+                },
+                "required": ["contact_id"],
+                "title": "update_contactArguments",
+                "type": "object"
+            },
+            "title": "Update contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "get_deals",
+            "description": "Get the 5 most recent Deals from HubSpot. Returns deal name, stage, amount, close date, and pipeline.",
+            "inputSchema": {
+                "properties": {},
+                "required": [],
+                "title": "get_dealsArguments",
+                "type": "object"
+            },
+            "title": "Get deals",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "create_deal",
+            "description": "Create a new Deal in HubSpot. Requires dealname, pipeline, and dealstage at minimum. Returns the updated list of latest 5 deals.",
+            "inputSchema": {
+                "properties": {
+                    "dealname":  { "title": "Deal Name",  "type": "string" },
+                    "pipeline":  { "title": "Pipeline",   "type": "string" },
+                    "dealstage": { "title": "Deal Stage", "type": "string" },
+                    "amount":    { "title": "Amount",     "type": "number", "default": 0 },
+                    "closedate": { "title": "Close Date", "type": "string", "default": "" }
+                },
+                "required": ["dealname", "pipeline", "dealstage"],
+                "title": "create_dealArguments",
+                "type": "object"
+            },
+            "title": "Create deal",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "update_deal",
+            "description": "Update an existing Deal in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 deals.",
+            "inputSchema": {
+                "properties": {
+                    "deal_id":   { "title": "Deal ID",    "type": "string" },
+                    "dealname":  { "title": "Deal Name",  "type": "string", "default": "" },
+                    "dealstage": { "title": "Deal Stage", "type": "string", "default": "" },
+                    "amount":    { "title": "Amount",     "type": "number", "default": 0 },
+                    "closedate": { "title": "Close Date", "type": "string", "default": "" },
+                    "pipeline":  { "title": "Pipeline",   "type": "string", "default": "" }
+                },
+                "required": ["deal_id"],
+                "title": "update_dealArguments",
+                "type": "object"
+            },
+            "title": "Update deal",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
         }
     ]
 }
