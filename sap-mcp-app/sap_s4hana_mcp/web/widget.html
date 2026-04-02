@@ -80,15 +80,7 @@
   var overlay = document.getElementById('formOverlay');
   var formCard = document.getElementById('formCard');
 
-  function callTool(name, args) {
-    return new Promise(function (resolve, reject) {
-      if (window.__mcpHost && window.__mcpHost.callTool) {
-        window.__mcpHost.callTool(name, args, function (err, result) {
-          if (err) reject(err); else resolve(result);
-        });
-      } else { reject(new Error('MCP host not available')); }
-    });
-  }
+  // callTool is defined below after pendingCalls setup
 
   function render(data) {
     if (data.error) { app.innerHTML = '<div class="error-banner">\u26a0 ' + data.message + '</div>'; return; }
@@ -235,8 +227,66 @@
   window.__submitForm = submitForm;
   window.__callDetail = callDetail;
 
-  if (window.__toolOutput) render(window.__toolOutput);
-  else document.addEventListener('mcpToolOutput', function (e) { render(e.detail); });
+  // ── Pending callTool requests (for postMessage bridge) ──
+  var pendingCalls = {};
+  var nextCallId = 1;
+
+  // ── Override callTool to support both openai bridge and postMessage ──
+  function callTool(name, args) {
+    return new Promise(function (resolve, reject) {
+      if (window.openai && window.openai.callTool) {
+        window.openai.callTool(name, args).then(function (r) {
+          resolve({ structuredContent: r });
+        }).catch(reject);
+      } else {
+        var id = 'ct_' + (nextCallId++);
+        pendingCalls[id] = { resolve: resolve, reject: reject };
+        window.parent.postMessage({
+          jsonrpc: '2.0',
+          id: id,
+          method: 'ui/callTool',
+          params: { name: name, args: args }
+        }, '*');
+      }
+    });
+  }
+
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── Listen for postMessage from test harness or M365 host ──
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // Tool result notification (from test harness)
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      render(msg.params.structuredContent);
+      setTimeout(notifyHeight, 50);
+      return;
+    }
+
+    // JSON-RPC response (for callTool round-trip)
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      cb.resolve({ structuredContent: msg.result });
+      return;
+    }
+  });
+
+  // ── Initial render from openai bridge or __toolOutput ──
+  if (window.openai && window.openai.toolOutput) {
+    render(window.openai.toolOutput);
+  } else if (window.__toolOutput) {
+    render(window.__toolOutput);
+  }
+  // else: wait for postMessage from test harness
 })();
 </script>
 </body>
