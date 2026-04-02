@@ -152,6 +152,18 @@ class HubSpotClient:
         result = resp.json()
         return result["id"]
 
+    # ── Marketing Emails ─────────────────────────────────────────────────────
+
+    async def list_emails(self, limit: int = 5) -> list[dict]:
+        """Fetch marketing emails with stats."""
+        resp = await self._request("GET", "/marketing/v3/emails", params={
+            "limit": limit,
+            "orderBy": "-updated",
+        })
+        self._raise_for_error(resp, "list emails")
+        data = resp.json()
+        return data.get("results", [])
+
     # ── Update ────────────────────────────────────────────────────────────────
 
     async def update_object(

@@ -26,12 +26,16 @@
             "text": "Show me the latest purchase orders from SAP"
         },
         {
-            "title": "Review the spice bazaar contacts",
+            "title": "Review email performance",
+            "text": "Show me the latest marketing email performance from HubSpot"
+        },
+        {
+            "title": "Browse the spice bazaar contacts",
             "text": "Show me the latest contacts from HubSpot"
         },
         {
-            "title": "Check the trade deals",
-            "text": "Show me the latest deals from HubSpot"
+            "title": "Inspect the trading companies",
+            "text": "Show me the latest companies from HubSpot"
         },
         {
             "title": "Log a new trade lead",

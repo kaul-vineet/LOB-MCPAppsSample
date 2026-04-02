@@ -1,5 +1,5 @@
 """
-HubSpot CRM MCP Server — 6 tools for Contacts & Deals CRUD.
+HubSpot Marketing MCP Server — 7 tools for Marketing Emails, Contacts & Companies.
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -27,12 +27,12 @@ WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding
 
 # ── MCP Server ─────────────────────────────────────────────────────────────────
 
-mcp = FastMCP("hubspot-crm")
+mcp = FastMCP("hubspot-marketing")
 
 
 @mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
 async def crm_widget() -> str:
-    """UI widget for displaying HubSpot CRM data."""
+    """UI widget for displaying HubSpot marketing data."""
     return WIDGET_HTML
 
 
@@ -47,7 +47,30 @@ def _error_result(message: str) -> types.CallToolResult:
 
 
 CONTACT_PROPERTIES = ["firstname", "lastname", "email", "phone", "company", "lifecyclestage"]
-DEAL_PROPERTIES = ["dealname", "dealstage", "amount", "closedate", "pipeline"]
+COMPANY_PROPERTIES = ["name", "domain", "industry", "city", "phone", "numberofemployees"]
+
+
+async def _fetch_emails() -> list[dict]:
+    """Fetch the 5 most recently updated marketing emails with stats."""
+    client = get_client()
+    records = await client.list_emails(limit=5)
+    return [
+        {
+            "id": r.get("id", ""),
+            "name": r.get("name", ""),
+            "subject": r.get("subject", ""),
+            "status": r.get("state", ""),
+            "stats": {
+                "sent": (r.get("statistics", {}) or {}).get("counters", {}).get("sent", 0),
+                "delivered": (r.get("statistics", {}) or {}).get("counters", {}).get("delivered", 0),
+                "opened": (r.get("statistics", {}) or {}).get("counters", {}).get("open", 0),
+                "clicked": (r.get("statistics", {}) or {}).get("counters", {}).get("click", 0),
+                "bounced": (r.get("statistics", {}) or {}).get("counters", {}).get("bounce", 0),
+                "unsubscribed": (r.get("statistics", {}) or {}).get("counters", {}).get("unsubscribed", 0),
+            }
+        }
+        for r in records
+    ]
 
 
 async def _fetch_contacts() -> list[dict]:
@@ -68,21 +91,68 @@ async def _fetch_contacts() -> list[dict]:
     ]
 
 
-async def _fetch_deals() -> list[dict]:
-    """Fetch the 5 most recently created Deals."""
-    hs = get_client()
-    records = await hs.list_objects("deals", DEAL_PROPERTIES, limit=5)
+async def _fetch_companies() -> list[dict]:
+    """Fetch the 5 most recently created Companies."""
+    client = get_client()
+    records = await client.list_objects(
+        "companies",
+        properties=COMPANY_PROPERTIES,
+        limit=5,
+    )
     return [
         {
-            "id":        r.get("id", ""),
-            "dealname":  r.get("dealname") or "",
-            "dealstage": r.get("dealstage") or "",
-            "amount":    r.get("amount"),
-            "closedate": r.get("closedate") or "",
-            "pipeline":  r.get("pipeline") or "",
+            "id": r.get("id", ""),
+            "name": r.get("name") or "",
+            "domain": r.get("domain") or "",
+            "industry": r.get("industry") or "",
+            "city": r.get("city") or "",
+            "phone": r.get("phone") or "",
+            "employees": r.get("numberofemployees") or "",
         }
         for r in records
     ]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EMAIL TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the 5 most recent marketing emails from HubSpot. "
+        "Returns email name, subject, status, and performance stats "
+        "(sent, delivered, opened, clicked, bounced, unsubscribed)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def get_emails() -> types.CallToolResult:
+    """Fetch latest 5 marketing emails from HubSpot."""
+    try:
+        items = await _fetch_emails()
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"HubSpot API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching emails: {exc}")
+
+    structured = {
+        "type": "emails",
+        "total": len(items),
+        "items": items,
+    }
+
+    summary = (
+        "No marketing emails found."
+        if not items
+        else f"Retrieved {len(items)} marketing email(s). See the widget for details."
+    )
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -252,38 +322,38 @@ async def update_contact(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DEAL TOOLS
+# COMPANY TOOLS
 # ══════════════════════════════════════════════════════════════════════════════
 
 
 @mcp.tool(
     description=(
-        "Get the 5 most recent Deals from HubSpot. "
-        "Returns deal name, stage, amount, close date, and pipeline."
+        "Get the 5 most recent Companies from HubSpot. "
+        "Returns company name, domain, industry, city, phone, and employee count."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_deals() -> types.CallToolResult:
-    """Fetch latest 5 Deals from HubSpot."""
+async def get_companies() -> types.CallToolResult:
+    """Fetch latest 5 Companies from HubSpot."""
     try:
-        items = await _fetch_deals()
+        items = await _fetch_companies()
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
     except HubSpotAPIError as exc:
         return _error_result(f"HubSpot API error: {exc}")
     except Exception as exc:
-        return _error_result(f"Unexpected error fetching deals: {exc}")
+        return _error_result(f"Unexpected error fetching companies: {exc}")
 
     structured = {
-        "type": "deals",
+        "type": "companies",
         "total": len(items),
         "items": items,
     }
 
     summary = (
-        "No deals found."
+        "No companies found."
         if not items
-        else f"Retrieved {len(items)} deal(s). See the widget for details."
+        else f"Retrieved {len(items)} company/companies. See the widget for details."
     )
 
     return types.CallToolResult(
@@ -294,123 +364,121 @@ async def get_deals() -> types.CallToolResult:
 
 @mcp.tool(
     description=(
-        "Create a new Deal in HubSpot. "
-        "Requires dealname, pipeline, and dealstage at minimum. "
-        "Returns the updated list of latest 5 deals."
+        "Create a new Company in HubSpot. "
+        "Requires name at minimum. "
+        "Returns the updated list of latest 5 companies."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_deal(
-    dealname: str,
-    pipeline: str,
-    dealstage: str,
-    amount: float = 0.0,
-    closedate: str = "",
+async def create_company(
+    name: str,
+    domain: str = "",
+    industry: str = "",
+    city: str = "",
+    phone: str = "",
 ) -> types.CallToolResult:
     """
     Args:
-        dealname:   Deal name (required)
-        pipeline:   Pipeline identifier (required, e.g. 'default')
-        dealstage:  Deal stage (required, e.g. 'appointmentscheduled')
-        amount:     Deal amount in currency
-        closedate:  Expected close date YYYY-MM-DD
+        name:     Company name (required)
+        domain:   Company website domain
+        industry: Industry vertical
+        city:     Company city
+        phone:    Company phone number
     """
     try:
         hs = get_client()
-        data: dict = {
-            "dealname": dealname,
-            "pipeline": pipeline,
-            "dealstage": dealstage,
-        }
-        if amount:    data["amount"] = str(amount)
-        if closedate: data["closedate"] = closedate
+        data: dict = {"name": name}
+        if domain:   data["domain"] = domain
+        if industry: data["industry"] = industry
+        if city:     data["city"] = city
+        if phone:    data["phone"] = phone
 
-        new_id = await hs.create_object("deals", data)
+        new_id = await hs.create_object("companies", data)
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
     except HubSpotAPIError as exc:
-        return _error_result(f"Failed to create deal: {exc}")
+        return _error_result(f"Failed to create company: {exc}")
     except Exception as exc:
-        return _error_result(f"Unexpected error creating deal: {exc}")
+        return _error_result(f"Unexpected error creating company: {exc}")
 
     # Re-fetch the refreshed list
     try:
-        items = await _fetch_deals()
+        items = await _fetch_companies()
     except Exception:
         items = []
 
     structured = {
-        "type": "deals",
+        "type": "companies",
         "total": len(items),
         "items": items,
         "_createdId": new_id,
     }
 
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Deal created (Id: {new_id}). Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=f"Company created (Id: {new_id}). Refreshed list returned.")],
         structuredContent=structured,
     )
 
 
 @mcp.tool(
     description=(
-        "Update an existing Deal in HubSpot by its record Id. "
+        "Update an existing Company in HubSpot by its record Id. "
         "Only fields provided will be updated. "
-        "Returns the updated list of latest 5 deals."
+        "Returns the updated list of latest 5 companies."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_deal(
-    deal_id: str,
-    dealname: str = "",
-    dealstage: str = "",
-    amount: float = 0.0,
-    closedate: str = "",
-    pipeline: str = "",
+async def update_company(
+    company_id: str,
+    name: str = "",
+    domain: str = "",
+    industry: str = "",
+    city: str = "",
+    phone: str = "",
 ) -> types.CallToolResult:
     """
     Args:
-        deal_id:    HubSpot Deal record Id (required)
-        dealname:   Updated deal name
-        dealstage:  Updated deal stage
-        amount:     Updated deal amount
-        closedate:  Updated close date YYYY-MM-DD
-        pipeline:   Updated pipeline
+        company_id: HubSpot Company record Id (required)
+        name:       Updated company name (empty string = no change)
+        domain:     Updated domain
+        industry:   Updated industry
+        city:       Updated city
+        phone:      Updated phone
     """
     try:
         hs = get_client()
         data: dict = {}
-        if dealname:  data["dealname"] = dealname
-        if dealstage: data["dealstage"] = dealstage
-        if amount:    data["amount"] = str(amount)
-        if closedate: data["closedate"] = closedate
-        if pipeline:  data["pipeline"] = pipeline
+        if name:     data["name"] = name
+        if domain:   data["domain"] = domain
+        if industry: data["industry"] = industry
+        if city:     data["city"] = city
+        if phone:    data["phone"] = phone
 
         if not data:
             return _error_result("No fields provided to update.")
 
-        await hs.update_object("deals", deal_id, data)
+        await hs.update_object("companies", company_id, data)
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
     except HubSpotAPIError as exc:
-        return _error_result(f"Failed to update deal: {exc}")
+        return _error_result(f"Failed to update company: {exc}")
     except Exception as exc:
-        return _error_result(f"Unexpected error updating deal: {exc}")
+        return _error_result(f"Unexpected error updating company: {exc}")
 
     # Re-fetch the refreshed list
     try:
-        items = await _fetch_deals()
+        items = await _fetch_companies()
     except Exception:
         items = []
 
     structured = {
-        "type": "deals",
+        "type": "companies",
         "total": len(items),
         "items": items,
     }
 
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Deal {deal_id} updated. Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=f"Company {company_id} updated. Refreshed list returned.")],
         structuredContent=structured,
     )
 
@@ -418,6 +486,23 @@ async def update_deal(
 # ══════════════════════════════════════════════════════════════════════════════
 # PROMPTS
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.prompt()
+def show_emails() -> list[PromptMessage]:
+    """Show the latest 5 marketing emails from HubSpot."""
+    return [
+        PromptMessage(
+            role="user",
+            content=TextContent(
+                type="text",
+                text=(
+                    "Show me the latest 5 marketing emails from HubSpot. "
+                    "Call get_emails and display the results in the widget."
+                ),
+            ),
+        )
+    ]
 
 
 @mcp.prompt()
@@ -438,16 +523,16 @@ def show_contacts() -> list[PromptMessage]:
 
 
 @mcp.prompt()
-def show_deals() -> list[PromptMessage]:
-    """Show the latest 5 deals from HubSpot."""
+def show_companies() -> list[PromptMessage]:
+    """Show the latest 5 companies from HubSpot."""
     return [
         PromptMessage(
             role="user",
             content=TextContent(
                 type="text",
                 text=(
-                    "Show me the latest 5 deals from HubSpot. "
-                    "Call get_deals and display the results in the widget."
+                    "Show me the latest 5 companies from HubSpot. "
+                    "Call get_companies and display the results in the widget."
                 ),
             ),
         )
@@ -455,18 +540,18 @@ def show_deals() -> list[PromptMessage]:
 
 
 @mcp.prompt()
-def manage_hubspot() -> list[PromptMessage]:
-    """Help manage HubSpot CRM data — contacts and deals."""
+def manage_marketing() -> list[PromptMessage]:
+    """Help manage HubSpot marketing data — emails, contacts, and companies."""
     return [
         PromptMessage(
             role="user",
             content=TextContent(
                 type="text",
                 text=(
-                    "I want to manage my HubSpot CRM data. "
-                    "Start by showing me the latest 5 contacts with get_contacts. "
-                    "I may want to create new contacts, edit existing ones, "
-                    "or switch to viewing deals."
+                    "I want to manage my HubSpot marketing data. "
+                    "Start by showing me the latest 5 marketing emails with get_emails. "
+                    "I may want to view contacts, manage companies, "
+                    "or review email performance stats."
                 ),
             ),
         )

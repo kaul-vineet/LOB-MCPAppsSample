@@ -392,6 +392,22 @@
             }
         },
         {
+            "name": "get_emails",
+            "description": "Get the latest marketing emails from HubSpot with performance stats (sent, opened, clicked, bounced).",
+            "inputSchema": {
+                "properties": {},
+                "required": [],
+                "title": "get_emailsArguments",
+                "type": "object"
+            },
+            "title": "Get marketing emails",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
             "name": "get_contacts",
             "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage.",
             "inputSchema": {
@@ -455,15 +471,15 @@
             }
         },
         {
-            "name": "get_deals",
-            "description": "Get the 5 most recent Deals from HubSpot. Returns deal name, stage, amount, close date, and pipeline.",
+            "name": "get_companies",
+            "description": "Get the 5 most recent Companies from HubSpot. Returns company name, domain, industry, city, and phone.",
             "inputSchema": {
                 "properties": {},
                 "required": [],
-                "title": "get_dealsArguments",
+                "title": "get_companiesArguments",
                 "type": "object"
             },
-            "title": "Get deals",
+            "title": "Get companies",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -471,21 +487,21 @@
             }
         },
         {
-            "name": "create_deal",
-            "description": "Create a new Deal in HubSpot. Requires dealname, pipeline, and dealstage at minimum. Returns the updated list of latest 5 deals.",
+            "name": "create_company",
+            "description": "Create a new Company in HubSpot. Requires name at minimum. Returns the updated list of latest 5 companies.",
             "inputSchema": {
                 "properties": {
-                    "dealname":  { "title": "Deal Name",  "type": "string" },
-                    "pipeline":  { "title": "Pipeline",   "type": "string" },
-                    "dealstage": { "title": "Deal Stage", "type": "string" },
-                    "amount":    { "title": "Amount",     "type": "number", "default": 0 },
-                    "closedate": { "title": "Close Date", "type": "string", "default": "" }
+                    "name":     { "title": "Name",     "type": "string" },
+                    "domain":   { "title": "Domain",   "type": "string", "default": "" },
+                    "industry": { "title": "Industry", "type": "string", "default": "" },
+                    "city":     { "title": "City",     "type": "string", "default": "" },
+                    "phone":    { "title": "Phone",    "type": "string", "default": "" }
                 },
-                "required": ["dealname", "pipeline", "dealstage"],
-                "title": "create_dealArguments",
+                "required": ["name"],
+                "title": "create_companyArguments",
                 "type": "object"
             },
-            "title": "Create deal",
+            "title": "Create company",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -493,22 +509,22 @@
             }
         },
         {
-            "name": "update_deal",
-            "description": "Update an existing Deal in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 deals.",
+            "name": "update_company",
+            "description": "Update an existing Company in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 companies.",
             "inputSchema": {
                 "properties": {
-                    "deal_id":   { "title": "Deal ID",    "type": "string" },
-                    "dealname":  { "title": "Deal Name",  "type": "string", "default": "" },
-                    "dealstage": { "title": "Deal Stage", "type": "string", "default": "" },
-                    "amount":    { "title": "Amount",     "type": "number", "default": 0 },
-                    "closedate": { "title": "Close Date", "type": "string", "default": "" },
-                    "pipeline":  { "title": "Pipeline",   "type": "string", "default": "" }
+                    "company_id": { "title": "Company ID", "type": "string" },
+                    "name":       { "title": "Name",       "type": "string", "default": "" },
+                    "domain":     { "title": "Domain",     "type": "string", "default": "" },
+                    "industry":   { "title": "Industry",   "type": "string", "default": "" },
+                    "city":       { "title": "City",       "type": "string", "default": "" },
+                    "phone":      { "title": "Phone",      "type": "string", "default": "" }
                 },
-                "required": ["deal_id"],
-                "title": "update_dealArguments",
+                "required": ["company_id"],
+                "title": "update_companyArguments",
                 "type": "object"
             },
-            "title": "Update deal",
+            "title": "Update company",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"

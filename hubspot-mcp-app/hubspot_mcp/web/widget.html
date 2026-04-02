@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HubSpot CRM</title>
+<title>HubSpot Marketing</title>
 <style>
   :root {
     --hs-primary: #FF7A59;
@@ -46,6 +46,13 @@
   .btn-outline { background: transparent; border: 1px solid var(--hs-primary); color: var(--hs-primary); }
 
   .error-banner { background: var(--hs-error); color: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .status-published { background: var(--hs-success); color: white; }
+  .status-draft { background: #cbd6e2; color: #33475b; }
+  .status-other { background: #f5c26b; color: #33475b; }
+
+  .stat-pct { font-size: 11px; color: var(--hs-text-light); }
 
   .form-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
   .form-overlay.active { display: flex; align-items: center; justify-content: center; }
@@ -92,21 +99,19 @@
     }
   }
 
-  // ── Tool calling abstraction ──────────────────────────────────────────────
+  // ── Pending callTool requests (for postMessage bridge) ────────────────────
   var pendingCalls = {};
-  var callId = 1;
+  var nextCallId = 1;
 
   function callTool(name, args) {
     return new Promise(function (resolve, reject) {
-      // Try window.openai bridge first
       if (window.openai && window.openai.callTool) {
-        window.openai.callTool(name, args, function (err, result) {
-          if (err) reject(err); else resolve(result);
-        });
+        window.openai.callTool(name, args).then(function (r) {
+          resolve({ structuredContent: r });
+        }).catch(reject);
         return;
       }
-      // Fallback: JSON-RPC postMessage
-      var id = callId++;
+      var id = 'ct_' + (nextCallId++);
       pendingCalls[id] = { resolve: resolve, reject: reject };
       window.parent.postMessage({
         jsonrpc: '2.0',
@@ -123,22 +128,74 @@
     });
   }
 
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
   // ── Render dispatcher ─────────────────────────────────────────────────────
   function render(data) {
     if (!data) return;
     if (data.error) {
       app.innerHTML = '<div class="error-banner">\u26A0 ' + (data.message || 'Unknown error') + '</div>';
+      notifyHeight();
       return;
     }
-    if (data.type === 'contacts') renderContacts(data);
-    else if (data.type === 'deals') renderDeals(data);
+    if (data.type === 'emails') renderEmails(data);
+    else if (data.type === 'contacts') renderContacts(data);
+    else if (data.type === 'companies') renderCompanies(data);
     else app.innerHTML = '<div class="empty">Unknown data type</div>';
     notifyHeight();
   }
 
-  function notifyHeight() {
-    var h = document.body.scrollHeight;
-    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function pct(num, denom) {
+    if (!denom || denom === 0) return '0%';
+    return (num / denom * 100).toFixed(1) + '%';
+  }
+
+  function fmtNum(n) {
+    return (n || 0).toLocaleString();
+  }
+
+  function statusClass(s) {
+    var upper = (s || '').toUpperCase();
+    if (upper === 'PUBLISHED') return 'status-published';
+    if (upper === 'DRAFT') return 'status-draft';
+    return 'status-other';
+  }
+
+  // ── Marketing Emails table (read-only) ────────────────────────────────────
+  function renderEmails(data) {
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = '<div class="empty">No marketing emails found</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var em = data.items[i];
+      var st = em.stats || {};
+      rows += '<tr>'
+        + '<td>' + esc(em.subject || em.name) + '</td>'
+        + '<td><span class="status-badge ' + statusClass(em.status) + '">' + esc(em.status) + '</span></td>'
+        + '<td>' + fmtNum(st.sent) + '</td>'
+        + '<td>' + fmtNum(st.opened) + ' <span class="stat-pct">(' + pct(st.opened, st.delivered) + ')</span></td>'
+        + '<td>' + fmtNum(st.clicked) + ' <span class="stat-pct">(' + pct(st.clicked, st.delivered) + ')</span></td>'
+        + '<td>' + fmtNum(st.bounced) + '</td>'
+        + '</tr>';
+    }
+    app.innerHTML =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCE7 Marketing Emails <span class="badge">' + data.total + '</span></h2>'
+      + '</div>'
+      + '<table>'
+      + '<tr><th>Subject</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Bounced</th></tr>'
+      + rows
+      + '</table>';
   }
 
   // ── Contacts table ────────────────────────────────────────────────────────
@@ -152,18 +209,18 @@
       var c = data.items[i];
       var escaped = JSON.stringify(c).replace(/"/g, '&quot;');
       rows += '<tr>'
-        + '<td>' + (c.firstname || '') + ' ' + (c.lastname || '') + '</td>'
-        + '<td>' + (c.email || '') + '</td>'
-        + '<td>' + (c.phone || '') + '</td>'
-        + '<td>' + (c.company || '') + '</td>'
-        + '<td>' + (c.lifecyclestage || '') + '</td>'
+        + '<td>' + esc(c.firstname) + ' ' + esc(c.lastname) + '</td>'
+        + '<td>' + esc(c.email) + '</td>'
+        + '<td>' + esc(c.phone) + '</td>'
+        + '<td>' + esc(c.company) + '</td>'
+        + '<td>' + esc(c.lifecyclestage) + '</td>'
         + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_contact\', ' + escaped + ')">\u270E</button></td>'
         + '</tr>';
     }
     app.innerHTML =
       '<div class="header">'
       + '<h2>\uD83D\uDCC7 Contacts <span class="badge">' + data.total + '</span></h2>'
-      + '<button class="btn" onclick="window.__showForm(\'create_contact\')">+ New</button>'
+      + '<button class="btn" onclick="window.__showForm(\'create_contact\')">+ New Contact</button>'
       + '</div>'
       + '<table>'
       + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
@@ -171,36 +228,33 @@
       + '</table>';
   }
 
-  // ── Deals table ───────────────────────────────────────────────────────────
-  function renderDeals(data) {
+  // ── Companies table ───────────────────────────────────────────────────────
+  function renderCompanies(data) {
     if (!data.items || data.items.length === 0) {
-      app.innerHTML = '<div class="empty">No deals found</div>';
+      app.innerHTML = '<div class="empty">No companies found</div>';
       return;
-    }
-    function fmt(v) {
-      if (!v) return '\u2014';
-      return parseFloat(v).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
     }
     var rows = '';
     for (var i = 0; i < data.items.length; i++) {
-      var d = data.items[i];
-      var escaped = JSON.stringify(d).replace(/"/g, '&quot;');
+      var co = data.items[i];
+      var escaped = JSON.stringify(co).replace(/"/g, '&quot;');
       rows += '<tr>'
-        + '<td>' + (d.dealname || '') + '</td>'
-        + '<td>' + (d.dealstage || '') + '</td>'
-        + '<td>' + fmt(d.amount) + '</td>'
-        + '<td>' + (d.closedate || '') + '</td>'
-        + '<td>' + (d.pipeline || '') + '</td>'
-        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_deal\', ' + escaped + ')">\u270E</button></td>'
+        + '<td>' + esc(co.name) + '</td>'
+        + '<td>' + esc(co.domain) + '</td>'
+        + '<td>' + esc(co.industry) + '</td>'
+        + '<td>' + esc(co.city) + '</td>'
+        + '<td>' + esc(co.phone) + '</td>'
+        + '<td>' + esc(co.employees) + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_company\', ' + escaped + ')">\u270E</button></td>'
         + '</tr>';
     }
     app.innerHTML =
       '<div class="header">'
-      + '<h2>\uD83D\uDCB0 Deals <span class="badge">' + data.total + '</span></h2>'
-      + '<button class="btn" onclick="window.__showForm(\'create_deal\')">+ New</button>'
+      + '<h2>\uD83C\uDFE2 Companies <span class="badge">' + data.total + '</span></h2>'
+      + '<button class="btn" onclick="window.__showForm(\'create_company\')">+ New Company</button>'
       + '</div>'
       + '<table>'
-      + '<tr><th>Deal</th><th>Stage</th><th>Amount</th><th>Close Date</th><th>Pipeline</th><th></th></tr>'
+      + '<tr><th>Name</th><th>Domain</th><th>Industry</th><th>City</th><th>Phone</th><th>Employees</th><th></th></tr>'
       + rows
       + '</table>';
   }
@@ -223,40 +277,40 @@
     } else if (tool === 'update_contact') {
       formCard.innerHTML =
         '<h3>Edit Contact</h3>'
-        + '<input type="hidden" id="f_id" value="' + existing.id + '" />'
-        + '<label>First Name<input id="f_fn" value="' + (existing.firstname || '') + '" /></label>'
-        + '<label>Last Name<input id="f_ln" value="' + (existing.lastname || '') + '" /></label>'
-        + '<label>Email<input id="f_em" value="' + (existing.email || '') + '" /></label>'
-        + '<label>Phone<input id="f_ph" value="' + (existing.phone || '') + '" /></label>'
-        + '<label>Company<input id="f_co" value="' + (existing.company || '') + '" /></label>'
+        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
+        + '<label>First Name<input id="f_fn" value="' + esc(existing.firstname) + '" /></label>'
+        + '<label>Last Name<input id="f_ln" value="' + esc(existing.lastname) + '" /></label>'
+        + '<label>Email<input id="f_em" value="' + esc(existing.email) + '" /></label>'
+        + '<label>Phone<input id="f_ph" value="' + esc(existing.phone) + '" /></label>'
+        + '<label>Company<input id="f_co" value="' + esc(existing.company) + '" /></label>'
         + '<div class="form-actions">'
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
         + '<button class="btn" onclick="window.__submitForm(\'update_contact\')">Save</button>'
         + '</div>';
-    } else if (tool === 'create_deal') {
+    } else if (tool === 'create_company') {
       formCard.innerHTML =
-        '<h3>New Deal</h3>'
-        + '<label>Deal Name<input id="f_dn" /></label>'
-        + '<label>Pipeline<input id="f_pl" value="default" /></label>'
-        + '<label>Stage<input id="f_ds" /></label>'
-        + '<label>Amount<input id="f_am" type="number" /></label>'
-        + '<label>Close Date<input id="f_cd" type="date" /></label>'
+        '<h3>New Company</h3>'
+        + '<label>Name<input id="f_cn" /></label>'
+        + '<label>Domain<input id="f_cd" /></label>'
+        + '<label>Industry<input id="f_ci" /></label>'
+        + '<label>City<input id="f_cc" /></label>'
+        + '<label>Phone<input id="f_cp" /></label>'
         + '<div class="form-actions">'
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'create_deal\')">Create</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'create_company\')">Create</button>'
         + '</div>';
-    } else if (tool === 'update_deal') {
+    } else if (tool === 'update_company') {
       formCard.innerHTML =
-        '<h3>Edit Deal</h3>'
-        + '<input type="hidden" id="f_id" value="' + existing.id + '" />'
-        + '<label>Deal Name<input id="f_dn" value="' + (existing.dealname || '') + '" /></label>'
-        + '<label>Stage<input id="f_ds" value="' + (existing.dealstage || '') + '" /></label>'
-        + '<label>Amount<input id="f_am" type="number" value="' + (existing.amount || '') + '" /></label>'
-        + '<label>Close Date<input id="f_cd" type="date" value="' + (existing.closedate || '') + '" /></label>'
-        + '<label>Pipeline<input id="f_pl" value="' + (existing.pipeline || 'default') + '" /></label>'
+        '<h3>Edit Company</h3>'
+        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
+        + '<label>Name<input id="f_cn" value="' + esc(existing.name) + '" /></label>'
+        + '<label>Domain<input id="f_cd" value="' + esc(existing.domain) + '" /></label>'
+        + '<label>Industry<input id="f_ci" value="' + esc(existing.industry) + '" /></label>'
+        + '<label>City<input id="f_cc" value="' + esc(existing.city) + '" /></label>'
+        + '<label>Phone<input id="f_cp" value="' + esc(existing.phone) + '" /></label>'
         + '<div class="form-actions">'
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'update_deal\')">Save</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_company\')">Save</button>'
         + '</div>';
     }
   }
@@ -281,22 +335,22 @@
           phone: document.getElementById('f_ph').value,
           company: document.getElementById('f_co').value,
         });
-      } else if (tool === 'create_deal') {
-        result = callTool('create_deal', {
-          dealname: document.getElementById('f_dn').value,
-          pipeline: document.getElementById('f_pl').value,
-          dealstage: document.getElementById('f_ds').value,
-          amount: parseFloat(document.getElementById('f_am').value) || 0,
-          closedate: document.getElementById('f_cd').value,
+      } else if (tool === 'create_company') {
+        result = callTool('create_company', {
+          name: document.getElementById('f_cn').value,
+          domain: document.getElementById('f_cd').value,
+          industry: document.getElementById('f_ci').value,
+          city: document.getElementById('f_cc').value,
+          phone: document.getElementById('f_cp').value,
         });
-      } else if (tool === 'update_deal') {
-        result = callTool('update_deal', {
-          deal_id: document.getElementById('f_id').value,
-          dealname: document.getElementById('f_dn').value,
-          dealstage: document.getElementById('f_ds').value,
-          amount: parseFloat(document.getElementById('f_am').value) || 0,
-          closedate: document.getElementById('f_cd').value,
-          pipeline: document.getElementById('f_pl').value,
+      } else if (tool === 'update_company') {
+        result = callTool('update_company', {
+          company_id: document.getElementById('f_id').value,
+          name: document.getElementById('f_cn').value,
+          domain: document.getElementById('f_cd').value,
+          industry: document.getElementById('f_ci').value,
+          city: document.getElementById('f_cc').value,
+          phone: document.getElementById('f_cp').value,
         });
       }
       if (result && result.then) {
@@ -336,12 +390,12 @@
       return;
     }
 
-    // JSON-RPC response (for callTool)
+    // JSON-RPC response (for callTool round-trip)
     if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
       var cb = pendingCalls[msg.id];
       delete pendingCalls[msg.id];
       if (msg.error) cb.reject(new Error(msg.error.message || 'Tool call failed'));
-      else cb.resolve(msg.result);
+      else cb.resolve({ structuredContent: msg.result });
       return;
     }
   });
@@ -353,11 +407,11 @@
     applyTheme(document.documentElement.getAttribute('data-theme'));
   }
 
-  // ── Initial render from toolOutput ────────────────────────────────────────
-  if (window.__toolOutput) {
+  // ── Initial render from openai bridge or __toolOutput ─────────────────────
+  if (window.openai && window.openai.toolOutput) {
+    render(window.openai.toolOutput);
+  } else if (window.__toolOutput) {
     render(window.__toolOutput);
-  } else {
-    document.addEventListener('mcpToolOutput', function (e) { render(e.detail); });
   }
 })();
 </script>

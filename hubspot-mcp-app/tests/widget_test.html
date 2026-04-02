@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>HubSpot CRM — Widget UX Test</title>
+<title>HubSpot Marketing — Widget UX Test</title>
 <style>
   body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
   h2      { margin-bottom: 4px; }
@@ -13,6 +13,8 @@
   button:hover { background: #E8563D; }
   button.green  { background: #00BDA5; }
   button.green:hover  { background: #009a87; }
+  button.blue   { background: #0070F2; }
+  button.blue:hover   { background: #0054B4; }
   button.dark   { background: #33475b; }
   button.dark:hover   { background: #1f2d3d; }
   button.secondary    { background: #706e6b; }
@@ -28,22 +30,29 @@
 </head>
 <body>
 
-<h2>HubSpot CRM — Widget UX Test <span class="badge">Interactive</span></h2>
+<h2>HubSpot Marketing — Widget UX Test <span class="badge">Interactive</span></h2>
 <p class="subtitle">Test harness simulating M365 Copilot's <code>window.openai.*</code> bridge. All CRUD operations use mock data.</p>
+
+<div class="section-label">📧 Marketing Emails — get_emails</div>
+<div class="controls">
+  <button onclick="sendEmails()">Send Mock Emails (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyEmails()">Send Empty Emails</button>
+</div>
+<p class="hint">Read-only dashboard showing email performance stats with open/click rates.</p>
 
 <div class="section-label">📇 Contacts — get_contacts</div>
 <div class="controls">
-  <button onclick="sendContacts()">Send Mock Contacts (5 rows)</button>
+  <button class="green" onclick="sendContacts()">Send Mock Contacts (5 rows)</button>
   <button class="secondary" onclick="sendEmptyContacts()">Send Empty Contacts</button>
 </div>
-<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New" to create a contact.</p>
+<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New Contact" to create a contact.</p>
 
-<div class="section-label">💰 Deals — get_deals</div>
+<div class="section-label">🏢 Companies — get_companies</div>
 <div class="controls">
-  <button class="green" onclick="sendDeals()">Send Mock Deals (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyDeals()">Send Empty Deals</button>
+  <button class="blue" onclick="sendCompanies()">Send Mock Companies (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyCompanies()">Send Empty Companies</button>
 </div>
-<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New" to create a deal.</p>
+<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New Company" to create a company.</p>
 
 <div class="section-label">⚠️ Error Simulation</div>
 <div class="controls">
@@ -67,7 +76,22 @@
 <script>
   var isDark = false;
   var nextContactId = 106;
-  var nextDealId    = 206;
+  var nextCompanyId = 306;
+
+  // ── Mock Data: Marketing Emails ────────────────────────────────────────
+  var MOCK_EMAILS = {
+    type: "emails",
+    total: 5,
+    items: [
+      { id: "12345", name: "Spring Sale 2025",        subject: "\uD83C\uDF38 Don't miss our Spring Sale!",      status: "PUBLISHED", stats: { sent: 15420, delivered: 15100, opened: 6340, clicked: 892, bounced: 320, unsubscribed: 45 } },
+      { id: "12346", name: "Monthly Newsletter Mar",   subject: "March Newsletter — What's New",                 status: "PUBLISHED", stats: { sent: 22800, delivered: 22350, opened: 8940, clicked: 1560, bounced: 450, unsubscribed: 72 } },
+      { id: "12347", name: "Product Launch Webinar",    subject: "\uD83D\uDE80 Join our Product Launch Event!",   status: "PUBLISHED", stats: { sent: 8500,  delivered: 8320,  opened: 4160, clicked: 1248, bounced: 180, unsubscribed: 18 } },
+      { id: "12348", name: "Customer Survey Q1",        subject: "We'd love your feedback!",                     status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } },
+      { id: "12349", name: "Summer Preview Campaign",   subject: "\u2600\uFE0F Summer is coming — sneak peek!",  status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } }
+    ]
+  };
+
+  var MOCK_EMPTY_EMAILS = { type: "emails", total: 0, items: [] };
 
   // ── Mock Data: Contacts ─────────────────────────────────────────────────
   var MOCK_CONTACTS = {
@@ -84,27 +108,27 @@
 
   var MOCK_EMPTY_CONTACTS = { type: "contacts", total: 0, items: [] };
 
-  // ── Mock Data: Deals ────────────────────────────────────────────────────
-  var MOCK_DEALS = {
-    type: "deals",
+  // ── Mock Data: Companies ───────────────────────────────────────────────
+  var MOCK_COMPANIES = {
+    type: "companies",
     total: 5,
     items: [
-      { id: "201", dealname: "TechFlow Enterprise License",   dealstage: "qualifiedtobuy",      amount: 125000, closedate: "2026-05-15", pipeline: "default" },
-      { id: "202", dealname: "DataBridge Platform Migration", dealstage: "contractsent",         amount: 340000, closedate: "2026-04-30", pipeline: "default" },
-      { id: "203", dealname: "CloudNine Starter Package",     dealstage: "appointmentscheduled", amount: 28000,  closedate: "2026-07-01", pipeline: "default" },
-      { id: "204", dealname: "Summit Analytics Dashboard",    dealstage: "closedwon",            amount: 89000,  closedate: "2026-03-10", pipeline: "default" },
-      { id: "205", dealname: "Quantum Research Grant Tool",   dealstage: "decisionmakerboughtin", amount: 210000, closedate: "2026-06-20", pipeline: "default" }
+      { id: "301", name: "TechFlow Inc",        domain: "techflow.com",         industry: "Technology",     city: "San Francisco", phone: "(415) 555-1000", employees: "250" },
+      { id: "302", name: "DataBridge Corp",      domain: "databridge.io",        industry: "Data Analytics", city: "New York",      phone: "(212) 555-2000", employees: "500" },
+      { id: "303", name: "CloudNine Solutions",   domain: "cloudnine.dev",        industry: "Cloud Services", city: "Palo Alto",     phone: "(650) 555-3000", employees: "120" },
+      { id: "304", name: "Summit Analytics",      domain: "summit-analytics.com", industry: "Analytics",      city: "Chicago",       phone: "(312) 555-4000", employees: "75" },
+      { id: "305", name: "Quantum Dynamics",      domain: "qdynamics.cn",         industry: "Research",       city: "San Jose",      phone: "(408) 555-5000", employees: "1800" }
     ]
   };
 
-  var MOCK_EMPTY_DEALS = { type: "deals", total: 0, items: [] };
+  var MOCK_EMPTY_COMPANIES = { type: "companies", total: 0, items: [] };
 
   // ── Mock Error ──────────────────────────────────────────────────────────
   var MOCK_ERROR = { error: true, message: "HubSpot authentication failed: Missing HubSpot credentials. Set HUBSPOT_ACCESS_TOKEN in your .env file." };
 
   // ── Current state (mutated by mock CRUD operations) ─────────────────────
-  var currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS));
-  var currentDeals    = JSON.parse(JSON.stringify(MOCK_DEALS));
+  var currentContacts  = JSON.parse(JSON.stringify(MOCK_CONTACTS));
+  var currentCompanies = JSON.parse(JSON.stringify(MOCK_COMPANIES));
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   function post(data) {
@@ -117,11 +141,13 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  function sendContacts()      { currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('→ Sent mock contacts (5 rows)'); }
-  function sendEmptyContacts() { currentContacts = JSON.parse(JSON.stringify(MOCK_EMPTY_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('→ Sent empty contacts'); }
-  function sendDeals()         { currentDeals = JSON.parse(JSON.stringify(MOCK_DEALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentDeals } }); log('→ Sent mock deals (5 rows)'); }
-  function sendEmptyDeals()    { currentDeals = JSON.parse(JSON.stringify(MOCK_EMPTY_DEALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentDeals } }); log('→ Sent empty deals'); }
-  function sendError()         { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('→ Sent mock error'); }
+  function sendEmails()        { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMAILS } }); log('\u2192 Sent mock emails (5 rows)'); }
+  function sendEmptyEmails()   { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
+  function sendContacts()      { currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('\u2192 Sent mock contacts (5 rows)'); }
+  function sendEmptyContacts() { currentContacts = JSON.parse(JSON.stringify(MOCK_EMPTY_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('\u2192 Sent empty contacts'); }
+  function sendCompanies()     { currentCompanies = JSON.parse(JSON.stringify(MOCK_COMPANIES)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentCompanies } }); log('\u2192 Sent mock companies (5 rows)'); }
+  function sendEmptyCompanies(){ currentCompanies = JSON.parse(JSON.stringify(MOCK_EMPTY_COMPANIES)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentCompanies } }); log('\u2192 Sent empty companies'); }
+  function sendError()         { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
 
   function toggleTheme() {
     isDark = !isDark;
@@ -130,7 +156,7 @@
     document.getElementById('frame-wrapper').style.background = isDark ? '#16213e' : 'white';
     document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3a3a5c' : '#ddd';
     post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
-    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+    log('\u2192 Theme: ' + (isDark ? 'dark' : 'light'));
   }
 
   // ── Handle messages FROM the widget ─────────────────────────────────────
@@ -142,7 +168,7 @@
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
       var tool = msg.params.name;
       var args = msg.params.args;
-      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+      log('\u2190 callTool: ' + tool + '(' + JSON.stringify(args) + ')');
 
       setTimeout(function() {
         var result;
@@ -163,7 +189,7 @@
           currentContacts.total = currentContacts.items.length;
           result = JSON.parse(JSON.stringify(currentContacts));
           result._createdId = newContact.id;
-          log('→ Created contact: ' + newContact.firstname + ' ' + newContact.lastname + ' (id: ' + newContact.id + ')');
+          log('\u2192 Created contact: ' + newContact.firstname + ' ' + newContact.lastname + ' (id: ' + newContact.id + ')');
         }
 
         // ── UPDATE CONTACT ──
@@ -177,52 +203,53 @@
               if (args.phone      !== undefined) c.phone      = args.phone;
               if (args.company    !== undefined) c.company    = args.company;
               if (args.lifecyclestage !== undefined) c.lifecyclestage = args.lifecyclestage;
-              log('→ Updated contact: ' + c.firstname + ' ' + c.lastname);
+              log('\u2192 Updated contact: ' + c.firstname + ' ' + c.lastname);
               break;
             }
           }
           result = JSON.parse(JSON.stringify(currentContacts));
         }
 
-        // ── CREATE DEAL ──
-        else if (tool === 'create_deal') {
-          var newDeal = {
-            id: String(nextDealId++),
-            dealname:  args.dealname  || '',
-            dealstage: args.dealstage || 'appointmentscheduled',
-            amount:    args.amount    || 0,
-            closedate: args.closedate || '',
-            pipeline:  args.pipeline  || 'default'
+        // ── CREATE COMPANY ──
+        else if (tool === 'create_company') {
+          var newCompany = {
+            id: String(nextCompanyId++),
+            name:      args.name     || '',
+            domain:    args.domain   || '',
+            industry:  args.industry || '',
+            city:      args.city     || '',
+            phone:     args.phone    || '',
+            employees: args.employees || ''
           };
-          currentDeals.items.unshift(newDeal);
-          if (currentDeals.items.length > 5) currentDeals.items.pop();
-          currentDeals.total = currentDeals.items.length;
-          result = JSON.parse(JSON.stringify(currentDeals));
-          result._createdId = newDeal.id;
-          log('→ Created deal: ' + newDeal.dealname + ' (id: ' + newDeal.id + ')');
+          currentCompanies.items.unshift(newCompany);
+          if (currentCompanies.items.length > 5) currentCompanies.items.pop();
+          currentCompanies.total = currentCompanies.items.length;
+          result = JSON.parse(JSON.stringify(currentCompanies));
+          result._createdId = newCompany.id;
+          log('\u2192 Created company: ' + newCompany.name + ' (id: ' + newCompany.id + ')');
         }
 
-        // ── UPDATE DEAL ──
-        else if (tool === 'update_deal') {
-          for (var j = 0; j < currentDeals.items.length; j++) {
-            if (currentDeals.items[j].id === args.deal_id) {
-              var d = currentDeals.items[j];
-              if (args.dealname  !== undefined) d.dealname  = args.dealname;
-              if (args.dealstage !== undefined) d.dealstage = args.dealstage;
-              if (args.amount    !== undefined) d.amount    = args.amount;
-              if (args.closedate !== undefined) d.closedate = args.closedate;
-              if (args.pipeline  !== undefined) d.pipeline  = args.pipeline;
-              log('→ Updated deal: ' + d.dealname);
+        // ── UPDATE COMPANY ──
+        else if (tool === 'update_company') {
+          for (var j = 0; j < currentCompanies.items.length; j++) {
+            if (currentCompanies.items[j].id === args.company_id) {
+              var co = currentCompanies.items[j];
+              if (args.name     !== undefined) co.name     = args.name;
+              if (args.domain   !== undefined) co.domain   = args.domain;
+              if (args.industry !== undefined) co.industry = args.industry;
+              if (args.city     !== undefined) co.city     = args.city;
+              if (args.phone    !== undefined) co.phone    = args.phone;
+              log('\u2192 Updated company: ' + co.name);
               break;
             }
           }
-          result = JSON.parse(JSON.stringify(currentDeals));
+          result = JSON.parse(JSON.stringify(currentCompanies));
         }
 
         // ── UNKNOWN TOOL ──
         else {
           result = { error: true, message: 'Unknown tool: ' + tool };
-          log('→ Unknown tool: ' + tool);
+          log('\u2192 Unknown tool: ' + tool);
         }
 
         post({ jsonrpc: '2.0', id: msg.id, result: result });

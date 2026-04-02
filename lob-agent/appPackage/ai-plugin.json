@@ -87,6 +87,10 @@
             "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material."
         },
         {
+            "name": "get_emails",
+            "description": "Get the latest marketing emails from HubSpot with performance stats (sent, opened, clicked, bounced)."
+        },
+        {
             "name": "get_contacts",
             "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage."
         },
@@ -99,16 +103,16 @@
             "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
         },
         {
-            "name": "get_deals",
-            "description": "Get the 5 most recent Deals from HubSpot. Returns deal name, stage, amount, close date, and pipeline."
+            "name": "get_companies",
+            "description": "Get the 5 most recent Companies from HubSpot. Returns company name, domain, industry, city, and phone."
         },
         {
-            "name": "create_deal",
-            "description": "Create a new Deal in HubSpot. Requires dealname, pipeline, and dealstage at minimum. Returns the updated list of latest 5 deals."
+            "name": "create_company",
+            "description": "Create a new Company in HubSpot. Requires name at minimum. Returns the updated list of latest 5 companies."
         },
         {
-            "name": "update_deal",
-            "description": "Update an existing Deal in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 deals."
+            "name": "update_company",
+            "description": "Update an existing Company in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 companies."
         }
     ],
     "runtimes": [
@@ -183,12 +187,13 @@
                 }
             },
             "run_for_functions": [
+                "get_emails",
                 "get_contacts",
                 "create_contact",
                 "update_contact",
-                "get_deals",
-                "create_deal",
-                "update_deal"
+                "get_companies",
+                "create_company",
+                "update_company"
             ],
             "auth": {
                 "type": "None"
