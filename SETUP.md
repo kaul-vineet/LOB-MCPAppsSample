@@ -15,6 +15,7 @@
 7. [Installing & Running Each MCP App](#7-installing--running-each-mcp-app)
 8. [Deploying the Agent to M365 Copilot](#8-deploying-the-agent-to-m365-copilot)
 9. [Verifying Everything Works](#9-verifying-everything-works)
+10. [Authentication Deep Dive](#10-authentication-deep-dive)
 
 ---
 
@@ -399,7 +400,7 @@ Try these prompts:
 - 📋 *"Show me the latest leads"* → Salesforce widget appears
 - 🎫 *"Show me the latest incidents"* → ServiceNow widget appears
 - 📦 *"Show me the latest purchase orders"* → SAP widget appears
-- 📇 *"Show me the latest contacts from HubSpot"* → HubSpot widget appears
+- 📇 *"Show me the marketing email performance"* → HubSpot widget appears
 
 ---
 
@@ -438,3 +439,207 @@ These let you see and interact with the widgets without needing M365 Copilot.
 | ServiceNow 401 error | For OAuth: enable `client_credential.grant_type.enabled` property. For Basic: check username/password |
 | SAP empty results | Verify `SAP_API_KEY` is valid at [api.sap.com](https://api.sap.com) |
 | HubSpot 403 error | Check that your Private App has the required scopes enabled |
+
+---
+
+## 10. Authentication Deep Dive
+
+This section explains **how authentication works under the hood** for each LOB system — what protocol is used, how tokens flow, when they expire, and how the MCP server handles them. Understanding this helps with debugging and production hardening.
+
+---
+
+### 🏛️ Salesforce — OAuth 2.0 Client Credentials
+
+```
+┌──────────────┐     POST /services/oauth2/token      ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  Salesforce Org   │
+│  (port 3000) │     grant_type=client_credentials     │                   │
+│              │     client_id=...                      │  Token Endpoint   │
+│              │     client_secret=...                  │                   │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "access_token": "00D..." }       └───────────────────┘
+│              │
+│              │     GET /services/data/v62.0/query     ┌───────────────────┐
+│              │  ─────────────────────────────────►   │  Salesforce REST  │
+│              │     Authorization: Bearer 00D...       │  API              │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "records": [...] }               └───────────────────┘
+└──────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | OAuth 2.0 Client Credentials Grant |
+| **Credentials** | `SF_CLIENT_ID` + `SF_CLIENT_SECRET` (from Connected App) |
+| **Token type** | Bearer access token |
+| **Token lifetime** | ~2 hours (session timeout) |
+| **Auto-refresh** | Yes — `salesforce.py` caches the token and refreshes 5 minutes before expiry |
+| **Retry on 401** | Yes — clears cached token and re-authenticates once |
+| **No user interaction** | Correct — this is machine-to-machine (M2M) auth, no browser login needed |
+
+**How the Connected App works:**
+1. You create a Connected App in Salesforce Setup with OAuth enabled
+2. The app gets a Consumer Key (client_id) and Consumer Secret (client_secret)
+3. You assign a "Run As" user — this user's permissions determine what the API can access
+4. The MCP server exchanges these credentials for a short-lived access token
+5. All API calls use `Authorization: Bearer {token}` header
+
+**Security notes:**
+- The Client Secret is a long-lived credential — treat it like a password
+- The Run As user should have minimal permissions (principle of least privilege)
+- Enable IP restrictions on the Connected App for production use
+- Rotate the Client Secret periodically via Setup → App Manager
+
+---
+
+### 🎫 ServiceNow — OAuth 2.0 or Basic Auth
+
+ServiceNow supports two authentication modes. The MCP server auto-selects based on `SERVICENOW_AUTH_MODE`.
+
+#### Option A: OAuth 2.0 Client Credentials (recommended)
+
+```
+┌──────────────┐     POST /oauth_token.do              ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  ServiceNow PDI   │
+│  (port 3001) │     grant_type=client_credentials     │                   │
+│              │     client_id=...                      │  OAuth Endpoint   │
+│              │     client_secret=...                  │                   │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "access_token": "..." }          └───────────────────┘
+│              │
+│              │     GET /api/now/table/incident        ┌───────────────────┐
+│              │  ─────────────────────────────────►   │  ServiceNow       │
+│              │     Authorization: Bearer ...          │  Table API        │
+└──────────────┘                                        └───────────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | OAuth 2.0 Client Credentials Grant |
+| **Credentials** | `SERVICENOW_CLIENT_ID` + `SERVICENOW_CLIENT_SECRET` (from Application Registry) |
+| **Token lifetime** | ~30 minutes (configurable in ServiceNow) |
+| **Prerequisite** | Must enable system property `glide.oauth.inbound.client.credential.grant_type.enabled = true` |
+| **OAuth Application User** | The user assigned in the Application Registry entry — determines API permissions |
+
+#### Option B: Basic Auth (simpler, for development)
+
+```
+┌──────────────┐     GET /api/now/table/incident        ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  ServiceNow PDI   │
+│  (port 3001) │     Authorization: Basic base64(u:p)   │  Table API        │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "result": [...] }                └───────────────────┘
+└──────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | HTTP Basic Authentication |
+| **Credentials** | `SERVICENOW_USERNAME` + `SERVICENOW_PASSWORD` (admin credentials from PDI dashboard) |
+| **Token lifetime** | N/A — credentials sent with every request |
+| **No setup needed** | Just use the admin username/password shown when you create the PDI |
+
+**Security notes:**
+- Basic Auth sends credentials with every request (base64-encoded, not encrypted) — use only over HTTPS
+- OAuth is preferred for anything beyond local development
+- PDI credentials reset when the instance hibernates (after ~hours of inactivity)
+- The PDI admin password is shown on the ServiceNow developer dashboard — bookmark it
+
+---
+
+### 📦 SAP S/4HANA — API Key (Sandbox) or Basic Auth (Tenant)
+
+The SAP MCP server operates in **dual mode** controlled by `SAP_MODE`.
+
+#### Sandbox Mode (default — read-only)
+
+```
+┌──────────────┐     GET /sap/opu/odata/sap/...        ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  SAP API Business │
+│  (port 3002) │     apikey: {SAP_API_KEY}              │  Hub Sandbox      │
+│              │     Accept: application/json            │                   │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "d": { "results": [...] } }     └───────────────────┘
+└──────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | API Key in HTTP header |
+| **Credentials** | `SAP_API_KEY` (free from [api.sap.com](https://api.sap.com) profile) |
+| **Token lifetime** | Permanent (until you regenerate it) |
+| **Read-only** | GET requests only — POST/PUT/PATCH return mock demo data |
+| **No user setup** | Just register on api.sap.com and copy the key |
+| **Rate limits** | Shared sandbox — be gentle |
+
+#### Tenant Mode (full CRUD — requires real S/4HANA)
+
+```
+┌──────────────┐     GET /sap/opu/odata/sap/...        ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  S/4HANA Cloud    │
+│  (port 3002) │     Authorization: Basic base64(u:p)   │  Tenant           │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "d": { "results": [...] } }     └───────────────────┘
+└──────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | HTTP Basic Authentication (Communication User) |
+| **Credentials** | `SAP_USERNAME` + `SAP_PASSWORD` (from Communication Arrangement in S/4HANA) |
+| **Full CRUD** | All operations work against your real data |
+| **Setup required** | Create Communication System → Communication User → Communication Arrangement for each API |
+
+**Security notes:**
+- The API key is tied to your personal SAP account — don't share it publicly
+- In tenant mode, the Communication User should have only the Communication Scenarios needed (e.g., `SAP_COM_0008` for Business Partners)
+- SAP OData responses default to XML — the client adds `Accept: application/json` header
+
+---
+
+### 🧡 HubSpot — Private App Token (Bearer)
+
+```
+┌──────────────┐     GET /marketing/v3/emails           ┌───────────────────┐
+│  MCP Server  │  ─────────────────────────────────►   │  HubSpot API      │
+│  (port 3003) │     Authorization: Bearer pat-na1-...  │  (api.hubapi.com) │
+│              │  ◄─────────────────────────────────   │                   │
+│              │     { "results": [...] }               └───────────────────┘
+└──────────────┘
+```
+
+| Aspect | Detail |
+|---|---|
+| **Protocol** | Bearer Token (Private App) |
+| **Credentials** | `HUBSPOT_ACCESS_TOKEN` (from Settings → Integrations → Private Apps) |
+| **Token lifetime** | Permanent (until you rotate it) |
+| **Token format** | `pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
+| **Scopes** | Defined at creation time — controls which APIs the token can access |
+| **Shown once** | The token is displayed only once at creation — copy it immediately |
+
+**Required scopes for this app:**
+- `crm.objects.contacts.read` — read contacts in lists
+- `crm.objects.contacts.write` — add/remove contacts from lists
+- `crm.objects.lists.read` — view contact lists
+- `crm.objects.lists.write` — modify list membership
+- `content` — read marketing emails and stats
+
+**Security notes:**
+- The Private App token is a long-lived bearer token — treat it like an API key
+- It's scoped: even if leaked, it can only do what the scopes allow
+- To rotate: go to the Private App → click "Rotate token" → update your `.env`
+- HubSpot rate limits: 100 requests per 10 seconds, 250,000 per day on the free tier
+- Unlike OAuth flows, there's no refresh — the token works until rotated or revoked
+
+---
+
+### Authentication Comparison at a Glance
+
+| LOB | Auth Type | Credentials Needed | Token Lifetime | Auto-Refresh | Free Tier |
+|---|---|---|---|---|---|
+| **Salesforce** | OAuth 2.0 Client Credentials | Client ID + Secret | ~2 hours | ✅ Yes | ✅ Dev Org |
+| **ServiceNow** | OAuth 2.0 or Basic Auth | Client ID + Secret (or user/pass) | ~30 min (OAuth) | ✅ OAuth only | ✅ PDI |
+| **SAP** | API Key (sandbox) / Basic (tenant) | API Key or user/pass | Permanent / per-session | N/A | ✅ API Hub |
+| **HubSpot** | Bearer Token (Private App) | Access Token | Permanent | N/A | ✅ Free CRM |
+
+> 💡 **Key takeaway:** All four LOBs use different auth patterns, but the MCP servers abstract this away completely. You set credentials once in `.env`, and the server handles token management, caching, and retry logic automatically.
