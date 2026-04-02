@@ -38,8 +38,10 @@
 - [Test Harness](#test-harness)
 - [Tools Reference](#tools-reference)
 - [Critical Troubleshooting](#critical-troubleshooting)
-- [v2.0 Roadmap](#v20-roadmap)
+- [v3.0 Roadmap](#v30-roadmap)
 - [References](#references)
+
+> 📖 **New to this?** See [**SETUP.md**](SETUP.md) for a beginner-friendly guide with step-by-step credential setup for every system.
 
 ---
 
