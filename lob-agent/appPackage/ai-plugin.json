@@ -88,27 +88,31 @@
         },
         {
             "name": "get_emails",
-            "description": "Get the latest marketing emails from HubSpot with performance stats (sent, opened, clicked, bounced)."
+            "description": "Get the latest marketing emails from HubSpot with performance stats. Entry point — the widget handles drill-down to lists and contacts."
         },
         {
             "name": "get_lists",
-            "description": "Get contact lists (segments) from HubSpot. Returns list name, type (MANUAL/DYNAMIC), and size."
+            "description": "Get contact lists from HubSpot. Called by the widget for drill-down."
         },
         {
             "name": "get_list_contacts",
-            "description": "Get contacts belonging to a specific HubSpot list. Returns contact name, email, phone, company, and lifecycle stage."
+            "description": "Get contacts in a specific HubSpot list. Called by the widget."
         },
         {
             "name": "add_to_list",
-            "description": "Add a contact to a static HubSpot list by email address. Looks up the contact and adds them."
+            "description": "Add a contact to a static HubSpot list by email. Called by the widget."
         },
         {
             "name": "remove_from_list",
-            "description": "Remove a contact from a static HubSpot list by contact ID."
+            "description": "Remove a contact from a static HubSpot list. Called by the widget."
         },
         {
-            "name": "update_contact",
-            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated."
+            "name": "update_email",
+            "description": "Update a marketing email's name or subject. Called by the widget."
+        },
+        {
+            "name": "update_list",
+            "description": "Update a list's name. Called by the widget."
         }
     ],
     "runtimes": [
@@ -188,7 +192,8 @@
                 "get_list_contacts",
                 "add_to_list",
                 "remove_from_list",
-                "update_contact"
+                "update_email",
+                "update_list"
             ],
             "auth": {
                 "type": "None"

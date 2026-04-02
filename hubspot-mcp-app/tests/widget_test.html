@@ -30,29 +30,15 @@
 </head>
 <body>
 
-<h2>HubSpot Marketing — Widget UX Test <span class="badge">Interactive</span></h2>
-<p class="subtitle">Test harness simulating M365 Copilot's <code>window.openai.*</code> bridge. All CRUD operations use mock data.</p>
+<h2>HubSpot Marketing — Widget UX Test <span class="badge">Single-Ask Flow</span></h2>
+<p class="subtitle">Test harness simulating M365 Copilot's <code>window.openai.*</code> bridge. Entry point is <strong>get_emails</strong> — widget handles all drill-down.</p>
 
-<div class="section-label">📧 Marketing Emails — get_emails</div>
+<div class="section-label">📧 Entry Point — Send Mock Emails</div>
 <div class="controls">
   <button onclick="sendEmails()">Send Mock Emails (5 rows)</button>
   <button class="secondary" onclick="sendEmptyEmails()">Send Empty Emails</button>
 </div>
-<p class="hint">Read-only dashboard showing email performance stats with open/click rates.</p>
-
-<div class="section-label">📋 Contact Lists — get_lists</div>
-<div class="controls">
-  <button class="green" onclick="sendLists()">Send Mock Lists (4 rows)</button>
-  <button class="secondary" onclick="sendEmptyLists()">Send Empty Lists</button>
-</div>
-<p class="hint">Click "View →" on any list to drill into its contacts. Tests navigation flow.</p>
-
-<div class="section-label">👥 List Contacts — get_list_contacts</div>
-<div class="controls">
-  <button class="blue" onclick="sendListContacts()">Send Mock List Contacts (3 rows)</button>
-  <button class="secondary" onclick="sendEmptyListContacts()">Send Empty List Contacts</button>
-</div>
-<p class="hint">Click ✎ to edit, ✕ to remove, or "+ Add Contact" to add. Tests list membership ops.</p>
+<p class="hint">Click "📋 View Contact Lists →" in the widget to navigate. ✎ to edit email name/subject. All navigation is widget-driven via callTool.</p>
 
 <div class="section-label">⚠️ Error Simulation</div>
 <div class="controls">
@@ -101,8 +87,6 @@
     ]
   };
 
-  var MOCK_EMPTY_LISTS = { type: "lists", total: 0, items: [] };
-
   // ── Mock Data: List Contacts ───────────────────────────────────────────
   var MOCK_LIST_CONTACTS = {
     type: "list_contacts", list_id: "102", list_name: "Spring Campaign 2025", total: 3, items: [
@@ -111,8 +95,6 @@
       { id: "503", firstname: "Maria", lastname: "Garcia", email: "m.garcia@example.com", phone: "+1-555-0103", company: "GlobalTrade", lifecyclestage: "opportunity" },
     ]
   };
-
-  var MOCK_EMPTY_LIST_CONTACTS = { type: "list_contacts", list_id: "102", list_name: "Spring Campaign 2025", total: 0, items: [] };
 
   // ── Mock Error ──────────────────────────────────────────────────────────
   var MOCK_ERROR = { error: true, message: "HubSpot authentication failed: Missing HubSpot credentials. Set HUBSPOT_ACCESS_TOKEN in your .env file." };
@@ -131,13 +113,9 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  function sendEmails()           { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMAILS } }); log('\u2192 Sent mock emails (5 rows)'); }
-  function sendEmptyEmails()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
-  function sendLists()            { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_LISTS } }); log('\u2192 Sent mock lists (4 rows)'); }
-  function sendEmptyLists()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_LISTS } }); log('\u2192 Sent empty lists'); }
-  function sendListContacts()     { currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentListContacts } }); log('\u2192 Sent mock list contacts (3 rows)'); }
-  function sendEmptyListContacts(){ post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_LIST_CONTACTS } }); log('\u2192 Sent empty list contacts'); }
-  function sendError()            { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
+  function sendEmails()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(MOCK_EMAILS)) } }); log('\u2192 Sent mock emails (5 rows)'); }
+  function sendEmptyEmails() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
+  function sendError()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
 
   function toggleTheme() {
     isDark = !isDark;
@@ -163,8 +141,14 @@
       setTimeout(function() {
         var result;
 
+        // ── GET EMAILS ──
+        if (tool === 'get_emails') {
+          result = JSON.parse(JSON.stringify(MOCK_EMAILS));
+          log('\u2192 Returned mock emails');
+        }
+
         // ── GET LISTS ──
-        if (tool === 'get_lists') {
+        else if (tool === 'get_lists') {
           result = JSON.parse(JSON.stringify(MOCK_LISTS));
           log('\u2192 Returned mock lists');
         }
@@ -172,7 +156,6 @@
         // ── GET LIST CONTACTS ──
         else if (tool === 'get_list_contacts') {
           var listId = args.list_id;
-          // Find the list name from mock data
           var listName = 'Unknown List';
           for (var li = 0; li < MOCK_LISTS.items.length; li++) {
             if (MOCK_LISTS.items[li].id === listId) {
@@ -214,22 +197,29 @@
           log('\u2192 Removed contact ' + removeId + ' from list ' + args.list_id);
         }
 
-        // ── UPDATE CONTACT ──
-        else if (tool === 'update_contact') {
-          for (var i = 0; i < currentListContacts.items.length; i++) {
-            if (currentListContacts.items[i].id === args.contact_id) {
-              var c = currentListContacts.items[i];
-              if (args.firstname  !== undefined) c.firstname  = args.firstname;
-              if (args.lastname   !== undefined) c.lastname   = args.lastname;
-              if (args.email      !== undefined) c.email      = args.email;
-              if (args.phone      !== undefined) c.phone      = args.phone;
-              if (args.company    !== undefined) c.company    = args.company;
-              if (args.lifecyclestage !== undefined) c.lifecyclestage = args.lifecyclestage;
-              log('\u2192 Updated contact: ' + c.firstname + ' ' + c.lastname);
+        // ── UPDATE EMAIL ──
+        else if (tool === 'update_email') {
+          for (var i = 0; i < MOCK_EMAILS.items.length; i++) {
+            if (MOCK_EMAILS.items[i].id === args.email_id) {
+              if (args.name) MOCK_EMAILS.items[i].name = args.name;
+              if (args.subject) MOCK_EMAILS.items[i].subject = args.subject;
+              log('\u2192 Updated email ' + args.email_id + ': name="' + (args.name || '') + '", subject="' + (args.subject || '') + '"');
               break;
             }
           }
-          result = JSON.parse(JSON.stringify(currentListContacts));
+          result = JSON.parse(JSON.stringify(MOCK_EMAILS));
+        }
+
+        // ── UPDATE LIST ──
+        else if (tool === 'update_list') {
+          for (var j = 0; j < MOCK_LISTS.items.length; j++) {
+            if (MOCK_LISTS.items[j].id === args.list_id) {
+              MOCK_LISTS.items[j].name = args.name;
+              log('\u2192 Renamed list ' + args.list_id + ' to "' + args.name + '"');
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(MOCK_LISTS));
         }
 
         // ── UNKNOWN TOOL ──

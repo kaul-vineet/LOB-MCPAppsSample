@@ -60,12 +60,14 @@
 
   .stat-pct { font-size: 11px; color: var(--hs-text-light); }
 
+  .footer-bar { display: flex; justify-content: flex-end; margin-top: 12px; }
+
   .form-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
   .form-overlay.active { display: flex; align-items: center; justify-content: center; }
   .form-card { background: var(--hs-bg); padding: 20px; border-radius: 10px; width: 340px; max-width: 95vw; }
   .form-card h3 { margin-bottom: 12px; font-size: 15px; }
   .form-card label { display: block; font-size: 12px; color: var(--hs-text-light); margin-top: 8px; }
-  .form-card input, .form-card select { width: 100%; padding: 6px 10px; border: 1px solid var(--hs-border); border-radius: 4px; font-size: 13px; margin-top: 2px; background: var(--hs-surface); color: var(--hs-text); }
+  .form-card input { width: 100%; padding: 6px 10px; border: 1px solid var(--hs-border); border-radius: 4px; font-size: 13px; margin-top: 2px; background: var(--hs-surface); color: var(--hs-text); }
   .form-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
 
   .empty { text-align: center; padding: 24px; color: var(--hs-text-light); }
@@ -143,6 +145,11 @@
     window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
   }
 
+  function handleResult(res) {
+    if (res && res.structuredContent) render(res.structuredContent);
+    else if (res) render(res);
+  }
+
   // ── Render dispatcher ─────────────────────────────────────────────────────
   function render(data) {
     if (!data) return;
@@ -154,7 +161,6 @@
     if (data.type === 'emails') renderEmails(data);
     else if (data.type === 'lists') renderLists(data);
     else if (data.type === 'list_contacts') renderListContacts(data);
-    else if (data.type === 'contacts') renderContacts(data);
     else app.innerHTML = '<div class="empty">Unknown data type</div>';
     notifyHeight();
   }
@@ -177,7 +183,7 @@
     return 'status-other';
   }
 
-  // ── Marketing Emails table (read-only) ────────────────────────────────────
+  // ── View 1: Marketing Emails ──────────────────────────────────────────────
   function renderEmails(data) {
     if (!data.items || data.items.length === 0) {
       app.innerHTML = '<div class="empty">No marketing emails found</div>';
@@ -187,13 +193,14 @@
     for (var i = 0; i < data.items.length; i++) {
       var em = data.items[i];
       var st = em.stats || {};
+      var escaped = JSON.stringify(em).replace(/"/g, '&quot;');
       rows += '<tr>'
         + '<td>' + esc(em.subject || em.name) + '</td>'
         + '<td><span class="status-badge ' + statusClass(em.status) + '">' + esc(em.status) + '</span></td>'
         + '<td>' + fmtNum(st.sent) + '</td>'
         + '<td>' + fmtNum(st.opened) + ' <span class="stat-pct">(' + pct(st.opened, st.delivered) + ')</span></td>'
         + '<td>' + fmtNum(st.clicked) + ' <span class="stat-pct">(' + pct(st.clicked, st.delivered) + ')</span></td>'
-        + '<td>' + fmtNum(st.bounced) + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_email\', ' + escaped + ')">\u270E</button></td>'
         + '</tr>';
     }
     app.innerHTML =
@@ -201,15 +208,24 @@
       + '<h2>\uD83D\uDCE7 Marketing Emails <span class="badge">' + data.total + '</span></h2>'
       + '</div>'
       + '<table>'
-      + '<tr><th>Subject</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Bounced</th></tr>'
+      + '<tr><th>Subject</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th></th></tr>'
       + rows
-      + '</table>';
+      + '</table>'
+      + '<div class="footer-bar">'
+      + '<button class="btn" onclick="window.__viewLists()">\uD83D\uDCCB View Contact Lists \u2192</button>'
+      + '</div>';
   }
 
-  // ── Lists table ───────────────────────────────────────────────────────────
+  // ── View 2: Lists ─────────────────────────────────────────────────────────
   function renderLists(data) {
+    var headerHtml =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCCB Contact Lists <span class="badge">' + (data.total || 0) + '</span></h2>'
+      + '<button class="btn-back" onclick="window.__backToEmails()">\u2190 Back to Emails</button>'
+      + '</div>';
+
     if (!data.items || data.items.length === 0) {
-      app.innerHTML = '<div class="empty">No contact lists found</div>';
+      app.innerHTML = headerHtml + '<div class="empty">No contact lists found</div>';
       return;
     }
     var rows = '';
@@ -218,24 +234,25 @@
       var typeBadge = (li.type || '').toUpperCase() === 'MANUAL'
         ? '<span class="badge-blue">MANUAL</span>'
         : '<span class="badge-green">DYNAMIC</span>';
+      var escaped = JSON.stringify(li).replace(/"/g, '&quot;');
       rows += '<tr>'
         + '<td>' + esc(li.name) + '</td>'
         + '<td>' + typeBadge + '</td>'
         + '<td>' + fmtNum(li.size) + '</td>'
-        + '<td><button class="btn btn-sm" onclick="window.__viewList(\'' + esc(li.id) + '\')">View \u2192</button></td>'
+        + '<td>'
+        + '<button class="btn btn-sm" onclick="window.__viewList(\'' + esc(li.id) + '\')">View \u2192</button> '
+        + '<button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_list\', ' + escaped + ')">\u270E</button>'
+        + '</td>'
         + '</tr>';
     }
-    app.innerHTML =
-      '<div class="header">'
-      + '<h2>\uD83D\uDCCB Contact Lists <span class="badge">' + data.total + '</span></h2>'
-      + '</div>'
+    app.innerHTML = headerHtml
       + '<table>'
       + '<tr><th>Name</th><th>Type</th><th>Size</th><th></th></tr>'
       + rows
       + '</table>';
   }
 
-  // ── List Contacts table ───────────────────────────────────────────────────
+  // ── View 3: List Contacts ─────────────────────────────────────────────────
   function renderListContacts(data) {
     currentListId = data.list_id || null;
     var listName = data.list_name || 'List';
@@ -256,7 +273,6 @@
     var rows = '';
     for (var i = 0; i < data.items.length; i++) {
       var c = data.items[i];
-      var escaped = JSON.stringify(c).replace(/"/g, '&quot;');
       rows += '<tr>'
         + '<td>' + esc(c.firstname) + ' ' + esc(c.lastname) + '</td>'
         + '<td>' + esc(c.email) + '</td>'
@@ -264,7 +280,6 @@
         + '<td>' + esc(c.company) + '</td>'
         + '<td>' + esc(c.lifecyclestage) + '</td>'
         + '<td>'
-        + '<button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_contact\', ' + escaped + ')">\u270E</button> '
         + '<button class="btn-danger btn-sm" onclick="window.__removeFromList(\'' + esc(c.id) + '\')">\u2715</button>'
         + '</td>'
         + '</tr>';
@@ -276,43 +291,27 @@
       + '</table>';
   }
 
-  // ── Contacts table (for update_contact responses) ─────────────────────────
-  function renderContacts(data) {
-    if (!data.items || data.items.length === 0) {
-      app.innerHTML = '<div class="empty">No contacts found</div>';
-      return;
-    }
-    var rows = '';
-    for (var i = 0; i < data.items.length; i++) {
-      var c = data.items[i];
-      var escaped = JSON.stringify(c).replace(/"/g, '&quot;');
-      rows += '<tr>'
-        + '<td>' + esc(c.firstname) + ' ' + esc(c.lastname) + '</td>'
-        + '<td>' + esc(c.email) + '</td>'
-        + '<td>' + esc(c.phone) + '</td>'
-        + '<td>' + esc(c.company) + '</td>'
-        + '<td>' + esc(c.lifecyclestage) + '</td>'
-        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_contact\', ' + escaped + ')">\u270E</button></td>'
-        + '</tr>';
-    }
-    app.innerHTML =
-      '<div class="header">'
-      + '<h2>\uD83D\uDCC7 Contacts <span class="badge">' + data.total + '</span></h2>'
-      + '</div>'
-      + '<table>'
-      + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
-      + rows
-      + '</table>';
-  }
-
   // ── Navigation helpers ────────────────────────────────────────────────────
+  window.__viewLists = function () {
+    app.innerHTML = '<div class="loading">Loading contact lists\u2026</div>';
+    notifyHeight();
+    callTool('get_lists', {}).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load lists' });
+    });
+  };
+
+  window.__backToEmails = function () {
+    app.innerHTML = '<div class="loading">Loading emails\u2026</div>';
+    notifyHeight();
+    callTool('get_emails', {}).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load emails' });
+    });
+  };
+
   window.__viewList = function (listId) {
     app.innerHTML = '<div class="loading">Loading list contacts\u2026</div>';
     notifyHeight();
-    callTool('get_list_contacts', { list_id: listId }).then(function (res) {
-      if (res && res.structuredContent) render(res.structuredContent);
-      else if (res) render(res);
-    }).catch(function (e) {
+    callTool('get_list_contacts', { list_id: listId }).then(handleResult).catch(function (e) {
       render({ error: true, message: e.message || 'Failed to load list contacts' });
     });
   };
@@ -321,10 +320,7 @@
     currentListId = null;
     app.innerHTML = '<div class="loading">Loading lists\u2026</div>';
     notifyHeight();
-    callTool('get_lists', {}).then(function (res) {
-      if (res && res.structuredContent) render(res.structuredContent);
-      else if (res) render(res);
-    }).catch(function (e) {
+    callTool('get_lists', {}).then(handleResult).catch(function (e) {
       render({ error: true, message: e.message || 'Failed to load lists' });
     });
   };
@@ -333,10 +329,7 @@
     if (!currentListId) return;
     app.innerHTML = '<div class="loading">Removing contact\u2026</div>';
     notifyHeight();
-    callTool('remove_from_list', { list_id: currentListId, contact_id: contactId }).then(function (res) {
-      if (res && res.structuredContent) render(res.structuredContent);
-      else if (res) render(res);
-    }).catch(function (e) {
+    callTool('remove_from_list', { list_id: currentListId, contact_id: contactId }).then(handleResult).catch(function (e) {
       render({ error: true, message: e.message || 'Failed to remove contact' });
     });
   };
@@ -352,18 +345,24 @@
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
         + '<button class="btn" onclick="window.__submitForm(\'add_to_list\')">Add</button>'
         + '</div>';
-    } else if (tool === 'update_contact') {
+    } else if (tool === 'update_email') {
       formCard.innerHTML =
-        '<h3>Edit Contact</h3>'
+        '<h3>Edit Email</h3>'
         + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
-        + '<label>First Name<input id="f_fn" value="' + esc(existing.firstname) + '" /></label>'
-        + '<label>Last Name<input id="f_ln" value="' + esc(existing.lastname) + '" /></label>'
-        + '<label>Email<input id="f_em" value="' + esc(existing.email) + '" /></label>'
-        + '<label>Phone<input id="f_ph" value="' + esc(existing.phone) + '" /></label>'
-        + '<label>Company<input id="f_co" value="' + esc(existing.company) + '" /></label>'
+        + '<label>Name<input id="f_name" value="' + esc(existing.name) + '" /></label>'
+        + '<label>Subject<input id="f_subject" value="' + esc(existing.subject) + '" /></label>'
         + '<div class="form-actions">'
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'update_contact\')">Save</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_email\')">Save</button>'
+        + '</div>';
+    } else if (tool === 'update_list') {
+      formCard.innerHTML =
+        '<h3>Rename List</h3>'
+        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
+        + '<label>Name<input id="f_name" value="' + esc(existing.name) + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_list\')">Save</button>'
         + '</div>';
     }
   }
@@ -373,26 +372,29 @@
     try {
       if (tool === 'add_to_list') {
         var email = document.getElementById('f_em').value;
-        if (!email) { return; }
+        if (!email) return;
         result = callTool('add_to_list', {
           list_id: currentListId,
           contact_email: email,
         });
-      } else if (tool === 'update_contact') {
-        result = callTool('update_contact', {
-          contact_id: document.getElementById('f_id').value,
-          firstname: document.getElementById('f_fn').value,
-          lastname: document.getElementById('f_ln').value,
-          email: document.getElementById('f_em').value,
-          phone: document.getElementById('f_ph').value,
-          company: document.getElementById('f_co').value,
+      } else if (tool === 'update_email') {
+        result = callTool('update_email', {
+          email_id: document.getElementById('f_id').value,
+          name: document.getElementById('f_name').value,
+          subject: document.getElementById('f_subject').value,
+        });
+      } else if (tool === 'update_list') {
+        var name = document.getElementById('f_name').value;
+        if (!name) return;
+        result = callTool('update_list', {
+          list_id: document.getElementById('f_id').value,
+          name: name,
         });
       }
       if (result && result.then) {
         result.then(function (res) {
           overlay.classList.remove('active');
-          if (res && res.structuredContent) render(res.structuredContent);
-          else if (res) render(res);
+          handleResult(res);
         }).catch(function (e) {
           render({ error: true, message: e.message || 'Operation failed' });
           overlay.classList.remove('active');

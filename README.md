@@ -393,16 +393,19 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 
 > 📡 In sandbox mode, create/update tools return mock demo data.
 
-### 🧡 HubSpot Marketing (6 tools — port 3003)
+### 🧡 HubSpot Marketing (7 tools — port 3003, single entry point)
 
-| Tool | Description | Required params |
+| Tool | Description | Called by |
 |---|---|---|
-| `get_emails` | Marketing emails with performance stats | — |
-| `get_lists` | Contact lists/segments | — |
-| `get_list_contacts` | Contacts in a specific list | `list_id` |
-| `add_to_list` | Add contact to a list by email | `list_id`, `contact_email` |
-| `remove_from_list` | Remove contact from a list | `list_id`, `contact_id` |
-| `update_contact` | Edit a contact's properties | `contact_id` |
+| `get_emails` | Marketing emails with performance stats | **LLM** (entry point) |
+| `get_lists` | Contact lists/segments | Widget |
+| `get_list_contacts` | Contacts in a specific list | Widget |
+| `add_to_list` | Add contact to a list by email | Widget |
+| `remove_from_list` | Remove contact from a list | Widget |
+| `update_email` | Edit email name/subject | Widget |
+| `update_list` | Edit list name | Widget |
+
+> 💡 The LLM only calls `get_emails`. The widget handles all navigation: Emails → Lists → Contacts → Add/Remove/Edit.
 
 ---
 

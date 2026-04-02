@@ -393,7 +393,7 @@
         },
         {
             "name": "get_emails",
-            "description": "Get the latest marketing emails from HubSpot with performance stats (sent, opened, clicked, bounced).",
+            "description": "Get the latest marketing emails from HubSpot with performance stats. Entry point — the widget handles drill-down to lists and contacts.",
             "inputSchema": {
                 "properties": {},
                 "required": [],
@@ -409,7 +409,7 @@
         },
         {
             "name": "get_lists",
-            "description": "Get contact lists (segments) from HubSpot. Returns list name, type (MANUAL/DYNAMIC), and size.",
+            "description": "Get contact lists from HubSpot. Called by the widget for drill-down.",
             "inputSchema": {
                 "properties": {},
                 "required": [],
@@ -425,7 +425,7 @@
         },
         {
             "name": "get_list_contacts",
-            "description": "Get contacts belonging to a specific HubSpot list. Returns contact name, email, phone, company, and lifecycle stage.",
+            "description": "Get contacts in a specific HubSpot list. Called by the widget.",
             "inputSchema": {
                 "properties": {
                     "list_id": { "title": "List ID", "type": "string" }
@@ -443,7 +443,7 @@
         },
         {
             "name": "add_to_list",
-            "description": "Add a contact to a static HubSpot list by email address.",
+            "description": "Add a contact to a static HubSpot list by email. Called by the widget.",
             "inputSchema": {
                 "properties": {
                     "list_id":       { "title": "List ID",       "type": "string" },
@@ -462,7 +462,7 @@
         },
         {
             "name": "remove_from_list",
-            "description": "Remove a contact from a static HubSpot list by contact ID.",
+            "description": "Remove a contact from a static HubSpot list. Called by the widget.",
             "inputSchema": {
                 "properties": {
                     "list_id":    { "title": "List ID",    "type": "string" },
@@ -480,23 +480,38 @@
             }
         },
         {
-            "name": "update_contact",
-            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated.",
+            "name": "update_email",
+            "description": "Update a marketing email's name or subject. Called by the widget.",
             "inputSchema": {
                 "properties": {
-                    "contact_id":     { "title": "Contact ID",      "type": "string" },
-                    "firstname":      { "title": "First Name",      "type": "string", "default": "" },
-                    "lastname":       { "title": "Last Name",       "type": "string", "default": "" },
-                    "email":          { "title": "Email",           "type": "string", "default": "" },
-                    "phone":          { "title": "Phone",           "type": "string", "default": "" },
-                    "company":        { "title": "Company",         "type": "string", "default": "" },
-                    "lifecyclestage": { "title": "Lifecycle Stage", "type": "string", "default": "" }
+                    "email_id": { "title": "Email ID", "type": "string" },
+                    "name":     { "title": "Name",     "type": "string", "default": "" },
+                    "subject":  { "title": "Subject",  "type": "string", "default": "" }
                 },
-                "required": ["contact_id"],
-                "title": "update_contactArguments",
+                "required": ["email_id"],
+                "title": "update_emailArguments",
                 "type": "object"
             },
-            "title": "Update contact",
+            "title": "Update email",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "update_list",
+            "description": "Update a list's name. Called by the widget.",
+            "inputSchema": {
+                "properties": {
+                    "list_id": { "title": "List ID", "type": "string" },
+                    "name":    { "title": "Name",    "type": "string" }
+                },
+                "required": ["list_id", "name"],
+                "title": "update_listArguments",
+                "type": "object"
+            },
+            "title": "Update list",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
