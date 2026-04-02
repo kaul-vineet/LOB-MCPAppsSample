@@ -251,8 +251,8 @@ async def create_purchase_order(
             "Supplier": supplier,
             "PurchasingOrganization": purchasing_org,
             "PurchaseOrderType": purchase_order_type,
-            "CompanyCode": "1710",
-            "PurchasingGroup": "001",
+            "CompanyCode": "1710",          # Demo company code (SAP sandbox default)
+            "PurchasingGroup": "001",       # Demo purchasing group
         }
         result = await sap.create_entity(PO_SERVICE, PO_ENTITY, data)
         new_id = result.get("id") or result.get("PurchaseOrder", f"MOCK-PO-{int(time.time())}")

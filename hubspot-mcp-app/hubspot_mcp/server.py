@@ -1,7 +1,15 @@
 """
-HubSpot Marketing MCP Server — 7 tools for Marketing Emails, Lists & Contacts.
+HubSpot Marketing MCP Server — 7 tools for Email Performance, Contact Lists & Membership.
 
-Single entry point: get_emails. All drill-down is widget-driven via callTool.
+Single entry point: get_emails. The widget handles all drill-down navigation
+via callTool — from emails → lists → contacts in list. Tools support:
+- Email performance dashboard (read-only, with open/click rates)
+- Contact lists: view, rename
+- List membership: view contacts, add by email, remove
+- Contact editing (inline from list view)
+
+All tools return structuredContent for the widget, with _meta on the
+decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 """
 
 import os
@@ -32,6 +40,7 @@ async def hubspot_widget() -> str:
 
 
 def _error_result(message: str) -> types.CallToolResult:
+    """Return a structured error result the widget can display."""
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=message)],
         structuredContent={"error": True, "message": message},
@@ -41,6 +50,7 @@ def _error_result(message: str) -> types.CallToolResult:
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 async def _fetch_emails() -> list[dict]:
+    """Fetch the 5 most recently updated marketing emails with stats."""
     client = get_client()
     records = await client.list_emails(limit=5)
     return [
@@ -50,6 +60,7 @@ async def _fetch_emails() -> list[dict]:
             "subject": r.get("subject", ""),
             "status": r.get("state", ""),
             "stats": {
+                # Safely extract nested properties, defaulting if None
                 "sent": (r.get("statistics", {}) or {}).get("counters", {}).get("sent", 0),
                 "delivered": (r.get("statistics", {}) or {}).get("counters", {}).get("delivered", 0),
                 "opened": (r.get("statistics", {}) or {}).get("counters", {}).get("open", 0),
@@ -63,6 +74,7 @@ async def _fetch_emails() -> list[dict]:
 
 
 async def _fetch_lists() -> list[dict]:
+    """Fetch contact lists, filtered to contact-type lists only (objectTypeId 0-1)."""
     client = get_client()
     records = await client.list_lists(limit=10)
     return [
@@ -73,11 +85,12 @@ async def _fetch_lists() -> list[dict]:
             "size": r.get("size", 0),
         }
         for r in records
-        if r.get("objectTypeId") == "0-1"
+        if r.get("objectTypeId") == "0-1"  # Filter to contact lists only (0-1 = contacts object type)
     ]
 
 
 async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
+    """Fetch contacts in a specific list. Returns (contacts_list, list_name) tuple."""
     client = get_client()
     lists = await client.list_lists(limit=50)
     list_name = ""
@@ -92,6 +105,7 @@ async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
     contacts = [
         {
             "id": r.get("id", ""),
+            # Safely extract nested properties, defaulting if None
             "firstname": (r.get("properties", {}) or {}).get("firstname", ""),
             "lastname": (r.get("properties", {}) or {}).get("lastname", ""),
             "email": (r.get("properties", {}) or {}).get("email", ""),
@@ -105,7 +119,7 @@ async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TOOLS
+# EMAIL TOOLS (entry point)
 # ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -117,6 +131,7 @@ async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def get_emails() -> types.CallToolResult:
+    """Fetch latest marketing emails from HubSpot with performance stats."""
     try:
         items = await _fetch_emails()
     except HubSpotAuthError as exc:
@@ -134,11 +149,17 @@ async def get_emails() -> types.CallToolResult:
     )
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# LIST TOOLS (widget-driven navigation)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
 @mcp.tool(
     description="Get contact lists from HubSpot. Called by the widget for drill-down navigation.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def get_lists() -> types.CallToolResult:
+    """Fetch contact lists (segments) from HubSpot."""
     try:
         items = await _fetch_lists()
     except HubSpotAuthError as exc:
@@ -161,6 +182,11 @@ async def get_lists() -> types.CallToolResult:
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def get_list_contacts(list_id: str) -> types.CallToolResult:
+    """Fetch contacts belonging to a specific list.
+
+    Args:
+        list_id: HubSpot list ID to fetch contacts from
+    """
     try:
         items, list_name = await _fetch_list_contacts(list_id)
     except HubSpotAuthError as exc:
@@ -178,17 +204,28 @@ async def get_list_contacts(list_id: str) -> types.CallToolResult:
     )
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# LIST MEMBERSHIP TOOLS (widget-driven CRUD)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
 @mcp.tool(
     description="Add a contact to a static list by email. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
+    """Add a contact to a list by email address.
+
+    Args:
+        list_id:       HubSpot list ID
+        contact_email: Email of the contact to add
+    """
     try:
         client = get_client()
         contact_id = await client.search_contact_by_email(contact_email)
         if not contact_id:
             return _error_result(f"No contact found with email: {contact_email}")
-        await client.add_to_list(list_id, [int(contact_id)])
+        await client.add_to_list(list_id, [int(contact_id)])  # HubSpot membership API expects integer record IDs
         items, list_name = await _fetch_list_contacts(list_id)
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
@@ -209,9 +246,15 @@ async def add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def remove_from_list(list_id: str, contact_id: str) -> types.CallToolResult:
+    """Remove a contact from a list.
+
+    Args:
+        list_id:    HubSpot list ID
+        contact_id: Contact ID to remove
+    """
     try:
         client = get_client()
-        await client.remove_from_list(list_id, [int(contact_id)])
+        await client.remove_from_list(list_id, [int(contact_id)])  # HubSpot membership API expects integer record IDs
         items, list_name = await _fetch_list_contacts(list_id)
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
@@ -227,11 +270,23 @@ async def remove_from_list(list_id: str, contact_id: str) -> types.CallToolResul
     )
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# EMAIL & LIST EDITING TOOLS (widget-driven)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
 @mcp.tool(
     description="Update a marketing email's name or subject. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def update_email(email_id: str, name: str = "", subject: str = "") -> types.CallToolResult:
+    """Update a marketing email's name or subject.
+
+    Args:
+        email_id: HubSpot email ID
+        name:     Updated email name (empty = no change)
+        subject:  Updated subject line (empty = no change)
+    """
     try:
         client = get_client()
         data: dict = {}
@@ -260,6 +315,12 @@ async def update_email(email_id: str, name: str = "", subject: str = "") -> type
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def update_list(list_id: str, name: str) -> types.CallToolResult:
+    """Rename a contact list.
+
+    Args:
+        list_id: HubSpot list ID
+        name:    New list name
+    """
     try:
         client = get_client()
         await client.update_list(list_id, name)

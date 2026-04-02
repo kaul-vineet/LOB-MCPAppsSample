@@ -438,6 +438,72 @@ If the widget is not rendering in M365 Copilot, check these three things:
 
 ---
 
+## 🧰 Using This as a Scaffolding
+
+This repo is designed as a **reference implementation** — fork it, copy an app folder, and connect your own LOB system. Here's how:
+
+### Adding a new LOB app (e.g., Jira, Zendesk, Dynamics)
+
+1. **Copy any app folder** as a template (we recommend `sf-mcp-app/` for full CRUD, or `sap-mcp-app/` for read-heavy with mock writes):
+   ```bash
+   cp -r sf-mcp-app/ jira-mcp-app/
+   ```
+
+2. **Rename the Python package**: `sf_crm_mcp/` → `jira_mcp/`. Update `pyproject.toml` accordingly.
+
+3. **Replace the API client** (`salesforce.py` → `jira_client.py`): implement your LOB's authentication and REST/GraphQL calls. Follow the same pattern — async methods, custom exceptions, singleton `get_client()`.
+
+4. **Rewrite `server.py` tools**: replace Leads/Opportunities with your entity types. Keep the same structure:
+   - `_fetch_*()` helpers that call the client
+   - `@mcp.tool(meta={"ui": {"resourceUri": WIDGET_URI}})` decorators
+   - Return `types.CallToolResult` with both `content` and `structuredContent`
+
+5. **Build your widget** (`web/widget.html`): use the existing widgets as templates. The critical pattern is the `postMessage`/`openai` bridge — copy it exactly, then change the HTML rendering.
+
+6. **Wire into the agent**: add your tools to `lob-agent/appPackage/ai-plugin.json` (new runtime block), `mcp-tools.json` (tool schemas with `_meta`), and `instruction.txt` (routing rules).
+
+7. **Add a tunnel port**: `devtunnel port create gtc-tunnel -p 300X`
+
+### Key patterns to preserve
+
+| Pattern | Why it matters |
+|---|---|
+| `_meta.ui.resourceUri` on every tool | M365 Copilot loads the widget from this URI |
+| `structuredContent` in every response | The widget reads this JSON to render data |
+| `_error_result()` helper | Consistent error display in the widget |
+| `mcp.streamable_http_app()` + CORS | Required for M365 Copilot's iframe renderer |
+| `postMessage` bridge in widget.html | Enables test harness + M365 host communication |
+| `.env.example` + `.gitignore` for `.env` | Credentials never committed to git |
+
+### Code structure convention
+
+Every MCP app follows this exact layout:
+```
+{lob}-mcp-app/
+├── .env.example              # Template — user copies to .env
+├── .gitignore                # Excludes .venv, .env, __pycache__
+├── pyproject.toml            # Dependencies + entry point
+├── {lob}_mcp/
+│   ├── __init__.py           # Empty
+│   ├── __main__.py           # Calls server.main()
+│   ├── {lob}_client.py       # API client (auth, REST calls, error handling)
+│   ├── server.py             # MCP tools, prompts, widget resource, entry point
+│   └── web/
+│       └── widget.html       # Interactive widget rendered in M365 Copilot
+└── tests/
+    └── widget_test.html      # Standalone test harness with mock data
+```
+
+### Widget development tips
+
+- Open `tests/widget_test.html` in a browser — no server needed
+- Click the mock data buttons to test rendering, CRUD forms, error states
+- Use the **Theme toggle** to verify dark mode support
+- The widget communicates via `window.parent.postMessage()` (test harness) or `window.openai.callTool()` (M365 Copilot)
+- Always include a `notifyHeight()` call after rendering to resize the iframe
+
+---
+
 ## References
 
 - [MCP Apps in M365 Copilot](https://learn.microsoft.com/microsoft-365-copilot/extensibility/mcp-apps-overview)

@@ -1,3 +1,11 @@
+"""
+ServiceNow ITSM MCP Server — 8 tools for Incidents, Requests & Request Items.
+
+Supports both OAuth 2.0 (client credentials) and Basic Auth, controlled by
+SERVICENOW_AUTH_MODE env var. All tools return structuredContent for the widget,
+with _meta on the decorator to ensure M365 Copilot discovers the widget URI.
+"""
+
 import base64
 import os
 import time

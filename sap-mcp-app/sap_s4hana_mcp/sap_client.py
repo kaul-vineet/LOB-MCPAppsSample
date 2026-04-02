@@ -63,8 +63,9 @@ class SAPClient:
             "Content-Type": "application/json",
         }
         if self.is_sandbox:
-            headers["apikey"] = self._api_key
+            headers["apikey"] = self._api_key            # API Hub uses apikey header
         else:
+            # Tenant mode uses HTTP Basic Auth (Communication User credentials)
             creds = base64.b64encode(
                 f"{self._username}:{self._password}".encode()
             ).decode()
@@ -174,9 +175,11 @@ class SAPClient:
     ) -> dict[str, Any]:
         """
         Create a new entity.
-        In sandbox mode returns mock data; in tenant mode POSTs to the API.
+        In sandbox mode: returns mock data with a timestamp-based ID (no API call).
+        In tenant mode: POSTs to the real OData API.
         """
         if self.is_sandbox:
+            # Sandbox is read-only — return mock success with generated ID
             mock_id = f"MOCK-PO-{int(time.time())}"
             print(f"[sandbox] Mock create {service}/{entity} → {mock_id}")
             return {"id": mock_id, **data}
@@ -200,9 +203,10 @@ class SAPClient:
     ) -> None:
         """
         Update an entity by key.
-        In sandbox mode this is a no-op; in tenant mode PATCHes the API.
+        In sandbox mode: no-op (logs to stdout). In tenant mode: PATCHes the API.
         """
         if self.is_sandbox:
+            # Sandbox is read-only — log and return silently
             print(f"[sandbox] Mock update {service}/{entity}('{key}'): {data}")
             return
 
