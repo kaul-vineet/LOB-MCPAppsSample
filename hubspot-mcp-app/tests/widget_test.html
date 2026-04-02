@@ -40,19 +40,19 @@
 </div>
 <p class="hint">Read-only dashboard showing email performance stats with open/click rates.</p>
 
-<div class="section-label">📇 Contacts — get_contacts</div>
+<div class="section-label">📋 Contact Lists — get_lists</div>
 <div class="controls">
-  <button class="green" onclick="sendContacts()">Send Mock Contacts (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyContacts()">Send Empty Contacts</button>
+  <button class="green" onclick="sendLists()">Send Mock Lists (4 rows)</button>
+  <button class="secondary" onclick="sendEmptyLists()">Send Empty Lists</button>
 </div>
-<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New Contact" to create a contact.</p>
+<p class="hint">Click "View →" on any list to drill into its contacts. Tests navigation flow.</p>
 
-<div class="section-label">🏢 Companies — get_companies</div>
+<div class="section-label">👥 List Contacts — get_list_contacts</div>
 <div class="controls">
-  <button class="blue" onclick="sendCompanies()">Send Mock Companies (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyCompanies()">Send Empty Companies</button>
+  <button class="blue" onclick="sendListContacts()">Send Mock List Contacts (3 rows)</button>
+  <button class="secondary" onclick="sendEmptyListContacts()">Send Empty List Contacts</button>
 </div>
-<p class="hint">Click ✎ Edit on any row to open edit form. Click "+ New Company" to create a company.</p>
+<p class="hint">Click ✎ to edit, ✕ to remove, or "+ Add Contact" to add. Tests list membership ops.</p>
 
 <div class="section-label">⚠️ Error Simulation</div>
 <div class="controls">
@@ -75,8 +75,6 @@
 
 <script>
   var isDark = false;
-  var nextContactId = 106;
-  var nextCompanyId = 306;
 
   // ── Mock Data: Marketing Emails ────────────────────────────────────────
   var MOCK_EMAILS = {
@@ -93,42 +91,34 @@
 
   var MOCK_EMPTY_EMAILS = { type: "emails", total: 0, items: [] };
 
-  // ── Mock Data: Contacts ─────────────────────────────────────────────────
-  var MOCK_CONTACTS = {
-    type: "contacts",
-    total: 5,
-    items: [
-      { id: "101", firstname: "Sarah",   lastname: "Chen",    email: "sarah.chen@techflow.com",     phone: "(415) 555-0101", company: "TechFlow Inc",        lifecyclestage: "lead" },
-      { id: "102", firstname: "Marcus",  lastname: "Rivera",  email: "m.rivera@databridge.io",      phone: "(212) 555-0202", company: "DataBridge Corp",     lifecyclestage: "opportunity" },
-      { id: "103", firstname: "Aisha",   lastname: "Patel",   email: "aisha@cloudnine.dev",         phone: "(650) 555-0303", company: "CloudNine Solutions", lifecyclestage: "subscriber" },
-      { id: "104", firstname: "James",   lastname: "O'Brien", email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", company: "Summit Analytics",   lifecyclestage: "customer" },
-      { id: "105", firstname: "Lin",     lastname: "Wei",     email: "lin.wei@qdynamics.cn",        phone: "(408) 555-0505", company: "Quantum Dynamics",    lifecyclestage: "lead" }
+  // ── Mock Data: Contact Lists ───────────────────────────────────────────
+  var MOCK_LISTS = {
+    type: "lists", total: 4, items: [
+      { id: "101", name: "Newsletter Subscribers", type: "DYNAMIC", size: 2450 },
+      { id: "102", name: "Spring Campaign 2025", type: "MANUAL", size: 340 },
+      { id: "103", name: "VIP Customers", type: "MANUAL", size: 89 },
+      { id: "104", name: "Event Attendees — Q1", type: "MANUAL", size: 156 },
     ]
   };
 
-  var MOCK_EMPTY_CONTACTS = { type: "contacts", total: 0, items: [] };
+  var MOCK_EMPTY_LISTS = { type: "lists", total: 0, items: [] };
 
-  // ── Mock Data: Companies ───────────────────────────────────────────────
-  var MOCK_COMPANIES = {
-    type: "companies",
-    total: 5,
-    items: [
-      { id: "301", name: "TechFlow Inc",        domain: "techflow.com",         industry: "Technology",     city: "San Francisco", phone: "(415) 555-1000", employees: "250" },
-      { id: "302", name: "DataBridge Corp",      domain: "databridge.io",        industry: "Data Analytics", city: "New York",      phone: "(212) 555-2000", employees: "500" },
-      { id: "303", name: "CloudNine Solutions",   domain: "cloudnine.dev",        industry: "Cloud Services", city: "Palo Alto",     phone: "(650) 555-3000", employees: "120" },
-      { id: "304", name: "Summit Analytics",      domain: "summit-analytics.com", industry: "Analytics",      city: "Chicago",       phone: "(312) 555-4000", employees: "75" },
-      { id: "305", name: "Quantum Dynamics",      domain: "qdynamics.cn",         industry: "Research",       city: "San Jose",      phone: "(408) 555-5000", employees: "1800" }
+  // ── Mock Data: List Contacts ───────────────────────────────────────────
+  var MOCK_LIST_CONTACTS = {
+    type: "list_contacts", list_id: "102", list_name: "Spring Campaign 2025", total: 3, items: [
+      { id: "501", firstname: "Sarah", lastname: "Chen", email: "sarah.chen@example.com", phone: "+1-555-0101", company: "Acme Corp", lifecyclestage: "lead" },
+      { id: "502", firstname: "James", lastname: "Wilson", email: "j.wilson@example.com", phone: "+1-555-0102", company: "TechStart", lifecyclestage: "subscriber" },
+      { id: "503", firstname: "Maria", lastname: "Garcia", email: "m.garcia@example.com", phone: "+1-555-0103", company: "GlobalTrade", lifecyclestage: "opportunity" },
     ]
   };
 
-  var MOCK_EMPTY_COMPANIES = { type: "companies", total: 0, items: [] };
+  var MOCK_EMPTY_LIST_CONTACTS = { type: "list_contacts", list_id: "102", list_name: "Spring Campaign 2025", total: 0, items: [] };
 
   // ── Mock Error ──────────────────────────────────────────────────────────
   var MOCK_ERROR = { error: true, message: "HubSpot authentication failed: Missing HubSpot credentials. Set HUBSPOT_ACCESS_TOKEN in your .env file." };
 
   // ── Current state (mutated by mock CRUD operations) ─────────────────────
-  var currentContacts  = JSON.parse(JSON.stringify(MOCK_CONTACTS));
-  var currentCompanies = JSON.parse(JSON.stringify(MOCK_COMPANIES));
+  var currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   function post(data) {
@@ -141,13 +131,13 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  function sendEmails()        { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMAILS } }); log('\u2192 Sent mock emails (5 rows)'); }
-  function sendEmptyEmails()   { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
-  function sendContacts()      { currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('\u2192 Sent mock contacts (5 rows)'); }
-  function sendEmptyContacts() { currentContacts = JSON.parse(JSON.stringify(MOCK_EMPTY_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentContacts } }); log('\u2192 Sent empty contacts'); }
-  function sendCompanies()     { currentCompanies = JSON.parse(JSON.stringify(MOCK_COMPANIES)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentCompanies } }); log('\u2192 Sent mock companies (5 rows)'); }
-  function sendEmptyCompanies(){ currentCompanies = JSON.parse(JSON.stringify(MOCK_EMPTY_COMPANIES)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentCompanies } }); log('\u2192 Sent empty companies'); }
-  function sendError()         { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
+  function sendEmails()           { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMAILS } }); log('\u2192 Sent mock emails (5 rows)'); }
+  function sendEmptyEmails()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
+  function sendLists()            { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_LISTS } }); log('\u2192 Sent mock lists (4 rows)'); }
+  function sendEmptyLists()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_LISTS } }); log('\u2192 Sent empty lists'); }
+  function sendListContacts()     { currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentListContacts } }); log('\u2192 Sent mock list contacts (3 rows)'); }
+  function sendEmptyListContacts(){ post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_LIST_CONTACTS } }); log('\u2192 Sent empty list contacts'); }
+  function sendError()            { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
 
   function toggleTheme() {
     isDark = !isDark;
@@ -173,30 +163,62 @@
       setTimeout(function() {
         var result;
 
-        // ── CREATE CONTACT ──
-        if (tool === 'create_contact') {
+        // ── GET LISTS ──
+        if (tool === 'get_lists') {
+          result = JSON.parse(JSON.stringify(MOCK_LISTS));
+          log('\u2192 Returned mock lists');
+        }
+
+        // ── GET LIST CONTACTS ──
+        else if (tool === 'get_list_contacts') {
+          var listId = args.list_id;
+          // Find the list name from mock data
+          var listName = 'Unknown List';
+          for (var li = 0; li < MOCK_LISTS.items.length; li++) {
+            if (MOCK_LISTS.items[li].id === listId) {
+              listName = MOCK_LISTS.items[li].name;
+              break;
+            }
+          }
+          currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
+          currentListContacts.list_id = listId;
+          currentListContacts.list_name = listName;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Returned list contacts for list ' + listId + ' (' + listName + ')');
+        }
+
+        // ── ADD TO LIST ──
+        else if (tool === 'add_to_list') {
           var newContact = {
-            id: String(nextContactId++),
-            firstname:      args.firstname  || '',
-            lastname:       args.lastname   || '',
-            email:          args.email       || '',
-            phone:          args.phone       || '',
-            company:        args.company     || '',
-            lifecyclestage: args.lifecyclestage || 'lead'
+            id: String(600 + currentListContacts.items.length),
+            firstname: args.contact_email.split('@')[0],
+            lastname: '(added)',
+            email: args.contact_email,
+            phone: '',
+            company: '',
+            lifecyclestage: 'lead'
           };
-          currentContacts.items.unshift(newContact);
-          if (currentContacts.items.length > 5) currentContacts.items.pop();
-          currentContacts.total = currentContacts.items.length;
-          result = JSON.parse(JSON.stringify(currentContacts));
-          result._createdId = newContact.id;
-          log('\u2192 Created contact: ' + newContact.firstname + ' ' + newContact.lastname + ' (id: ' + newContact.id + ')');
+          currentListContacts.items.push(newContact);
+          currentListContacts.total = currentListContacts.items.length;
+          currentListContacts._addedEmail = args.contact_email;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Added ' + args.contact_email + ' to list ' + args.list_id);
+        }
+
+        // ── REMOVE FROM LIST ──
+        else if (tool === 'remove_from_list') {
+          var removeId = args.contact_id;
+          currentListContacts.items = currentListContacts.items.filter(function(c) { return c.id !== removeId; });
+          currentListContacts.total = currentListContacts.items.length;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Removed contact ' + removeId + ' from list ' + args.list_id);
         }
 
         // ── UPDATE CONTACT ──
         else if (tool === 'update_contact') {
-          for (var i = 0; i < currentContacts.items.length; i++) {
-            if (currentContacts.items[i].id === args.contact_id) {
-              var c = currentContacts.items[i];
+          for (var i = 0; i < currentListContacts.items.length; i++) {
+            if (currentListContacts.items[i].id === args.contact_id) {
+              var c = currentListContacts.items[i];
               if (args.firstname  !== undefined) c.firstname  = args.firstname;
               if (args.lastname   !== undefined) c.lastname   = args.lastname;
               if (args.email      !== undefined) c.email      = args.email;
@@ -207,43 +229,7 @@
               break;
             }
           }
-          result = JSON.parse(JSON.stringify(currentContacts));
-        }
-
-        // ── CREATE COMPANY ──
-        else if (tool === 'create_company') {
-          var newCompany = {
-            id: String(nextCompanyId++),
-            name:      args.name     || '',
-            domain:    args.domain   || '',
-            industry:  args.industry || '',
-            city:      args.city     || '',
-            phone:     args.phone    || '',
-            employees: args.employees || ''
-          };
-          currentCompanies.items.unshift(newCompany);
-          if (currentCompanies.items.length > 5) currentCompanies.items.pop();
-          currentCompanies.total = currentCompanies.items.length;
-          result = JSON.parse(JSON.stringify(currentCompanies));
-          result._createdId = newCompany.id;
-          log('\u2192 Created company: ' + newCompany.name + ' (id: ' + newCompany.id + ')');
-        }
-
-        // ── UPDATE COMPANY ──
-        else if (tool === 'update_company') {
-          for (var j = 0; j < currentCompanies.items.length; j++) {
-            if (currentCompanies.items[j].id === args.company_id) {
-              var co = currentCompanies.items[j];
-              if (args.name     !== undefined) co.name     = args.name;
-              if (args.domain   !== undefined) co.domain   = args.domain;
-              if (args.industry !== undefined) co.industry = args.industry;
-              if (args.city     !== undefined) co.city     = args.city;
-              if (args.phone    !== undefined) co.phone    = args.phone;
-              log('\u2192 Updated company: ' + co.name);
-              break;
-            }
-          }
-          result = JSON.parse(JSON.stringify(currentCompanies));
+          result = JSON.parse(JSON.stringify(currentListContacts));
         }
 
         // ── UNKNOWN TOOL ──

@@ -393,17 +393,16 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 
 > 📡 In sandbox mode, create/update tools return mock demo data.
 
-### 🧡 HubSpot Marketing (7 tools — port 3003)
+### 🧡 HubSpot Marketing (6 tools — port 3003)
 
 | Tool | Description | Required params |
 |---|---|---|
 | `get_emails` | Marketing emails with performance stats | — |
-| `get_contacts` | Latest 5 contacts | — |
-| `create_contact` | Create a contact | `email`, `firstname`, `lastname` |
-| `update_contact` | Update a contact | `contact_id` |
-| `get_companies` | Latest 5 companies | — |
-| `create_company` | Create a company | `name` |
-| `update_company` | Update a company | `company_id` |
+| `get_lists` | Contact lists/segments | — |
+| `get_list_contacts` | Contacts in a specific list | `list_id` |
+| `add_to_list` | Add contact to a list by email | `list_id`, `contact_email` |
+| `remove_from_list` | Remove contact from a list | `list_id`, `contact_id` |
+| `update_contact` | Edit a contact's properties | `contact_id` |
 
 ---
 

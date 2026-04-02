@@ -180,6 +180,84 @@ class HubSpotClient:
         )
         self._raise_for_error(resp, f"update {object_type}/{object_id}")
 
+    # ── Lists ─────────────────────────────────────────────────────────────────
+
+    async def list_lists(self, limit: int = 10) -> list[dict]:
+        """Fetch contact lists."""
+        resp = await self._request("GET", "/crm/v3/lists", params={
+            "includeFilters": "false",
+        })
+        self._raise_for_error(resp, "list lists")
+        data = resp.json()
+        results = data.get("lists", [])[:limit]
+        return results
+
+    async def get_list_memberships(self, list_id: str, limit: int = 10) -> list[str]:
+        """Fetch record IDs in a list."""
+        resp = await self._request(
+            "GET",
+            f"/crm/v3/lists/{list_id}/memberships",
+        )
+        self._raise_for_error(resp, f"list memberships {list_id}")
+        data = resp.json()
+        return data.get("results", [])[:limit]
+
+    async def get_contacts_by_ids(self, contact_ids: list[str]) -> list[dict]:
+        """Batch fetch contacts by their IDs."""
+        if not contact_ids:
+            return []
+        resp = await self._request(
+            "POST",
+            "/crm/v3/objects/contacts/batch/read",
+            json_body={
+                "inputs": [{"id": cid} for cid in contact_ids],
+                "properties": ["firstname", "lastname", "email", "phone", "company", "lifecyclestage"],
+            },
+        )
+        self._raise_for_error(resp, "batch read contacts")
+        data = resp.json()
+        return data.get("results", [])
+
+    async def add_to_list(self, list_id: str, record_ids: list[str]) -> None:
+        """Add records to a static list."""
+        resp = await self._request(
+            "PUT",
+            f"/crm/v3/lists/{list_id}/memberships/add",
+            json_body=record_ids,
+        )
+        self._raise_for_error(resp, f"add to list {list_id}")
+
+    async def remove_from_list(self, list_id: str, record_ids: list[str]) -> None:
+        """Remove records from a static list."""
+        resp = await self._request(
+            "PUT",
+            f"/crm/v3/lists/{list_id}/memberships/remove",
+            json_body=record_ids,
+        )
+        self._raise_for_error(resp, f"remove from list {list_id}")
+
+    async def search_contact_by_email(self, email: str) -> str | None:
+        """Search for a contact by email and return their ID."""
+        resp = await self._request(
+            "POST",
+            "/crm/v3/objects/contacts/search",
+            json_body={
+                "filterGroups": [{
+                    "filters": [{
+                        "propertyName": "email",
+                        "operator": "EQ",
+                        "value": email,
+                    }]
+                }],
+                "properties": ["email"],
+                "limit": 1,
+            },
+        )
+        self._raise_for_error(resp, "search contact by email")
+        data = resp.json()
+        results = data.get("results", [])
+        return results[0]["id"] if results else None
+
 
 # ── Module-level singleton ────────────────────────────────────────────────────
 # Lazily initialised so the module can be imported before env vars are loaded.

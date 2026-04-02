@@ -1,5 +1,5 @@
 """
-HubSpot Marketing MCP Server — 7 tools for Marketing Emails, Contacts & Companies.
+HubSpot Marketing MCP Server — 6 tools for Marketing Emails, Lists & Contacts.
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -47,7 +47,6 @@ def _error_result(message: str) -> types.CallToolResult:
 
 
 CONTACT_PROPERTIES = ["firstname", "lastname", "email", "phone", "company", "lifecyclestage"]
-COMPANY_PROPERTIES = ["name", "domain", "industry", "city", "phone", "numberofemployees"]
 
 
 async def _fetch_emails() -> list[dict]:
@@ -73,44 +72,54 @@ async def _fetch_emails() -> list[dict]:
     ]
 
 
-async def _fetch_contacts() -> list[dict]:
-    """Fetch the 5 most recently created Contacts."""
-    hs = get_client()
-    records = await hs.list_objects("contacts", CONTACT_PROPERTIES, limit=5)
+async def _fetch_lists() -> list[dict]:
+    """Fetch contact lists."""
+    client = get_client()
+    records = await client.list_lists(limit=10)
     return [
+        {
+            "id": str(r.get("listId", "")),
+            "name": r.get("name", ""),
+            "type": r.get("processingType", ""),
+            "size": r.get("size", 0),
+            "object_type": r.get("objectTypeId", ""),
+        }
+        for r in records
+        if r.get("objectTypeId") == "0-1"  # contacts only
+    ]
+
+
+async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
+    """Fetch contacts in a specific list. Returns (contacts, list_name)."""
+    client = get_client()
+    # Get list info
+    lists = await client.list_lists(limit=50)
+    list_name = ""
+    for lst in lists:
+        if str(lst.get("listId", "")) == list_id:
+            list_name = lst.get("name", "")
+            break
+
+    # Get member IDs
+    member_ids = await client.get_list_memberships(list_id, limit=10)
+    if not member_ids:
+        return [], list_name
+
+    # Batch fetch contact details
+    raw_contacts = await client.get_contacts_by_ids([str(m) for m in member_ids[:10]])
+    contacts = [
         {
             "id":             r.get("id", ""),
-            "firstname":      r.get("firstname") or "",
-            "lastname":       r.get("lastname") or "",
-            "email":          r.get("email") or "",
-            "phone":          r.get("phone") or "",
-            "company":        r.get("company") or "",
-            "lifecyclestage": r.get("lifecyclestage") or "",
+            "firstname":      (r.get("properties", {}) or {}).get("firstname", ""),
+            "lastname":       (r.get("properties", {}) or {}).get("lastname", ""),
+            "email":          (r.get("properties", {}) or {}).get("email", ""),
+            "phone":          (r.get("properties", {}) or {}).get("phone", ""),
+            "company":        (r.get("properties", {}) or {}).get("company", ""),
+            "lifecyclestage": (r.get("properties", {}) or {}).get("lifecyclestage", ""),
         }
-        for r in records
+        for r in raw_contacts
     ]
-
-
-async def _fetch_companies() -> list[dict]:
-    """Fetch the 5 most recently created Companies."""
-    client = get_client()
-    records = await client.list_objects(
-        "companies",
-        properties=COMPANY_PROPERTIES,
-        limit=5,
-    )
-    return [
-        {
-            "id": r.get("id", ""),
-            "name": r.get("name") or "",
-            "domain": r.get("domain") or "",
-            "industry": r.get("industry") or "",
-            "city": r.get("city") or "",
-            "phone": r.get("phone") or "",
-            "employees": r.get("numberofemployees") or "",
-        }
-        for r in records
-    ]
+    return contacts, list_name
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -156,38 +165,38 @@ async def get_emails() -> types.CallToolResult:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# CONTACT TOOLS
+# LIST TOOLS
 # ══════════════════════════════════════════════════════════════════════════════
 
 
 @mcp.tool(
     description=(
-        "Get the 5 most recent Contacts from HubSpot. "
-        "Returns contact name, email, phone, company, and lifecycle stage."
+        "Get contact lists (segments) from HubSpot. "
+        "Returns list name, type (MANUAL/DYNAMIC), and size."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_contacts() -> types.CallToolResult:
-    """Fetch latest 5 Contacts from HubSpot."""
+async def get_lists() -> types.CallToolResult:
+    """Fetch contact lists from HubSpot."""
     try:
-        items = await _fetch_contacts()
+        items = await _fetch_lists()
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
     except HubSpotAPIError as exc:
         return _error_result(f"HubSpot API error: {exc}")
     except Exception as exc:
-        return _error_result(f"Unexpected error fetching contacts: {exc}")
+        return _error_result(f"Unexpected error fetching lists: {exc}")
 
     structured = {
-        "type": "contacts",
+        "type": "lists",
         "total": len(items),
         "items": items,
     }
 
     summary = (
-        "No contacts found."
+        "No lists found."
         if not items
-        else f"Retrieved {len(items)} contact(s). See the widget for details."
+        else f"Retrieved {len(items)} list(s). See the widget for details."
     )
 
     return types.CallToolResult(
@@ -198,68 +207,138 @@ async def get_contacts() -> types.CallToolResult:
 
 @mcp.tool(
     description=(
-        "Create a new Contact in HubSpot. "
-        "Requires email at minimum. "
-        "Returns the updated list of latest 5 contacts."
+        "Get contacts belonging to a specific list. "
+        "Returns contact name, email, phone, company, and lifecycle stage."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_contact(
-    email: str,
-    firstname: str,
-    lastname: str,
-    phone: str = "",
-    company: str = "",
-    lifecyclestage: str = "lead",
-) -> types.CallToolResult:
+async def get_list_contacts(list_id: str) -> types.CallToolResult:
     """
     Args:
-        email:          Contact's email address (required)
-        firstname:      Contact's first name (required)
-        lastname:       Contact's last name (required)
-        phone:          Contact's phone number
-        company:        Contact's company
-        lifecyclestage: Lifecycle stage (e.g. 'lead', 'subscriber')
+        list_id: HubSpot list ID to fetch contacts from (required)
     """
     try:
-        hs = get_client()
-        data = {"email": email, "firstname": firstname, "lastname": lastname}
-        if phone:          data["phone"] = phone
-        if company:        data["company"] = company
-        if lifecyclestage: data["lifecyclestage"] = lifecyclestage
-
-        new_id = await hs.create_object("contacts", data)
+        items, list_name = await _fetch_list_contacts(list_id)
     except HubSpotAuthError as exc:
         return _error_result(f"HubSpot authentication failed: {exc}")
     except HubSpotAPIError as exc:
-        return _error_result(f"Failed to create contact: {exc}")
+        return _error_result(f"HubSpot API error: {exc}")
     except Exception as exc:
-        return _error_result(f"Unexpected error creating contact: {exc}")
-
-    # Re-fetch the refreshed list
-    try:
-        items = await _fetch_contacts()
-    except Exception:
-        items = []
+        return _error_result(f"Unexpected error fetching list contacts: {exc}")
 
     structured = {
-        "type": "contacts",
+        "type": "list_contacts",
+        "list_id": list_id,
+        "list_name": list_name,
         "total": len(items),
         "items": items,
-        "_createdId": new_id,
     }
 
+    summary = (
+        f"No contacts found in list '{list_name}'."
+        if not items
+        else f"Retrieved {len(items)} contact(s) from list '{list_name}'."
+    )
+
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Contact created (Id: {new_id}). Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
 @mcp.tool(
     description=(
+        "Add a contact to a static list by email address. "
+        "Looks up the contact by email and adds them to the list."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
+    """
+    Args:
+        list_id:       HubSpot list ID (required)
+        contact_email: Email of the contact to add (required)
+    """
+    try:
+        client = get_client()
+        contact_id = await client.search_contact_by_email(contact_email)
+        if not contact_id:
+            return _error_result(f"No contact found with email: {contact_email}")
+
+        await client.add_to_list(list_id, [int(contact_id)])
+
+        items, list_name = await _fetch_list_contacts(list_id)
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to add to list: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error: {exc}")
+
+    structured = {
+        "type": "list_contacts",
+        "list_id": list_id,
+        "list_name": list_name,
+        "total": len(items),
+        "items": items,
+        "_addedEmail": contact_email,
+    }
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_email} added to list '{list_name}'.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Remove a contact from a static list by contact ID. "
+        "Returns the updated list of contacts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def remove_from_list(list_id: str, contact_id: str) -> types.CallToolResult:
+    """
+    Args:
+        list_id:    HubSpot list ID (required)
+        contact_id: Contact ID to remove (required)
+    """
+    try:
+        client = get_client()
+        await client.remove_from_list(list_id, [int(contact_id)])
+
+        items, list_name = await _fetch_list_contacts(list_id)
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to remove from list: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error: {exc}")
+
+    structured = {
+        "type": "list_contacts",
+        "list_id": list_id,
+        "list_name": list_name,
+        "total": len(items),
+        "items": items,
+    }
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_id} removed from list '{list_name}'.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTACT TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
         "Update an existing Contact in HubSpot by its record Id. "
         "Only fields provided will be updated. "
-        "Returns the updated list of latest 5 contacts."
+        "Returns the updated contact data."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
@@ -303,182 +382,25 @@ async def update_contact(
     except Exception as exc:
         return _error_result(f"Unexpected error updating contact: {exc}")
 
-    # Re-fetch the refreshed list
-    try:
-        items = await _fetch_contacts()
-    except Exception:
-        items = []
+    # Return a contacts-type response with the updated fields
+    updated = {
+        "id": contact_id,
+        "firstname": firstname,
+        "lastname": lastname,
+        "email": email,
+        "phone": phone,
+        "company": company,
+        "lifecyclestage": lifecyclestage,
+    }
 
     structured = {
         "type": "contacts",
-        "total": len(items),
-        "items": items,
+        "total": 1,
+        "items": [updated],
     }
 
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
-    )
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# COMPANY TOOLS
-# ══════════════════════════════════════════════════════════════════════════════
-
-
-@mcp.tool(
-    description=(
-        "Get the 5 most recent Companies from HubSpot. "
-        "Returns company name, domain, industry, city, phone, and employee count."
-    ),
-    meta={"ui": {"resourceUri": WIDGET_URI}},
-)
-async def get_companies() -> types.CallToolResult:
-    """Fetch latest 5 Companies from HubSpot."""
-    try:
-        items = await _fetch_companies()
-    except HubSpotAuthError as exc:
-        return _error_result(f"HubSpot authentication failed: {exc}")
-    except HubSpotAPIError as exc:
-        return _error_result(f"HubSpot API error: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error fetching companies: {exc}")
-
-    structured = {
-        "type": "companies",
-        "total": len(items),
-        "items": items,
-    }
-
-    summary = (
-        "No companies found."
-        if not items
-        else f"Retrieved {len(items)} company/companies. See the widget for details."
-    )
-
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
-    )
-
-
-@mcp.tool(
-    description=(
-        "Create a new Company in HubSpot. "
-        "Requires name at minimum. "
-        "Returns the updated list of latest 5 companies."
-    ),
-    meta={"ui": {"resourceUri": WIDGET_URI}},
-)
-async def create_company(
-    name: str,
-    domain: str = "",
-    industry: str = "",
-    city: str = "",
-    phone: str = "",
-) -> types.CallToolResult:
-    """
-    Args:
-        name:     Company name (required)
-        domain:   Company website domain
-        industry: Industry vertical
-        city:     Company city
-        phone:    Company phone number
-    """
-    try:
-        hs = get_client()
-        data: dict = {"name": name}
-        if domain:   data["domain"] = domain
-        if industry: data["industry"] = industry
-        if city:     data["city"] = city
-        if phone:    data["phone"] = phone
-
-        new_id = await hs.create_object("companies", data)
-    except HubSpotAuthError as exc:
-        return _error_result(f"HubSpot authentication failed: {exc}")
-    except HubSpotAPIError as exc:
-        return _error_result(f"Failed to create company: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error creating company: {exc}")
-
-    # Re-fetch the refreshed list
-    try:
-        items = await _fetch_companies()
-    except Exception:
-        items = []
-
-    structured = {
-        "type": "companies",
-        "total": len(items),
-        "items": items,
-        "_createdId": new_id,
-    }
-
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Company created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
-    )
-
-
-@mcp.tool(
-    description=(
-        "Update an existing Company in HubSpot by its record Id. "
-        "Only fields provided will be updated. "
-        "Returns the updated list of latest 5 companies."
-    ),
-    meta={"ui": {"resourceUri": WIDGET_URI}},
-)
-async def update_company(
-    company_id: str,
-    name: str = "",
-    domain: str = "",
-    industry: str = "",
-    city: str = "",
-    phone: str = "",
-) -> types.CallToolResult:
-    """
-    Args:
-        company_id: HubSpot Company record Id (required)
-        name:       Updated company name (empty string = no change)
-        domain:     Updated domain
-        industry:   Updated industry
-        city:       Updated city
-        phone:      Updated phone
-    """
-    try:
-        hs = get_client()
-        data: dict = {}
-        if name:     data["name"] = name
-        if domain:   data["domain"] = domain
-        if industry: data["industry"] = industry
-        if city:     data["city"] = city
-        if phone:    data["phone"] = phone
-
-        if not data:
-            return _error_result("No fields provided to update.")
-
-        await hs.update_object("companies", company_id, data)
-    except HubSpotAuthError as exc:
-        return _error_result(f"HubSpot authentication failed: {exc}")
-    except HubSpotAPIError as exc:
-        return _error_result(f"Failed to update company: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error updating company: {exc}")
-
-    # Re-fetch the refreshed list
-    try:
-        items = await _fetch_companies()
-    except Exception:
-        items = []
-
-    structured = {
-        "type": "companies",
-        "total": len(items),
-        "items": items,
-    }
-
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Company {company_id} updated. Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=f"Contact {contact_id} updated.")],
         structuredContent=structured,
     )
 
@@ -506,33 +428,16 @@ def show_emails() -> list[PromptMessage]:
 
 
 @mcp.prompt()
-def show_contacts() -> list[PromptMessage]:
-    """Show the latest 5 contacts from HubSpot."""
+def show_lists() -> list[PromptMessage]:
+    """Show contact lists from HubSpot."""
     return [
         PromptMessage(
             role="user",
             content=TextContent(
                 type="text",
                 text=(
-                    "Show me the latest 5 contacts from HubSpot. "
-                    "Call get_contacts and display the results in the widget."
-                ),
-            ),
-        )
-    ]
-
-
-@mcp.prompt()
-def show_companies() -> list[PromptMessage]:
-    """Show the latest 5 companies from HubSpot."""
-    return [
-        PromptMessage(
-            role="user",
-            content=TextContent(
-                type="text",
-                text=(
-                    "Show me the latest 5 companies from HubSpot. "
-                    "Call get_companies and display the results in the widget."
+                    "Show me the contact lists from HubSpot. "
+                    "Call get_lists and display the results in the widget."
                 ),
             ),
         )
@@ -541,7 +446,7 @@ def show_companies() -> list[PromptMessage]:
 
 @mcp.prompt()
 def manage_marketing() -> list[PromptMessage]:
-    """Help manage HubSpot marketing data — emails, contacts, and companies."""
+    """Help manage HubSpot marketing — emails, lists, and contacts."""
     return [
         PromptMessage(
             role="user",
@@ -549,9 +454,9 @@ def manage_marketing() -> list[PromptMessage]:
                 type="text",
                 text=(
                     "I want to manage my HubSpot marketing data. "
-                    "Start by showing me the latest 5 marketing emails with get_emails. "
-                    "I may want to view contacts, manage companies, "
-                    "or review email performance stats."
+                    "Start by showing me the latest marketing emails with get_emails. "
+                    "I may want to view contact lists, drill into list members, "
+                    "or add/remove contacts from lists."
                 ),
             ),
         )

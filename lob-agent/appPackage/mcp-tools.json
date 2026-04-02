@@ -408,15 +408,15 @@
             }
         },
         {
-            "name": "get_contacts",
-            "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage.",
+            "name": "get_lists",
+            "description": "Get contact lists (segments) from HubSpot. Returns list name, type (MANUAL/DYNAMIC), and size.",
             "inputSchema": {
                 "properties": {},
                 "required": [],
-                "title": "get_contactsArguments",
+                "title": "get_listsArguments",
                 "type": "object"
             },
-            "title": "Get contacts",
+            "title": "Get lists",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -424,22 +424,55 @@
             }
         },
         {
-            "name": "create_contact",
-            "description": "Create a new Contact in HubSpot. Requires email at minimum. Returns the updated list of latest 5 contacts.",
+            "name": "get_list_contacts",
+            "description": "Get contacts belonging to a specific HubSpot list. Returns contact name, email, phone, company, and lifecycle stage.",
             "inputSchema": {
                 "properties": {
-                    "email":          { "title": "Email",           "type": "string" },
-                    "firstname":      { "title": "First Name",      "type": "string" },
-                    "lastname":       { "title": "Last Name",       "type": "string" },
-                    "phone":          { "title": "Phone",           "type": "string", "default": "" },
-                    "company":        { "title": "Company",         "type": "string", "default": "" },
-                    "lifecyclestage": { "title": "Lifecycle Stage", "type": "string", "default": "lead" }
+                    "list_id": { "title": "List ID", "type": "string" }
                 },
-                "required": ["email", "firstname", "lastname"],
-                "title": "create_contactArguments",
+                "required": ["list_id"],
+                "title": "get_list_contactsArguments",
                 "type": "object"
             },
-            "title": "Create contact",
+            "title": "Get list contacts",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "add_to_list",
+            "description": "Add a contact to a static HubSpot list by email address.",
+            "inputSchema": {
+                "properties": {
+                    "list_id":       { "title": "List ID",       "type": "string" },
+                    "contact_email": { "title": "Contact Email", "type": "string" }
+                },
+                "required": ["list_id", "contact_email"],
+                "title": "add_to_listArguments",
+                "type": "object"
+            },
+            "title": "Add to list",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "remove_from_list",
+            "description": "Remove a contact from a static HubSpot list by contact ID.",
+            "inputSchema": {
+                "properties": {
+                    "list_id":    { "title": "List ID",    "type": "string" },
+                    "contact_id": { "title": "Contact ID", "type": "string" }
+                },
+                "required": ["list_id", "contact_id"],
+                "title": "remove_from_listArguments",
+                "type": "object"
+            },
+            "title": "Remove from list",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -448,7 +481,7 @@
         },
         {
             "name": "update_contact",
-            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts.",
+            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated.",
             "inputSchema": {
                 "properties": {
                     "contact_id":     { "title": "Contact ID",      "type": "string" },
@@ -464,67 +497,6 @@
                 "type": "object"
             },
             "title": "Update contact",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "get_companies",
-            "description": "Get the 5 most recent Companies from HubSpot. Returns company name, domain, industry, city, and phone.",
-            "inputSchema": {
-                "properties": {},
-                "required": [],
-                "title": "get_companiesArguments",
-                "type": "object"
-            },
-            "title": "Get companies",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "create_company",
-            "description": "Create a new Company in HubSpot. Requires name at minimum. Returns the updated list of latest 5 companies.",
-            "inputSchema": {
-                "properties": {
-                    "name":     { "title": "Name",     "type": "string" },
-                    "domain":   { "title": "Domain",   "type": "string", "default": "" },
-                    "industry": { "title": "Industry", "type": "string", "default": "" },
-                    "city":     { "title": "City",     "type": "string", "default": "" },
-                    "phone":    { "title": "Phone",    "type": "string", "default": "" }
-                },
-                "required": ["name"],
-                "title": "create_companyArguments",
-                "type": "object"
-            },
-            "title": "Create company",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "update_company",
-            "description": "Update an existing Company in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 companies.",
-            "inputSchema": {
-                "properties": {
-                    "company_id": { "title": "Company ID", "type": "string" },
-                    "name":       { "title": "Name",       "type": "string", "default": "" },
-                    "domain":     { "title": "Domain",     "type": "string", "default": "" },
-                    "industry":   { "title": "Industry",   "type": "string", "default": "" },
-                    "city":       { "title": "City",       "type": "string", "default": "" },
-                    "phone":      { "title": "Phone",      "type": "string", "default": "" }
-                },
-                "required": ["company_id"],
-                "title": "update_companyArguments",
-                "type": "object"
-            },
-            "title": "Update company",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"

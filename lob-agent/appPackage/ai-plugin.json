@@ -91,28 +91,24 @@
             "description": "Get the latest marketing emails from HubSpot with performance stats (sent, opened, clicked, bounced)."
         },
         {
-            "name": "get_contacts",
-            "description": "Get the 5 most recent Contacts from HubSpot. Returns contact name, email, phone, company, and lifecycle stage."
+            "name": "get_lists",
+            "description": "Get contact lists (segments) from HubSpot. Returns list name, type (MANUAL/DYNAMIC), and size."
         },
         {
-            "name": "create_contact",
-            "description": "Create a new Contact in HubSpot. Requires email at minimum. Returns the updated list of latest 5 contacts."
+            "name": "get_list_contacts",
+            "description": "Get contacts belonging to a specific HubSpot list. Returns contact name, email, phone, company, and lifecycle stage."
+        },
+        {
+            "name": "add_to_list",
+            "description": "Add a contact to a static HubSpot list by email address. Looks up the contact and adds them."
+        },
+        {
+            "name": "remove_from_list",
+            "description": "Remove a contact from a static HubSpot list by contact ID."
         },
         {
             "name": "update_contact",
-            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
-        },
-        {
-            "name": "get_companies",
-            "description": "Get the 5 most recent Companies from HubSpot. Returns company name, domain, industry, city, and phone."
-        },
-        {
-            "name": "create_company",
-            "description": "Create a new Company in HubSpot. Requires name at minimum. Returns the updated list of latest 5 companies."
-        },
-        {
-            "name": "update_company",
-            "description": "Update an existing Company in HubSpot by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 companies."
+            "description": "Update an existing Contact in HubSpot by its record Id. Only fields provided will be updated."
         }
     ],
     "runtimes": [
@@ -188,12 +184,11 @@
             },
             "run_for_functions": [
                 "get_emails",
-                "get_contacts",
-                "create_contact",
-                "update_contact",
-                "get_companies",
-                "create_company",
-                "update_company"
+                "get_lists",
+                "get_list_contacts",
+                "add_to_list",
+                "remove_from_list",
+                "update_contact"
             ],
             "auth": {
                 "type": "None"

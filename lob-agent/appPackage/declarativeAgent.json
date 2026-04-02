@@ -30,12 +30,8 @@
             "text": "Show me the latest marketing email performance from HubSpot"
         },
         {
-            "title": "Browse the spice bazaar contacts",
-            "text": "Show me the latest contacts from HubSpot"
-        },
-        {
-            "title": "Inspect the trading companies",
-            "text": "Show me the latest companies from HubSpot"
+            "title": "Browse the contact lists",
+            "text": "Show me the contact lists from HubSpot"
         },
         {
             "title": "Log a new trade lead",

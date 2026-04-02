@@ -33,6 +33,8 @@
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .header h2 { font-size: 16px; font-weight: 600; }
   .badge { background: var(--hs-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .badge-blue { background: #0070F2; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--hs-success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 
   table { width: 100%; border-collapse: collapse; background: var(--hs-surface); border-radius: 8px; overflow: hidden; }
   th { background: var(--hs-primary); color: white; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -44,6 +46,10 @@
   .btn:hover { background: var(--hs-primary-dark); }
   .btn-sm { padding: 3px 8px; font-size: 11px; }
   .btn-outline { background: transparent; border: 1px solid var(--hs-primary); color: var(--hs-primary); }
+  .btn-back { background: transparent; border: 1px solid var(--hs-border); color: var(--hs-text); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn-back:hover { background: var(--hs-surface); }
+  .btn-danger { background: var(--hs-error); color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .btn-danger:hover { background: #d43d44; }
 
   .error-banner { background: var(--hs-error); color: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
 
@@ -80,6 +86,7 @@
   var app = document.getElementById('app');
   var overlay = document.getElementById('formOverlay');
   var formCard = document.getElementById('formCard');
+  var currentListId = null;
 
   // ── Theme support ─────────────────────────────────────────────────────────
   function applyTheme(theme) {
@@ -140,13 +147,14 @@
   function render(data) {
     if (!data) return;
     if (data.error) {
-      app.innerHTML = '<div class="error-banner">\u26A0 ' + (data.message || 'Unknown error') + '</div>';
+      app.innerHTML = '<div class="error-banner">\u26A0 ' + esc(data.message || 'Unknown error') + '</div>';
       notifyHeight();
       return;
     }
     if (data.type === 'emails') renderEmails(data);
+    else if (data.type === 'lists') renderLists(data);
+    else if (data.type === 'list_contacts') renderListContacts(data);
     else if (data.type === 'contacts') renderContacts(data);
-    else if (data.type === 'companies') renderCompanies(data);
     else app.innerHTML = '<div class="empty">Unknown data type</div>';
     notifyHeight();
   }
@@ -198,7 +206,77 @@
       + '</table>';
   }
 
-  // ── Contacts table ────────────────────────────────────────────────────────
+  // ── Lists table ───────────────────────────────────────────────────────────
+  function renderLists(data) {
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = '<div class="empty">No contact lists found</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var li = data.items[i];
+      var typeBadge = (li.type || '').toUpperCase() === 'MANUAL'
+        ? '<span class="badge-blue">MANUAL</span>'
+        : '<span class="badge-green">DYNAMIC</span>';
+      rows += '<tr>'
+        + '<td>' + esc(li.name) + '</td>'
+        + '<td>' + typeBadge + '</td>'
+        + '<td>' + fmtNum(li.size) + '</td>'
+        + '<td><button class="btn btn-sm" onclick="window.__viewList(\'' + esc(li.id) + '\')">View \u2192</button></td>'
+        + '</tr>';
+    }
+    app.innerHTML =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCCB Contact Lists <span class="badge">' + data.total + '</span></h2>'
+      + '</div>'
+      + '<table>'
+      + '<tr><th>Name</th><th>Type</th><th>Size</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── List Contacts table ───────────────────────────────────────────────────
+  function renderListContacts(data) {
+    currentListId = data.list_id || null;
+    var listName = data.list_name || 'List';
+
+    var headerHtml =
+      '<div class="header">'
+      + '<h2>\uD83D\uDCCB ' + esc(listName) + ' <span class="badge">' + (data.total || 0) + '</span></h2>'
+      + '<div>'
+      + '<button class="btn-back" onclick="window.__backToLists()">\u2190 Back to Lists</button> '
+      + '<button class="btn" onclick="window.__showForm(\'add_to_list\')">+ Add Contact</button>'
+      + '</div>'
+      + '</div>';
+
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = headerHtml + '<div class="empty">No contacts in this list</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var c = data.items[i];
+      var escaped = JSON.stringify(c).replace(/"/g, '&quot;');
+      rows += '<tr>'
+        + '<td>' + esc(c.firstname) + ' ' + esc(c.lastname) + '</td>'
+        + '<td>' + esc(c.email) + '</td>'
+        + '<td>' + esc(c.phone) + '</td>'
+        + '<td>' + esc(c.company) + '</td>'
+        + '<td>' + esc(c.lifecyclestage) + '</td>'
+        + '<td>'
+        + '<button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_contact\', ' + escaped + ')">\u270E</button> '
+        + '<button class="btn-danger btn-sm" onclick="window.__removeFromList(\'' + esc(c.id) + '\')">\u2715</button>'
+        + '</td>'
+        + '</tr>';
+    }
+    app.innerHTML = headerHtml
+      + '<table>'
+      + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── Contacts table (for update_contact responses) ─────────────────────────
   function renderContacts(data) {
     if (!data.items || data.items.length === 0) {
       app.innerHTML = '<div class="empty">No contacts found</div>';
@@ -220,7 +298,6 @@
     app.innerHTML =
       '<div class="header">'
       + '<h2>\uD83D\uDCC7 Contacts <span class="badge">' + data.total + '</span></h2>'
-      + '<button class="btn" onclick="window.__showForm(\'create_contact\')">+ New Contact</button>'
       + '</div>'
       + '<table>'
       + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
@@ -228,51 +305,52 @@
       + '</table>';
   }
 
-  // ── Companies table ───────────────────────────────────────────────────────
-  function renderCompanies(data) {
-    if (!data.items || data.items.length === 0) {
-      app.innerHTML = '<div class="empty">No companies found</div>';
-      return;
-    }
-    var rows = '';
-    for (var i = 0; i < data.items.length; i++) {
-      var co = data.items[i];
-      var escaped = JSON.stringify(co).replace(/"/g, '&quot;');
-      rows += '<tr>'
-        + '<td>' + esc(co.name) + '</td>'
-        + '<td>' + esc(co.domain) + '</td>'
-        + '<td>' + esc(co.industry) + '</td>'
-        + '<td>' + esc(co.city) + '</td>'
-        + '<td>' + esc(co.phone) + '</td>'
-        + '<td>' + esc(co.employees) + '</td>'
-        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_company\', ' + escaped + ')">\u270E</button></td>'
-        + '</tr>';
-    }
-    app.innerHTML =
-      '<div class="header">'
-      + '<h2>\uD83C\uDFE2 Companies <span class="badge">' + data.total + '</span></h2>'
-      + '<button class="btn" onclick="window.__showForm(\'create_company\')">+ New Company</button>'
-      + '</div>'
-      + '<table>'
-      + '<tr><th>Name</th><th>Domain</th><th>Industry</th><th>City</th><th>Phone</th><th>Employees</th><th></th></tr>'
-      + rows
-      + '</table>';
-  }
+  // ── Navigation helpers ────────────────────────────────────────────────────
+  window.__viewList = function (listId) {
+    app.innerHTML = '<div class="loading">Loading list contacts\u2026</div>';
+    notifyHeight();
+    callTool('get_list_contacts', { list_id: listId }).then(function (res) {
+      if (res && res.structuredContent) render(res.structuredContent);
+      else if (res) render(res);
+    }).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load list contacts' });
+    });
+  };
+
+  window.__backToLists = function () {
+    currentListId = null;
+    app.innerHTML = '<div class="loading">Loading lists\u2026</div>';
+    notifyHeight();
+    callTool('get_lists', {}).then(function (res) {
+      if (res && res.structuredContent) render(res.structuredContent);
+      else if (res) render(res);
+    }).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load lists' });
+    });
+  };
+
+  window.__removeFromList = function (contactId) {
+    if (!currentListId) return;
+    app.innerHTML = '<div class="loading">Removing contact\u2026</div>';
+    notifyHeight();
+    callTool('remove_from_list', { list_id: currentListId, contact_id: contactId }).then(function (res) {
+      if (res && res.structuredContent) render(res.structuredContent);
+      else if (res) render(res);
+    }).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to remove contact' });
+    });
+  };
 
   // ── Form management ───────────────────────────────────────────────────────
   function showForm(tool, existing) {
     overlay.classList.add('active');
-    if (tool === 'create_contact') {
+    if (tool === 'add_to_list') {
       formCard.innerHTML =
-        '<h3>New Contact</h3>'
-        + '<label>First Name<input id="f_fn" /></label>'
-        + '<label>Last Name<input id="f_ln" /></label>'
-        + '<label>Email<input id="f_em" type="email" /></label>'
-        + '<label>Phone<input id="f_ph" /></label>'
-        + '<label>Company<input id="f_co" /></label>'
+        '<h3>Add Contact to List</h3>'
+        + '<label>Email Address<input id="f_em" type="email" placeholder="contact@example.com" /></label>'
         + '<div class="form-actions">'
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'create_contact\')">Create</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'add_to_list\')">Add</button>'
         + '</div>';
     } else if (tool === 'update_contact') {
       formCard.innerHTML =
@@ -287,44 +365,18 @@
         + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
         + '<button class="btn" onclick="window.__submitForm(\'update_contact\')">Save</button>'
         + '</div>';
-    } else if (tool === 'create_company') {
-      formCard.innerHTML =
-        '<h3>New Company</h3>'
-        + '<label>Name<input id="f_cn" /></label>'
-        + '<label>Domain<input id="f_cd" /></label>'
-        + '<label>Industry<input id="f_ci" /></label>'
-        + '<label>City<input id="f_cc" /></label>'
-        + '<label>Phone<input id="f_cp" /></label>'
-        + '<div class="form-actions">'
-        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'create_company\')">Create</button>'
-        + '</div>';
-    } else if (tool === 'update_company') {
-      formCard.innerHTML =
-        '<h3>Edit Company</h3>'
-        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
-        + '<label>Name<input id="f_cn" value="' + esc(existing.name) + '" /></label>'
-        + '<label>Domain<input id="f_cd" value="' + esc(existing.domain) + '" /></label>'
-        + '<label>Industry<input id="f_ci" value="' + esc(existing.industry) + '" /></label>'
-        + '<label>City<input id="f_cc" value="' + esc(existing.city) + '" /></label>'
-        + '<label>Phone<input id="f_cp" value="' + esc(existing.phone) + '" /></label>'
-        + '<div class="form-actions">'
-        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
-        + '<button class="btn" onclick="window.__submitForm(\'update_company\')">Save</button>'
-        + '</div>';
     }
   }
 
   function submitForm(tool) {
     var result;
     try {
-      if (tool === 'create_contact') {
-        result = callTool('create_contact', {
-          email: document.getElementById('f_em').value,
-          firstname: document.getElementById('f_fn').value,
-          lastname: document.getElementById('f_ln').value,
-          phone: document.getElementById('f_ph').value,
-          company: document.getElementById('f_co').value,
+      if (tool === 'add_to_list') {
+        var email = document.getElementById('f_em').value;
+        if (!email) { return; }
+        result = callTool('add_to_list', {
+          list_id: currentListId,
+          contact_email: email,
         });
       } else if (tool === 'update_contact') {
         result = callTool('update_contact', {
@@ -334,23 +386,6 @@
           email: document.getElementById('f_em').value,
           phone: document.getElementById('f_ph').value,
           company: document.getElementById('f_co').value,
-        });
-      } else if (tool === 'create_company') {
-        result = callTool('create_company', {
-          name: document.getElementById('f_cn').value,
-          domain: document.getElementById('f_cd').value,
-          industry: document.getElementById('f_ci').value,
-          city: document.getElementById('f_cc').value,
-          phone: document.getElementById('f_cp').value,
-        });
-      } else if (tool === 'update_company') {
-        result = callTool('update_company', {
-          company_id: document.getElementById('f_id').value,
-          name: document.getElementById('f_cn').value,
-          domain: document.getElementById('f_cd').value,
-          industry: document.getElementById('f_ci').value,
-          city: document.getElementById('f_cc').value,
-          phone: document.getElementById('f_cp').value,
         });
       }
       if (result && result.then) {
