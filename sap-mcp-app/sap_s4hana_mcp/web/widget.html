@@ -156,7 +156,9 @@
     for (var i = 0; i < keys.length; i++) {
       rows += '<div class="detail-row"><span class="detail-label">' + esc(keys[i]) + '</span><span class="detail-value">' + esc(m[keys[i]] || '\u2014') + '</span></div>';
     }
-    return '<div class="detail-card"><h3>\ud83d\udccb Material: ' + esc(m.product) + '</h3>' + rows + '</div>';
+    return '<div class="detail-card"><div class="header"><h3>\ud83d\udccb Material: ' + esc(m.product) + '</h3>'
+      + '<button class="btn btn-outline" onclick="window.__backToMaterials()">\u2190 Back to Materials</button></div>'
+      + rows + '</div>';
   }
 
   function showForm(tool, existing) {
@@ -226,6 +228,11 @@
   window.__closeForm = function () { overlay.classList.remove('active'); };
   window.__submitForm = submitForm;
   window.__callDetail = callDetail;
+  window.__backToMaterials = function () {
+    callTool('get_materials', {})
+      .then(function (r) { if (r && r.structuredContent) render(r.structuredContent); })
+      .catch(function (e) { render({ error: true, message: e.message }); });
+  };
 
   // ── Pending callTool requests (for postMessage bridge) ──
   var pendingCalls = {};

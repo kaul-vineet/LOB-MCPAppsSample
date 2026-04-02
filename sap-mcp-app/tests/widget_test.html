@@ -233,6 +233,12 @@
           log('→ Returned detail for material: ' + detail.item.product);
         }
 
+        // ── GET MATERIALS (back button) ──
+        else if (tool === 'get_materials') {
+          result = JSON.parse(JSON.stringify(currentMats));
+          log('→ Returned materials list (back from detail)');
+        }
+
         // ── UNKNOWN TOOL ──
         else {
           result = { error: true, message: 'Unknown tool: ' + tool };
