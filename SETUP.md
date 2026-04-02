@@ -243,8 +243,9 @@ You need: `HUBSPOT_ACCESS_TOKEN`.
 2. Search for and enable these scopes:
    - ✅ `crm.objects.contacts.read`
    - ✅ `crm.objects.contacts.write`
-   - ✅ `crm.objects.deals.read`
-   - ✅ `crm.objects.deals.write`
+   - ✅ `crm.lists.read`
+   - ✅ `crm.lists.write`
+   - ✅ `content`
 3. Click **Update** to save the scopes
 
 ### Step 4: Generate the Token
@@ -624,8 +625,8 @@ The SAP MCP server operates in **dual mode** controlled by `SAP_MODE`.
 **Required scopes for this app:**
 - `crm.objects.contacts.read` — read contacts in lists
 - `crm.objects.contacts.write` — add/remove contacts from lists
-- `crm.objects.lists.read` — view contact lists
-- `crm.objects.lists.write` — modify list membership
+- `crm.lists.read` — view contact lists
+- `crm.lists.write` — modify list membership
 - `content` — read marketing emails and stats
 
 **Security notes:**
