@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>⚓ GTC Dockyard — Salesforce Widget Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #0176d3; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #014486; }
+  button.green  { background: #2e844a; }
+  button.green:hover  { background: #1c6b35; }
+  button.dark   { background: #16325c; }
+  button.dark:hover   { background: #0b1f3a; }
+  button.secondary    { background: #706e6b; }
+  button.secondary:hover { background: #514f4d; }
+  button.error  { background: #ea001e; }
+  button.error:hover  { background: #ba0517; }
+  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #eef4ff; color: #0176d3; margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<h2>⚓ <img src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="Salesforce" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — Salesforce CRM <span class="badge">Interactive</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
+
+<div class="section-label">📋 Leads — get_leads</div>
+<div class="controls">
+  <button onclick="sendLeads()">Send Mock Leads (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyLeads()">Send Empty Leads</button>
+</div>
+<p class="hint">Click ✎ Edit on any row to open inline edit form. Click "+ New Lead" to create.</p>
+
+<div class="section-label">💰 Opportunities — get_opportunities</div>
+<div class="controls">
+  <button class="green" onclick="sendOpportunities()">Send Mock Opportunities (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyOpps()">Send Empty Opportunities</button>
+</div>
+<p class="hint">Click ✎ Edit on any row to open inline edit form. Click "+ New Opportunity" to create.</p>
+
+<div class="section-label">⚠️ Error Simulation</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Send Auth Error</button>
+</div>
+<p class="hint">Simulates a Salesforce authentication failure to test error display in the widget.</p>
+
+<div class="section-label">🎨 Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="sf_crm_mcp/web/widget.html"></iframe>
+</div>
+
+<div class="section-label">📜 Event Log</div>
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+  var nextLeadId = 6;
+  var nextOppId  = 6;
+
+  // ── Mock Data: Leads ─────────────────────────────────────────────────────
+  var MOCK_LEADS = {
+    type: "leads",
+    total: 5,
+    items: [
+      { id: "00Q000000001", first_name: "Sarah",   last_name: "Chen",      company: "TechFlow Inc",       email: "sarah.chen@techflow.com",     phone: "(415) 555-0101", status: "Open - Not Contacted",   lead_source: "Web" },
+      { id: "00Q000000002", first_name: "Marcus",  last_name: "Rivera",    company: "DataBridge Corp",    email: "m.rivera@databridge.io",      phone: "(212) 555-0202", status: "Working - Contacted",    lead_source: "Partner Referral" },
+      { id: "00Q000000003", first_name: "Aisha",   last_name: "Patel",     company: "CloudNine Solutions", email: "aisha@cloudnine.dev",        phone: "(650) 555-0303", status: "Open - Not Contacted",   lead_source: "Phone Inquiry" },
+      { id: "00Q000000004", first_name: "James",   last_name: "O'Brien",   company: "Summit Analytics",   email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", status: "Closed - Converted",    lead_source: "Web" },
+      { id: "00Q000000005", first_name: "Lin",     last_name: "Wei",       company: "Quantum Dynamics",   email: "lin.wei@qdynamics.cn",        phone: "(408) 555-0505", status: "Working - Contacted",    lead_source: "Purchased List" }
+    ]
+  };
+
+  var MOCK_EMPTY_LEADS = { type: "leads", total: 0, items: [] };
+
+  // ── Mock Data: Opportunities ─────────────────────────────────────────────
+  var MOCK_OPPS = {
+    type: "opportunities",
+    total: 5,
+    items: [
+      { id: "006000000001", name: "TechFlow Enterprise License",    account_name: "TechFlow Inc",       stage: "Proposal/Price Quote",  amount: 125000, close_date: "2026-05-15", probability: 60 },
+      { id: "006000000002", name: "DataBridge Platform Migration",  account_name: "DataBridge Corp",    stage: "Negotiation/Review",    amount: 340000, close_date: "2026-04-30", probability: 75 },
+      { id: "006000000003", name: "CloudNine Starter Package",      account_name: "CloudNine Solutions", stage: "Prospecting",          amount: 28000,  close_date: "2026-07-01", probability: 15 },
+      { id: "006000000004", name: "Summit Analytics Dashboard",     account_name: "Summit Analytics",   stage: "Closed Won",            amount: 89000,  close_date: "2026-03-10", probability: 100 },
+      { id: "006000000005", name: "Quantum Research Grant Tool",    account_name: "Quantum Dynamics",   stage: "Needs Analysis",        amount: 210000, close_date: "2026-06-20", probability: 30 }
+    ]
+  };
+
+  var MOCK_EMPTY_OPPS = { type: "opportunities", total: 0, items: [] };
+
+  // ── Mock Error ───────────────────────────────────────────────────────────
+  var MOCK_ERROR = { error: true, message: "Salesforce authentication failed: Missing Salesforce credentials. Set SF_INSTANCE_URL, SF_CLIENT_ID, and SF_CLIENT_SECRET in your .env file." };
+
+  // ── Current state (mutated by mock CRUD operations) ──────────────────────
+  var currentLeads = JSON.parse(JSON.stringify(MOCK_LEADS));
+  var currentOpps  = JSON.parse(JSON.stringify(MOCK_OPPS));
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function sendLeads()       { currentLeads = JSON.parse(JSON.stringify(MOCK_LEADS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentLeads } }); log('→ Sent mock leads (5 rows)'); }
+  function sendEmptyLeads()  { currentLeads = JSON.parse(JSON.stringify(MOCK_EMPTY_LEADS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentLeads } }); log('→ Sent empty leads'); }
+  function sendOpportunities(){ currentOpps = JSON.parse(JSON.stringify(MOCK_OPPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentOpps } }); log('→ Sent mock opportunities (5 rows)'); }
+  function sendEmptyOpps()   { currentOpps = JSON.parse(JSON.stringify(MOCK_EMPTY_OPPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentOpps } }); log('→ Sent empty opportunities'); }
+  function sendError()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('→ Sent mock error'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#16325c' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#ecebea' : '#111';
+    document.getElementById('frame-wrapper').style.background = isDark ? '#1a3a65' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#2b5797' : '#ddd';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ──────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // ── callTool request from widget ──
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.args;
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+
+      setTimeout(function() {
+        var result;
+
+        // ── CREATE LEAD ──
+        if (tool === 'create_lead') {
+          var newLead = {
+            id: "00Q00000000" + (nextLeadId++),
+            first_name:  args.first_name  || '',
+            last_name:   args.last_name   || '',
+            company:     args.company     || '',
+            email:       args.email       || '',
+            phone:       args.phone       || '',
+            status:      args.status      || 'Open - Not Contacted',
+            lead_source: args.lead_source || ''
+          };
+          currentLeads.items.unshift(newLead);
+          if (currentLeads.items.length > 5) currentLeads.items.pop();
+          currentLeads.total = currentLeads.items.length;
+          result = JSON.parse(JSON.stringify(currentLeads));
+          result._createdId = newLead.id;
+          log('→ Created lead: ' + newLead.first_name + ' ' + newLead.last_name + ' (id: ' + newLead.id + ')');
+        }
+
+        // ── UPDATE LEAD ──
+        else if (tool === 'update_lead') {
+          for (var i = 0; i < currentLeads.items.length; i++) {
+            if (currentLeads.items[i].id === args.lead_id) {
+              var lead = currentLeads.items[i];
+              if (args.first_name  !== undefined) lead.first_name  = args.first_name;
+              if (args.last_name   !== undefined) lead.last_name   = args.last_name;
+              if (args.company     !== undefined) lead.company     = args.company;
+              if (args.email       !== undefined) lead.email       = args.email;
+              if (args.phone       !== undefined) lead.phone       = args.phone;
+              if (args.status      !== undefined) lead.status      = args.status;
+              if (args.lead_source !== undefined) lead.lead_source = args.lead_source;
+              log('→ Updated lead: ' + lead.first_name + ' ' + lead.last_name);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentLeads));
+        }
+
+        // ── CREATE OPPORTUNITY ──
+        else if (tool === 'create_opportunity') {
+          var newOpp = {
+            id: "00600000000" + (nextOppId++),
+            name:         args.name         || '',
+            account_name: args.account_name || '',
+            stage:        args.stage        || 'Prospecting',
+            amount:       args.amount       || 0,
+            close_date:   args.close_date   || '',
+            probability:  args.probability  || 0
+          };
+          currentOpps.items.unshift(newOpp);
+          if (currentOpps.items.length > 5) currentOpps.items.pop();
+          currentOpps.total = currentOpps.items.length;
+          result = JSON.parse(JSON.stringify(currentOpps));
+          result._createdId = newOpp.id;
+          log('→ Created opportunity: ' + newOpp.name + ' (id: ' + newOpp.id + ')');
+        }
+
+        // ── UPDATE OPPORTUNITY ──
+        else if (tool === 'update_opportunity') {
+          for (var j = 0; j < currentOpps.items.length; j++) {
+            if (currentOpps.items[j].id === args.opportunity_id) {
+              var opp = currentOpps.items[j];
+              if (args.name         !== undefined) opp.name         = args.name;
+              if (args.account_name !== undefined) opp.account_name = args.account_name;
+              if (args.stage        !== undefined) opp.stage        = args.stage;
+              if (args.amount       !== undefined) opp.amount       = args.amount;
+              if (args.close_date   !== undefined) opp.close_date   = args.close_date;
+              if (args.probability  !== undefined) opp.probability  = args.probability;
+              log('→ Updated opportunity: ' + opp.name);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentOpps));
+        }
+
+        // ── UNKNOWN TOOL ──
+        else {
+          result = { error: true, message: 'Unknown tool: ' + tool };
+          log('→ Unknown tool: ' + tool);
+        }
+
+        post({ jsonrpc: '2.0', id: msg.id, result: result });
+      }, 600); // simulate network latency
+
+      return;
+    }
+
+    // ── Height notification from widget ──
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>

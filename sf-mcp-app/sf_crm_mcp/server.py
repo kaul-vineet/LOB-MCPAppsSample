@@ -6,6 +6,7 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 """
 
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -490,9 +491,32 @@ def manage_crm() -> list[PromptMessage]:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+def _validate_env() -> None:
+    """Check required environment variables and print startup checklist."""
+    instance = os.environ.get("SF_INSTANCE_URL", "")
+    client_id = os.environ.get("SF_CLIENT_ID", "")
+    client_secret = os.environ.get("SF_CLIENT_SECRET", "")
+
+    print("  ┌─ Environment ─────────────────────────────────")
+    print(f"  │ SF_INSTANCE_URL   {'✓ ' + instance[:40] if instance else '✗ MISSING'}")
+    print(f"  │ SF_CLIENT_ID      {'✓ ' + client_id[:8] + '...' if client_id else '✗ MISSING'}")
+    print(f"  │ SF_CLIENT_SECRET  {'✓ (set)' if client_secret else '✗ MISSING'}")
+    print("  └────────────────────────────────────────────────")
+
+    missing = []
+    if not instance: missing.append("SF_INSTANCE_URL")
+    if not client_id: missing.append("SF_CLIENT_ID")
+    if not client_secret: missing.append("SF_CLIENT_SECRET")
+    if missing:
+        print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
+        print("  Copy .env.example to .env and fill in your Salesforce credentials.")
+        sys.exit(1)
+
+
 def main():
     port = int(os.environ.get("PORT", 3000))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    _validate_env()
     print(f"⚓ GTC — Salesforce Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()

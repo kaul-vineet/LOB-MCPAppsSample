@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ServiceNow Tracker — Widget Preview</title>
+<style>
+  :root {
+    /* ServiceNow brand palette — light */
+    --color-bg:         #ffffff;
+    --color-surface:    #f4f5f7;
+    --color-text:       #1e252e;
+    --color-text-muted: #6b7280;
+    --color-border:     #d6dbe0;
+    --color-header-bg:  #e8ecf0;
+    --color-hover:      #e3f2e8;
+    --color-expanded:   #eef6f1;
+    --color-accent:     #293e40;       /* ServiceNow dark teal */
+    --color-mcp-bar:    #81b5a1;       /* ServiceNow green */
+    --color-success:    #2e8540;       /* ServiceNow green-dark */
+    --color-success-hover:#236934;
+    --sn-green:         #81b5a1;
+    --sn-teal:          #293e40;
+    --sn-lime:          #b8e986;
+    --radius:           8px;
+    --space-xs:         4px;
+    --space-sm:         8px;
+    --space-md:         12px;
+    --space-lg:         16px;
+  }
+  [data-theme="dark"] {
+    /* ServiceNow brand palette — dark */
+    --color-bg:         #161b22;
+    --color-surface:    #1c2229;
+    --color-text:       #e6edf3;
+    --color-text-muted: #8b949e;
+    --color-border:     #30363d;
+    --color-header-bg:  #232a32;
+    --color-hover:      #1a3028;
+    --color-expanded:   #1a2e25;
+    --color-accent:     #81b5a1;       /* ServiceNow green in dark */
+    --color-success:    #81b5a1;
+    --color-success-hover:#6a9d89;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding: var(--space-md);
+  }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-header-bg);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+  }
+
+  tr.data-row {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  tr.data-row:hover { background: var(--color-hover); }
+  tr.data-row.expanded { background: var(--color-hover); }
+  tr.data-row.checked { background: #e3f2e8; }
+  tr.data-row.checked:hover { background: #d4ead9; }
+  tr.data-row.checked.expanded { background: #d4ead9; }
+  [data-theme="dark"] tr.data-row.checked { background: #1a2e25; }
+  [data-theme="dark"] tr.data-row.checked:hover { background: #1f3a2d; }
+  [data-theme="dark"] tr.data-row.checked.expanded { background: #1f3a2d; }
+  td.toggle-cell.done { color: #2e8540; font-size: 13px; font-weight: 600; }
+  [data-theme="dark"] td.toggle-cell.done { color: #81b5a1; }
+
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: 13px;
+  }
+
+  td.toggle-cell {
+    width: 24px;
+    padding-right: 0;
+    color: var(--color-text-muted);
+    font-size: 10px;
+  }
+
+  tr.detail-row td {
+    background: var(--color-expanded);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-md);
+  }
+
+  .loading {
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .number-link {
+    color: var(--sn-teal, var(--color-accent));
+    text-decoration: none;
+    font-weight: 500;
+    font-family: monospace;
+    font-size: 13px;
+  }
+
+  .empty {
+    padding: var(--space-lg);
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Priority badges ── */
+  .priority-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .priority-1 { background: #fde7e7; color: #a80000; }
+  .priority-2 { background: #fff1e0; color: #8a4b00; }
+  .priority-3 { background: #e3f2e8; color: #293e40; }
+  .priority-4 { background: #eef6f1; color: #2e8540; }
+  [data-theme="dark"] .priority-1 { background: #3d1111; color: #f87171; }
+  [data-theme="dark"] .priority-2 { background: #3d2e11; color: #fbbf24; }
+  [data-theme="dark"] .priority-3 { background: #1a2e25; color: #81b5a1; }
+  [data-theme="dark"] .priority-4 { background: #1a3320; color: #6ee7b7; }
+
+  /* ── State badges ── */
+  .state-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e3f2e8;
+    color: #293e40;
+  }
+  [data-theme="dark"] .state-badge {
+    background: #1a2e25;
+    color: #81b5a1;
+  }
+
+  /* ── Action buttons ── */
+  .btn {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .btn-add {
+    background: var(--color-success);
+    color: white;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  .btn-add:hover { background: var(--color-success-hover); }
+
+  /* ── Action section (add) ── */
+  .action-section {
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  /* ── Inline form ── */
+  .inline-form {
+    padding: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-expanded);
+    display: none;
+  }
+  .inline-form.visible { display: block; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm) var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  .form-field { display: flex; flex-direction: column; gap: 4px; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--color-text-muted);
+  }
+  .form-input, .form-textarea {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  .form-textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(0,102,204,0.15);
+  }
+  .form-select {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  .form-actions { display: flex; gap: var(--space-sm); }
+  .btn-submit {
+    background: var(--color-accent);
+    color: white;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+  .btn-cancel {
+    background: none;
+    color: var(--color-text-muted);
+    padding: 6px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-cancel:hover { background: var(--color-hover); }
+
+  /* ── Edit section inside expanded row ── */
+  .edit-section {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .edit-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .edit-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-sm);
+  }
+  .edit-row {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .edit-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+  .edit-field-narrow { display: flex; flex-direction: column; gap: 4px; width: 160px; }
+  .edit-field-action { display: flex; align-items: flex-end; }
+  .btn-save {
+    background: var(--color-accent);
+    color: white;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-save:hover { opacity: 0.9; }
+  .btn-save.saved {
+    background: var(--color-success);
+  }
+
+  /* ── Request items sub-table ── */
+  .sub-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-sm);
+  }
+  .sub-table th {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 10px;
+    background: transparent;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .sub-table td {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .sub-table tr:last-child td { border-bottom: none; }
+  .sub-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+  }
+
+  .qty-input {
+    width: 60px;
+    padding: 3px 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--color-bg);
+    color: var(--color-text);
+    text-align: center;
+  }
+  .qty-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(0,102,204,0.15);
+  }
+  .btn-save-sm {
+    background: var(--color-accent);
+    color: white;
+    padding: 3px 8px;
+    border: none;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-save-sm:hover { opacity: 0.9; }
+  .btn-save-sm.saved { background: var(--color-success); }
+
+  /* ── MCP identity bar ── */
+  .mcp-bar {
+    height: 3px;
+    background: var(--color-mcp-bar);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .mcp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-header-bg);
+  }
+
+  .mcp-badge {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.3px;
+  }
+  .mcp-badge strong {
+    color: var(--sn-teal, var(--color-accent));
+    font-weight: 600;
+  }
+  .mcp-source {
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+
+  /* ── Toast notification ── */
+  .toast {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+    background: var(--color-success);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 999;
+  }
+  .toast.visible { opacity: 1; transform: translateY(0); }
+  .toast.error { background: #d13438; }
+  .gtc-watermark { text-align: right; padding: 6px 4px 0; font-size: 10px; color: var(--color-text-muted); opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<div id="root"><div class="empty">Loading ServiceNow data...</div></div>
+<div class="gtc-watermark">⚓ GTC</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg, isError) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast visible' + (isError ? ' error' : '');
+    setTimeout(function() { t.className = 'toast'; }, 2500);
+  }
+
+  // ── callTool abstraction ───────────────────────────────────────────────────
+  var pendingCalls = {};
+  var callId = 0;
+
+  function callTool(name, args) {
+    if (window.openai && window.openai.callTool) {
+      return window.openai.callTool(name, args).then(function(r) {
+        return r.structuredContent;
+      });
+    }
+    return new Promise(function(resolve, reject) {
+      var id = ++callId;
+      pendingCalls[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({
+        jsonrpc: '2.0', id: id,
+        method: 'ui/callTool',
+        params: { name: name, args: args }
+      }, '*');
+      setTimeout(function() {
+        if (pendingCalls[id]) {
+          delete pendingCalls[id];
+          reject(new Error('Timed out'));
+        }
+      }, 15000);
+    });
+  }
+
+  // ── Notify host of height ─────────────────────────────────────────────────
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  var currentData  = null;
+  var expandedIdx  = -1;
+  var viewMode     = 'incidents';
+  var checkedRows  = {};
+  var addFormOpen  = false;
+
+  var MCP_FOOTER =
+    '<div class="mcp-footer">' +
+      '<span class="mcp-badge">&#9889; <strong>MCP Widget</strong> &middot; servicenow-mcp</span>' +
+      '<span class="mcp-source">Data: ServiceNow</span>' +
+    '</div>';
+
+  // ── Priority formatting ────────────────────────────────────────────────────
+  function priorityBadge(p) {
+    var num = typeof p === 'string' ? p.charAt(0) : p;
+    var labels = { '1': '1 – Critical', '2': '2 – High', '3': '3 – Moderate', '4': '4 – Low' };
+    var label = labels[num] || p || '—';
+    return '<span class="priority-badge priority-' + num + '">' + label + '</span>';
+  }
+
+  function stateBadge(s) {
+    return '<span class="state-badge">' + (s || '—') + '</span>';
+  }
+
+  // ── Main render dispatcher ─────────────────────────────────────────────────
+  function render(data) {
+    currentData  = data;
+    expandedIdx  = -1;
+    checkedRows  = {};
+    addFormOpen  = false;
+    var root = document.getElementById('root');
+
+    if (!data) {
+      root.innerHTML = '<div class="empty">No data received.</div>';
+      notifyHeight(); return;
+    }
+
+    if (data.type === 'incidents') {
+      viewMode = 'incidents';
+      renderIncidentsView(data);
+    } else if (data.type === 'requests') {
+      viewMode = 'requests';
+      renderRequestsView(data);
+    } else {
+      root.innerHTML = '<div class="empty">Unknown data type.</div>';
+      notifyHeight();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INCIDENTS VIEW — expandable rows for editing Description + Priority
+  // ═══════════════════════════════════════════════════════════════════════════
+  function renderIncidentsView(data) {
+    var root  = document.getElementById('root');
+    var count = data.incidents ? data.incidents.length : 0;
+
+    if (count === 0) {
+      root.innerHTML =
+        '<div class="card"><div class="mcp-bar"></div>' +
+        '<div class="card-header"><span><img src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="" style="height:18px;vertical-align:middle;margin-right:6px">&#127915; Incidents — 0 records</span></div>' +
+        '<div class="empty">No incidents found.</div>' +
+        buildAddSection('incident') +
+        MCP_FOOTER + '</div>';
+      notifyHeight(); return;
+    }
+
+    var rows = data.incidents.map(function(inc, i) {
+      return '<tr class="data-row" data-idx="' + i + '" onclick="toggleRow(' + i + ')">' +
+        '<td class="toggle-cell">&#9654;</td>' +
+        '<td><span class="number-link">' + inc.number + '</span></td>' +
+        '<td>' + (inc.short_description || '—') + '</td>' +
+        '<td>' + stateBadge(inc.state) + '</td>' +
+        '<td>' + priorityBadge(inc.priority) + '</td>' +
+        '<td>' + (inc.assigned_to || '—') + '</td>' +
+        '<td>' + (inc.sys_created_on || '—') + '</td>' +
+      '</tr>' +
+      '<tr class="detail-row" id="detail-' + i + '" style="display:none">' +
+        '<td colspan="7"></td>' +
+      '</tr>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">' +
+          '<span><img src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="" style="height:18px;vertical-align:middle;margin-right:6px">&#127915; Incidents &mdash; ' + count + ' record' + (count !== 1 ? 's' : '') + '</span>' +
+          '<span class="hint">Click a row to edit</span>' +
+        '</div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th></th><th>Number</th><th>Short Description</th><th>State</th>' +
+            '<th>Priority</th><th>Assigned To</th><th>Created</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        buildAddSection('incident') +
+        '<div class="inline-form" id="add-form">' + buildAddForm('incident') + '</div>' +
+        MCP_FOOTER +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REQUESTS VIEW — expandable rows → edit Approval + request items with Qty
+  // ═══════════════════════════════════════════════════════════════════════════
+  function renderRequestsView(data) {
+    var root  = document.getElementById('root');
+    var count = data.requests ? data.requests.length : 0;
+
+    if (count === 0) {
+      root.innerHTML =
+        '<div class="card"><div class="mcp-bar"></div>' +
+        '<div class="card-header"><span><img src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="" style="height:18px;vertical-align:middle;margin-right:6px">&#128203; Requests — 0 records</span></div>' +
+        '<div class="empty">No requests found.</div>' +
+        buildAddSection('request') +
+        MCP_FOOTER + '</div>';
+      notifyHeight(); return;
+    }
+
+    var rows = data.requests.map(function(req, i) {
+      return '<tr class="data-row" data-idx="' + i + '" onclick="toggleRow(' + i + ')">' +
+        '<td class="toggle-cell">&#9654;</td>' +
+        '<td><span class="number-link">' + req.number + '</span></td>' +
+        '<td>' + (req.short_description || '—') + '</td>' +
+        '<td>' + stateBadge(req.request_state) + '</td>' +
+        '<td>' + priorityBadge(req.priority) + '</td>' +
+        '<td>' + (req.approval || '—') + '</td>' +
+        '<td>' + (req.sys_created_on || '—') + '</td>' +
+      '</tr>' +
+      '<tr class="detail-row" id="detail-' + i + '" style="display:none">' +
+        '<td colspan="7"><div class="loading">Fetching request items...</div></td>' +
+      '</tr>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">' +
+          '<span><img src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="" style="height:18px;vertical-align:middle;margin-right:6px">&#128203; Requests &mdash; ' + count + ' record' + (count !== 1 ? 's' : '') + '</span>' +
+          '<span class="hint">Click a row to edit &amp; view items</span>' +
+        '</div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th></th><th>Number</th><th>Short Description</th><th>State</th>' +
+            '<th>Priority</th><th>Approval</th><th>Created</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        buildAddSection('request') +
+        '<div class="inline-form" id="add-form">' + buildAddForm('request') + '</div>' +
+        MCP_FOOTER +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ── Toggle expanded row ────────────────────────────────────────────────────
+  function toggleRow(idx) {
+    var detailRow = document.getElementById('detail-' + idx);
+    var dataRow   = document.querySelector('[data-idx="' + idx + '"]');
+    if (!detailRow || !dataRow) return;
+    var toggleCell = dataRow.querySelector('.toggle-cell');
+
+    // Collapse if already expanded
+    if (expandedIdx === idx) {
+      detailRow.style.display = 'none';
+      dataRow.classList.remove('expanded');
+      toggleCell.innerHTML = checkedRows[idx] ? '&#10003;' : '&#9654;';
+      toggleCell.className = 'toggle-cell' + (checkedRows[idx] ? ' done' : '');
+      expandedIdx = -1;
+      notifyHeight();
+      return;
+    }
+
+    // Collapse previous
+    if (expandedIdx >= 0) {
+      var prev    = document.getElementById('detail-' + expandedIdx);
+      var prevRow = document.querySelector('[data-idx="' + expandedIdx + '"]');
+      if (prev) prev.style.display = 'none';
+      if (prevRow) {
+        prevRow.classList.remove('expanded');
+        var prevCell = prevRow.querySelector('.toggle-cell');
+        prevCell.innerHTML = checkedRows[expandedIdx] ? '&#10003;' : '&#9654;';
+        prevCell.className = 'toggle-cell' + (checkedRows[expandedIdx] ? ' done' : '');
+      }
+    }
+
+    expandedIdx = idx;
+    dataRow.classList.add('expanded');
+    toggleCell.innerHTML = '&#9660;';
+    detailRow.style.display = '';
+
+    if (viewMode === 'incidents') {
+      renderIncidentEdit(idx);
+    } else if (viewMode === 'requests') {
+      renderRequestExpanded(idx);
+    }
+
+    notifyHeight();
+  }
+
+  // ── Render: Incident inline edit (Description + Priority) ─────────────────
+  function renderIncidentEdit(idx) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    var inc  = currentData.incidents[idx];
+    if (!cell || !inc) return;
+
+    cell.innerHTML =
+      '<div class="edit-section">' +
+        '<div class="edit-header">&#9998; Edit Incident ' + inc.number + '</div>' +
+        '<div class="edit-row">' +
+          '<div class="edit-field">' +
+            '<label class="form-label">Description</label>' +
+            '<textarea class="form-textarea" id="edit-desc-' + idx + '" rows="3">' + (inc.description || '') + '</textarea>' +
+          '</div>' +
+        '</div>' +
+        '<div class="edit-row" style="margin-top:8px">' +
+          '<div class="edit-field-narrow">' +
+            '<label class="form-label">Priority</label>' +
+            '<select class="form-select" id="edit-priority-' + idx + '">' +
+              '<option value="1"' + (inc.priority === '1' ? ' selected' : '') + '>1 – Critical</option>' +
+              '<option value="2"' + (inc.priority === '2' ? ' selected' : '') + '>2 – High</option>' +
+              '<option value="3"' + (inc.priority === '3' ? ' selected' : '') + '>3 – Moderate</option>' +
+              '<option value="4"' + (inc.priority === '4' ? ' selected' : '') + '>4 – Low</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="edit-field-action">' +
+            '<button class="btn-save" id="save-inc-' + idx + '" onclick="saveIncident(' + idx + ', event)">Save Changes</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ── Save incident update ──────────────────────────────────────────────────
+  function saveIncident(idx, event) {
+    event.stopPropagation();
+    var inc = currentData.incidents[idx];
+    var desc = document.getElementById('edit-desc-' + idx).value;
+    var prio = document.getElementById('edit-priority-' + idx).value;
+    var btn  = document.getElementById('save-inc-' + idx);
+
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    callTool('update_incident', {
+      sys_id: inc.sys_id,
+      description: desc,
+      priority: prio
+    })
+    .then(function() {
+      btn.textContent = 'Saved ✓';
+      btn.className = 'btn-save saved';
+      showToast(inc.number + ' updated ✓', false);
+      // Mark row as updated
+      checkedRows[idx] = true;
+      var row = document.querySelector('[data-idx="' + idx + '"]');
+      if (row) row.classList.add('checked');
+      setTimeout(function() { btn.textContent = 'Save Changes'; btn.className = 'btn-save'; btn.disabled = false; }, 2000);
+      notifyHeight();
+    })
+    .catch(function(err) {
+      btn.textContent = 'Save Changes';
+      btn.disabled = false;
+      showToast('Error: ' + err.message, true);
+    });
+  }
+
+  // ── Render: Request expanded (Approval edit + Request Items with Qty) ─────
+  function renderRequestExpanded(idx) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    var req  = currentData.requests[idx];
+    if (!cell || !req) return;
+
+    cell.innerHTML = '<div class="loading">Fetching request items...</div>';
+    notifyHeight();
+
+    callTool('get_request_items', { request_sys_id: req.sys_id })
+      .then(function(result) {
+        var items = result && result.items ? result.items : [];
+        renderRequestDetail(idx, items);
+      })
+      .catch(function(err) {
+        cell.innerHTML = '<div class="loading">Error: ' + err.message + '</div>';
+        notifyHeight();
+      });
+  }
+
+  function renderRequestDetail(idx, items) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    var req  = currentData.requests[idx];
+    if (!cell || !req) return;
+
+    // Section 1: Edit Approval
+    var approvalSection =
+      '<div class="edit-section">' +
+        '<div class="edit-header">&#9998; Edit Request ' + req.number + '</div>' +
+        '<div class="edit-row">' +
+          '<div class="edit-field-narrow">' +
+            '<label class="form-label">Approval</label>' +
+            '<select class="form-select" id="edit-approval-' + idx + '">' +
+              '<option value="not requested"' + (req.approval === 'Not Yet Requested' ? ' selected' : '') + '>Not Yet Requested</option>' +
+              '<option value="requested"' + (req.approval === 'Requested' ? ' selected' : '') + '>Requested</option>' +
+              '<option value="approved"' + (req.approval === 'Approved' ? ' selected' : '') + '>Approved</option>' +
+              '<option value="rejected"' + (req.approval === 'Rejected' ? ' selected' : '') + '>Rejected</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="edit-field-action">' +
+            '<button class="btn-save" id="save-req-' + idx + '" onclick="saveRequest(' + idx + ', event)">Save</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    // Section 2: Request Items with editable Quantity
+    var itemsSection = '';
+    if (items.length === 0) {
+      itemsSection =
+        '<div class="edit-section">' +
+          '<div class="sub-header">&#128230; Request Items (0)</div>' +
+          '<div class="loading">No request items for this request.</div>' +
+        '</div>';
+    } else {
+      var itemRows = items.map(function(item, j) {
+        return '<tr>' +
+          '<td><span class="number-link">' + item.number + '</span></td>' +
+          '<td>' + (item.short_description || '—') + '</td>' +
+          '<td>' + stateBadge(item.state) + '</td>' +
+          '<td>' + (item.stage || '—') + '</td>' +
+          '<td>' +
+            '<input type="number" class="qty-input" id="qty-' + idx + '-' + j + '" value="' + (item.quantity || 1) + '" min="1" onclick="event.stopPropagation()" />' +
+          '</td>' +
+          '<td>' + (item.price || '—') + '</td>' +
+          '<td>' +
+            '<button class="btn-save-sm" id="save-qty-' + idx + '-' + j + '" onclick="saveItemQty(' + idx + ', ' + j + ', \'' + item.sys_id + '\', event)">Save</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      itemsSection =
+        '<div class="edit-section">' +
+          '<div class="sub-header">&#128230; Request Items (' + items.length + ')</div>' +
+          '<table class="sub-table">' +
+            '<thead><tr>' +
+              '<th>Number</th><th>Description</th><th>State</th>' +
+              '<th>Stage</th><th>Qty</th><th>Price</th><th></th>' +
+            '</tr></thead>' +
+            '<tbody>' + itemRows + '</tbody>' +
+          '</table>' +
+        '</div>';
+    }
+
+    cell.innerHTML = approvalSection + itemsSection;
+
+    // Mark row as checked (items loaded)
+    checkedRows[idx] = true;
+    var row = document.querySelector('[data-idx="' + idx + '"]');
+    var tc  = row && row.querySelector('.toggle-cell');
+    if (row) row.classList.add('checked');
+    if (tc)  { tc.innerHTML = '&#9660;'; tc.className = 'toggle-cell done'; }
+
+    // Store items for later reference
+    currentData.requests[idx]._items = items;
+
+    notifyHeight();
+  }
+
+  // ── Save request approval ─────────────────────────────────────────────────
+  function saveRequest(idx, event) {
+    event.stopPropagation();
+    var req = currentData.requests[idx];
+    var approval = document.getElementById('edit-approval-' + idx).value;
+    var btn = document.getElementById('save-req-' + idx);
+
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    callTool('update_request', {
+      sys_id: req.sys_id,
+      approval: approval
+    })
+    .then(function() {
+      btn.textContent = 'Saved ✓';
+      btn.className = 'btn-save saved';
+      showToast(req.number + ' approval updated ✓', false);
+      setTimeout(function() { btn.textContent = 'Save'; btn.className = 'btn-save'; btn.disabled = false; }, 2000);
+    })
+    .catch(function(err) {
+      btn.textContent = 'Save';
+      btn.disabled = false;
+      showToast('Error: ' + err.message, true);
+    });
+  }
+
+  // ── Save request item quantity ────────────────────────────────────────────
+  function saveItemQty(rowIdx, itemIdx, sysId, event) {
+    event.stopPropagation();
+    var qty = document.getElementById('qty-' + rowIdx + '-' + itemIdx).value;
+    var btn = document.getElementById('save-qty-' + rowIdx + '-' + itemIdx);
+
+    btn.textContent = '...';
+    btn.disabled = true;
+
+    callTool('update_request_item', {
+      sys_id: sysId,
+      quantity: qty
+    })
+    .then(function() {
+      btn.textContent = '✓';
+      btn.className = 'btn-save-sm saved';
+      showToast('Quantity updated ✓', false);
+      setTimeout(function() { btn.textContent = 'Save'; btn.className = 'btn-save-sm'; btn.disabled = false; }, 2000);
+    })
+    .catch(function(err) {
+      btn.textContent = 'Save';
+      btn.disabled = false;
+      showToast('Error: ' + err.message, true);
+    });
+  }
+
+  // ── Add section + form ─────────────────────────────────────────────────────
+  function buildAddSection(type) {
+    var label = type === 'incident' ? 'Incident' : 'Request';
+    return '<div class="action-section">' +
+      '<button class="btn btn-add" onclick="toggleAddForm()">&#10133; Add ' + label + '</button>' +
+    '</div>';
+  }
+
+  function buildAddForm(type) {
+    var label = type === 'incident' ? 'Incident' : 'Request';
+    var extra = type === 'incident'
+      ? '<div class="form-field">' +
+          '<label class="form-label">Category</label>' +
+          '<select class="form-select" id="form-category">' +
+            '<option value="inquiry">Inquiry / Help</option>' +
+            '<option value="software">Software</option>' +
+            '<option value="hardware">Hardware</option>' +
+            '<option value="network">Network</option>' +
+            '<option value="database">Database</option>' +
+          '</select>' +
+        '</div>'
+      : '';
+
+    return '<div class="form-grid">' +
+      '<div class="form-field full">' +
+        '<label class="form-label">Short Description</label>' +
+        '<input class="form-input" id="form-short-desc" placeholder="Brief summary..." />' +
+      '</div>' +
+      '<div class="form-field full">' +
+        '<label class="form-label">Description</label>' +
+        '<textarea class="form-textarea" id="form-desc" placeholder="Detailed description..." rows="2"></textarea>' +
+      '</div>' +
+      '<div class="form-field">' +
+        '<label class="form-label">Priority</label>' +
+        '<select class="form-select" id="form-priority">' +
+          '<option value="1">1 – Critical</option>' +
+          '<option value="2">2 – High</option>' +
+          '<option value="3" selected>3 – Moderate</option>' +
+          '<option value="4">4 – Low</option>' +
+        '</select>' +
+      '</div>' +
+      extra +
+    '</div>' +
+    '<div class="form-actions">' +
+      '<button class="btn-submit" onclick="submitAdd(\'' + type + '\')">Create ' + label + '</button>' +
+      '<button class="btn-cancel" onclick="toggleAddForm()">Cancel</button>' +
+    '</div>';
+  }
+
+  function toggleAddForm() {
+    var form = document.getElementById('add-form');
+    if (!form) return;
+    addFormOpen = !addFormOpen;
+    form.className = addFormOpen ? 'inline-form visible' : 'inline-form';
+    notifyHeight();
+  }
+
+  function submitAdd(type) {
+    var shortDesc = document.getElementById('form-short-desc').value;
+    if (!shortDesc) { showToast('Short description is required', true); return; }
+
+    var args = {
+      short_description: shortDesc,
+      description: document.getElementById('form-desc').value || '',
+      priority: document.getElementById('form-priority').value,
+    };
+
+    if (type === 'incident') {
+      var cat = document.getElementById('form-category');
+      if (cat) args.category = cat.value;
+    }
+
+    var toolName = type === 'incident' ? 'create_incident' : 'create_request';
+    showToast('Creating ' + type + '...', false);
+
+    callTool(toolName, args)
+      .then(function(result) {
+        showToast((result && result.number ? result.number + ' created' : type + ' created') + ' ✓', false);
+        var refreshTool = type === 'incident' ? 'get_incidents' : 'get_requests';
+        return callTool(refreshTool, { limit: 5 });
+      })
+      .then(function(data) { if (data) render(data); })
+      .catch(function(err) { showToast('Error: ' + err.message, true); });
+  }
+
+  // ── Receive messages from host ─────────────────────────────────────────────
+  window.addEventListener('message', function(event) {
+    if (event.source !== window.parent) return;
+    var msg = event.data;
+    if (!msg) return;
+
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      render(msg.params.structuredContent);
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      applyTheme(msg.params.theme);
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.result) { cb.resolve(msg.result); }
+      else { cb.reject(new Error(msg.error || 'Tool call failed')); }
+      return;
+    }
+  }, { passive: true });
+
+  // ── window.openai.toolOutput (M365 + modern ChatGPT) ──────────────────────
+  var rendered = false;
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme)      { applyTheme(window.openai.theme); }
+      if (window.openai.toolOutput) {
+        var out  = window.openai.toolOutput;
+        var data = (out && out.structuredContent !== undefined) ? out.structuredContent : out;
+        render(data);
+        rendered = true;
+      }
+    }
+  }
+  tryRenderFromOpenAI();
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 30) clearInterval(poll);
+    }, 100);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚓ The Great Trading Company — Widget Dockyard</title>
+<style>
+  :root {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --text: #2c2c2c;
+    --text-light: #6b6b6b;
+    --border: #e0ddd5;
+    --gold: #C9A84C;
+    --gold-dark: #a08030;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --text: #e0e0e0;
+      --text-light: #a0a0a0;
+      --border: #3a3a5c;
+      --gold: #d4b85c;
+      --gold-dark: #C9A84C;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #e0e0e0;
+  }
+  .hero h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 8px; }
+  .hero h1 span { color: var(--gold); font-weight: 600; }
+  .hero p { font-size: 14px; color: #a0a0a0; margin-top: 8px; }
+  .hero .anchor { font-size: 48px; display: block; margin-bottom: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: -30px auto 40px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+
+  .card .logo { height: 32px; width: 32px; }
+  .card .top { display: flex; align-items: center; gap: 12px; }
+  .card h2 { font-size: 18px; font-weight: 600; }
+  .card .desc { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+  .card .port { font-size: 11px; font-family: monospace; color: var(--gold-dark); background: rgba(201,168,76,0.1); padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+
+  .footer {
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 12px;
+    color: var(--text-light);
+    border-top: 1px solid var(--border);
+  }
+  .footer a { color: var(--gold-dark); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  .note {
+    max-width: 700px;
+    margin: 0 auto 30px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-light);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .note code { background: rgba(201,168,76,0.15); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="anchor">⚓</span>
+  <h1>The <span>Great Trading Company</span></h1>
+  <p>Widget Dockyard — Interactive test harnesses for all LOB MCP Apps</p>
+</div>
+
+<div class="grid">
+  <a class="card" href="sf-widget-test.html">
+    <div class="top">
+      <img class="logo" src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="Salesforce">
+      <h2>Salesforce CRM</h2>
+    </div>
+    <div class="desc">Leads & Opportunities — inline Create, Edit, and table rendering with Lightning Design System colours.</div>
+    <span class="port">Port 3000 · 6 tools</span>
+  </a>
+
+  <a class="card" href="snow-widget-test.html">
+    <div class="top">
+      <img class="logo" src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="ServiceNow">
+      <h2>ServiceNow ITSM</h2>
+    </div>
+    <div class="desc">Incidents, Requests & Request Items — expandable rows, inline CRUD, priority badges.</div>
+    <span class="port">Port 3001 · 8 tools</span>
+  </a>
+
+  <a class="card" href="sap-widget-test.html">
+    <div class="top">
+      <img class="logo" src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP">
+      <h2>SAP S/4HANA</h2>
+    </div>
+    <div class="desc">Purchase Orders, Business Partners & Materials — Fiori-inspired UI with sandbox mode banner and material detail drill-down.</div>
+    <span class="port">Port 3002 · 6 tools · Sandbox</span>
+  </a>
+
+  <a class="card" href="hs-widget-test.html">
+    <div class="top">
+      <img class="logo" src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot">
+      <h2>HubSpot Marketing</h2>
+    </div>
+    <div class="desc">Marketing Emails → Contact Lists → List Contacts — single-ask drill-down with add/remove/edit.</div>
+    <span class="port">Port 3003 · 7 tools · Single-ask</span>
+  </a>
+</div>
+
+<div class="note">
+  These test harnesses run entirely in the browser with <strong>mock data</strong> — no server or credentials needed.<br>
+  They simulate the M365 Copilot <code>postMessage</code> bridge so you can test widget rendering, CRUD forms, error states, and dark mode independently.
+</div>
+
+<div class="footer">
+  ⚓ The Great Trading Company · <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">GitHub</a> · MIT License
+</div>
+
+</body>
+</html>

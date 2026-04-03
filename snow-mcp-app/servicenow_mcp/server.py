@@ -8,6 +8,7 @@ with _meta on the decorator to ensure M365 Copilot discovers the widget URI.
 
 import base64
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -23,7 +24,7 @@ load_dotenv()
 
 # ── Configuration (all from .env) ─────────────────────────────────────────────
 
-INSTANCE = os.environ["SERVICENOW_INSTANCE"]
+INSTANCE = os.environ.get("SERVICENOW_INSTANCE", "")
 AUTH_MODE = os.environ.get("SERVICENOW_AUTH_MODE", "oauth").lower()
 CLIENT_ID = os.environ.get("SERVICENOW_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("SERVICENOW_CLIENT_SECRET", "")
@@ -617,9 +618,37 @@ def incident_summary() -> list[PromptMessage]:
 # ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _validate_env() -> None:
+    """Check required environment variables and print startup checklist."""
+    print("  ┌─ Environment ─────────────────────────────────")
+    print(f"  │ SERVICENOW_INSTANCE  {'✓ ' + INSTANCE if INSTANCE else '✗ MISSING'}")
+    print(f"  │ AUTH_MODE            ✓ {AUTH_MODE}")
+    if AUTH_MODE == "oauth":
+        print(f"  │ CLIENT_ID           {'✓ ' + CLIENT_ID[:8] + '...' if CLIENT_ID else '✗ MISSING'}")
+        print(f"  │ CLIENT_SECRET       {'✓ (set)' if CLIENT_SECRET else '✗ MISSING'}")
+    else:
+        print(f"  │ USERNAME            {'✓ ' + USERNAME if USERNAME else '✗ MISSING'}")
+        print(f"  │ PASSWORD            {'✓ (set)' if PASSWORD else '✗ MISSING'}")
+    print("  └────────────────────────────────────────────────")
+
+    missing = []
+    if not INSTANCE: missing.append("SERVICENOW_INSTANCE")
+    if AUTH_MODE == "oauth":
+        if not CLIENT_ID: missing.append("SERVICENOW_CLIENT_ID")
+        if not CLIENT_SECRET: missing.append("SERVICENOW_CLIENT_SECRET")
+    else:
+        if not USERNAME: missing.append("SERVICENOW_USERNAME")
+        if not PASSWORD: missing.append("SERVICENOW_PASSWORD")
+    if missing:
+        print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
+        print("  Copy .env.example to .env and fill in your ServiceNow credentials.")
+        sys.exit(1)
+
+
 def main() -> None:
     port = int(os.environ.get("PORT", 3001))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    _validate_env()
     print(f"⚓ GTC — ServiceNow Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()

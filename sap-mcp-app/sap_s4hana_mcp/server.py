@@ -6,6 +6,7 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 """
 
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -463,8 +464,40 @@ def manage_erp() -> list[PromptMessage]:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+def _validate_env() -> None:
+    """Check required environment variables and print startup checklist."""
+    mode = os.environ.get("SAP_MODE", "sandbox").lower()
+    api_key = os.environ.get("SAP_API_KEY", "")
+    tenant_url = os.environ.get("SAP_TENANT_URL", "")
+    username = os.environ.get("SAP_USERNAME", "")
+    password = os.environ.get("SAP_PASSWORD", "")
+
+    print("  ┌─ Environment ─────────────────────────────────")
+    print(f"  │ SAP_MODE           ✓ {mode}")
+    if mode == "sandbox":
+        print(f"  │ SAP_API_KEY        {'✓ ' + api_key[:8] + '...' if api_key else '✗ MISSING'}")
+    else:
+        print(f"  │ SAP_TENANT_URL     {'✓ ' + tenant_url[:40] if tenant_url else '✗ MISSING'}")
+        print(f"  │ SAP_USERNAME       {'✓ ' + username if username else '✗ MISSING'}")
+        print(f"  │ SAP_PASSWORD       {'✓ (set)' if password else '✗ MISSING'}")
+    print("  └────────────────────────────────────────────────")
+
+    missing = []
+    if mode == "sandbox":
+        if not api_key: missing.append("SAP_API_KEY")
+    else:
+        if not tenant_url: missing.append("SAP_TENANT_URL")
+        if not username: missing.append("SAP_USERNAME")
+        if not password: missing.append("SAP_PASSWORD")
+    if missing:
+        print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
+        print("  Copy .env.example to .env and fill in your SAP credentials.")
+        sys.exit(1)
+
+
 def main():
     port = int(os.environ.get("PORT", 3002))
+    _validate_env()
     mode = os.environ.get("SAP_MODE", "sandbox").lower()
     print(f"⚓ GTC — SAP S/4HANA Trading Post starting on port {port} (mode: {mode})")
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")

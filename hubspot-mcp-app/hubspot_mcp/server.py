@@ -13,6 +13,7 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 """
 
 import os
+import sys
 from pathlib import Path
 
 import uvicorn
@@ -363,9 +364,24 @@ def show_marketing() -> list[PromptMessage]:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+def _validate_env() -> None:
+    """Check required environment variables and print startup checklist."""
+    token = os.environ.get("HUBSPOT_ACCESS_TOKEN", "")
+
+    print("  ┌─ Environment ─────────────────────────────────")
+    print(f"  │ HUBSPOT_ACCESS_TOKEN  {'✓ ' + token[:12] + '...' if token else '✗ MISSING'}")
+    print("  └────────────────────────────────────────────────")
+
+    if not token:
+        print("\n  ❌ Missing required env var: HUBSPOT_ACCESS_TOKEN")
+        print("  Copy .env.example to .env and fill in your HubSpot Private App token.")
+        sys.exit(1)
+
+
 def main():
     port = int(os.environ.get("PORT", 3003))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    _validate_env()
     print(f"⚓ GTC — HubSpot Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>⚓ GTC Dockyard — HubSpot Marketing Widget Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #FF7A59; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #E8563D; }
+  button.green  { background: #00BDA5; }
+  button.green:hover  { background: #009a87; }
+  button.blue   { background: #0070F2; }
+  button.blue:hover   { background: #0054B4; }
+  button.dark   { background: #33475b; }
+  button.dark:hover   { background: #1f2d3d; }
+  button.secondary    { background: #706e6b; }
+  button.secondary:hover { background: #514f4d; }
+  button.error  { background: #F2545B; }
+  button.error:hover  { background: #d43d44; }
+  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #fff0ec; color: #FF7A59; margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<h2>⚓ <img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — HubSpot Marketing <span class="badge">Single-Ask Flow</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
+<p class="subtitle">Test harness simulating M365 Copilot's <code>window.openai.*</code> bridge. Entry point is <strong>get_emails</strong> — widget handles all drill-down.</p>
+
+<div class="section-label">📧 Entry Point — Send Mock Emails</div>
+<div class="controls">
+  <button onclick="sendEmails()">Send Mock Emails (5 rows)</button>
+  <button class="secondary" onclick="sendEmptyEmails()">Send Empty Emails</button>
+</div>
+<p class="hint">Click "📋 View Contact Lists →" in the widget to navigate. ✎ to edit email name/subject. All navigation is widget-driven via callTool.</p>
+
+<div class="section-label">⚠️ Error Simulation</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Send Auth Error</button>
+</div>
+<p class="hint">Simulates a HubSpot authentication failure to test error display in the widget.</p>
+
+<div class="section-label">🎨 Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="hubspot_mcp/web/widget.html"></iframe>
+</div>
+
+<div class="section-label">📜 Event Log</div>
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+
+  // ── Mock Data: Marketing Emails ────────────────────────────────────────
+  var MOCK_EMAILS = {
+    type: "emails",
+    total: 5,
+    items: [
+      { id: "12345", name: "Spring Sale 2025",        subject: "\uD83C\uDF38 Don't miss our Spring Sale!",      status: "PUBLISHED", stats: { sent: 15420, delivered: 15100, opened: 6340, clicked: 892, bounced: 320, unsubscribed: 45 } },
+      { id: "12346", name: "Monthly Newsletter Mar",   subject: "March Newsletter — What's New",                 status: "PUBLISHED", stats: { sent: 22800, delivered: 22350, opened: 8940, clicked: 1560, bounced: 450, unsubscribed: 72 } },
+      { id: "12347", name: "Product Launch Webinar",    subject: "\uD83D\uDE80 Join our Product Launch Event!",   status: "PUBLISHED", stats: { sent: 8500,  delivered: 8320,  opened: 4160, clicked: 1248, bounced: 180, unsubscribed: 18 } },
+      { id: "12348", name: "Customer Survey Q1",        subject: "We'd love your feedback!",                     status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } },
+      { id: "12349", name: "Summer Preview Campaign",   subject: "\u2600\uFE0F Summer is coming — sneak peek!",  status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } }
+    ]
+  };
+
+  var MOCK_EMPTY_EMAILS = { type: "emails", total: 0, items: [] };
+
+  // ── Mock Data: Contact Lists ───────────────────────────────────────────
+  var MOCK_LISTS = {
+    type: "lists", total: 4, items: [
+      { id: "101", name: "Newsletter Subscribers", type: "DYNAMIC", size: 2450 },
+      { id: "102", name: "Spring Campaign 2025", type: "MANUAL", size: 340 },
+      { id: "103", name: "VIP Customers", type: "MANUAL", size: 89 },
+      { id: "104", name: "Event Attendees — Q1", type: "MANUAL", size: 156 },
+    ]
+  };
+
+  // ── Mock Data: List Contacts ───────────────────────────────────────────
+  var MOCK_LIST_CONTACTS = {
+    type: "list_contacts", list_id: "102", list_name: "Spring Campaign 2025", total: 3, items: [
+      { id: "501", firstname: "Sarah", lastname: "Chen", email: "sarah.chen@example.com", phone: "+1-555-0101", company: "Acme Corp", lifecyclestage: "lead" },
+      { id: "502", firstname: "James", lastname: "Wilson", email: "j.wilson@example.com", phone: "+1-555-0102", company: "TechStart", lifecyclestage: "subscriber" },
+      { id: "503", firstname: "Maria", lastname: "Garcia", email: "m.garcia@example.com", phone: "+1-555-0103", company: "GlobalTrade", lifecyclestage: "opportunity" },
+    ]
+  };
+
+  // ── Mock Error ──────────────────────────────────────────────────────────
+  var MOCK_ERROR = { error: true, message: "HubSpot authentication failed: Missing HubSpot credentials. Set HUBSPOT_ACCESS_TOKEN in your .env file." };
+
+  // ── Current state (mutated by mock CRUD operations) ─────────────────────
+  var currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function sendEmails()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(MOCK_EMAILS)) } }); log('\u2192 Sent mock emails (5 rows)'); }
+  function sendEmptyEmails() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
+  function sendError()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#1a1a2e' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#e0e0e0' : '#111';
+    document.getElementById('frame-wrapper').style.background = isDark ? '#16213e' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3a3a5c' : '#ddd';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('\u2192 Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ─────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // ── callTool request from widget ──
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.args;
+      log('\u2190 callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+
+      setTimeout(function() {
+        var result;
+
+        // ── GET EMAILS ──
+        if (tool === 'get_emails') {
+          result = JSON.parse(JSON.stringify(MOCK_EMAILS));
+          log('\u2192 Returned mock emails');
+        }
+
+        // ── GET LISTS ──
+        else if (tool === 'get_lists') {
+          result = JSON.parse(JSON.stringify(MOCK_LISTS));
+          log('\u2192 Returned mock lists');
+        }
+
+        // ── GET LIST CONTACTS ──
+        else if (tool === 'get_list_contacts') {
+          var listId = args.list_id;
+          var listName = 'Unknown List';
+          for (var li = 0; li < MOCK_LISTS.items.length; li++) {
+            if (MOCK_LISTS.items[li].id === listId) {
+              listName = MOCK_LISTS.items[li].name;
+              break;
+            }
+          }
+          currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
+          currentListContacts.list_id = listId;
+          currentListContacts.list_name = listName;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Returned list contacts for list ' + listId + ' (' + listName + ')');
+        }
+
+        // ── ADD TO LIST ──
+        else if (tool === 'add_to_list') {
+          var newContact = {
+            id: String(600 + currentListContacts.items.length),
+            firstname: args.contact_email.split('@')[0],
+            lastname: '(added)',
+            email: args.contact_email,
+            phone: '',
+            company: '',
+            lifecyclestage: 'lead'
+          };
+          currentListContacts.items.push(newContact);
+          currentListContacts.total = currentListContacts.items.length;
+          currentListContacts._addedEmail = args.contact_email;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Added ' + args.contact_email + ' to list ' + args.list_id);
+        }
+
+        // ── REMOVE FROM LIST ──
+        else if (tool === 'remove_from_list') {
+          var removeId = args.contact_id;
+          currentListContacts.items = currentListContacts.items.filter(function(c) { return c.id !== removeId; });
+          currentListContacts.total = currentListContacts.items.length;
+          result = JSON.parse(JSON.stringify(currentListContacts));
+          log('\u2192 Removed contact ' + removeId + ' from list ' + args.list_id);
+        }
+
+        // ── UPDATE EMAIL ──
+        else if (tool === 'update_email') {
+          for (var i = 0; i < MOCK_EMAILS.items.length; i++) {
+            if (MOCK_EMAILS.items[i].id === args.email_id) {
+              if (args.name) MOCK_EMAILS.items[i].name = args.name;
+              if (args.subject) MOCK_EMAILS.items[i].subject = args.subject;
+              log('\u2192 Updated email ' + args.email_id + ': name="' + (args.name || '') + '", subject="' + (args.subject || '') + '"');
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(MOCK_EMAILS));
+        }
+
+        // ── UPDATE LIST ──
+        else if (tool === 'update_list') {
+          for (var j = 0; j < MOCK_LISTS.items.length; j++) {
+            if (MOCK_LISTS.items[j].id === args.list_id) {
+              MOCK_LISTS.items[j].name = args.name;
+              log('\u2192 Renamed list ' + args.list_id + ' to "' + args.name + '"');
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(MOCK_LISTS));
+        }
+
+        // ── UNKNOWN TOOL ──
+        else {
+          result = { error: true, message: 'Unknown tool: ' + tool };
+          log('\u2192 Unknown tool: ' + tool);
+        }
+
+        post({ jsonrpc: '2.0', id: msg.id, result: result });
+      }, 600); // simulate network latency
+
+      return;
+    }
+
+    // ── Height notification from widget ──
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>
