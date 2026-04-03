@@ -30,7 +30,7 @@ WIDGET_URI = "ui://widget/hubspot.html"
 RESOURCE_MIME_TYPE = "text/html;profile=mcp-app"
 WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding="utf-8")
 
-mcp = FastMCP("hubspot-marketing")
+mcp = FastMCP("gtc-hubspot-trading-post")
 
 
 @mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
@@ -366,6 +366,7 @@ def show_marketing() -> list[PromptMessage]:
 def main():
     port = int(os.environ.get("PORT", 3003))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    print(f"⚓ GTC — HubSpot Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(

@@ -28,7 +28,7 @@ WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding
 
 # ── MCP Server ─────────────────────────────────────────────────────────────────
 
-mcp = FastMCP("sf-crm")
+mcp = FastMCP("gtc-sf-trading-post")
 
 
 @mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
@@ -493,6 +493,7 @@ def manage_crm() -> list[PromptMessage]:
 def main():
     port = int(os.environ.get("PORT", 3000))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    print(f"⚓ GTC — Salesforce Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(

@@ -428,11 +428,13 @@
   }
   .toast.visible { opacity: 1; transform: translateY(0); }
   .toast.error { background: #d13438; }
+  .gtc-watermark { text-align: right; padding: 6px 4px 0; font-size: 10px; color: var(--color-text-muted); opacity: 0.5; }
 </style>
 </head>
 <body>
 
 <div id="root"><div class="empty">Loading ServiceNow data...</div></div>
+<div class="gtc-watermark">⚓ GTC</div>
 <div class="toast" id="toast"></div>
 
 <script>

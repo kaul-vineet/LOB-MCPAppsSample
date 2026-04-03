@@ -48,7 +48,7 @@ def _error_result(message: str) -> types.CallToolResult:
 
 # ── MCP Server ────────────────────────────────────────────────────────────────
 
-mcp = FastMCP("servicenow-tracker")
+mcp = FastMCP("gtc-servicenow-post")
 
 
 @mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
@@ -620,6 +620,7 @@ def incident_summary() -> list[PromptMessage]:
 def main() -> None:
     port = int(os.environ.get("PORT", 3001))
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    print(f"⚓ GTC — ServiceNow Trading Post starting on port {port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(

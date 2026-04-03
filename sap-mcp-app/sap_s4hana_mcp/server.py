@@ -28,7 +28,7 @@ WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding
 
 # ── MCP Server ─────────────────────────────────────────────────────────────────
 
-mcp = FastMCP("sap-s4hana")
+mcp = FastMCP("gtc-sap-trading-post")
 
 
 @mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
@@ -466,7 +466,7 @@ def manage_erp() -> list[PromptMessage]:
 def main():
     port = int(os.environ.get("PORT", 3002))
     mode = os.environ.get("SAP_MODE", "sandbox").lower()
-    print(f"🏭 SAP S/4HANA MCP server starting on port {port} (mode: {mode})")
+    print(f"⚓ GTC — SAP S/4HANA Trading Post starting on port {port} (mode: {mode})")
     cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
 
     app = mcp.streamable_http_app()

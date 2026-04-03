@@ -37,6 +37,16 @@ $Fleet = @(
 # ── Pre-flight checks ────────────────────────────────────────────────────────
 
 Write-Host ""
+Write-Host "              |    |    |                 " -ForegroundColor DarkYellow
+Write-Host "             )_)  )_)  )_)               " -ForegroundColor DarkYellow
+Write-Host "            )___))___))___)               " -ForegroundColor DarkYellow
+Write-Host "           )____)____)_____)              " -ForegroundColor DarkYellow
+Write-Host "         _____|____|____|____\___         " -ForegroundColor White
+Write-Host "  ------\                       /------   " -ForegroundColor Cyan
+Write-Host "    ^^^^ \_____________________/          " -ForegroundColor Blue
+Write-Host "      ^^^^       ^^^^     ^^^    ^^       " -ForegroundColor Blue
+Write-Host "           ^^^^      ^^^                  " -ForegroundColor DarkBlue
+Write-Host ""
 Write-Host "  ⚓ The Great Trading Company — Setting Sail!" -ForegroundColor Cyan
 Write-Host "  ════════════════════════════════════════════" -ForegroundColor DarkCyan
 Write-Host ""
