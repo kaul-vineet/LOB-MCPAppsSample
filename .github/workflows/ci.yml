@@ -1,0 +1,277 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# The Great Trading Company — CI Pipeline
+# Runs on every push and PR to main. Validates all 4 MCP apps + agent config.
+# ══════════════════════════════════════════════════════════════════════════════
+
+name: CI — Inspect the Fleet
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── 1. Python lint + import check for each MCP app ────────────────────────
+  lint-and-import:
+    name: "🐍 ${{ matrix.app.name }} — Lint & Import"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - { name: "Salesforce",  dir: "sf-mcp-app",      pkg: "sf_crm_mcp" }
+          - { name: "ServiceNow", dir: "snow-mcp-app",     pkg: "servicenow_mcp" }
+          - { name: "SAP",        dir: "sap-mcp-app",      pkg: "sap_s4hana_mcp" }
+          - { name: "HubSpot",    dir: "hubspot-mcp-app",  pkg: "hubspot_mcp" }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.app.dir }}
+          pip install -e . --quiet
+
+      - name: Lint with ruff
+        run: |
+          pip install ruff --quiet
+          cd ${{ matrix.app.dir }}
+          ruff check ${{ matrix.app.pkg }}/ --select E,F,I --ignore E501
+
+      - name: Verify imports
+        run: |
+          cd ${{ matrix.app.dir }}
+          python -c "
+          from ${{ matrix.app.pkg }} import server
+          print('✅ server.py imports OK')
+          print(f'   Entry point: {server.main.__name__}')
+          "
+
+      - name: Verify .env.example exists
+        run: |
+          test -f ${{ matrix.app.dir }}/.env.example \
+            && echo "✅ .env.example found" \
+            || (echo "❌ Missing .env.example" && exit 1)
+
+      - name: Verify widget.html exists
+        run: |
+          test -f ${{ matrix.app.dir }}/${{ matrix.app.pkg }}/web/widget.html \
+            && echo "✅ widget.html found" \
+            || (echo "❌ Missing widget.html" && exit 1)
+
+      - name: Verify test harness exists
+        run: |
+          test -d ${{ matrix.app.dir }}/tests/ \
+            && echo "✅ tests/ folder found" \
+            || (echo "❌ Missing tests/ folder" && exit 1)
+
+  # ── 2. Validate agent configuration JSON ──────────────────────────────────
+  validate-agent-config:
+    name: "⚓ Agent Config — JSON Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate JSON syntax
+        run: |
+          echo "Checking ai-plugin.json..."
+          python -m json.tool lob-agent/appPackage/ai-plugin.json > /dev/null
+          echo "✅ ai-plugin.json valid"
+
+          echo "Checking mcp-tools.json..."
+          python -m json.tool lob-agent/appPackage/mcp-tools.json > /dev/null
+          echo "✅ mcp-tools.json valid"
+
+          echo "Checking manifest.json..."
+          python -m json.tool lob-agent/appPackage/manifest.json > /dev/null
+          echo "✅ manifest.json valid"
+
+          echo "Checking declarativeAgent.json..."
+          python -m json.tool lob-agent/appPackage/declarativeAgent.json > /dev/null
+          echo "✅ declarativeAgent.json valid"
+
+      - name: Check ai-plugin.json has 4 runtimes
+        run: |
+          python -c "
+          import json
+          with open('lob-agent/appPackage/ai-plugin.json') as f:
+              data = json.load(f)
+          runtimes = data.get('runtimes', [])
+          funcs = data.get('functions', [])
+          print(f'Runtimes: {len(runtimes)}')
+          print(f'Functions declared: {len(funcs)}')
+          assert len(runtimes) == 4, f'Expected 4 runtimes, found {len(runtimes)}'
+          print('✅ 4 runtimes configured')
+
+          # Check all functions are assigned to a runtime
+          assigned = set()
+          for rt in runtimes:
+              assigned.update(rt.get('run_for_functions', []))
+          declared = {f['name'] for f in funcs}
+          orphan = declared - assigned
+          assert not orphan, f'Functions not assigned to any runtime: {orphan}'
+          print(f'✅ All {len(declared)} functions assigned to runtimes')
+          "
+
+      - name: Check mcp-tools.json tool count matches ai-plugin.json
+        run: |
+          python -c "
+          import json
+
+          with open('lob-agent/appPackage/ai-plugin.json') as f:
+              plugin = json.load(f)
+          with open('lob-agent/appPackage/mcp-tools.json') as f:
+              tools = json.load(f)
+
+          plugin_funcs = {f['name'] for f in plugin.get('functions', [])}
+          tool_names = {t['name'] for t in tools.get('tools', [])}
+
+          in_plugin_not_tools = plugin_funcs - tool_names
+          in_tools_not_plugin = tool_names - plugin_funcs
+
+          if in_plugin_not_tools:
+              print(f'❌ In ai-plugin.json but NOT in mcp-tools.json: {in_plugin_not_tools}')
+          if in_tools_not_plugin:
+              print(f'❌ In mcp-tools.json but NOT in ai-plugin.json: {in_tools_not_plugin}')
+
+          assert not in_plugin_not_tools and not in_tools_not_plugin, 'Tool lists do not match!'
+          print(f'✅ {len(plugin_funcs)} tools match between ai-plugin.json and mcp-tools.json')
+          "
+
+      - name: Verify all tools have _meta.ui.resourceUri
+        run: |
+          python -c "
+          import json
+          with open('lob-agent/appPackage/mcp-tools.json') as f:
+              data = json.load(f)
+          missing = []
+          for tool in data.get('tools', []):
+              meta = tool.get('_meta', {})
+              uri = meta.get('ui', {}).get('resourceUri', '')
+              if not uri:
+                  missing.append(tool['name'])
+          if missing:
+              print(f'❌ Tools missing _meta.ui.resourceUri: {missing}')
+              exit(1)
+          print(f'✅ All {len(data[\"tools\"])} tools have _meta.ui.resourceUri')
+          "
+
+      - name: Check instruction.txt exists and is non-empty
+        run: |
+          FILE="lob-agent/appPackage/instruction.txt"
+          test -f "$FILE" && test -s "$FILE" \
+            && echo "✅ instruction.txt found ($(wc -l < $FILE) lines)" \
+            || (echo "❌ instruction.txt missing or empty" && exit 1)
+
+  # ── 3. Port assignment consistency check ──────────────────────────────────
+  port-consistency:
+    name: "🚢 Port Assignment Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify port assignments are consistent
+        run: |
+          python -c "
+          import json, re
+
+          # Expected port mapping
+          EXPECTED = {
+              'sf-mcp-app':      3000,
+              'snow-mcp-app':    3001,
+              'sap-mcp-app':     3002,
+              'hubspot-mcp-app': 3003,
+          }
+
+          errors = []
+
+          # Check .env.example files
+          for app, port in EXPECTED.items():
+              try:
+                  with open(f'{app}/.env.example') as f:
+                      content = f.read()
+                  if f'PORT={port}' not in content:
+                      errors.append(f'{app}/.env.example: expected PORT={port}')
+              except FileNotFoundError:
+                  errors.append(f'{app}/.env.example: file not found')
+
+          # Check ai-plugin.json runtime URLs contain correct ports
+          with open('lob-agent/appPackage/ai-plugin.json') as f:
+              plugin = json.load(f)
+          for rt in plugin.get('runtimes', []):
+              url = rt.get('spec', {}).get('url', '')
+              port_match = re.search(r'-(\d{4})\.', url)
+              if port_match:
+                  port = int(port_match.group(1))
+                  if port not in EXPECTED.values():
+                      errors.append(f'ai-plugin.json: unexpected port {port} in URL {url}')
+
+          if errors:
+              for e in errors:
+                  print(f'❌ {e}')
+              exit(1)
+          else:
+              print('✅ All port assignments consistent across .env.example and ai-plugin.json')
+          "
+
+  # ── 4. Widget HTML validation ─────────────────────────────────────────────
+  widget-check:
+    name: "🎨 Widget HTML Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check widgets contain required patterns
+        run: |
+          ERRORS=0
+
+          for widget in \
+            sf-mcp-app/sf_crm_mcp/web/widget.html \
+            snow-mcp-app/servicenow_mcp/web/widget.html \
+            sap-mcp-app/sap_s4hana_mcp/web/widget.html \
+            hubspot-mcp-app/hubspot_mcp/web/widget.html
+          do
+            echo "Checking $widget..."
+
+            if ! grep -q "addEventListener.*message" "$widget"; then
+              echo "  ❌ Missing postMessage listener"
+              ERRORS=$((ERRORS+1))
+            else
+              echo "  ✅ postMessage listener found"
+            fi
+
+            if ! grep -q "ui/notifications/tool-result" "$widget"; then
+              echo "  ❌ Missing tool-result handler"
+              ERRORS=$((ERRORS+1))
+            else
+              echo "  ✅ tool-result handler found"
+            fi
+
+            if ! grep -q "prefers-color-scheme.*dark" "$widget"; then
+              echo "  ❌ Missing dark mode support"
+              ERRORS=$((ERRORS+1))
+            else
+              echo "  ✅ Dark mode support found"
+            fi
+          done
+
+          if [ $ERRORS -gt 0 ]; then
+            echo ""
+            echo "❌ $ERRORS widget issue(s) found"
+            exit 1
+          else
+            echo ""
+            echo "✅ All 4 widgets pass pattern checks"
+          fi
