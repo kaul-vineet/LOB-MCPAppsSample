@@ -61,6 +61,23 @@
 
 ## Architecture
 
+### MCP Server vs. MCP App — Why custom servers?
+
+You may wonder: *"Salesforce/ServiceNow/SAP already have (or will have) their own MCP servers — can I just use those?"*
+
+**Short answer: not for widgets.** There's a key difference:
+
+| | Generic MCP Server | MCP App (what we built) |
+|---|---|---|
+| **Returns** | Raw JSON → LLM summarizes as text | `structuredContent` → renders a **visual widget** |
+| **UI** | None — text in chat | Interactive tables with inline Create, Edit, Delete |
+| **Requires** | Just tools | Tools + `_meta.ui.resourceUri` + widget HTML resource |
+| **Example** | *"You have 5 leads: John Smith at Acme..."* | Live sortable table with ✎ edit buttons |
+
+Our MCP servers are **MCP Apps** — they return structured data that M365 Copilot renders as interactive widgets directly in the chat. A generic LOB MCP server would give you text answers, not visual UI. The widget is the whole point of this project.
+
+> 💡 If a LOB vendor releases their own MCP server and you only need text responses, you can point `ai-plugin.json` at their URL. But for the interactive widget experience, you need the custom servers in this repo.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            M365 Copilot                                │
@@ -152,7 +169,8 @@ lob-mcp-apps/
 
 | Requirement | Version |
 |---|---|
-| Python | ≥ 3.11 |
+| **Docker Desktop** | Latest ([install](https://docker.com/products/docker-desktop)) — **recommended**, eliminates Python/venv setup |
+| Python | ≥ 3.11 *(only if not using Docker)* |
 | Node.js | ≥ 18 (for Teams Toolkit CLI) |
 | M365 Agents Toolkit | VS Code extension or `teamsapp` CLI |
 | Dev Tunnels CLI | `devtunnel` ([install](https://learn.microsoft.com/azure/developer/dev-tunnels/get-started)) |
@@ -304,6 +322,42 @@ Then open M365 Copilot, find **The Great Trading Company** in the agent side pan
 
 ## Running
 
+### Option A: Docker (Recommended) 🐳
+
+The easiest way — no Python install, no virtual environments. Just [Docker Desktop](https://docker.com/products/docker-desktop) + credentials.
+
+```bash
+# One-time: set up credentials for each app
+cp sf-mcp-app/.env.example sf-mcp-app/.env           # edit with SF credentials
+cp snow-mcp-app/.env.example snow-mcp-app/.env       # edit with ServiceNow credentials
+cp sap-mcp-app/.env.example sap-mcp-app/.env         # edit with SAP API key
+cp hubspot-mcp-app/.env.example hubspot-mcp-app/.env # edit with HubSpot token
+
+# Start all 4 servers
+docker compose up
+
+# Or start specific ones
+docker compose up salesforce sap
+
+# Run in background
+docker compose up -d
+
+# Stop everything
+docker compose down
+```
+
+### Option B: Python + Set-Sail.ps1
+
+If you prefer running natively (e.g., for active development):
+
+```powershell
+# One-time: install dependencies (see SETUP.md for details)
+# Then launch everything:
+.\Set-Sail.ps1
+```
+
+### Option C: Manual (individual terminals)
+
 Start all four MCP servers (four terminals):
 
 **Terminal 1 — Salesforce (port 3000)**
@@ -338,6 +392,8 @@ python -m hubspot_mcp
 ```bash
 devtunnel host gtc-tunnel
 ```
+
+> 💡 Whichever option you choose, you still need to run `devtunnel host gtc-tunnel` separately — the tunnel requires your Microsoft identity and can't run inside Docker.
 
 ---
 
