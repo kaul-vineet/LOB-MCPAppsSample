@@ -119,7 +119,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://gtc-tunnel-3000.inc1.devtunnels.ms/mcp",
+                "url": "https://9r6dn63x-3000.inc1.devtunnels.ms/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -139,7 +139,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://gtc-tunnel-3001.inc1.devtunnels.ms/mcp",
+                "url": "https://9r6dn63x-3001.inc1.devtunnels.ms/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -161,7 +161,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://gtc-tunnel-3002.inc1.devtunnels.ms/mcp",
+                "url": "https://9r6dn63x-3002.inc1.devtunnels.ms/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -181,7 +181,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://gtc-tunnel-3003.inc1.devtunnels.ms/mcp",
+                "url": "https://9r6dn63x-3003.inc1.devtunnels.ms/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
