@@ -22,7 +22,7 @@ services:
       - ./sf-mcp-app/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/mcp')"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3000),2); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -37,7 +37,7 @@ services:
       - ./snow-mcp-app/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3001/mcp')"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3001),2); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -52,7 +52,7 @@ services:
       - ./sap-mcp-app/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3002/mcp')"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3002),2); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,7 +67,7 @@ services:
       - ./hubspot-mcp-app/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3003/mcp')"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3003),2); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3

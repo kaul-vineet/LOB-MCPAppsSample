@@ -1,8 +1,10 @@
 {
   "servers": {
-    "sf-crm": {
-      "url": "https://sf-crm-3000.inc1.devtunnels.ms/mcp",
-      "type": "http"
-    }
+    // Click on Start button to fetch tools from your server
+    // Then, click the "ATK: Update Action with MCP" button from CodeLens to select the wanted tools.
+    "sf-crm": {"url": "https://9r6dn63x-3000.inc1.devtunnels.ms/mcp", "type": "http"},
+    "servicenow": {"url": "https://9r6dn63x-3001.inc1.devtunnels.ms/mcp", "type": "http"},
+    "sap": {"url": "https://9r6dn63x-3002.inc1.devtunnels.ms/mcp", "type": "http"},
+    "hubspot": {"url": "https://9r6dn63x-3003.inc1.devtunnels.ms/mcp", "type": "http"}
   }
 }
