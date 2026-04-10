@@ -1,2 +1,3 @@
 appPackage/build/
 env/.env.*.user
+.sfdx/
