@@ -28,7 +28,7 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--hs-bg); color: var(--hs-text); font-size: 14px; padding: 16px; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--hs-bg); color: var(--hs-text); font-size: 14px; padding: 16px; margin: 0; overflow-x: hidden; }
 
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .header h2 { font-size: 16px; font-weight: 600; }
@@ -36,7 +36,7 @@
   .badge-blue { background: #0070F2; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .badge-green { background: var(--hs-success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 
-  table { width: 100%; border-collapse: collapse; background: var(--hs-surface); border-radius: 8px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; background: var(--hs-surface); border-radius: 8px; overflow-x: hidden; }
   th { background: var(--hs-primary); color: white; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
   td { padding: 8px 12px; border-bottom: 1px solid var(--hs-border); font-size: 13px; }
   tr:last-child td { border-bottom: none; }
@@ -110,6 +110,31 @@
     }
   }
 
+  // ── MCP Apps handshake ────────────────────────────────────────────────────
+  var INIT_REQ_ID = 'mcp-ui-init';
+  var mcpHandshakeDone = false;
+  var rendered = false;
+
+  function sendMcpInitialize() {
+    window.parent.postMessage({
+      jsonrpc: '2.0', id: INIT_REQ_ID,
+      method: 'ui/initialize',
+      params: {
+        appInfo: { name: 'gtc-hubspot-widget', version: '1.0' },
+        appCapabilities: {}
+      }
+    }, '*');
+  }
+
+  function sendMcpInitialized() {
+    if (mcpHandshakeDone) return;
+    mcpHandshakeDone = true;
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/notifications/initialized'
+    }, '*');
+  }
+
   // ── Pending callTool requests (for postMessage bridge) ────────────────────
   var pendingCalls = {};
   var nextCallId = 1;
@@ -127,24 +152,24 @@
       window.parent.postMessage({
         jsonrpc: '2.0',
         id: id,
-        method: 'ui/callTool',
-        params: { name: name, args: args }
+        method: 'tools/call',
+        params: { name: name, arguments: args || {} }
       }, '*');
       setTimeout(function () {
         if (pendingCalls[id]) {
           pendingCalls[id].reject(new Error('Tool call timed out'));
           delete pendingCalls[id];
         }
-      }, 15000);
+      }, 20000);
     });
   }
 
   function notifyHeight() {
-    var h = document.body.scrollHeight;
+    var h = document.body.scrollHeight + 2;
     if (window.openai && window.openai.notifyIntrinsicHeight) {
       window.openai.notifyIntrinsicHeight({ height: h });
     }
-    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/size-changed', params: { width: document.body.scrollWidth, height: h } }, '*');
   }
 
   function handleResult(res) {
@@ -417,15 +442,23 @@
     var msg = e.data;
     if (!msg) return;
 
-    // Tool result notification
-    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
-      render(msg.params && msg.params.structuredContent);
+    if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
+      sendMcpInitialize();
       return;
     }
-
-    // Theme change notification
+    if (msg.id === INIT_REQ_ID) {
+      sendMcpInitialized();
+      return;
+    }
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
-      applyTheme(msg.params && msg.params.theme);
+      if (msg.params && msg.params.theme) {
+        document.documentElement.setAttribute('data-theme', msg.params.theme === 'dark' ? 'dark' : 'light');
+      }
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      var sc = msg.params && msg.params.structuredContent;
+      if (sc !== undefined) { rendered = true; render(sc); }
       return;
     }
 
@@ -433,8 +466,8 @@
     if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
       var cb = pendingCalls[msg.id];
       delete pendingCalls[msg.id];
-      if (msg.error) cb.reject(new Error(msg.error.message || 'Tool call failed'));
-      else cb.resolve({ structuredContent: msg.result });
+      if (msg.error) cb.reject(new Error(msg.error && msg.error.message || 'Tool call failed'));
+      else { var sc = msg.result.structuredContent || msg.result; cb.resolve(sc); }
       return;
     }
   });
@@ -446,13 +479,34 @@
     applyTheme(document.documentElement.getAttribute('data-theme'));
   }
 
-  // ── Initial render from openai bridge or __toolOutput ─────────────────────
-  if (window.openai && window.openai.toolOutput) {
-    render(window.openai.toolOutput);
-  } else if (window.__toolOutput) {
-    render(window.__toolOutput);
+  // MCP Apps handshake — send on load
+  sendMcpInitialize();
+
+  // Legacy fallback: try window.openai.toolOutput
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme) { document.documentElement.setAttribute('data-theme', window.openai.theme === 'dark' ? 'dark' : 'light'); }
+      if (window.openai.toolOutput) {
+        var out = window.openai.toolOutput;
+        var data = (out && out.structuredContent !== undefined) ? out.structuredContent : out;
+        rendered = true;
+        render(data);
+      }
+    }
+  }
+  tryRenderFromOpenAI();
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 300) { clearInterval(poll); }
+    }, 100);
   }
 })();
 </script>
 </body>
 </html>
+
+

@@ -185,215 +185,183 @@ lob-mcp-apps/
 
 ## Setup
 
-### 1. 🏛️ Salesforce MCP Server — *The Trade Ledger*
+### 1. Clone & Configure Credentials
 
 ```bash
-cd sf-mcp-app
-cp .env.example .env          # fill in your credentials
+git clone https://github.com/kaul-vineet/LOB-MCPAppsSample.git
+cd lob-mcp-apps
 ```
 
-Edit `.env`:
-```env
-SF_INSTANCE_URL=https://your-instance.salesforce.com
-SF_CLIENT_ID=your-connected-app-client-id
-SF_CLIENT_SECRET=your-connected-app-client-secret
-PORT=3000
-CORS_ORIGINS=*
-```
-
-Install dependencies:
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -e .
-```
-
-### 2. 🎫 ServiceNow MCP Server — *The Service Manifest*
+Copy `.env.example` → `.env` for each app and fill in credentials:
 
 ```bash
-cd snow-mcp-app
-cp .env.example .env          # fill in your credentials
+cp sf-mcp-app/.env.example sf-mcp-app/.env
+cp snow-mcp-app/.env.example snow-mcp-app/.env
+cp sap-mcp-app/.env.example sap-mcp-app/.env
+cp hubspot-mcp-app/.env.example hubspot-mcp-app/.env
 ```
 
-Edit `.env`:
-```env
-SERVICENOW_INSTANCE=dev12345
-SERVICENOW_AUTH_MODE=oauth
-SERVICENOW_CLIENT_ID=your-client-id
-SERVICENOW_CLIENT_SECRET=your-client-secret
-PORT=3001
-CORS_ORIGINS=*
-```
+| App | Key credentials | How to get them |
+|-----|----------------|-----------------|
+| **Salesforce** | `SF_INSTANCE_URL`, `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Salesforce → Setup → App Manager → New Connected App (OAuth2 client_credentials) |
+| **ServiceNow** | `SERVICENOW_INSTANCE`, `SERVICENOW_CLIENT_ID/SECRET` or `USERNAME/PASSWORD` | Developer instance from [developer.servicenow.com](https://developer.servicenow.com). Set `AUTH_MODE=oauth` or `AUTH_MODE=basic` |
+| **SAP** | `SAP_API_KEY` | Free from [api.sap.com](https://api.sap.com) → Log in → Copy API Key. Uses sandbox mode by default |
+| **HubSpot** | `HUBSPOT_ACCESS_TOKEN` | HubSpot → Settings → Integrations → Private Apps. Scopes: `crm.objects.contacts.read/write` |
 
-Install dependencies:
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -e .
-```
-
-### 3. 📦 SAP S/4HANA MCP Server — *The Cargo Manifest*
+### 2. Dev Tunnel (one-time setup)
 
 ```bash
-cd sap-mcp-app
-cp .env.example .env          # fill in your API key
-```
-
-Edit `.env`:
-```env
-SAP_MODE=sandbox
-SAP_API_KEY=your-api-hub-api-key        # Free from api.sap.com
-PORT=3002
-CORS_ORIGINS=*
-```
-
-> **Sandbox mode** connects to SAP's free API Business Hub — read-only with demo data. Write operations return mock responses. Set `SAP_MODE=tenant` with real credentials for full CRUD.
-
-Install dependencies:
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -e .
-```
-
-### 4. 🧡 HubSpot CRM MCP Server — *The Spice Bazaar*
-
-```bash
-cd hubspot-mcp-app
-cp .env.example .env          # fill in your token
-```
-
-Edit `.env`:
-```env
-HUBSPOT_ACCESS_TOKEN=your-private-app-token
-PORT=3003
-CORS_ORIGINS=*
-```
-
-> Create a Private App at: HubSpot → Settings → Integrations → Private Apps. Required scopes: `crm.objects.contacts.read/write`, `crm.objects.deals.read/write`.
-
-Install dependencies:
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-pip install -e .
-```
-
-### 5. 🚇 Dev Tunnel (single persistent tunnel, four ports)
-
-Create **one** named persistent tunnel. The URL stays the same across restarts — just don't delete the tunnel:
-
-```bash
-# One-time setup
+devtunnel user login -d
 devtunnel create gtc-tunnel --allow-anonymous
-devtunnel port create gtc-tunnel -p 3000    # Salesforce MCP server
-devtunnel port create gtc-tunnel -p 3001    # ServiceNow MCP server
-devtunnel port create gtc-tunnel -p 3002    # SAP MCP server
-devtunnel port create gtc-tunnel -p 3003    # HubSpot MCP server
+devtunnel port create gtc-tunnel -p 3000    # Salesforce
+devtunnel port create gtc-tunnel -p 3001    # ServiceNow
+devtunnel port create gtc-tunnel -p 3002    # SAP
+devtunnel port create gtc-tunnel -p 3003    # HubSpot
 ```
 
-This gives you four **stable** URLs:
-- `https://gtc-tunnel-3000.inc1.devtunnels.ms/mcp` → Salesforce
-- `https://gtc-tunnel-3001.inc1.devtunnels.ms/mcp` → ServiceNow
-- `https://gtc-tunnel-3002.inc1.devtunnels.ms/mcp` → SAP S/4HANA
-- `https://gtc-tunnel-3003.inc1.devtunnels.ms/mcp` → HubSpot
+Note the tunnel hostname (e.g. `https://<id>-3000.inc1.devtunnels.ms`) and update `lob-agent/appPackage/ai-plugin.json` with the URLs.
 
-To start hosting (every dev session):
-```bash
-devtunnel host gtc-tunnel
-```
+> **⚠️ `--allow-anonymous` is required** on both `create` and `host` — without it, M365 Copilot's backend servers cannot reach your MCP endpoints through the tunnel.
 
-> **⚠️ The tunnel name is persistent** — as long as you only _stop_ hosting (Ctrl+C) and don't run `devtunnel delete`, the URLs remain fixed. No need to update `ai-plugin.json` after each restart. Tunnels expire after 30 days of inactivity.
+### 3. Agent Provisioning
 
-### 6. ⚓ The Agent — Provision & Sideload
+Requires VS Code + [M365 Agents Toolkit](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension) v6.6.1+.
 
+1. Open `lob-agent/` folder in VS Code
+2. ATK sidebar → **Accounts** → sign in to M365. Verify both **Custom App Upload Enabled ✓** and **Copilot Access Enabled ✓**
+3. ATK sidebar → **Lifecycle** → **Provision**
+
+Or via CLI:
 ```bash
 cd lob-agent
+teamsapp auth login m365
 teamsapp provision --env dev
 ```
-
-Then open M365 Copilot, find **The Great Trading Company** in the agent side panel, and start chatting:
-- *"Show me the latest leads"* → Salesforce widget
-- *"Show me the latest incidents"* → ServiceNow widget
-- *"Show me the latest purchase orders"* → SAP widget
-- *"Show me marketing email performance"* → HubSpot widget
 
 ---
 
 ## Running
 
-### Option A: Docker (Recommended) 🐳
+### Option A: One-Command Startup (Recommended) ⚡
 
-The easiest way — no Python install, no virtual environments. Just [Docker Desktop](https://docker.com/products/docker-desktop) + credentials.
+```powershell
+.\Set-Sail.ps1                          # Docker + tunnel (default)
+.\Set-Sail.ps1 -Native                  # Python venvs + tunnel
+.\Set-Sail.ps1 -SkipTunnel              # Docker only, no tunnel
+.\Set-Sail.ps1 -TunnelName my-tunnel    # Use a specific named tunnel
+.\Set-Sail.ps1 -Only sf,sap             # Start specific services only
+```
+
+This single command:
+- ✅ Checks Docker/Python, `.env` files, and devtunnel CLI
+- ✅ Starts all 4 MCP servers (Docker or native)
+- ✅ Waits for healthchecks (Docker mode)
+- ✅ Creates tunnel + ports if they don't exist
+- ✅ Opens tunnel in a new terminal window with `--allow-anonymous`
+
+### Option B: Docker Manual 🐳
 
 ```bash
-# One-time: set up credentials for each app
-cp sf-mcp-app/.env.example sf-mcp-app/.env           # edit with SF credentials
-cp snow-mcp-app/.env.example snow-mcp-app/.env       # edit with ServiceNow credentials
-cp sap-mcp-app/.env.example sap-mcp-app/.env         # edit with SAP API key
-cp hubspot-mcp-app/.env.example hubspot-mcp-app/.env # edit with HubSpot token
-
 # Start all 4 servers
-docker compose up
-
-# Or start specific ones
-docker compose up salesforce sap
-
-# Run in background
 docker compose up -d
+
+# Start the tunnel (separate terminal)
+devtunnel host gtc-tunnel --allow-anonymous
+
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f              # all servers
+docker compose logs -f salesforce   # specific server
 
 # Stop everything
 docker compose down
 ```
 
-### Option B: Python + Set-Sail.ps1
+### Option C: Python Venvs (for development)
 
-If you prefer running natively (e.g., for active development):
-
-```powershell
-# One-time: install dependencies (see SETUP.md for details)
-# Then launch everything:
-.\Set-Sail.ps1
-```
-
-### Option C: Manual (individual terminals)
-
-Start all four MCP servers (four terminals):
-
-**Terminal 1 — Salesforce (port 3000)**
+Install dependencies in each app (one-time):
 ```bash
-cd sf-mcp-app
-.venv\Scripts\activate
-python -m sf_crm_mcp
+cd sf-mcp-app && python -m venv .venv && .venv\Scripts\activate && pip install -e .
+# repeat for snow-mcp-app, sap-mcp-app, hubspot-mcp-app
 ```
 
-**Terminal 2 — ServiceNow (port 3001)**
+Start each server in a separate terminal:
 ```bash
-cd snow-mcp-app
-.venv\Scripts\activate
-python -m servicenow_mcp
+cd sf-mcp-app   && .venv\Scripts\activate && python -m sf_crm_mcp         # port 3000
+cd snow-mcp-app && .venv\Scripts\activate && python -m servicenow_mcp     # port 3001
+cd sap-mcp-app  && .venv\Scripts\activate && python -m sap_s4hana_mcp     # port 3002
+cd hubspot-mcp-app && .venv\Scripts\activate && python -m hubspot_mcp     # port 3003
 ```
 
-**Terminal 3 — SAP S/4HANA (port 3002)**
+Start the tunnel (separate terminal):
 ```bash
-cd sap-mcp-app
-.venv\Scripts\activate
-python -m sap_s4hana_mcp
+devtunnel host gtc-tunnel --allow-anonymous
 ```
 
-**Terminal 4 — HubSpot (port 3003)**
+> 💡 Whichever option you choose, the dev tunnel must run separately — it requires your Microsoft identity and can't run inside Docker.
+
+---
+
+## Logs & Monitoring
+
+### Docker logs
+
 ```bash
-cd hubspot-mcp-app
-.venv\Scripts\activate
-python -m hubspot_mcp
+# All servers — live stream
+docker compose logs -f
+
+# Specific server
+docker compose logs -f salesforce       # port 3000
+docker compose logs -f servicenow      # port 3001
+docker compose logs -f sap             # port 3002
+docker compose logs -f hubspot         # port 3003
+
+# Last 50 lines only
+docker compose logs --tail 50 salesforce
+
+# Last 5 minutes
+docker compose logs --since 5m salesforce
 ```
 
-**Terminal 5 — Dev Tunnel**
+### Docker Desktop GUI
+
+Open **Docker Desktop** → **Containers** → click any container → **Logs** tab. Live streaming with search and filter.
+
+### What to look for
+
+| Log entry | Meaning |
+|-----------|---------|
+| `POST /mcp HTTP/1.1 200 OK` | MCP request succeeded |
+| `Processing request of type CallToolRequest` | A tool was called (e.g. `get_leads`) |
+| `Processing request of type ReadResourceRequest` | Widget HTML was fetched by M365 |
+| `GET /mcp HTTP/1.1 200 OK` | SSE stream opened (MCP session) |
+| `POST /mcp HTTP/1.1 202 Accepted` | Async request accepted |
+| `Created new transport with session ID: ...` | New MCP session established |
+
+### Container health
+
 ```bash
-devtunnel host gtc-tunnel
+docker compose ps                       # status + health for all 4
+docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 ```
 
-> 💡 Whichever option you choose, you still need to run `devtunnel host gtc-tunnel` separately — the tunnel requires your Microsoft identity and can't run inside Docker.
+### Dev tunnel inspection
+
+Each port has a built-in network inspector at:
+- `https://<tunnel-id>-3000-inspect.inc1.devtunnels.ms` — Salesforce
+- `https://<tunnel-id>-3001-inspect.inc1.devtunnels.ms` — ServiceNow
+- `https://<tunnel-id>-3002-inspect.inc1.devtunnels.ms` — SAP
+- `https://<tunnel-id>-3003-inspect.inc1.devtunnels.ms` — HubSpot
+
+Open these in a browser to see live request/response traffic through the tunnel.
+
+### M365 Copilot debugging
+
+Open DevTools (`F12`) in M365 Copilot and check:
+- **Console** → filter by `McpWidgetHost` to see widget lifecycle events
+- **Network** → filter by your tunnel domain to see MCP requests
 
 ---
 
@@ -468,19 +436,25 @@ These files mock the MCP host environment and let you iterate on widget HTML/CSS
 
 ## Critical Troubleshooting
 
-If the widget is not rendering in M365 Copilot, check these three things:
+If the widget is not rendering in M365 Copilot, check these items in order:
 
-1. **`_meta` placement** — The `_meta.ui.resourceUri` must be on the tool definition in `mcp-tools.json`, not nested inside `inputSchema`. This is what tells M365 Copilot to load the widget.
+1. **MCP Apps handshake** — As of April 2026, M365 Copilot requires the MCP Apps initialization protocol. The widget must send `ui/initialize` (with `appInfo` and `appCapabilities`) via `postMessage`, wait for the host response, then send `ui/notifications/initialized`. Only then will the host deliver `ui/notifications/tool-result`. The old `window.openai.toolOutput` direct-injection no longer works without this handshake.
 
-2. **`mcp-tools.json` must match the server** — The tool descriptions in `mcp-tools.json` must exactly mirror what the MCP server returns from `tools/list`. If they drift, regenerate by hitting `POST /mcp` with a `tools/list` request.
+2. **`--allow-anonymous` on the tunnel** — Both `devtunnel create` and `devtunnel host` must include `--allow-anonymous`. Without it, M365 Copilot's backend servers cannot reach your MCP endpoints.
 
-3. **`toolOutput` format** — The `structuredContent` returned by each tool must use the `toolOutput` wrapper format that M365 Copilot expects.
+3. **`_meta` placement** — The `_meta.ui.resourceUri` must be on the tool definition in `mcp-tools.json`, not nested inside `inputSchema`. This is what tells M365 Copilot to load the widget.
 
-4. **Tunnel URLs** — Ensure `ai-plugin.json` has the correct tunnel URLs for both runtimes. Each time you recreate the tunnel, the hostname may change.
+4. **`mcp-tools.json` must match the server** — The tool descriptions in `mcp-tools.json` must exactly mirror what the MCP server returns from `tools/list`. If they drift, regenerate by hitting `POST /mcp` with a `tools/list` request.
 
-5. **Port mismatch** — Salesforce must run on port **3000**, ServiceNow on **3001**, SAP on **3002**, and HubSpot on **3003**. Verify with `curl http://localhost:{port}/mcp`.
+5. **`callTool` method name** — Widget-to-host tool calls must use `method: 'tools/call'` with `arguments` (not `ui/callTool` with `args`).
 
-6. **SAP sandbox mode** — If SAP returns empty results, ensure your `SAP_API_KEY` is valid. Get one free at [api.sap.com](https://api.sap.com) → Log in → Copy API Key from your profile.
+6. **Custom App Upload Enabled** — Check the ATK sidebar → Accounts. Both "Custom App Upload Enabled" and "Copilot Access Enabled" must show ✓. Enable in Teams Admin Center if not.
+
+7. **Tunnel URLs** — Ensure `ai-plugin.json` has the correct tunnel URLs for all runtimes. Each time you recreate the tunnel, the hostname changes.
+
+8. **Port mismatch** — Salesforce must run on port **3000**, ServiceNow on **3001**, SAP on **3002**, and HubSpot on **3003**. Verify with `curl http://localhost:{port}/mcp`.
+
+9. **SAP sandbox mode** — If SAP returns empty results, ensure your `SAP_API_KEY` is valid. Get one free at [api.sap.com](https://api.sap.com) → Log in → Copy API Key from your profile.
 
 ---
 

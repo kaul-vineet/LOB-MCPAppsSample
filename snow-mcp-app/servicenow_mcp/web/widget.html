@@ -51,13 +51,15 @@
     background: var(--color-bg);
     color: var(--color-text);
     padding: var(--space-md);
+    margin: 0;
+    overflow-x: hidden;
   }
 
   .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   .card-header {
@@ -451,6 +453,30 @@
     setTimeout(function() { t.className = 'toast'; }, 2500);
   }
 
+  // ── MCP Apps handshake ────────────────────────────────────────────────────
+  var INIT_REQ_ID = 'mcp-ui-init';
+  var mcpHandshakeDone = false;
+
+  function sendMcpInitialize() {
+    window.parent.postMessage({
+      jsonrpc: '2.0', id: INIT_REQ_ID,
+      method: 'ui/initialize',
+      params: {
+        appInfo: { name: 'gtc-snow-widget', version: '1.0' },
+        appCapabilities: {}
+      }
+    }, '*');
+  }
+
+  function sendMcpInitialized() {
+    if (mcpHandshakeDone) return;
+    mcpHandshakeDone = true;
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/notifications/initialized'
+    }, '*');
+  }
+
   // ── callTool abstraction ───────────────────────────────────────────────────
   var pendingCalls = {};
   var callId = 0;
@@ -466,25 +492,25 @@
       pendingCalls[id] = { resolve: resolve, reject: reject };
       window.parent.postMessage({
         jsonrpc: '2.0', id: id,
-        method: 'ui/callTool',
-        params: { name: name, args: args }
+        method: 'tools/call',
+        params: { name: name, arguments: args || {} }
       }, '*');
       setTimeout(function() {
         if (pendingCalls[id]) {
           delete pendingCalls[id];
           reject(new Error('Timed out'));
         }
-      }, 15000);
+      }, 20000);
     });
   }
 
   // ── Notify host of height ─────────────────────────────────────────────────
   function notifyHeight() {
-    var h = document.body.scrollHeight;
+    var h = document.body.scrollHeight + 2;
     if (window.openai && window.openai.notifyIntrinsicHeight) {
       window.openai.notifyIntrinsicHeight({ height: h });
     }
-    window.parent.postMessage({ method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/size-changed', params: { width: document.body.scrollWidth, height: h } }, '*');
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -1000,19 +1026,34 @@
     var msg = event.data;
     if (!msg) return;
 
-    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
-      render(msg.params.structuredContent);
+    // MCP Apps handshake
+    if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
+      sendMcpInitialize();
+      return;
+    }
+    if (msg.id === INIT_REQ_ID) {
+      sendMcpInitialized();
       return;
     }
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
-      applyTheme(msg.params.theme);
+      if (msg.params && msg.params.theme) {
+        document.documentElement.setAttribute('data-theme', msg.params.theme === 'dark' ? 'dark' : 'light');
+      }
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      var sc = msg.params && msg.params.structuredContent;
+      if (sc !== undefined) { rendered = true; render(sc); }
       return;
     }
     if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
       var cb = pendingCalls[msg.id];
       delete pendingCalls[msg.id];
-      if (msg.result) { cb.resolve(msg.result); }
-      else { cb.reject(new Error(msg.error || 'Tool call failed')); }
+      if (msg.result) {
+        var sc = msg.result.structuredContent || msg.result;
+        cb.resolve(sc);
+      }
+      else { cb.reject(new Error(msg.error && msg.error.message || 'Tool call failed')); }
       return;
     }
   }, { passive: true });
@@ -1031,15 +1072,17 @@
       }
     }
   }
+  sendMcpInitialize();
   tryRenderFromOpenAI();
   if (!rendered) {
     var attempts = 0;
     var poll = setInterval(function() {
       attempts++;
       tryRenderFromOpenAI();
-      if (rendered || attempts >= 30) clearInterval(poll);
+      if (rendered || attempts >= 300) clearInterval(poll);
     }, 100);
   }
 </script>
 </body>
 </html>
+
