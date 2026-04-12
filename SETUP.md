@@ -25,16 +25,18 @@ Before you begin, install these tools on your machine:
 
 | Tool | What it does | How to install |
 |---|---|---|
-| **Python 3.11+** | Runs the MCP servers | [python.org/downloads](https://www.python.org/downloads/) — check "Add to PATH" during install |
+| **Docker Desktop** | Runs all MCP servers (recommended) | [docker.com/products/docker-desktop](https://docker.com/products/docker-desktop) |
+| **Python 3.11+** | Runs the MCP servers *(only if not using Docker)* | [python.org/downloads](https://www.python.org/downloads/) — check "Add to PATH" during install |
 | **Node.js 18+** | Required by the Teams Toolkit CLI | [nodejs.org](https://nodejs.org/) — use the LTS version |
 | **Git** | Version control | [git-scm.com](https://git-scm.com/downloads) |
 | **VS Code** | Code editor | [code.visualstudio.com](https://code.visualstudio.com/) |
-| **M365 Agents Toolkit** | VS Code extension for deploying the agent | Search "Teams Toolkit" in VS Code Extensions marketplace |
+| **M365 Agents Toolkit** | VS Code extension for deploying the agent | Search "M365 Agents Toolkit" in VS Code Extensions (v6.6.1+) |
 | **Dev Tunnels CLI** | Exposes your local servers to the internet | [Install guide](https://learn.microsoft.com/azure/developer/dev-tunnels/get-started) |
 
 **Verify your installs** — open a terminal and run:
 ```bash
-python --version     # Should show 3.11 or higher
+docker --version     # Any version is fine (if using Docker)
+python --version     # Should show 3.11 or higher (if using Python)
 node --version       # Should show 18 or higher
 git --version        # Any version is fine
 devtunnel --version  # Any version is fine
@@ -280,10 +282,10 @@ The dev tunnel makes your local MCP servers accessible to M365 Copilot over the 
 ### First-time setup (do this once)
 
 ```bash
-# Log in to Dev Tunnels (uses your Microsoft account)
-devtunnel user login
+# Log in to Dev Tunnels (use -d for device code flow on Windows)
+devtunnel user login -d
 
-# Create a persistent named tunnel
+# Create a persistent named tunnel with anonymous access
 devtunnel create gtc-tunnel --allow-anonymous
 
 # Add all four ports
@@ -292,6 +294,8 @@ devtunnel port create gtc-tunnel -p 3001
 devtunnel port create gtc-tunnel -p 3002
 devtunnel port create gtc-tunnel -p 3003
 ```
+
+> **⚠️ `--allow-anonymous` is required** on both `create` and `host` — without it, M365 Copilot's backend servers cannot reach your MCP endpoints through the tunnel.
 
 ### Update ai-plugin.json with your tunnel URLs
 
@@ -311,7 +315,7 @@ Edit `lob-agent/appPackage/ai-plugin.json` and replace the four tunnel URLs with
 ### Starting the tunnel (every dev session)
 
 ```bash
-devtunnel host gtc-tunnel
+devtunnel host gtc-tunnel --allow-anonymous
 ```
 
 > 💡 The tunnel name is **persistent** — the URLs stay the same every time you restart. Just don't run `devtunnel delete`. Tunnels expire after 30 days of inactivity.
@@ -320,7 +324,33 @@ devtunnel host gtc-tunnel
 
 ## 7. Installing & Running Each MCP App
 
-### Install all four apps (one time)
+### Option A: Docker (Recommended) 🐳
+
+No Python install, no virtual environments — just Docker Desktop.
+
+```bash
+# One command to start all 4 servers
+docker compose up -d
+
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f
+
+# Stop everything
+docker compose down
+```
+
+Or use the automated script:
+```powershell
+.\Set-Sail.ps1                    # Docker + tunnel
+.\Set-Sail.ps1 -SkipTunnel        # Docker only
+```
+
+### Option B: Python venvs (for development)
+
+#### Install all four apps (one time)
 
 Open a terminal in the project root and run:
 
@@ -358,7 +388,7 @@ deactivate
 cd ..
 ```
 
-### Run all four servers (every dev session)
+#### Run all four servers (every dev session)
 
 Open **five** terminals:
 
@@ -368,7 +398,7 @@ Open **five** terminals:
 | **Terminal 2 — ServiceNow** | `cd snow-mcp-app` → `.venv\Scripts\activate` → `python -m servicenow_mcp` |
 | **Terminal 3 — SAP** | `cd sap-mcp-app` → `.venv\Scripts\activate` → `python -m sap_s4hana_mcp` |
 | **Terminal 4 — HubSpot** | `cd hubspot-mcp-app` → `.venv\Scripts\activate` → `python -m hubspot_mcp` |
-| **Terminal 5 — Tunnel** | `devtunnel host gtc-tunnel` |
+| **Terminal 5 — Tunnel** | `devtunnel host gtc-tunnel --allow-anonymous` |
 
 > 💡 **Tip:** You can use VS Code's split terminal feature to see all five at once.
 

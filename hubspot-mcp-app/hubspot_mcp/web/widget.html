@@ -165,11 +165,11 @@
   }
 
   function notifyHeight() {
-    var h = document.body.scrollHeight + 2;
+    var h = document.body.scrollHeight;
     if (window.openai && window.openai.notifyIntrinsicHeight) {
       window.openai.notifyIntrinsicHeight({ height: h });
     }
-    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/size-changed', params: { width: document.body.scrollWidth, height: h } }, '*');
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
   }
 
   function handleResult(res) {
@@ -508,5 +508,6 @@
 </script>
 </body>
 </html>
+
 
 

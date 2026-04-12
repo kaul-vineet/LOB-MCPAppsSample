@@ -6,40 +6,36 @@
     "instructions": "$[file('instruction.txt')]",
     "conversation_starters": [
         {
-            "title": "Review the ledger of leads",
+            "title": "📋 Show my CRM leads",
             "text": "Show me the latest leads from Salesforce"
         },
         {
-            "title": "Inspect the trade opportunities",
+            "title": "💰 Review sales pipeline",
             "text": "Show me the latest opportunities from Salesforce"
         },
         {
-            "title": "Survey the incident log",
+            "title": "➕ Log a new lead",
+            "text": "I want to create a new lead in Salesforce for John Smith at Acme Corp"
+        },
+        {
+            "title": "🎫 Check open incidents",
             "text": "Show me the latest incidents from ServiceNow"
         },
         {
-            "title": "Check the service requests",
-            "text": "Show me the latest service requests from ServiceNow"
+            "title": "📝 Raise a new ticket",
+            "text": "Create a new incident in ServiceNow — VPN not connecting"
         },
         {
-            "title": "Inspect the cargo manifest",
+            "title": "📦 Review purchase orders",
             "text": "Show me the latest purchase orders from SAP"
         },
         {
-            "title": "Review email performance",
+            "title": "🏭 Browse materials inventory",
+            "text": "Show me materials from SAP S/4HANA"
+        },
+        {
+            "title": "📧 Email campaign stats",
             "text": "Show me the latest marketing email performance from HubSpot"
-        },
-        {
-            "title": "Browse the contact lists",
-            "text": "Show me the contact lists from HubSpot"
-        },
-        {
-            "title": "Log a new trade lead",
-            "text": "I want to create a new lead in Salesforce"
-        },
-        {
-            "title": "Report an incident",
-            "text": "Create a new incident in ServiceNow"
         }
     ],
     "actions": [

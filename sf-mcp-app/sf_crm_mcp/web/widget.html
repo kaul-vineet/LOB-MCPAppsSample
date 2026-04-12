@@ -56,7 +56,6 @@
     color: var(--color-text);
     padding: var(--space-md);
     margin: 0;
-    overflow-x: hidden;
   }
 
   /* ── Card ── */
@@ -106,6 +105,7 @@
     border-bottom: 1px solid var(--color-border);
     color: var(--color-text);
     font-size: 13px;
+    vertical-align: middle;
   }
 
   tr:last-child td { border-bottom: none; }
@@ -422,21 +422,11 @@
 
   // ── Notify host of height ─────────────────────────────────────────────────
   function notifyHeight() {
-    var h = document.body.scrollHeight + 4;
+    var h = document.body.scrollHeight;
     if (window.openai && window.openai.notifyIntrinsicHeight) {
       window.openai.notifyIntrinsicHeight({ height: h });
     }
-    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/size-changed', params: { width: document.body.scrollWidth, height: h } }, '*');
-    // Re-check after layout settles
-    setTimeout(function() {
-      var h2 = document.body.scrollHeight + 4;
-      if (h2 !== h) {
-        if (window.openai && window.openai.notifyIntrinsicHeight) {
-          window.openai.notifyIntrinsicHeight({ height: h2 });
-        }
-        window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/size-changed', params: { width: document.body.scrollWidth, height: h2 } }, '*');
-      }
-    }, 50);
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
   }
 
   // ── Toast ──────────────────────────────────────────────────────────────────
