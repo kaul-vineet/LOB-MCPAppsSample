@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP S/4HANA</title>
+<style>
+  /* SAP Fiori-inspired color palette */
+  :root {
+    --sap-primary: #0070F2;
+    --sap-primary-dark: #0054B4;
+    --sap-bg: #ffffff;
+    --sap-surface: #f5f6f7;
+    --sap-text: #32363a;
+    --sap-text-light: #6a6d70;
+    --sap-border: #d9d9d9;
+    --sap-success: #107E3E;
+    --sap-warning: #E78C07;
+    --sap-error: #BB0000;
+    --sap-gold: #F0AB00;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sap-bg: #1c2228;
+      --sap-surface: #253040;
+      --sap-text: #ededed;
+      --sap-text-light: #a0a0a0;
+      --sap-border: #3d4f5f;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: '72', 'Segoe UI', system-ui, sans-serif; background: var(--sap-bg); color: var(--sap-text); font-size: 14px; padding: 16px; margin: 0; overflow-x: hidden; }
+
+  .sandbox-banner { background: var(--sap-gold); color: #32363a; padding: 6px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; text-align: center; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .header h2 { font-size: 16px; font-weight: 600; }
+  .badge { background: var(--sap-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--sap-surface); border-radius: 8px; overflow-x: hidden; }
+  th { background: var(--sap-primary); color: white; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--sap-border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,112,242,0.05); }
+
+  .btn { background: var(--sap-primary); color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn:hover { background: var(--sap-primary-dark); }
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-outline { background: transparent; border: 1px solid var(--sap-primary); color: var(--sap-primary); }
+
+  .error-banner { background: var(--sap-error); color: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+
+  .form-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+  .form-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .form-card { background: var(--sap-bg); padding: 20px; border-radius: 10px; width: 340px; max-width: 95vw; }
+  .form-card h3 { margin-bottom: 12px; font-size: 15px; }
+  .form-card label { display: block; font-size: 12px; color: var(--sap-text-light); margin-top: 8px; }
+  .form-card input, .form-card select { width: 100%; padding: 6px 10px; border: 1px solid var(--sap-border); border-radius: 4px; font-size: 13px; margin-top: 2px; background: var(--sap-surface); color: var(--sap-text); }
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+
+  .detail-card { background: var(--sap-surface); border-radius: 8px; padding: 16px; }
+  .detail-card h3 { margin-bottom: 10px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--sap-border); }
+  .detail-label { color: var(--sap-text-light); font-size: 12px; }
+  .detail-value { font-size: 13px; font-weight: 500; }
+
+  .empty { text-align: center; padding: 24px; color: var(--sap-text-light); }
+  .loading { text-align: center; padding: 24px; color: var(--sap-text-light); }
+  .gtc-watermark { text-align: right; padding: 6px 4px 0; font-size: 10px; color: var(--sap-text-light); opacity: 0.5; }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading SAP data…</div></div>
+<div class="gtc-watermark">⚓ GTC</div>
+<div id="formOverlay" class="form-overlay"><div class="form-card" id="formCard"></div></div>
+
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var overlay = document.getElementById('formOverlay');
+  var formCard = document.getElementById('formCard');
+
+  // callTool is defined below after pendingCalls setup
+
+  function render(data) {
+    if (data.error) { app.innerHTML = '<div class="error-banner">\u26a0 ' + data.message + '</div>'; return; }
+    var html = data.sandbox ? '<div class="sandbox-banner">\ud83d\udce1 Sandbox Mode \u2014 write operations return demo data</div>' : '';
+    if (data.type === 'purchase_orders') html += renderPOs(data);
+    else if (data.type === 'business_partners') html += renderBPs(data);
+    else if (data.type === 'materials') html += renderMaterials(data);
+    else if (data.type === 'material_detail') html += renderDetail(data);
+    else html += '<div class="empty">Unknown data type</div>';
+    app.innerHTML = html;
+  }
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function renderPOs(data) {
+    if (!data.items || !data.items.length) return '<div class="empty">No purchase orders found</div>';
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var p = data.items[i];
+      rows += '<tr>'
+        + '<td>' + esc(p.purchase_order) + '</td>'
+        + '<td>' + esc(p.supplier) + '</td>'
+        + '<td>' + esc(p.purchasing_org) + '</td>'
+        + '<td>' + esc(p.order_date) + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_purchase_order\', ' + esc(JSON.stringify(p)) + ')">\u270e</button></td>'
+        + '</tr>';
+    }
+    return '<div class="header"><h2><img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\ud83d\udce6 Purchase Orders <span class="badge">' + data.total + '</span></h2>'
+      + '<button class="btn" onclick="window.__showForm(\'create_purchase_order\')">+ New PO</button></div>'
+      + '<table><tr><th>PO Number</th><th>Supplier</th><th>Purch. Org</th><th>Date</th><th></th></tr>'
+      + rows + '</table>';
+  }
+
+  function renderBPs(data) {
+    if (!data.items || !data.items.length) return '<div class="empty">No business partners found</div>';
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var b = data.items[i];
+      rows += '<tr>'
+        + '<td>' + esc(b.id) + '</td>'
+        + '<td>' + esc(b.name) + '</td>'
+        + '<td>' + esc(b.category) + '</td>'
+        + '<td>' + esc(b.organization) + '</td>'
+        + '</tr>';
+    }
+    return '<div class="header"><h2><img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\ud83e\udd1d Business Partners <span class="badge">' + data.total + '</span></h2></div>'
+      + '<table><tr><th>ID</th><th>Name</th><th>Category</th><th>Organization</th></tr>'
+      + rows + '</table>';
+  }
+
+  function renderMaterials(data) {
+    if (!data.items || !data.items.length) return '<div class="empty">No materials found</div>';
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var m = data.items[i];
+      rows += '<tr>'
+        + '<td>' + esc(m.product) + '</td>'
+        + '<td>' + esc(m.product_type) + '</td>'
+        + '<td>' + esc(m.product_group) + '</td>'
+        + '<td>' + esc(m.base_unit) + '</td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__callDetail(\'' + esc(m.product) + '\')">\ud83d\udd0d</button></td>'
+        + '</tr>';
+    }
+    return '<div class="header"><h2><img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\ud83c\udfed Materials <span class="badge">' + data.total + '</span></h2></div>'
+      + '<table><tr><th>Material</th><th>Type</th><th>Group</th><th>Base Unit</th><th></th></tr>'
+      + rows + '</table>';
+  }
+
+  function renderDetail(data) {
+    var m = data.item || {};
+    var rows = '';
+    var keys = Object.keys(m);
+    for (var i = 0; i < keys.length; i++) {
+      rows += '<div class="detail-row"><span class="detail-label">' + esc(keys[i]) + '</span><span class="detail-value">' + esc(m[keys[i]] || '\u2014') + '</span></div>';
+    }
+    return '<div class="detail-card"><div class="header"><h3><img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\ud83d\udccb Material: ' + esc(m.product) + '</h3>'
+      + '<button class="btn btn-outline" onclick="window.__backToMaterials()">\u2190 Back to Materials</button></div>'
+      + rows + '</div>';
+  }
+
+  function showForm(tool, existing) {
+    overlay.classList.add('active');
+    if (tool === 'create_purchase_order') {
+      formCard.innerHTML = '<h3>New Purchase Order</h3>'
+        + '<label>Supplier<input id="f_sup" /></label>'
+        + '<label>Purchasing Org<input id="f_org" /></label>'
+        + '<label>PO Type<input id="f_type" value="NB" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'create_purchase_order\')">Create</button></div>';
+    } else if (tool === 'update_purchase_order') {
+      var ex = existing || {};
+      formCard.innerHTML = '<h3>Edit Purchase Order</h3>'
+        + '<input type="hidden" id="f_id" value="' + esc(ex.purchase_order) + '" />'
+        + '<label>Supplier<input id="f_sup" value="' + esc(ex.supplier) + '" /></label>'
+        + '<label>Purchasing Org<input id="f_org" value="' + esc(ex.purchasing_org) + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_purchase_order\')">Save</button></div>';
+    }
+  }
+
+  function submitForm(tool) {
+    try {
+      var result;
+      if (tool === 'create_purchase_order') {
+        result = callTool('create_purchase_order', {
+          supplier: document.getElementById('f_sup').value,
+          purchasing_org: document.getElementById('f_org').value,
+          purchase_order_type: document.getElementById('f_type').value,
+        });
+      } else if (tool === 'update_purchase_order') {
+        result = callTool('update_purchase_order', {
+          purchase_order_id: document.getElementById('f_id').value,
+          supplier: document.getElementById('f_sup').value,
+          purchasing_org: document.getElementById('f_org').value,
+        });
+      }
+      if (result) {
+        result.then(function (r) {
+          overlay.classList.remove('active');
+          if (r && r.structuredContent) render(r.structuredContent);
+        }).catch(function (e) {
+          render({ error: true, message: e.message });
+          overlay.classList.remove('active');
+        });
+      }
+    } catch (e) {
+      render({ error: true, message: e.message });
+      overlay.classList.remove('active');
+    }
+  }
+
+  function callDetail(materialId) {
+    callTool('get_material_details', { material_id: materialId })
+      .then(function (r) {
+        if (r && r.structuredContent) render(r.structuredContent);
+      })
+      .catch(function (e) {
+        render({ error: true, message: e.message });
+      });
+  }
+
+  window.__showForm = showForm;
+  window.__closeForm = function () { overlay.classList.remove('active'); };
+  window.__submitForm = submitForm;
+  window.__callDetail = callDetail;
+  window.__backToMaterials = function () {
+    callTool('get_materials', {})
+      .then(function (r) { if (r && r.structuredContent) render(r.structuredContent); })
+      .catch(function (e) { render({ error: true, message: e.message }); });
+  };
+
+  // ── Pending callTool requests (for postMessage bridge) ──
+  var pendingCalls = {};
+  var nextCallId = 1;
+
+  // ── MCP Apps handshake ────────────────────────────────────────────────────
+  var INIT_REQ_ID = 'mcp-ui-init';
+  var mcpHandshakeDone = false;
+  var rendered = false;
+
+  function sendMcpInitialize() {
+    window.parent.postMessage({
+      jsonrpc: '2.0', id: INIT_REQ_ID,
+      method: 'ui/initialize',
+      params: {
+        appInfo: { name: 'gtc-sap-widget', version: '1.0' },
+        appCapabilities: {}
+      }
+    }, '*');
+  }
+
+  function sendMcpInitialized() {
+    if (mcpHandshakeDone) return;
+    mcpHandshakeDone = true;
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/notifications/initialized'
+    }, '*');
+  }
+
+  // ── Override callTool to support both openai bridge and postMessage ──
+  function callTool(name, args) {
+    return new Promise(function (resolve, reject) {
+      if (window.openai && window.openai.callTool) {
+        window.openai.callTool(name, args).then(function (r) {
+          resolve({ structuredContent: r });
+        }).catch(reject);
+      } else {
+        var id = 'ct_' + (nextCallId++);
+        pendingCalls[id] = { resolve: resolve, reject: reject };
+        setTimeout(function () {
+          if (pendingCalls[id]) {
+            delete pendingCalls[id];
+            reject(new Error('callTool timeout'));
+          }
+        }, 20000);
+        window.parent.postMessage({
+          jsonrpc: '2.0',
+          id: id,
+          method: 'tools/call',
+          params: { name: name, arguments: args || {} }
+        }, '*');
+      }
+    });
+  }
+
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── Listen for postMessage from test harness or M365 host ──
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
+      sendMcpInitialize();
+      return;
+    }
+    if (msg.id === INIT_REQ_ID) {
+      sendMcpInitialized();
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      if (msg.params && msg.params.theme) {
+        document.documentElement.setAttribute('data-theme', msg.params.theme === 'dark' ? 'dark' : 'light');
+      }
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      var sc = msg.params && msg.params.structuredContent;
+      if (sc !== undefined) { rendered = true; render(sc); }
+      setTimeout(notifyHeight, 50);
+      return;
+    }
+
+    // JSON-RPC response (for callTool round-trip)
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.error) {
+        cb.reject(new Error(msg.error && msg.error.message || 'Unknown error'));
+      } else {
+        var sc = msg.result.structuredContent || msg.result; cb.resolve(sc);
+      }
+      return;
+    }
+  });
+
+  // MCP Apps handshake — send on load
+  sendMcpInitialize();
+
+  // Legacy fallback: try window.openai.toolOutput
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme) { document.documentElement.setAttribute('data-theme', window.openai.theme === 'dark' ? 'dark' : 'light'); }
+      if (window.openai.toolOutput) {
+        var out = window.openai.toolOutput;
+        var data = (out && out.structuredContent !== undefined) ? out.structuredContent : out;
+        rendered = true;
+        render(data);
+      }
+    }
+  }
+  tryRenderFromOpenAI();
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 300) { clearInterval(poll); }
+    }, 100);
+  }
+})();
+</script>
+</body>
+</html>
+
+
+

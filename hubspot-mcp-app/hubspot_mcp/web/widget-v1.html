@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HubSpot Marketing</title>
+<style>
+  :root {
+    --hs-primary: #FF7A59;
+    --hs-primary-dark: #E8563D;
+    --hs-bg: #ffffff;
+    --hs-surface: #f5f8fa;
+    --hs-text: #33475b;
+    --hs-text-light: #516f90;
+    --hs-border: #cbd6e2;
+    --hs-success: #00BDA5;
+    --hs-error: #F2545B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --hs-bg: #1a1a2e;
+      --hs-surface: #16213e;
+      --hs-text: #e0e0e0;
+      --hs-text-light: #a0a0a0;
+      --hs-border: #3a3a5c;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--hs-bg); color: var(--hs-text); font-size: 14px; padding: 16px; margin: 0; overflow-x: hidden; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .header h2 { font-size: 16px; font-weight: 600; }
+  .badge { background: var(--hs-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .badge-blue { background: #0070F2; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--hs-success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--hs-surface); border-radius: 8px; overflow-x: hidden; }
+  th { background: var(--hs-primary); color: white; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--hs-border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,122,89,0.05); }
+
+  .btn { background: var(--hs-primary); color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn:hover { background: var(--hs-primary-dark); }
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-outline { background: transparent; border: 1px solid var(--hs-primary); color: var(--hs-primary); }
+  .btn-back { background: transparent; border: 1px solid var(--hs-border); color: var(--hs-text); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .btn-back:hover { background: var(--hs-surface); }
+  .btn-danger { background: var(--hs-error); color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .btn-danger:hover { background: #d43d44; }
+
+  .error-banner { background: var(--hs-error); color: white; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .status-published { background: var(--hs-success); color: white; }
+  .status-draft { background: #cbd6e2; color: #33475b; }
+  .status-other { background: #f5c26b; color: #33475b; }
+
+  .stat-pct { font-size: 11px; color: var(--hs-text-light); }
+
+  .footer-bar { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+  .form-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+  .form-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .form-card { background: var(--hs-bg); padding: 20px; border-radius: 10px; width: 340px; max-width: 95vw; }
+  .form-card h3 { margin-bottom: 12px; font-size: 15px; }
+  .form-card label { display: block; font-size: 12px; color: var(--hs-text-light); margin-top: 8px; }
+  .form-card input { width: 100%; padding: 6px 10px; border: 1px solid var(--hs-border); border-radius: 4px; font-size: 13px; margin-top: 2px; background: var(--hs-surface); color: var(--hs-text); }
+  .form-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+
+  .empty { text-align: center; padding: 24px; color: var(--hs-text-light); }
+  .loading { text-align: center; padding: 24px; color: var(--hs-text-light); }
+  .gtc-watermark { text-align: right; padding: 6px 4px 0; font-size: 10px; color: var(--hs-text-light); opacity: 0.5; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">Loading HubSpot data…</div>
+</div>
+<div class="gtc-watermark">⚓ GTC</div>
+
+<div id="formOverlay" class="form-overlay">
+  <div class="form-card" id="formCard"></div>
+</div>
+
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var overlay = document.getElementById('formOverlay');
+  var formCard = document.getElementById('formCard');
+  var currentListId = null;
+
+  // ── Theme support ─────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    var root = document.documentElement;
+    if (theme === 'dark') {
+      root.style.setProperty('--hs-bg', '#1a1a2e');
+      root.style.setProperty('--hs-surface', '#16213e');
+      root.style.setProperty('--hs-text', '#e0e0e0');
+      root.style.setProperty('--hs-text-light', '#a0a0a0');
+      root.style.setProperty('--hs-border', '#3a3a5c');
+    } else {
+      root.style.setProperty('--hs-bg', '#ffffff');
+      root.style.setProperty('--hs-surface', '#f5f8fa');
+      root.style.setProperty('--hs-text', '#33475b');
+      root.style.setProperty('--hs-text-light', '#516f90');
+      root.style.setProperty('--hs-border', '#cbd6e2');
+    }
+  }
+
+  // ── MCP Apps handshake ────────────────────────────────────────────────────
+  var INIT_REQ_ID = 'mcp-ui-init';
+  var mcpHandshakeDone = false;
+  var rendered = false;
+
+  function sendMcpInitialize() {
+    window.parent.postMessage({
+      jsonrpc: '2.0', id: INIT_REQ_ID,
+      method: 'ui/initialize',
+      params: {
+        appInfo: { name: 'gtc-hubspot-widget', version: '1.0' },
+        appCapabilities: {}
+      }
+    }, '*');
+  }
+
+  function sendMcpInitialized() {
+    if (mcpHandshakeDone) return;
+    mcpHandshakeDone = true;
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/notifications/initialized'
+    }, '*');
+  }
+
+  // ── Pending callTool requests (for postMessage bridge) ────────────────────
+  var pendingCalls = {};
+  var nextCallId = 1;
+
+  function callTool(name, args) {
+    return new Promise(function (resolve, reject) {
+      if (window.openai && window.openai.callTool) {
+        window.openai.callTool(name, args).then(function (r) {
+          resolve({ structuredContent: r });
+        }).catch(reject);
+        return;
+      }
+      var id = 'ct_' + (nextCallId++);
+      pendingCalls[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({
+        jsonrpc: '2.0',
+        id: id,
+        method: 'tools/call',
+        params: { name: name, arguments: args || {} }
+      }, '*');
+      setTimeout(function () {
+        if (pendingCalls[id]) {
+          pendingCalls[id].reject(new Error('Tool call timed out'));
+          delete pendingCalls[id];
+        }
+      }, 20000);
+    });
+  }
+
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  function handleResult(res) {
+    if (res && res.structuredContent) render(res.structuredContent);
+    else if (res) render(res);
+  }
+
+  // ── Render dispatcher ─────────────────────────────────────────────────────
+  function render(data) {
+    if (!data) return;
+    if (data.error) {
+      app.innerHTML = '<div class="error-banner">\u26A0 ' + esc(data.message || 'Unknown error') + '</div>';
+      notifyHeight();
+      return;
+    }
+    if (data.type === 'emails') renderEmails(data);
+    else if (data.type === 'lists') renderLists(data);
+    else if (data.type === 'list_contacts') renderListContacts(data);
+    else app.innerHTML = '<div class="empty">Unknown data type</div>';
+    notifyHeight();
+  }
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function pct(num, denom) {
+    if (!denom || denom === 0) return '0%';
+    return (num / denom * 100).toFixed(1) + '%';
+  }
+
+  function fmtNum(n) {
+    return (n || 0).toLocaleString();
+  }
+
+  function statusClass(s) {
+    var upper = (s || '').toUpperCase();
+    if (upper === 'PUBLISHED') return 'status-published';
+    if (upper === 'DRAFT') return 'status-draft';
+    return 'status-other';
+  }
+
+  // ── View 1: Marketing Emails ──────────────────────────────────────────────
+  function renderEmails(data) {
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = '<div class="empty">No marketing emails found</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var em = data.items[i];
+      var st = em.stats || {};
+      var escaped = JSON.stringify(em).replace(/"/g, '&quot;');
+      rows += '<tr>'
+        + '<td>' + esc(em.subject || em.name) + '</td>'
+        + '<td><span class="status-badge ' + statusClass(em.status) + '">' + esc(em.status) + '</span></td>'
+        + '<td>' + fmtNum(st.sent) + '</td>'
+        + '<td>' + fmtNum(st.opened) + ' <span class="stat-pct">(' + pct(st.opened, st.delivered) + ')</span></td>'
+        + '<td>' + fmtNum(st.clicked) + ' <span class="stat-pct">(' + pct(st.clicked, st.delivered) + ')</span></td>'
+        + '<td><button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_email\', ' + escaped + ')">\u270E</button></td>'
+        + '</tr>';
+    }
+    app.innerHTML =
+      '<div class="header">'
+      + '<h2><img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\uD83D\uDCE7 Marketing Emails <span class="badge">' + data.total + '</span></h2>'
+      + '</div>'
+      + '<table>'
+      + '<tr><th>Subject</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th></th></tr>'
+      + rows
+      + '</table>'
+      + '<div class="footer-bar">'
+      + '<button class="btn" onclick="window.__viewLists()">\uD83D\uDCCB View Contact Lists \u2192</button>'
+      + '</div>';
+  }
+
+  // ── View 2: Lists ─────────────────────────────────────────────────────────
+  function renderLists(data) {
+    var headerHtml =
+      '<div class="header">'
+      + '<h2><img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\uD83D\uDCCB Contact Lists <span class="badge">' + (data.total || 0) + '</span></h2>'
+      + '<button class="btn-back" onclick="window.__backToEmails()">\u2190 Back to Emails</button>'
+      + '</div>';
+
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = headerHtml + '<div class="empty">No contact lists found</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var li = data.items[i];
+      var typeBadge = (li.type || '').toUpperCase() === 'MANUAL'
+        ? '<span class="badge-blue">MANUAL</span>'
+        : '<span class="badge-green">DYNAMIC</span>';
+      var escaped = JSON.stringify(li).replace(/"/g, '&quot;');
+      rows += '<tr>'
+        + '<td>' + esc(li.name) + '</td>'
+        + '<td>' + typeBadge + '</td>'
+        + '<td>' + fmtNum(li.size) + '</td>'
+        + '<td>'
+        + '<button class="btn btn-sm" onclick="window.__viewList(\'' + esc(li.id) + '\')">View \u2192</button> '
+        + '<button class="btn btn-sm btn-outline" onclick="window.__showForm(\'update_list\', ' + escaped + ')">\u270E</button>'
+        + '</td>'
+        + '</tr>';
+    }
+    app.innerHTML = headerHtml
+      + '<table>'
+      + '<tr><th>Name</th><th>Type</th><th>Size</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── View 3: List Contacts ─────────────────────────────────────────────────
+  function renderListContacts(data) {
+    currentListId = data.list_id || null;
+    var listName = data.list_name || 'List';
+
+    var headerHtml =
+      '<div class="header">'
+      + '<h2><img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="" style="height:18px;vertical-align:middle;margin-right:6px">\uD83D\uDCCB ' + esc(listName) + ' <span class="badge">' + (data.total || 0) + '</span></h2>'
+      + '<div>'
+      + '<button class="btn-back" onclick="window.__backToLists()">\u2190 Back to Lists</button> '
+      + '<button class="btn" onclick="window.__showForm(\'add_to_list\')">+ Add Contact</button>'
+      + '</div>'
+      + '</div>';
+
+    if (!data.items || data.items.length === 0) {
+      app.innerHTML = headerHtml + '<div class="empty">No contacts in this list</div>';
+      return;
+    }
+    var rows = '';
+    for (var i = 0; i < data.items.length; i++) {
+      var c = data.items[i];
+      rows += '<tr>'
+        + '<td>' + esc(c.firstname) + ' ' + esc(c.lastname) + '</td>'
+        + '<td>' + esc(c.email) + '</td>'
+        + '<td>' + esc(c.phone) + '</td>'
+        + '<td>' + esc(c.company) + '</td>'
+        + '<td>' + esc(c.lifecyclestage) + '</td>'
+        + '<td>'
+        + '<button class="btn-danger btn-sm" onclick="window.__removeFromList(\'' + esc(c.id) + '\')">\u2715</button>'
+        + '</td>'
+        + '</tr>';
+    }
+    app.innerHTML = headerHtml
+      + '<table>'
+      + '<tr><th>Name</th><th>Email</th><th>Phone</th><th>Company</th><th>Stage</th><th></th></tr>'
+      + rows
+      + '</table>';
+  }
+
+  // ── Navigation helpers ────────────────────────────────────────────────────
+  window.__viewLists = function () {
+    app.innerHTML = '<div class="loading">Loading contact lists\u2026</div>';
+    notifyHeight();
+    callTool('get_lists', {}).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load lists' });
+    });
+  };
+
+  window.__backToEmails = function () {
+    app.innerHTML = '<div class="loading">Loading emails\u2026</div>';
+    notifyHeight();
+    callTool('get_emails', {}).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load emails' });
+    });
+  };
+
+  window.__viewList = function (listId) {
+    app.innerHTML = '<div class="loading">Loading list contacts\u2026</div>';
+    notifyHeight();
+    callTool('get_list_contacts', { list_id: listId }).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load list contacts' });
+    });
+  };
+
+  window.__backToLists = function () {
+    currentListId = null;
+    app.innerHTML = '<div class="loading">Loading lists\u2026</div>';
+    notifyHeight();
+    callTool('get_lists', {}).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to load lists' });
+    });
+  };
+
+  window.__removeFromList = function (contactId) {
+    if (!currentListId) return;
+    app.innerHTML = '<div class="loading">Removing contact\u2026</div>';
+    notifyHeight();
+    callTool('remove_from_list', { list_id: currentListId, contact_id: contactId }).then(handleResult).catch(function (e) {
+      render({ error: true, message: e.message || 'Failed to remove contact' });
+    });
+  };
+
+  // ── Form management ───────────────────────────────────────────────────────
+  function showForm(tool, existing) {
+    overlay.classList.add('active');
+    if (tool === 'add_to_list') {
+      formCard.innerHTML =
+        '<h3>Add Contact to List</h3>'
+        + '<label>Email Address<input id="f_em" type="email" placeholder="contact@example.com" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'add_to_list\')">Add</button>'
+        + '</div>';
+    } else if (tool === 'update_email') {
+      formCard.innerHTML =
+        '<h3>Edit Email</h3>'
+        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
+        + '<label>Name<input id="f_name" value="' + esc(existing.name) + '" /></label>'
+        + '<label>Subject<input id="f_subject" value="' + esc(existing.subject) + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_email\')">Save</button>'
+        + '</div>';
+    } else if (tool === 'update_list') {
+      formCard.innerHTML =
+        '<h3>Rename List</h3>'
+        + '<input type="hidden" id="f_id" value="' + esc(existing.id) + '" />'
+        + '<label>Name<input id="f_name" value="' + esc(existing.name) + '" /></label>'
+        + '<div class="form-actions">'
+        + '<button class="btn btn-outline" onclick="window.__closeForm()">Cancel</button>'
+        + '<button class="btn" onclick="window.__submitForm(\'update_list\')">Save</button>'
+        + '</div>';
+    }
+  }
+
+  function submitForm(tool) {
+    var result;
+    try {
+      if (tool === 'add_to_list') {
+        var email = document.getElementById('f_em').value;
+        if (!email) return;
+        result = callTool('add_to_list', {
+          list_id: currentListId,
+          contact_email: email,
+        });
+      } else if (tool === 'update_email') {
+        result = callTool('update_email', {
+          email_id: document.getElementById('f_id').value,
+          name: document.getElementById('f_name').value,
+          subject: document.getElementById('f_subject').value,
+        });
+      } else if (tool === 'update_list') {
+        var name = document.getElementById('f_name').value;
+        if (!name) return;
+        result = callTool('update_list', {
+          list_id: document.getElementById('f_id').value,
+          name: name,
+        });
+      }
+      if (result && result.then) {
+        result.then(function (res) {
+          overlay.classList.remove('active');
+          handleResult(res);
+        }).catch(function (e) {
+          render({ error: true, message: e.message || 'Operation failed' });
+          overlay.classList.remove('active');
+        });
+      }
+    } catch (e) {
+      render({ error: true, message: e.message || 'Operation failed' });
+      overlay.classList.remove('active');
+    }
+  }
+
+  window.__showForm = showForm;
+  window.__closeForm = function () { overlay.classList.remove('active'); };
+  window.__submitForm = submitForm;
+
+  // ── Listen for incoming messages (JSON-RPC) ───────────────────────────────
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
+      sendMcpInitialize();
+      return;
+    }
+    if (msg.id === INIT_REQ_ID) {
+      sendMcpInitialized();
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      if (msg.params && msg.params.theme) {
+        document.documentElement.setAttribute('data-theme', msg.params.theme === 'dark' ? 'dark' : 'light');
+      }
+      return;
+    }
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      var sc = msg.params && msg.params.structuredContent;
+      if (sc !== undefined) { rendered = true; render(sc); }
+      return;
+    }
+
+    // JSON-RPC response (for callTool round-trip)
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.error) cb.reject(new Error(msg.error && msg.error.message || 'Tool call failed'));
+      else { var sc = msg.result.structuredContent || msg.result; cb.resolve(sc); }
+      return;
+    }
+  });
+
+  // ── Detect initial theme ──────────────────────────────────────────────────
+  if (window.openai && window.openai.theme) {
+    applyTheme(window.openai.theme);
+  } else if (document.documentElement.getAttribute('data-theme')) {
+    applyTheme(document.documentElement.getAttribute('data-theme'));
+  }
+
+  // MCP Apps handshake — send on load
+  sendMcpInitialize();
+
+  // Legacy fallback: try window.openai.toolOutput
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme) { document.documentElement.setAttribute('data-theme', window.openai.theme === 'dark' ? 'dark' : 'light'); }
+      if (window.openai.toolOutput) {
+        var out = window.openai.toolOutput;
+        var data = (out && out.structuredContent !== undefined) ? out.structuredContent : out;
+        rendered = true;
+        render(data);
+      }
+    }
+  }
+  tryRenderFromOpenAI();
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 300) { clearInterval(poll); }
+    }, 100);
+  }
+})();
+</script>
+</body>
+</html>
+
+
+

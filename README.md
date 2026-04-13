@@ -458,19 +458,9 @@ If the widget is not rendering in M365 Copilot, check these items in order:
 
 ---
 
-## Widget Architecture (v1 → v2)
+## Widget Architecture
 
-The project ships two widget generations side-by-side:
-
-### v1 — Vanilla HTML (current production)
-Single self-contained HTML files with inline CSS/JS. No build step, no dependencies.
-- `sf-mcp-app/sf_crm_mcp/web/widget.html` (32 KB)
-- `snow-mcp-app/servicenow_mcp/web/widget.html` (39 KB)
-- `sap-mcp-app/sap_s4hana_mcp/web/widget.html` (16 KB)
-- `hubspot-mcp-app/hubspot_mcp/web/widget.html` (22 KB)
-
-### v2 — React + Fluent UI (in development)
-React 19 + Fluent UI v9 components compiled into single-file HTML via Vite. Each widget is styled to match its LOB's native design language:
+React 19 + Fluent UI v9 widgets compiled into single-file HTML via Vite. Each widget is styled to match its LOB's native design language:
 
 | Widget | Design System | Key Visual Elements | Size |
 |--------|--------------|-------------------|------|
@@ -479,9 +469,7 @@ React 19 + Fluent UI v9 components compiled into single-file HTML via Vite. Each
 | **HubSpot** | Canvas | Metric cards, percentage bars, coral/teal palette, 3-level drill-down | 398 KB |
 | **ServiceNow** | Now Design | *Planned* |  |
 
-v2 widgets live at `widget-v2.html` alongside v1 for comparison.
-
-### Building v2 widgets
+### Building widgets
 
 ```bash
 cd widgets
@@ -494,7 +482,7 @@ The build compiles each React app into a single self-contained HTML file (all CS
 
 ### Test harness
 
-Test any widget (v1 or v2) locally without M365 Copilot:
+Test any widget locally without M365 Copilot:
 
 ```bash
 # Open in browser
@@ -503,15 +491,16 @@ tests/harness.html
 
 The harness simulates the full MCP Apps protocol (handshake, tool-result delivery, callTool responses, theme changes) with embedded mock data.
 
-| v1 vs v2 | v1 (Vanilla HTML) | v2 (React + Fluent UI) |
-|----------|-------------------|----------------------|
-| Look & feel | Custom CSS | LOB-native design systems (SLDS, Fiori, Canvas) |
-| Components | Hand-built tables, forms | Fluent DataGrid, Dialog, Badge, Button, Field |
-| Theming | CSS variables, manual | FluentProvider auto light/dark/high-contrast |
-| Loading states | "Loading..." text | Spinner components |
-| Forms | Raw HTML inputs | Field, Input, Dropdown with validation |
-| Accessibility | Manual ARIA | Built-in keyboard nav, screen reader, focus |
-| Bundle size | 16–39 KB | 396–460 KB |
+### Key capabilities
+
+| Feature | Details |
+|---------|---------|
+| **Look & feel** | LOB-native design systems (SLDS, Fiori, Canvas) |
+| **Components** | Fluent DataGrid, Dialog, Badge, Button, Field |
+| **Theming** | FluentProvider auto light/dark/high-contrast |
+| **Loading states** | Spinner components |
+| **Forms** | Field, Input, Dropdown with validation |
+| **Accessibility** | Built-in keyboard nav, screen reader, focus |
 
 ---
 
