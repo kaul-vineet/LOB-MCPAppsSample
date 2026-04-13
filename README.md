@@ -458,6 +458,63 @@ If the widget is not rendering in M365 Copilot, check these items in order:
 
 ---
 
+## Widget Architecture (v1 → v2)
+
+The project ships two widget generations side-by-side:
+
+### v1 — Vanilla HTML (current production)
+Single self-contained HTML files with inline CSS/JS. No build step, no dependencies.
+- `sf-mcp-app/sf_crm_mcp/web/widget.html` (32 KB)
+- `snow-mcp-app/servicenow_mcp/web/widget.html` (39 KB)
+- `sap-mcp-app/sap_s4hana_mcp/web/widget.html` (16 KB)
+- `hubspot-mcp-app/hubspot_mcp/web/widget.html` (22 KB)
+
+### v2 — React + Fluent UI (in development)
+React 19 + Fluent UI v9 components compiled into single-file HTML via Vite. Each widget is styled to match its LOB's native design language:
+
+| Widget | Design System | Key Visual Elements | Size |
+|--------|--------------|-------------------|------|
+| **Salesforce** | Lightning (SLDS) | Blue header, pill badges, compact forms, flash-on-save | 396 KB |
+| **SAP** | Fiori | Shell bar, '72' font, semantic badges, Object Page layout | 460 KB |
+| **HubSpot** | Canvas | Metric cards, percentage bars, coral/teal palette, 3-level drill-down | 398 KB |
+| **ServiceNow** | Now Design | *Planned* |  |
+
+v2 widgets live at `widget-v2.html` alongside v1 for comparison.
+
+### Building v2 widgets
+
+```bash
+cd widgets
+npm install          # one-time
+npm run build        # builds all widgets → dist/
+npm run build:sap    # build specific widget
+```
+
+The build compiles each React app into a single self-contained HTML file (all CSS/JS inlined) using `vite-plugin-singlefile`.
+
+### Test harness
+
+Test any widget (v1 or v2) locally without M365 Copilot:
+
+```bash
+# Open in browser
+tests/harness.html
+```
+
+The harness simulates the full MCP Apps protocol (handshake, tool-result delivery, callTool responses, theme changes) with embedded mock data.
+
+| v1 vs v2 | v1 (Vanilla HTML) | v2 (React + Fluent UI) |
+|----------|-------------------|----------------------|
+| Look & feel | Custom CSS | LOB-native design systems (SLDS, Fiori, Canvas) |
+| Components | Hand-built tables, forms | Fluent DataGrid, Dialog, Badge, Button, Field |
+| Theming | CSS variables, manual | FluentProvider auto light/dark/high-contrast |
+| Loading states | "Loading..." text | Spinner components |
+| Forms | Raw HTML inputs | Field, Input, Dropdown with validation |
+| Accessibility | Manual ARIA | Built-in keyboard nav, screen reader, focus |
+| Bundle size | 16–39 KB | 396–460 KB |
+
+---
+
 ## v3.0 Roadmap
 
 > **v3.0 — Jira & DocuSign** 🚢

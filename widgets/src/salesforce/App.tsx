@@ -78,7 +78,7 @@ function getStatusKey(status: string): string {
 }
 
 function formatAmount(val: number | null | undefined): string {
-  if (val == null) return '\u2014';
+  if (val == null) return '—';
   return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
@@ -189,7 +189,7 @@ function StatusPill({ status, theme }: { status: string; theme: 'light' | 'dark'
       color: style.color,
       border: `1px solid ${style.border}`,
     }}>
-      {status || '\u2014'}
+      {status || '—'}
     </span>
   );
 }
@@ -204,8 +204,8 @@ function SldsFooter({ theme }: { theme: 'light' | 'dark' }) {
       borderTop: `1px solid ${t.border}`,
       color: t.textWeak,
     }}>
-      <span>\u26A1 <strong>MCP Widget</strong> \u00B7 Salesforce CRM</span>
-      <span>\u2693 GTC</span>
+      <span>⚡ <strong>MCP Widget</strong> · Salesforce CRM</span>
+      <span>⚓ GTC</span>
     </div>
   );
 }
@@ -236,7 +236,7 @@ function FormSelect({ label, value, options, onChange, theme }: {
           height: '32px',
         }}
       >
-        <option value="">\u2014 Select \u2014</option>
+        <option value="">— Select —</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </Field>
@@ -287,10 +287,10 @@ function LeadsView({ items, callTool, toast, theme }: {
     try {
       if (creating) {
         await callTool('create_lead', { ...form });
-        toast('\u2713 Record created successfully');
+        toast('✓ Record created successfully');
       } else {
         await callTool('update_lead', { lead_id: editingId, ...form });
-        toast('\u2713 Record updated successfully');
+        toast('✓ Record updated successfully');
         setLastSavedId(editingId);
       }
       cancel();
@@ -344,7 +344,7 @@ function LeadsView({ items, callTool, toast, theme }: {
             </Button>
             <Button appearance="primary" size="small" onClick={handleSave} disabled={saving}
               style={{ background: t.brand, borderColor: t.brand, borderRadius: '4px', height: '32px', padding: '0 16px' }}>
-              {saving ? 'Saving\u2026' : creating ? '\u2713 Create' : '\u2713 Save'}
+              {saving ? 'Saving…' : creating ? '✓ Create' : '✓ Save'}
             </Button>
           </div>
         </div>
@@ -356,8 +356,8 @@ function LeadsView({ items, callTool, toast, theme }: {
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <div className={styles.headerBar} style={{ background: t.brand }}>
         <div className={styles.headerLeft}>
-          <span style={{ fontSize: '18px' }}>\ud83c\udfdb\ufe0f</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Salesforce CRM \u2014 Trade Ledger</span>
+          <span style={{ fontSize: '18px' }}>🏛️</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Salesforce CRM — Trade Ledger</span>
           <Badge appearance="filled" size="small"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
             {items.length} record{items.length !== 1 ? 's' : ''}
@@ -383,7 +383,7 @@ function LeadsView({ items, callTool, toast, theme }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {creating && renderForm('\u2795 New Lead')}
+          {creating && renderForm('➕ New Lead')}
           {items.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={7} className={styles.empty}>
@@ -401,13 +401,13 @@ function LeadsView({ items, callTool, toast, theme }: {
                 }}
               >
                 <TableCell className={styles.cell}>{lead.first_name} {lead.last_name}</TableCell>
-                <TableCell className={styles.cell}>{lead.company || '\u2014'}</TableCell>
-                <TableCell className={styles.cell}>{lead.email || '\u2014'}</TableCell>
-                <TableCell className={styles.cell}>{lead.phone || '\u2014'}</TableCell>
+                <TableCell className={styles.cell}>{lead.company || '—'}</TableCell>
+                <TableCell className={styles.cell}>{lead.email || '—'}</TableCell>
+                <TableCell className={styles.cell}>{lead.phone || '—'}</TableCell>
                 <TableCell className={styles.cell}>
                   <StatusPill status={lead.status} theme={theme} />
                 </TableCell>
-                <TableCell className={styles.cell}>{lead.lead_source || '\u2014'}</TableCell>
+                <TableCell className={styles.cell}>{lead.lead_source || '—'}</TableCell>
                 <TableCell className={styles.cell}>
                   <button
                     title="Edit"
@@ -418,10 +418,10 @@ function LeadsView({ items, callTool, toast, theme }: {
                       border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer',
                       color: t.textWeak, fontSize: '14px', padding: 0,
                     }}
-                  >\u270f\ufe0f</button>
+                  >✏️</button>
                 </TableCell>
               </TableRow>
-              {editingId === lead.id && renderForm('\u270f\ufe0f Edit Lead')}
+              {editingId === lead.id && renderForm('✏️ Edit Lead')}
             </React.Fragment>
           ))}
         </TableBody>
@@ -484,10 +484,10 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
 
       if (creating) {
         await callTool('create_opportunity', args);
-        toast('\u2713 Record created successfully');
+        toast('✓ Record created successfully');
       } else {
         await callTool('update_opportunity', { opportunity_id: editingId, ...args });
-        toast('\u2713 Record updated successfully');
+        toast('✓ Record updated successfully');
         setLastSavedId(editingId);
       }
       cancel();
@@ -540,7 +540,7 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
             </Button>
             <Button appearance="primary" size="small" onClick={handleSave} disabled={saving}
               style={{ background: t.brand, borderColor: t.brand, borderRadius: '4px', height: '32px', padding: '0 16px' }}>
-              {saving ? 'Saving\u2026' : creating ? '\u2713 Create' : '\u2713 Save'}
+              {saving ? 'Saving…' : creating ? '✓ Create' : '✓ Save'}
             </Button>
           </div>
         </div>
@@ -552,7 +552,7 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <div className={styles.headerBar} style={{ background: t.brand }}>
         <div className={styles.headerLeft}>
-          <span style={{ fontSize: '18px' }}>\ud83d\udcb0</span>
+          <span style={{ fontSize: '18px' }}>💰</span>
           <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Opportunities</span>
           <Badge appearance="filled" size="small"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
@@ -579,7 +579,7 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {creating && renderForm('\u2795 New Opportunity')}
+          {creating && renderForm('➕ New Opportunity')}
           {items.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={7} className={styles.empty}>
@@ -597,16 +597,16 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
                 }}
               >
                 <TableCell className={styles.cell}>{opp.name}</TableCell>
-                <TableCell className={styles.cell}>{opp.account_name || '\u2014'}</TableCell>
+                <TableCell className={styles.cell}>{opp.account_name || '—'}</TableCell>
                 <TableCell className={styles.cell}>
                   <StatusPill status={opp.stage} theme={theme} />
                 </TableCell>
                 <TableCell className={styles.cell}>
                   <span className={styles.amount}>{formatAmount(opp.amount)}</span>
                 </TableCell>
-                <TableCell className={styles.cell}>{opp.close_date || '\u2014'}</TableCell>
+                <TableCell className={styles.cell}>{opp.close_date || '—'}</TableCell>
                 <TableCell className={styles.cell}>
-                  <span className={styles.probability}>{opp.probability != null ? opp.probability + '%' : '\u2014'}</span>
+                  <span className={styles.probability}>{opp.probability != null ? opp.probability + '%' : '—'}</span>
                 </TableCell>
                 <TableCell className={styles.cell}>
                   <button
@@ -618,10 +618,10 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
                       border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer',
                       color: t.textWeak, fontSize: '14px', padding: 0,
                     }}
-                  >\u270f\ufe0f</button>
+                  >✏️</button>
                 </TableCell>
               </TableRow>
-              {editingId === opp.id && renderForm('\u270f\ufe0f Edit Opportunity')}
+              {editingId === opp.id && renderForm('✏️ Edit Opportunity')}
             </React.Fragment>
           ))}
         </TableBody>
@@ -682,7 +682,7 @@ export function SalesforceApp() {
         <div className={styles.loadingContainer}>
           <Spinner size="large" />
           <Text size={300} style={{ color: t.textWeak }}>
-            Loading CRM data\u2026
+            Loading CRM data…
           </Text>
         </div>
       </div>
@@ -694,7 +694,7 @@ export function SalesforceApp() {
       <div className={styles.shell}>
         <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
           <div className={styles.headerBar} style={{ background: t.brand }}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>\u26a0\ufe0f Error</span>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>⚠️ Error</span>
           </div>
           <div className={styles.errorBanner} style={{
             background: theme === 'dark' ? '#3c1a1a' : '#FEF1EE',
@@ -730,3 +730,4 @@ export function SalesforceApp() {
     </div>
   );
 }
+
