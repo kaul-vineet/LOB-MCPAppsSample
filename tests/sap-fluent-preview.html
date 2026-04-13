@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP S/4HANA — Fluent UI v9 Preview</title>
+<style>
+/* ===== Fluent UI v9 Design Tokens ===== */
+:root {
+  /* Neutral palette */
+  --colorNeutralBackground1: #ffffff;
+  --colorNeutralBackground1Hover: #f5f5f5;
+  --colorNeutralBackground2: #fafafa;
+  --colorNeutralBackground3: #f0f0f0;
+  --colorNeutralBackground4: #e0e0e0;
+  --colorNeutralForeground1: #242424;
+  --colorNeutralForeground2: #616161;
+  --colorNeutralForeground3: #9e9e9e;
+  --colorNeutralStroke1: #d1d1d1;
+  --colorNeutralStrokeAccessible: #616161;
+
+  /* Brand */
+  --colorBrandBackground: #0f6cbd;
+  --colorBrandBackgroundHover: #115ea3;
+  --colorBrandBackgroundPressed: #0c3b5e;
+  --colorBrandForeground1: #0f6cbd;
+
+  /* SAP accent */
+  --colorSapBlue: #0070F2;
+
+  /* Status */
+  --colorStatusSuccessBackground: #dff6dd;
+  --colorStatusSuccessForeground: #0e700e;
+  --colorStatusDangerBackground: #fde7e9;
+  --colorStatusDangerForeground: #b10e1c;
+  --colorStatusInfoBackground: #e8f1fb;
+  --colorStatusInfoForeground: #0f548c;
+  --colorStatusWarningBackground: #fff1d6;
+  --colorStatusWarningForeground: #835b00;
+  --colorStatusGrayBackground: #f0f0f0;
+  --colorStatusGrayForeground: #616161;
+
+  /* Shadows */
+  --shadow2: 0 0 2px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.14);
+  --shadow4: 0 0 2px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.14);
+  --shadow8: 0 0 2px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.14);
+  --shadow16: 0 0 2px rgba(0,0,0,.14), 0 8px 16px rgba(0,0,0,.18);
+
+  /* Border radius */
+  --borderRadiusSmall: 2px;
+  --borderRadiusMedium: 4px;
+  --borderRadiusLarge: 8px;
+  --borderRadiusXLarge: 12px;
+  --borderRadiusCircular: 9999px;
+
+  /* Typography */
+  --fontFamilyBase: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --fontSizeBase200: 12px;
+  --fontSizeBase300: 14px;
+  --fontSizeBase400: 16px;
+  --fontSizeBase500: 20px;
+  --fontSizeBase600: 24px;
+  --fontWeightRegular: 400;
+  --fontWeightSemibold: 600;
+  --fontWeightBold: 700;
+  --lineHeightBase300: 20px;
+
+  /* Spacing (4px grid) */
+  --spacingHorizontalXXS: 2px;
+  --spacingHorizontalXS: 4px;
+  --spacingHorizontalS: 8px;
+  --spacingHorizontalM: 12px;
+  --spacingHorizontalL: 16px;
+  --spacingHorizontalXL: 20px;
+  --spacingHorizontalXXL: 24px;
+  --spacingVerticalXS: 4px;
+  --spacingVerticalS: 8px;
+  --spacingVerticalM: 12px;
+  --spacingVerticalL: 16px;
+  --spacingVerticalXL: 20px;
+  --spacingVerticalXXL: 24px;
+
+  /* Transition */
+  --durationNormal: 200ms;
+  --curveEasyEase: cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+/* ===== Dark Theme ===== */
+[data-theme="dark"] {
+  --colorNeutralBackground1: #292929;
+  --colorNeutralBackground1Hover: #3d3d3d;
+  --colorNeutralBackground2: #2d2d2d;
+  --colorNeutralBackground3: #333333;
+  --colorNeutralBackground4: #404040;
+  --colorNeutralForeground1: #ffffff;
+  --colorNeutralForeground2: #d6d6d6;
+  --colorNeutralForeground3: #adadad;
+  --colorNeutralStroke1: #525252;
+  --colorNeutralStrokeAccessible: #adadad;
+  --colorBrandBackground: #2886de;
+  --colorBrandBackgroundHover: #3c96e6;
+  --colorBrandBackgroundPressed: #1a6dbf;
+  --colorBrandForeground1: #479ef5;
+  --colorStatusSuccessBackground: #052505;
+  --colorStatusSuccessForeground: #5ec75a;
+  --colorStatusDangerBackground: #3b0509;
+  --colorStatusDangerForeground: #e87979;
+  --colorStatusInfoBackground: #092137;
+  --colorStatusInfoForeground: #62abf5;
+  --colorStatusWarningBackground: #3d2e00;
+  --colorStatusWarningForeground: #f5c142;
+  --colorStatusGrayBackground: #3d3d3d;
+  --colorStatusGrayForeground: #d6d6d6;
+  --shadow2: 0 0 2px rgba(0,0,0,.24), 0 1px 2px rgba(0,0,0,.28);
+  --shadow4: 0 0 2px rgba(0,0,0,.24), 0 2px 4px rgba(0,0,0,.28);
+  --shadow8: 0 0 2px rgba(0,0,0,.24), 0 4px 8px rgba(0,0,0,.28);
+  --shadow16: 0 0 2px rgba(0,0,0,.28), 0 8px 16px rgba(0,0,0,.36);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--fontFamilyBase);
+  font-size: var(--fontSizeBase300);
+  line-height: var(--lineHeightBase300);
+  color: var(--colorNeutralForeground1);
+  background: var(--colorNeutralBackground1);
+  transition: background var(--durationNormal) var(--curveEasyEase),
+              color var(--durationNormal) var(--curveEasyEase);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Layout Shell ===== */
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--spacingVerticalXXL) var(--spacingHorizontalXXL);
+}
+
+/* ===== Top Bar ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacingVerticalM) var(--spacingHorizontalXXL);
+  background: var(--colorNeutralBackground2);
+  border-bottom: 1px solid var(--colorNeutralStroke1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+
+.topbar-title {
+  font-size: var(--fontSizeBase500);
+  font-weight: var(--fontWeightSemibold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacingHorizontalS);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacingHorizontalS);
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorNeutralStroke1);
+  background: var(--colorNeutralBackground1);
+  color: var(--colorNeutralForeground1);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+}
+.theme-toggle:hover {
+  background: var(--colorNeutralBackground1Hover);
+  box-shadow: var(--shadow2);
+}
+
+/* ===== Tab Bar ===== */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--colorNeutralStroke1);
+  margin-bottom: var(--spacingVerticalXL);
+  padding: 0 var(--spacingHorizontalXS);
+  transition: border-color var(--durationNormal) var(--curveEasyEase);
+}
+
+.tab-item {
+  padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+  font-size: var(--fontSizeBase300);
+  font-weight: var(--fontWeightSemibold);
+  color: var(--colorNeutralForeground2);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+  white-space: nowrap;
+  font-family: var(--fontFamilyBase);
+}
+.tab-item:hover {
+  color: var(--colorNeutralForeground1);
+  background: var(--colorNeutralBackground1Hover);
+}
+.tab-item.active {
+  color: var(--colorBrandForeground1);
+  border-bottom-color: var(--colorBrandForeground1);
+}
+
+/* ===== Sandbox Banner ===== */
+.sandbox-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacingHorizontalS);
+  padding: var(--spacingVerticalS) var(--spacingHorizontalL);
+  background: var(--colorStatusWarningBackground);
+  color: var(--colorStatusWarningForeground);
+  border-radius: var(--borderRadiusMedium);
+  font-size: var(--fontSizeBase200);
+  font-weight: var(--fontWeightSemibold);
+  margin-bottom: var(--spacingVerticalM);
+}
+
+/* ===== Toolbar ===== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacingVerticalM);
+}
+.toolbar-title {
+  font-size: var(--fontSizeBase400);
+  font-weight: var(--fontWeightSemibold);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacingHorizontalXS);
+  padding: 6px 16px;
+  border-radius: var(--borderRadiusMedium);
+  font-size: var(--fontSizeBase300);
+  font-weight: var(--fontWeightSemibold);
+  font-family: var(--fontFamilyBase);
+  cursor: pointer;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+  line-height: var(--lineHeightBase300);
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--colorBrandBackground);
+  color: #fff;
+  border: 1px solid var(--colorBrandBackground);
+}
+.btn-primary:hover {
+  background: var(--colorBrandBackgroundHover);
+  border-color: var(--colorBrandBackgroundHover);
+}
+.btn-primary:active {
+  background: var(--colorBrandBackgroundPressed);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--colorNeutralForeground1);
+  border: 1px solid var(--colorNeutralStroke1);
+}
+.btn-outline:hover {
+  background: var(--colorNeutralBackground1Hover);
+}
+.btn-subtle {
+  background: transparent;
+  color: var(--colorBrandForeground1);
+  border: 1px solid transparent;
+  padding: 4px 8px;
+}
+.btn-subtle:hover {
+  background: var(--colorNeutralBackground1Hover);
+}
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--colorNeutralForeground2);
+  cursor: pointer;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+  font-size: 16px;
+}
+.btn-icon:hover {
+  background: var(--colorNeutralBackground1Hover);
+  color: var(--colorNeutralForeground1);
+}
+
+/* ===== Badge ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--borderRadiusCircular);
+  font-size: var(--fontSizeBase200);
+  font-weight: var(--fontWeightSemibold);
+  line-height: 16px;
+  white-space: nowrap;
+}
+.badge-success {
+  background: var(--colorStatusSuccessBackground);
+  color: var(--colorStatusSuccessForeground);
+}
+.badge-danger {
+  background: var(--colorStatusDangerBackground);
+  color: var(--colorStatusDangerForeground);
+}
+.badge-info {
+  background: var(--colorStatusInfoBackground);
+  color: var(--colorStatusInfoForeground);
+}
+.badge-gray {
+  background: var(--colorStatusGrayBackground);
+  color: var(--colorStatusGrayForeground);
+}
+
+/* ===== DataGrid (Table) ===== */
+.datagrid-wrapper {
+  border: 1px solid var(--colorNeutralStroke1);
+  border-radius: var(--borderRadiusLarge);
+  overflow: hidden;
+  box-shadow: var(--shadow2);
+  transition: all var(--durationNormal) var(--curveEasyEase);
+}
+
+.datagrid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.datagrid thead th {
+  background: var(--colorNeutralBackground2);
+  font-weight: var(--fontWeightSemibold);
+  font-size: var(--fontSizeBase200);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--colorNeutralForeground2);
+  padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+  text-align: left;
+  border-bottom: 1px solid var(--colorNeutralStroke1);
+  white-space: nowrap;
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+
+.datagrid tbody td {
+  padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+  border-bottom: 1px solid var(--colorNeutralStroke1);
+  vertical-align: middle;
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+
+.datagrid tbody tr {
+  background: var(--colorNeutralBackground1);
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+
+.datagrid tbody tr:nth-child(even) {
+  background: var(--colorNeutralBackground2);
+}
+
+.datagrid tbody tr:hover {
+  background: var(--colorNeutralBackground1Hover);
+}
+
+.datagrid tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===== Inline Edit Panel ===== */
+.edit-panel {
+  background: var(--colorNeutralBackground3);
+  border-top: 2px solid var(--colorBrandForeground1);
+  padding: var(--spacingVerticalXL) var(--spacingHorizontalXXL);
+  animation: slideDown 250ms var(--curveEasyEase);
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+  to { opacity: 1; max-height: 400px; }
+}
+
+.edit-panel-title {
+  font-size: var(--fontSizeBase400);
+  font-weight: var(--fontWeightSemibold);
+  margin-bottom: var(--spacingVerticalL);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacingHorizontalL);
+  margin-bottom: var(--spacingVerticalXL);
+}
+
+.form-field label {
+  display: block;
+  font-size: var(--fontSizeBase200);
+  font-weight: var(--fontWeightSemibold);
+  color: var(--colorNeutralForeground2);
+  margin-bottom: var(--spacingVerticalXS);
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: var(--fontSizeBase300);
+  font-family: var(--fontFamilyBase);
+  border: 1px solid var(--colorNeutralStroke1);
+  border-radius: var(--borderRadiusMedium);
+  background: var(--colorNeutralBackground1);
+  color: var(--colorNeutralForeground1);
+  outline: none;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+  height: 32px;
+}
+.form-field input:focus,
+.form-field select:focus {
+  border-color: var(--colorBrandForeground1);
+  box-shadow: 0 0 0 1px var(--colorBrandForeground1);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacingHorizontalS);
+  justify-content: flex-end;
+}
+
+/* ===== Card ===== */
+.card {
+  background: var(--colorNeutralBackground1);
+  border: 1px solid var(--colorNeutralStroke1);
+  border-radius: var(--borderRadiusLarge);
+  box-shadow: var(--shadow4);
+  overflow: hidden;
+  transition: all var(--durationNormal) var(--curveEasyEase);
+}
+
+.card-header {
+  padding: var(--spacingVerticalL) var(--spacingHorizontalXXL);
+  border-bottom: 1px solid var(--colorNeutralStroke1);
+  background: var(--colorNeutralBackground2);
+}
+.card-header h2 {
+  font-size: var(--fontSizeBase500);
+  font-weight: var(--fontWeightSemibold);
+}
+
+.card-body {
+  padding: var(--spacingVerticalXXL) var(--spacingHorizontalXXL);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.detail-row {
+  display: flex;
+  padding: var(--spacingVerticalM) var(--spacingHorizontalL);
+  border-bottom: 1px solid var(--colorNeutralStroke1);
+  transition: background var(--durationNormal) var(--curveEasyEase);
+}
+.detail-row:hover {
+  background: var(--colorNeutralBackground1Hover);
+}
+.detail-label {
+  font-weight: var(--fontWeightSemibold);
+  color: var(--colorNeutralForeground2);
+  min-width: 130px;
+  font-size: var(--fontSizeBase200);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.detail-value {
+  color: var(--colorNeutralForeground1);
+  font-weight: var(--fontWeightRegular);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--spacingHorizontalXS);
+  margin-bottom: var(--spacingVerticalL);
+}
+.breadcrumb a {
+  color: var(--colorBrandForeground1);
+  text-decoration: none;
+  font-size: var(--fontSizeBase300);
+  font-weight: var(--fontWeightSemibold);
+  cursor: pointer;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ===== Link ===== */
+.link {
+  color: var(--colorBrandForeground1);
+  text-decoration: none;
+  font-weight: var(--fontWeightSemibold);
+  cursor: pointer;
+  font-size: var(--fontSizeBase200);
+}
+.link:hover { text-decoration: underline; }
+
+/* ===== Footer ===== */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacingVerticalXL) 0;
+  margin-top: var(--spacingVerticalXXL);
+}
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacingHorizontalS);
+  padding: var(--spacingVerticalXS) var(--spacingHorizontalM);
+  background: var(--colorNeutralBackground3);
+  border: 1px solid var(--colorNeutralStroke1);
+  border-radius: var(--borderRadiusCircular);
+  font-size: var(--fontSizeBase200);
+  color: var(--colorNeutralForeground2);
+  font-weight: var(--fontWeightSemibold);
+  transition: all var(--durationNormal) var(--curveEasyEase);
+}
+
+/* ===== View transitions ===== */
+.view {
+  display: none;
+  animation: fadeIn 250ms var(--curveEasyEase);
+}
+.view.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Misc ===== */
+.mono { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13px; }
+.text-muted { color: var(--colorNeutralForeground3); }
+.mt-s { margin-top: var(--spacingVerticalS); }
+.mb-m { margin-bottom: var(--spacingVerticalM); }
+</style>
+</head>
+<body>
+
+<!-- ===== Top Bar ===== -->
+<div class="topbar">
+  <div class="topbar-title">
+    <span>📦</span>
+    <span>SAP S/4HANA — Cargo Manifest</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+  </div>
+</div>
+
+<!-- ===== Main Shell ===== -->
+<div class="shell">
+
+  <!-- Tab Bar -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab-item active" onclick="switchView('po', this)" role="tab">Purchase Orders</button>
+    <button class="tab-item" onclick="switchView('bp', this)" role="tab">Business Partners</button>
+    <button class="tab-item" onclick="switchView('mat', this)" role="tab">Materials</button>
+  </div>
+
+  <!-- ========== VIEW 1: Purchase Orders ========== -->
+  <div id="view-po" class="view active">
+    <div class="sandbox-banner">
+      <span>⚠️</span>
+      <span>Sandbox Environment — Data resets nightly. Changes will not persist to production.</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-title">Purchase Orders</div>
+      <button class="btn btn-primary" onclick="return false">
+        <span>+</span> New PO
+      </button>
+    </div>
+
+    <div class="datagrid-wrapper">
+      <table class="datagrid">
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Supplier</th>
+            <th>Purch. Org</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th style="width:70px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="po-table-body">
+          <!-- Row 1 -->
+          <tr>
+            <td class="mono">4500000001</td>
+            <td>ACME Corp International</td>
+            <td>1710</td>
+            <td>2024-12-01</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>
+              <button class="btn-icon" title="Edit" onclick="toggleEditPanel('4500000001')">
+                ✏️
+              </button>
+            </td>
+          </tr>
+          <!-- Inline Edit Panel (hidden by default) -->
+          <tr id="edit-row-4500000001" style="display:none">
+            <td colspan="6" style="padding:0;border-bottom:1px solid var(--colorNeutralStroke1)">
+              <div class="edit-panel">
+                <div class="edit-panel-title">✏️ Edit Purchase Order 4500000001</div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Supplier</label>
+                    <input type="text" value="ACME Corp International" />
+                  </div>
+                  <div class="form-field">
+                    <label>Purchasing Org</label>
+                    <select>
+                      <option selected>1710 — US East</option>
+                      <option>1720 — US West</option>
+                      <option>2000 — Europe</option>
+                      <option>3000 — Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Order Type</label>
+                    <input type="text" value="NB" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-outline" onclick="toggleEditPanel('4500000001')">Cancel</button>
+                  <button class="btn btn-primary" onclick="toggleEditPanel('4500000001')">Save</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 2 -->
+          <tr>
+            <td class="mono">4500000002</td>
+            <td>Global Shipping Ltd</td>
+            <td>1710</td>
+            <td>2024-11-28</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td><button class="btn-icon" title="Edit" onclick="toggleEditPanel('4500000002')">✏️</button></td>
+          </tr>
+          <tr id="edit-row-4500000002" style="display:none">
+            <td colspan="6" style="padding:0;border-bottom:1px solid var(--colorNeutralStroke1)">
+              <div class="edit-panel">
+                <div class="edit-panel-title">✏️ Edit Purchase Order 4500000002</div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Supplier</label>
+                    <input type="text" value="Global Shipping Ltd" />
+                  </div>
+                  <div class="form-field">
+                    <label>Purchasing Org</label>
+                    <select>
+                      <option selected>1710 — US East</option>
+                      <option>1720 — US West</option>
+                      <option>2000 — Europe</option>
+                      <option>3000 — Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Order Type</label>
+                    <input type="text" value="NB" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-outline" onclick="toggleEditPanel('4500000002')">Cancel</button>
+                  <button class="btn btn-primary" onclick="toggleEditPanel('4500000002')">Save</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 3 -->
+          <tr>
+            <td class="mono">4500000003</td>
+            <td>Nordic Materials AB</td>
+            <td>2000</td>
+            <td>2024-11-15</td>
+            <td><span class="badge badge-danger">Deleted</span></td>
+            <td><button class="btn-icon" title="Edit" onclick="toggleEditPanel('4500000003')">✏️</button></td>
+          </tr>
+          <tr id="edit-row-4500000003" style="display:none">
+            <td colspan="6" style="padding:0;border-bottom:1px solid var(--colorNeutralStroke1)">
+              <div class="edit-panel">
+                <div class="edit-panel-title">✏️ Edit Purchase Order 4500000003</div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Supplier</label>
+                    <input type="text" value="Nordic Materials AB" />
+                  </div>
+                  <div class="form-field">
+                    <label>Purchasing Org</label>
+                    <select>
+                      <option>1710 — US East</option>
+                      <option>1720 — US West</option>
+                      <option selected>2000 — Europe</option>
+                      <option>3000 — Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Order Type</label>
+                    <input type="text" value="NB" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-outline" onclick="toggleEditPanel('4500000003')">Cancel</button>
+                  <button class="btn btn-primary" onclick="toggleEditPanel('4500000003')">Save</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 4 -->
+          <tr>
+            <td class="mono">4500000004</td>
+            <td>Pacific Trade Co</td>
+            <td>3000</td>
+            <td>2024-11-05</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td><button class="btn-icon" title="Edit" onclick="toggleEditPanel('4500000004')">✏️</button></td>
+          </tr>
+          <tr id="edit-row-4500000004" style="display:none">
+            <td colspan="6" style="padding:0;border-bottom:1px solid var(--colorNeutralStroke1)">
+              <div class="edit-panel">
+                <div class="edit-panel-title">✏️ Edit Purchase Order 4500000004</div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Supplier</label>
+                    <input type="text" value="Pacific Trade Co" />
+                  </div>
+                  <div class="form-field">
+                    <label>Purchasing Org</label>
+                    <select>
+                      <option>1710 — US East</option>
+                      <option>1720 — US West</option>
+                      <option>2000 — Europe</option>
+                      <option selected>3000 — Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Order Type</label>
+                    <input type="text" value="NB" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-outline" onclick="toggleEditPanel('4500000004')">Cancel</button>
+                  <button class="btn btn-primary" onclick="toggleEditPanel('4500000004')">Save</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!-- Row 5 -->
+          <tr>
+            <td class="mono">4500000005</td>
+            <td>Southern Logistics SA</td>
+            <td>1720</td>
+            <td>2024-10-22</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td><button class="btn-icon" title="Edit" onclick="toggleEditPanel('4500000005')">✏️</button></td>
+          </tr>
+          <tr id="edit-row-4500000005" style="display:none">
+            <td colspan="6" style="padding:0;border-bottom:1px solid var(--colorNeutralStroke1)">
+              <div class="edit-panel">
+                <div class="edit-panel-title">✏️ Edit Purchase Order 4500000005</div>
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label>Supplier</label>
+                    <input type="text" value="Southern Logistics SA" />
+                  </div>
+                  <div class="form-field">
+                    <label>Purchasing Org</label>
+                    <select>
+                      <option>1710 — US East</option>
+                      <option selected>1720 — US West</option>
+                      <option>2000 — Europe</option>
+                      <option>3000 — Asia Pacific</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Order Type</label>
+                    <input type="text" value="NB" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn-outline" onclick="toggleEditPanel('4500000005')">Cancel</button>
+                  <button class="btn btn-primary" onclick="toggleEditPanel('4500000005')">Save</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== VIEW 2: Business Partners ========== -->
+  <div id="view-bp" class="view">
+    <div class="toolbar">
+      <div class="toolbar-title">Business Partners</div>
+    </div>
+
+    <div class="datagrid-wrapper">
+      <table class="datagrid">
+        <thead>
+          <tr>
+            <th>Partner ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Organization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">BP-10001</td>
+            <td>ACME Corp International</td>
+            <td><span class="badge badge-success">Organization</span></td>
+            <td>ACME Holdings Inc.</td>
+          </tr>
+          <tr>
+            <td class="mono">BP-10002</td>
+            <td>Maria Gonzalez</td>
+            <td><span class="badge badge-info">Person</span></td>
+            <td>Global Shipping Ltd</td>
+          </tr>
+          <tr>
+            <td class="mono">BP-10003</td>
+            <td>Nordic Materials AB</td>
+            <td><span class="badge badge-success">Organization</span></td>
+            <td>Nordic Group</td>
+          </tr>
+          <tr>
+            <td class="mono">BP-10004</td>
+            <td>James Chen</td>
+            <td><span class="badge badge-info">Person</span></td>
+            <td>Pacific Trade Co</td>
+          </tr>
+          <tr>
+            <td class="mono">BP-10005</td>
+            <td>Southern Logistics SA</td>
+            <td><span class="badge badge-success">Organization</span></td>
+            <td>Southern Group SA</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== VIEW 3: Materials ========== -->
+  <div id="view-mat" class="view">
+    <div class="toolbar">
+      <div class="toolbar-title">Materials</div>
+    </div>
+
+    <div class="datagrid-wrapper">
+      <table class="datagrid">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th>Base Unit</th>
+            <th style="width:120px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">TG11</td>
+            <td><span class="badge badge-info">FERT</span></td>
+            <td>A001</td>
+            <td>EA</td>
+            <td><a class="link" onclick="showDetail('TG11')">View Detail →</a></td>
+          </tr>
+          <tr>
+            <td class="mono">SG22</td>
+            <td><span class="badge badge-success">HALB</span></td>
+            <td>B002</td>
+            <td>KG</td>
+            <td><a class="link" onclick="showDetail('SG22')">View Detail →</a></td>
+          </tr>
+          <tr>
+            <td class="mono">RM33</td>
+            <td><span class="badge badge-gray">ROH</span></td>
+            <td>C003</td>
+            <td>L</td>
+            <td><a class="link" onclick="showDetail('RM33')">View Detail →</a></td>
+          </tr>
+          <tr>
+            <td class="mono">FG44</td>
+            <td><span class="badge badge-info">FERT</span></td>
+            <td>A001</td>
+            <td>EA</td>
+            <td><a class="link" onclick="showDetail('FG44')">View Detail →</a></td>
+          </tr>
+          <tr>
+            <td class="mono">RM55</td>
+            <td><span class="badge badge-gray">ROH</span></td>
+            <td>D004</td>
+            <td>M</td>
+            <td><a class="link" onclick="showDetail('RM55')">View Detail →</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== VIEW 4: Material Detail ========== -->
+  <div id="view-detail" class="view">
+    <div class="breadcrumb">
+      <a onclick="backToMaterials()">← Back to Materials</a>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 id="detail-title">Material Detail — TG11</h2>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid" id="detail-content">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <div class="footer">
+    <div class="footer-badge">
+      <span>⚡</span>
+      <span>MCP Widget · SAP S/4HANA</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===== Theme Toggle ===== */
+function toggleTheme() {
+  var html = document.documentElement;
+  var btn = document.querySelector('.theme-toggle');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', 'light');
+    btn.textContent = '🌙';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    btn.textContent = '☀️';
+  }
+}
+
+/* ===== Tab Switching ===== */
+function switchView(viewId, tabEl) {
+  // Hide all views
+  var views = document.querySelectorAll('.view');
+  for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
+
+  // Deactivate all tabs
+  var tabs = document.querySelectorAll('.tab-item');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+
+  // Show selected view
+  document.getElementById('view-' + viewId).classList.add('active');
+  tabEl.classList.add('active');
+
+  // Close any open edit panels
+  closeAllEdits();
+}
+
+/* ===== Edit Panel Toggle ===== */
+function toggleEditPanel(poId) {
+  var row = document.getElementById('edit-row-' + poId);
+  if (!row) return;
+  if (row.style.display === 'none') {
+    closeAllEdits();
+    row.style.display = '';
+  } else {
+    row.style.display = 'none';
+  }
+}
+
+function closeAllEdits() {
+  var rows = document.querySelectorAll('[id^="edit-row-"]');
+  for (var i = 0; i < rows.length; i++) rows[i].style.display = 'none';
+}
+
+/* ===== Material Detail Data ===== */
+var materialData = {
+  'TG11': {
+    Product: 'TG11', Type: 'FERT', Group: 'A001', 'Base Unit': 'EA',
+    'Gross Weight': '2.500 KG', 'Net Weight': '2.100 KG', Division: '10',
+    Description: 'Finished Trading Good 11'
+  },
+  'SG22': {
+    Product: 'SG22', Type: 'HALB', Group: 'B002', 'Base Unit': 'KG',
+    'Gross Weight': '5.000 KG', 'Net Weight': '4.800 KG', Division: '20',
+    Description: 'Semi-Finished Assembly Part 22'
+  },
+  'RM33': {
+    Product: 'RM33', Type: 'ROH', Group: 'C003', 'Base Unit': 'L',
+    'Gross Weight': '1.200 KG', 'Net Weight': '1.200 KG', Division: '10',
+    Description: 'Raw Material Compound 33'
+  },
+  'FG44': {
+    Product: 'FG44', Type: 'FERT', Group: 'A001', 'Base Unit': 'EA',
+    'Gross Weight': '3.750 KG', 'Net Weight': '3.400 KG', Division: '10',
+    Description: 'Finished Goods Assembly 44'
+  },
+  'RM55': {
+    Product: 'RM55', Type: 'ROH', Group: 'D004', 'Base Unit': 'M',
+    'Gross Weight': '0.800 KG', 'Net Weight': '0.750 KG', Division: '30',
+    Description: 'Raw Material Cable 55'
+  }
+};
+
+function showDetail(productId) {
+  var data = materialData[productId];
+  if (!data) return;
+
+  // Hide materials, show detail
+  document.getElementById('view-mat').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+
+  // Set title
+  document.getElementById('detail-title').textContent = 'Material Detail — ' + productId;
+
+  // Render key-value pairs
+  var html = '';
+  var keys = ['Product', 'Type', 'Group', 'Base Unit', 'Gross Weight', 'Net Weight', 'Division', 'Description'];
+  for (var i = 0; i < keys.length; i++) {
+    var val = data[keys[i]] || '—';
+    if (keys[i] === 'Type') {
+      var cls = val === 'FERT' ? 'badge-info' : val === 'HALB' ? 'badge-success' : 'badge-gray';
+      val = '<span class="badge ' + cls + '">' + val + '</span>';
+    }
+    html += '<div class="detail-row">' +
+      '<div class="detail-label">' + keys[i] + '</div>' +
+      '<div class="detail-value">' + val + '</div>' +
+    '</div>';
+  }
+  document.getElementById('detail-content').innerHTML = html;
+}
+
+function backToMaterials() {
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-mat').classList.add('active');
+}
+</script>
+
+</body>
+</html>

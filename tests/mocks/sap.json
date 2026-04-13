@@ -1,0 +1,57 @@
+{
+  "dataTypes": {
+    "purchase_orders": {
+      "type": "purchase_orders",
+      "total": 5,
+      "sandbox": true,
+      "items": [
+        {"purchase_order": "4500000001", "supplier": "Domestic US Supplier 1", "purchasing_org": "17", "order_date": "2026-03-15", "deletion_code": false},
+        {"purchase_order": "4500000002", "supplier": "Domestic US Supplier 2", "purchasing_org": "17", "order_date": "2026-03-20", "deletion_code": false},
+        {"purchase_order": "4500000003", "supplier": "Domestic DE Supplier 1", "purchasing_org": "10", "order_date": "2026-04-01", "deletion_code": true},
+        {"purchase_order": "4500000004", "supplier": "Domestic US Supplier 3", "purchasing_org": "17", "order_date": "2026-04-05", "deletion_code": false},
+        {"purchase_order": "4500000005", "supplier": "International Supplier 1", "purchasing_org": "10", "order_date": "2026-04-10", "deletion_code": false}
+      ]
+    },
+    "business_partners": {
+      "type": "business_partners",
+      "total": 5,
+      "sandbox": true,
+      "items": [
+        {"id": "BP001", "name": "Domestic US Supplier 1", "category": "1", "organization": "Global Trade Inc."},
+        {"id": "BP002", "name": "Domestic US Supplier 2", "category": "1", "organization": "Pacific Logistics"},
+        {"id": "BP003", "name": "Domestic DE Supplier 1", "category": "2", "organization": "Berlin Manufacturing GmbH"},
+        {"id": "BP004", "name": "International Supplier 1", "category": "1", "organization": "Shanghai Parts Co."},
+        {"id": "BP005", "name": "Domestic US Supplier 3", "category": "1", "organization": "Midwest Components LLC"}
+      ]
+    },
+    "materials": {
+      "type": "materials",
+      "total": 5,
+      "sandbox": true,
+      "items": [
+        {"product": "TG11", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
+        {"product": "TG12", "product_type": "HALB", "product_group": "A001", "base_unit": "EA"},
+        {"product": "TG13", "product_type": "ROH", "product_group": "B002", "base_unit": "KG"},
+        {"product": "TG14", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
+        {"product": "TG15", "product_type": "ROH", "product_group": "C003", "base_unit": "L"}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "get_material_details": {
+      "type": "material_detail",
+      "product": "TG11",
+      "product_type": "FERT",
+      "product_group": "A001",
+      "base_unit": "EA",
+      "gross_weight": 2.500,
+      "net_weight": 2.100,
+      "weight_unit": "KG",
+      "division": "10",
+      "product_description": "Finished Trading Good 11"
+    },
+    "create_purchase_order": { "type": "purchase_orders", "total": 6, "sandbox": true, "items": "USE_CURRENT_PLUS_NEW" },
+    "update_purchase_order": { "type": "purchase_orders", "total": 5, "sandbox": true, "items": "USE_CURRENT_WITH_UPDATE" },
+    "get_materials": { "type": "materials", "total": 5, "sandbox": true, "items": "USE_CURRENT" }
+  }
+}

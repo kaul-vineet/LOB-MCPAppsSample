@@ -1,0 +1,43 @@
+{
+  "dataTypes": {
+    "emails": {
+      "type": "emails",
+      "total": 5,
+      "items": [
+        {"id": "em001", "name": "Spring Sale Announcement", "subject": "🌸 Spring Sale — 30% Off Everything", "status": "PUBLISHED", "stats": {"sent": 12500, "delivered": 12200, "opened": 4880, "clicked": 1220, "bounced": 300, "unsubscribed": 45}},
+        {"id": "em002", "name": "Product Launch Newsletter", "subject": "Introducing Our Latest Innovation", "status": "PUBLISHED", "stats": {"sent": 8900, "delivered": 8700, "opened": 3480, "clicked": 870, "bounced": 200, "unsubscribed": 22}},
+        {"id": "em003", "name": "Customer Survey Q2", "subject": "We'd love your feedback", "status": "DRAFT", "stats": {"sent": 0, "delivered": 0, "opened": 0, "clicked": 0, "bounced": 0, "unsubscribed": 0}},
+        {"id": "em004", "name": "Holiday Special Offer", "subject": "🎄 Holiday deals just for you", "status": "PUBLISHED", "stats": {"sent": 15000, "delivered": 14700, "opened": 7350, "clicked": 2205, "bounced": 300, "unsubscribed": 60}},
+        {"id": "em005", "name": "Welcome Series — Day 1", "subject": "Welcome aboard! Here's what's next", "status": "PUBLISHED", "stats": {"sent": 3200, "delivered": 3150, "opened": 2205, "clicked": 945, "bounced": 50, "unsubscribed": 5}}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "get_lists": {
+      "type": "lists",
+      "total": 4,
+      "items": [
+        {"id": "lst001", "name": "Spring Campaign Subscribers", "type": "MANUAL", "size": 3200},
+        {"id": "lst002", "name": "Product Launch Waitlist", "type": "DYNAMIC", "size": 1580},
+        {"id": "lst003", "name": "VIP Customers", "type": "MANUAL", "size": 450},
+        {"id": "lst004", "name": "Newsletter Opt-ins", "type": "DYNAMIC", "size": 8900}
+      ]
+    },
+    "get_list_contacts": {
+      "type": "contacts",
+      "list_id": "lst001",
+      "list_name": "Spring Campaign Subscribers",
+      "total": 3,
+      "items": [
+        {"id": "ct001", "firstname": "Maria", "lastname": "Johnson", "email": "maria.j@example.com", "phone": "(555) 123-4567", "company": "TechCorp", "lifecyclestage": "customer"},
+        {"id": "ct002", "firstname": "James", "lastname": "Wilson", "email": "jwilson@example.com", "phone": "(555) 234-5678", "company": "DataFlow Inc.", "lifecyclestage": "lead"},
+        {"id": "ct003", "firstname": "Sarah", "lastname": "Chen", "email": "s.chen@example.com", "phone": "(555) 345-6789", "company": "CloudBase", "lifecyclestage": "subscriber"}
+      ]
+    },
+    "update_email": { "type": "emails", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
+    "update_list": { "type": "lists", "total": 4, "items": "USE_CURRENT_WITH_UPDATE" },
+    "add_to_list": { "type": "contacts", "total": 4, "items": "USE_CURRENT_PLUS_NEW" },
+    "remove_from_list": { "type": "contacts", "total": 2, "items": "USE_CURRENT_MINUS_REMOVED" },
+    "get_emails": { "type": "emails", "total": 5, "items": "USE_CURRENT" }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "dataTypes": {
+    "leads": {
+      "type": "leads",
+      "total": 5,
+      "items": [
+        {"id": "00QgK0000080pE2UAI", "first_name": "Phyllis", "last_name": "Cotton", "company": "Abbott Insurance", "email": "pcotton@abbottins.net", "phone": "(703) 757-1000", "status": "Open - Not Contacted", "lead_source": "Web"},
+        {"id": "00QgK0000080pE3UAI", "first_name": "Jeff", "last_name": "Glimpse", "company": "Jackson Controls", "email": "jeffg@jackson.com", "phone": "886-2-25474189", "status": "Open - Not Contacted", "lead_source": "Phone Inquiry"},
+        {"id": "00QgK0000080pE4UAI", "first_name": "Mike", "last_name": "Braund", "company": "Metropolitan Health", "email": "mikeb@metro.com", "phone": "(410) 381-2334", "status": "Open - Not Contacted", "lead_source": "Purchased List"},
+        {"id": "00QgK0000080pE5UAI", "first_name": "Patricia", "last_name": "Feager", "company": "International Shipping Co.", "email": "patricia_feager@is.com", "phone": "(336) 777-1970", "status": "Working - Contacted", "lead_source": "Partner Referral"},
+        {"id": "00QgK0000080pE1UAI", "first_name": "Bertha", "last_name": "Boxer", "company": "Farmers Coop. of Florida", "email": "bertha@fcof.net", "phone": "(850) 644-4200", "status": "Working - Contacted", "lead_source": "Web"}
+      ]
+    },
+    "opportunities": {
+      "type": "opportunities",
+      "total": 5,
+      "items": [
+        {"id": "006gK000001ABC1", "name": "Grand Hotels SLA", "account": "Grand Hotels & Resorts Ltd", "stage": "Negotiation/Review", "amount": 210000, "close_date": "2026-05-15", "probability": 75},
+        {"id": "006gK000001ABC2", "name": "United Oil Installations", "account": "United Oil & Gas Corp.", "stage": "Closed Won", "amount": 440000, "close_date": "2026-03-01", "probability": 100},
+        {"id": "006gK000001ABC3", "name": "Edge Emergency Generators", "account": "Edge Communications", "stage": "Prospecting", "amount": 75000, "close_date": "2026-06-30", "probability": 10},
+        {"id": "006gK000001ABC4", "name": "Burlington Textile Weaving", "account": "Burlington Textiles Corp", "stage": "Needs Analysis", "amount": 325000, "close_date": "2026-07-15", "probability": 25},
+        {"id": "006gK000001ABC5", "name": "Pyramid Emergency Generators", "account": "Pyramid Construction Inc.", "stage": "Id. Decision Makers", "amount": 100000, "close_date": "2026-08-01", "probability": 60}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "create_lead": { "_createdId": "00QgK000NEW001", "type": "leads", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
+    "update_lead": { "type": "leads", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
+    "create_opportunity": { "_createdId": "006gK000NEW001", "type": "opportunities", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
+    "update_opportunity": { "type": "opportunities", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" }
+  }
+}
