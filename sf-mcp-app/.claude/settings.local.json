@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc navi-architecture.md -o \"Navi-Architecture-Review.docx\" --reference-doc=-)",
+      "Bash(pandoc navi-architecture.md -o \"Navi-Architecture-Review.docx\")"
+    ]
+  }
+}
