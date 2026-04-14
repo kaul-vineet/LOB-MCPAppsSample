@@ -1,9 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Button,
   Field,
   Input,
-  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -197,6 +196,209 @@ function fmtNum(n: number | undefined): string {
   return (n || 0).toLocaleString();
 }
 
+// ── Shimmer CSS & Skeleton Components ────────────────────────────────
+const shimmerCSS = `
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skel {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.skel-dark {
+  background: linear-gradient(90deg, #2C3E50 25%, #3a4f65 50%, #2C3E50 75%);
+  background-size: 200% 100%;
+}`;
+
+let shimmerInjected = false;
+function ensureShimmerCSS() {
+  if (shimmerInjected) return;
+  const style = document.createElement('style');
+  style.textContent = shimmerCSS;
+  document.head.appendChild(style);
+  shimmerInjected = true;
+}
+
+function SkeletonBlock({ width = '100%', height = 14, style }: { width?: string | number; height?: number; style?: React.CSSProperties }) {
+  const theme = useTheme();
+  useEffect(ensureShimmerCSS, []);
+  return <div className={theme === 'dark' ? 'skel skel-dark' : 'skel'} style={{ width, height, ...style }} />;
+}
+
+function SkeletonMetricCard({ isFullscreen }: { isFullscreen?: boolean }) {
+  const c = useHsColors();
+  const styles = useStyles();
+  return (
+    <div
+      className={styles.metricCard}
+      style={{
+        backgroundColor: c.bg,
+        border: `1px solid ${c.border}`,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        padding: isFullscreen ? '24px' : '16px',
+      }}
+    >
+      <SkeletonBlock width="50%" height={isFullscreen ? 32 : 24} style={{ margin: '0 auto 8px' }} />
+      <SkeletonBlock width="40%" height={12} style={{ margin: '0 auto' }} />
+    </div>
+  );
+}
+
+function EmailsSkeleton({ isFullscreen }: { isFullscreen?: boolean }) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const cols = isFullscreen ? 7 : 5;
+  return (
+    <>
+      <div
+        className={styles.header}
+        style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.border }}
+      >
+        <div>
+          <SkeletonBlock width={180} height={18} />
+          <SkeletonBlock width={100} height={13} style={{ marginTop: 6 }} />
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isFullscreen ? 6 : 4}, 1fr)`, gap: '12px', marginBottom: '16px' }}>
+        {Array.from({ length: isFullscreen ? 6 : 4 }).map((_, i) => (
+          <SkeletonMetricCard key={i} isFullscreen={isFullscreen} />
+        ))}
+      </div>
+      <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+        <Table>
+          <TableHeader>
+            <TableRow style={{ backgroundColor: c.bg }}>
+              {Array.from({ length: cols }).map((_, i) => (
+                <TableHeaderCell key={i} className={styles.headerCell} style={{ borderBottom: `2px solid ${c.border}` }}>
+                  <SkeletonBlock width={50 + i * 10} />
+                </TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <TableRow key={row} style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}>
+                {Array.from({ length: cols }).map((_, col) => (
+                  <TableCell key={col} className={styles.cell}>
+                    <SkeletonBlock width={`${50 + col * 8}%`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+
+function ListsSkeleton() {
+  const styles = useStyles();
+  const c = useHsColors();
+  return (
+    <>
+      <div className={styles.header} style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.border }}>
+        <div>
+          <SkeletonBlock width={160} height={18} />
+          <SkeletonBlock width={80} height={13} style={{ marginTop: 6 }} />
+        </div>
+      </div>
+      <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+        <Table>
+          <TableHeader>
+            <TableRow style={{ backgroundColor: c.bg }}>
+              {['Name', 'Type', 'Size', ''].map((_, i) => (
+                <TableHeaderCell key={i} className={styles.headerCell} style={{ borderBottom: `2px solid ${c.border}` }}>
+                  <SkeletonBlock width={60 + i * 12} />
+                </TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <TableRow key={row} style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}>
+                {Array.from({ length: 4 }).map((_, col) => (
+                  <TableCell key={col} className={styles.cell}>
+                    <SkeletonBlock width={`${45 + col * 10}%`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+
+function ContactsSkeleton() {
+  const styles = useStyles();
+  const c = useHsColors();
+  return (
+    <>
+      <div className={styles.header} style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.border }}>
+        <div>
+          <SkeletonBlock width={140} height={18} />
+          <SkeletonBlock width={90} height={13} style={{ marginTop: 6 }} />
+        </div>
+      </div>
+      <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+        <Table>
+          <TableHeader>
+            <TableRow style={{ backgroundColor: c.bg }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableHeaderCell key={i} className={styles.headerCell} style={{ borderBottom: `2px solid ${c.border}` }}>
+                  <SkeletonBlock width={55 + i * 15} />
+                </TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <TableRow key={row} style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}>
+                {Array.from({ length: 5 }).map((_, col) => (
+                  <TableCell key={col} className={styles.cell}>
+                    <SkeletonBlock width={`${40 + col * 12}%`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+
+function FullscreenToggle({ isFullscreen, onToggle }: { isFullscreen: boolean; onToggle: () => void }) {
+  const c = useHsColors();
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        backgroundColor: 'transparent',
+        border: `1px solid ${c.border}`,
+        color: c.textSec,
+        borderRadius: '3px',
+        padding: '8px 12px',
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontSize: '13px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        whiteSpace: 'nowrap' as const,
+      }}
+    >
+      {isFullscreen ? '✕ Exit Full Screen' : '⛶ Expand'}
+    </button>
+  );
+}
+
 // ── Themed style helpers ─────────────────────────────────────────────
 function useHsColors() {
   const theme = useTheme();
@@ -232,7 +434,7 @@ function lifecycleDotColor(stage: string): string {
 }
 
 // ── MetricCard ───────────────────────────────────────────────────────
-function MetricCard({ label, value, negative }: { label: string; value: string | number; negative?: boolean }) {
+function MetricCard({ label, value, negative, isFullscreen }: { label: string; value: string | number; negative?: boolean; isFullscreen?: boolean }) {
   const styles = useStyles();
   const c = useHsColors();
   return (
@@ -242,24 +444,27 @@ function MetricCard({ label, value, negative }: { label: string; value: string |
         backgroundColor: c.bg,
         border: `1px solid ${c.border}`,
         boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        padding: isFullscreen ? '24px' : '16px',
       }}
     >
-      <div style={{ fontSize: '24px', fontWeight: 700, color: negative ? c.error : c.teal, lineHeight: 1.2 }}>
+      <div style={{ fontSize: isFullscreen ? '32px' : '24px', fontWeight: 700, color: negative ? c.error : c.teal, lineHeight: 1.2 }}>
         {value}
       </div>
-      <div style={{ fontSize: '12px', color: c.textSec, marginTop: '4px' }}>{label}</div>
+      <div style={{ fontSize: isFullscreen ? '13px' : '12px', color: c.textSec, marginTop: '4px' }}>{label}</div>
     </div>
   );
 }
 
 // ── Emails View ──────────────────────────────────────────────────────
-function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
+function EmailsView({ items, total, onNavigateLists, callTool, toast, isFullscreen, onToggleFullscreen }: {
   items: Email[];
   total?: number;
   onNavigateLists: () => void;
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
-}) {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}){
   const styles = useStyles();
   const c = useHsColors();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -291,6 +496,7 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
   const totalDelivered = items.reduce((s, em) => s + (em.stats.delivered || 0), 0);
   const totalOpened = items.reduce((s, em) => s + (em.stats.opened || 0), 0);
   const totalClicked = items.reduce((s, em) => s + (em.stats.clicked || 0), 0);
+  const totalUnsub = items.reduce((s, em) => s + (em.stats.unsubscribed || 0), 0);
   const avgOpenRate = totalDelivered ? (totalOpened / totalDelivered * 100).toFixed(1) : '0.0';
   const avgClickRate = totalDelivered ? (totalClicked / totalDelivered * 100).toFixed(1) : '0.0';
 
@@ -316,32 +522,37 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
             {total ?? items.length} campaigns
           </Text>
         </div>
-        <button
-          onClick={onNavigateLists}
-          style={{
-            backgroundColor: 'transparent',
-            border: `1px solid ${c.coral}`,
-            color: c.coral,
-            borderRadius: '3px',
-            padding: '8px 24px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          <PeopleRegular style={{ fontSize: 16 }} /> View Lists
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {onToggleFullscreen && <FullscreenToggle isFullscreen={!!isFullscreen} onToggle={onToggleFullscreen} />}
+          <button
+            onClick={onNavigateLists}
+            style={{
+              backgroundColor: 'transparent',
+              border: `1px solid ${c.coral}`,
+              color: c.coral,
+              borderRadius: '3px',
+              padding: '8px 24px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <PeopleRegular style={{ fontSize: 16 }} /> View Lists
+          </button>
+        </div>
       </div>
 
       {/* Metrics summary cards */}
-      <div className={styles.metricsGrid}>
-        <MetricCard label="Total Sent" value={fmtNum(totalSent)} />
-        <MetricCard label="Avg Open Rate" value={avgOpenRate + '%'} />
-        <MetricCard label="Avg Click Rate" value={avgClickRate + '%'} />
-        <MetricCard label="Total Bounced" value={fmtNum(totalBounced)} negative />
+      <div className={styles.metricsGrid} style={isFullscreen ? { gridTemplateColumns: 'repeat(6, 1fr)' } : undefined}>
+        <MetricCard label="Total Sent" value={fmtNum(totalSent)} isFullscreen={isFullscreen} />
+        {isFullscreen && <MetricCard label="Delivered" value={fmtNum(totalDelivered)} isFullscreen />}
+        <MetricCard label="Avg Open Rate" value={avgOpenRate + '%'} isFullscreen={isFullscreen} />
+        <MetricCard label="Avg Click Rate" value={avgClickRate + '%'} isFullscreen={isFullscreen} />
+        <MetricCard label="Total Bounced" value={fmtNum(totalBounced)} negative isFullscreen={isFullscreen} />
+        {isFullscreen && <MetricCard label="Unsubscribed" value={fmtNum(totalUnsub)} negative isFullscreen />}
       </div>
 
       {/* Emails table — Canvas style */}
@@ -353,8 +564,10 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Subject</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Status</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Sent</TableHeaderCell>
+              {isFullscreen && <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Delivered</TableHeaderCell>}
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Open Rate</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Click Rate</TableHeaderCell>
+              {isFullscreen && <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Bounced</TableHeaderCell>}
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}`, width: 60 }} />
             </TableRow>
           </TableHeader>
@@ -379,6 +592,7 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
                       )}
                     </TableCell>
                     <TableCell className={styles.cell} style={{ color: c.text }}>{fmtNum(em.stats.sent)}</TableCell>
+                    {isFullscreen && <TableCell className={styles.cell} style={{ color: c.text }}>{fmtNum(em.stats.delivered)}</TableCell>}
                     <TableCell className={styles.cell}>
                       <div className={styles.rateCell}>
                         <span
@@ -413,13 +627,14 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
                         <span style={{ fontWeight: 700, fontSize: '13px', color: c.coral }}>{pct(em.stats.clicked, em.stats.delivered)}</span>
                       </div>
                     </TableCell>
+                    {isFullscreen && <TableCell className={styles.cell} style={{ color: c.error }}>{fmtNum(em.stats.bounced)}</TableCell>}
                     <TableCell className={styles.cell}>
                       <Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(em)} />
                     </TableCell>
                   </TableRow>
                   {editingId === em.id && (
                     <TableRow>
-                      <TableCell colSpan={7} style={{ padding: 0 }}>
+                      <TableCell colSpan={isFullscreen ? 9 : 7} style={{ padding: 0 }}>
                         <div className={styles.editPanel} style={{ backgroundColor: c.editPanelBg, borderTop: `2px solid ${c.editPanelBorder}` }}>
                           <div className={styles.editPanelTitle} style={{ color: c.text }}>✏️ Edit Email</div>
                           <div className={styles.formGrid}>
@@ -487,14 +702,16 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
 }
 
 // ── Lists View ───────────────────────────────────────────────────────
-function ListsView({ items, total, onBack, onViewContacts, callTool, toast }: {
+function ListsView({ items, total, onBack, onViewContacts, callTool, toast, isFullscreen, onToggleFullscreen }: {
   items: ContactList[];
   total?: number;
   onBack: () => void;
   onViewContacts: (listId: string) => void;
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
-}) {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}){
   const styles = useStyles();
   const c = useHsColors();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -547,24 +764,27 @@ function ListsView({ items, total, onBack, onViewContacts, callTool, toast }: {
             {total ?? items.length} lists
           </Text>
         </div>
-        <button
-          onClick={onBack}
-          style={{
-            backgroundColor: 'transparent',
-            border: `1px solid ${c.coral}`,
-            color: c.coral,
-            borderRadius: '3px',
-            padding: '8px 24px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          <ArrowLeftRegular style={{ fontSize: 14 }} /> Back to Emails
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {onToggleFullscreen && <FullscreenToggle isFullscreen={!!isFullscreen} onToggle={onToggleFullscreen} />}
+          <button
+            onClick={onBack}
+            style={{
+              backgroundColor: 'transparent',
+              border: `1px solid ${c.coral}`,
+              color: c.coral,
+              borderRadius: '3px',
+              padding: '8px 24px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <ArrowLeftRegular style={{ fontSize: 14 }} /> Back to Emails
+          </button>
+        </div>
       </div>
 
       <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
@@ -672,7 +892,7 @@ function ListsView({ items, total, onBack, onViewContacts, callTool, toast }: {
 }
 
 // ── Contacts View ────────────────────────────────────────────────────
-function ContactsView({ items, total, listName, listId, onBack, callTool, toast }: {
+function ContactsView({ items, total, listName, listId, onBack, callTool, toast, isFullscreen, onToggleFullscreen }: {
   items: Contact[];
   total?: number;
   listName: string;
@@ -680,7 +900,9 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
   onBack: () => void;
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
-}) {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}){
   const styles = useStyles();
   const c = useHsColors();
   const [addingContact, setAddingContact] = useState(false);
@@ -741,6 +963,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
           </Text>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {onToggleFullscreen && <FullscreenToggle isFullscreen={!!isFullscreen} onToggle={onToggleFullscreen} />}
           <button
             onClick={onBack}
             style={{
@@ -829,6 +1052,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
             <TableRow style={{ backgroundColor: c.bg }}>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Name</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Email</TableHeaderCell>
+              {isFullscreen && <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Phone</TableHeaderCell>}
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Company</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Lifecycle Stage</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}`, width: 60 }} />
@@ -837,7 +1061,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={isFullscreen ? 6 : 5}>
                   <div className={styles.emptyState}>
                     <PersonRegular style={{ fontSize: 48, color: c.border, display: 'block', margin: '0 auto 12px' }} />
                     <Text style={{ color: c.textSec, fontSize: '15px' }}>No contacts in this list yet</Text>
@@ -858,6 +1082,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
                     {ct.firstname} {ct.lastname}
                   </TableCell>
                   <TableCell className={styles.cell} style={{ color: c.text }}>{ct.email}</TableCell>
+                  {isFullscreen && <TableCell className={styles.cell} style={{ color: c.text }}>{ct.phone || '—'}</TableCell>}
                   <TableCell className={styles.cell} style={{ color: c.text }}>{ct.company}</TableCell>
                   <TableCell className={styles.cell}>
                     <span className={styles.lifecycleDot} style={{ backgroundColor: lifecycleDotColor(ct.lifecyclestage) }} />
@@ -897,22 +1122,35 @@ export function HubSpotApp() {
   const c = useHsColors();
 
   const [nav, setNav] = useState<ViewState>({ view: 'emails' });
-  const [loading, setLoading] = useState(false);
+  const [loadingView, setLoadingView] = useState<'emails' | 'lists' | 'contacts' | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: next ? 'fullscreen' : 'inline' },
+    }, '*');
+  }, [isFullscreen]);
+
+  const shellStyle = isFullscreen ? { maxWidth: 'none', padding: '28px 40px' } : undefined;
 
   const navigateToLists = useCallback(async () => {
-    setLoading(true);
+    setLoadingView('lists');
     try {
       const result = await callTool('get_lists', {});
       setNav({ view: 'lists', data: result });
     } catch (e: any) {
       toast(e.message || 'Failed to load lists', 'error');
     } finally {
-      setLoading(false);
+      setLoadingView(null);
     }
   }, [callTool, toast]);
 
   const navigateToContacts = useCallback(async (listId: string, listName?: string) => {
-    setLoading(true);
+    setLoadingView('contacts');
     try {
       const result = await callTool('get_list_contacts', { list_id: listId });
       setNav({
@@ -924,53 +1162,50 @@ export function HubSpotApp() {
     } catch (e: any) {
       toast(e.message || 'Failed to load contacts', 'error');
     } finally {
-      setLoading(false);
+      setLoadingView(null);
     }
   }, [callTool, toast]);
 
   const backToEmails = useCallback(async () => {
-    setLoading(true);
+    setLoadingView('emails');
     try {
       await callTool('get_emails', {});
       setNav({ view: 'emails' });
     } catch (e: any) {
       toast(e.message || 'Failed to load emails', 'error');
     } finally {
-      setLoading(false);
+      setLoadingView(null);
     }
   }, [callTool, toast]);
 
   const backToLists = useCallback(async () => {
-    setLoading(true);
+    setLoadingView('lists');
     try {
       const result = await callTool('get_lists', {});
       setNav({ view: 'lists', data: result });
     } catch (e: any) {
       toast(e.message || 'Failed to load lists', 'error');
     } finally {
-      setLoading(false);
+      setLoadingView(null);
     }
   }, [callTool, toast]);
 
-  // Loading state
+  // Initial loading skeleton
   if (!initialData && nav.view === 'emails') {
     return (
-      <div className={styles.shell}>
-        <div className={styles.loadingContainer}>
-          <Spinner size="large" />
-          <Text size={300} style={{ color: c.textSec }}>Loading HubSpot data…</Text>
-        </div>
+      <div className={styles.shell} style={shellStyle}>
+        <EmailsSkeleton isFullscreen={isFullscreen} />
       </div>
     );
   }
 
-  if (loading) {
+  // Navigation loading skeleton
+  if (loadingView) {
     return (
-      <div className={styles.shell}>
-        <div className={styles.loadingContainer}>
-          <Spinner size="large" />
-          <Text size={300} style={{ color: c.textSec }}>Loading…</Text>
-        </div>
+      <div className={styles.shell} style={shellStyle}>
+        {loadingView === 'emails' && <EmailsSkeleton isFullscreen={isFullscreen} />}
+        {loadingView === 'lists' && <ListsSkeleton />}
+        {loadingView === 'contacts' && <ContactsSkeleton />}
       </div>
     );
   }
@@ -978,7 +1213,7 @@ export function HubSpotApp() {
   // Contacts view
   if (nav.view === 'contacts' && nav.data) {
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} style={shellStyle}>
         <ContactsView
           items={(nav.data.items || []) as Contact[]}
           total={nav.data.total}
@@ -987,6 +1222,8 @@ export function HubSpotApp() {
           onBack={backToLists}
           callTool={callTool}
           toast={toast}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
         <McpFooter label="HubSpot Marketing" />
       </div>
@@ -996,7 +1233,7 @@ export function HubSpotApp() {
   // Lists view
   if (nav.view === 'lists' && nav.data) {
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} style={shellStyle}>
         <ListsView
           items={(nav.data.items || []) as ContactList[]}
           total={nav.data.total}
@@ -1007,6 +1244,8 @@ export function HubSpotApp() {
           }}
           callTool={callTool}
           toast={toast}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
         <McpFooter label="HubSpot Marketing" />
       </div>
@@ -1017,7 +1256,7 @@ export function HubSpotApp() {
   const data = initialData!;
   if (data.type === 'lists') {
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} style={shellStyle}>
         <ListsView
           items={(data.items || []) as ContactList[]}
           total={data.total}
@@ -1028,6 +1267,8 @@ export function HubSpotApp() {
           }}
           callTool={callTool}
           toast={toast}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
         <McpFooter label="HubSpot Marketing" />
       </div>
@@ -1036,7 +1277,7 @@ export function HubSpotApp() {
 
   if (data.type === 'list_contacts') {
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} style={shellStyle}>
         <ContactsView
           items={(data.items || []) as Contact[]}
           total={data.total}
@@ -1045,6 +1286,8 @@ export function HubSpotApp() {
           onBack={backToLists}
           callTool={callTool}
           toast={toast}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
         />
         <McpFooter label="HubSpot Marketing" />
       </div>
@@ -1053,13 +1296,15 @@ export function HubSpotApp() {
 
   // Default: emails
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} style={shellStyle}>
       <EmailsView
         items={(data.items || []) as Email[]}
         total={data.total}
         onNavigateLists={navigateToLists}
         callTool={callTool}
         toast={toast}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
       />
       <McpFooter label="HubSpot Marketing" />
     </div>

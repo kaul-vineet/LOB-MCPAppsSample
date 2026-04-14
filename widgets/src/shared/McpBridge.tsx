@@ -125,9 +125,21 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   // Notify height whenever toolData changes
   useEffect(() => {
     if (toolData) {
+      // Multiple notifications to catch layout shifts
       setTimeout(notifyHeight, 50);
+      setTimeout(notifyHeight, 200);
+      setTimeout(notifyHeight, 500);
     }
   }, [toolData, notifyHeight]);
+
+  // Also observe DOM changes for dynamic content
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setTimeout(notifyHeight, 50);
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    return () => observer.disconnect();
+  }, [notifyHeight]);
 
   return (
     <McpBridgeContext.Provider value={{ toolData, theme, callTool, notifyHeight }}>

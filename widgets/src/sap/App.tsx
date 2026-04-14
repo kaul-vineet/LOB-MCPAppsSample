@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Spinner } from '@fluentui/react-components';
+
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
@@ -65,6 +65,17 @@ function injectFioriGlobalStyles() {
     }
     input, button, select, textarea {
       font-family: '72', 'Segoe UI', Arial, Helvetica, sans-serif !important;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skel {
+      height: 14px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
     }
   `;
   document.head.appendChild(style);
@@ -195,7 +206,11 @@ function FioriInput({ label, value, onChange }: {
 }
 
 /* ─── Fiori Shell Bar ─────────────────────────────────────────────── */
-function FioriShellBar({ title }: { title: string }) {
+function FioriShellBar({ title, isFullscreen, onToggleFullscreen }: {
+  title: string;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}) {
   const t = useFioriTokens();
   return (
     <div style={{
@@ -209,7 +224,29 @@ function FioriShellBar({ title }: { title: string }) {
       marginBottom: '16px',
     }}>
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="2" fill="#FFFFFF" fillOpacity="0.15"/><text x="3" y="14" fill="#FFFFFF" fontSize="11" fontWeight="bold">S/4</text></svg>
-      <span style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '0.2px' }}>{title}</span>
+      <span style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '0.2px', flex: 1 }}>{title}</span>
+      {onToggleFullscreen && (
+        <button
+          onClick={onToggleFullscreen}
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            borderRadius: '4px',
+            color: '#FFFFFF',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: '4px 10px',
+            height: '28px',
+          }}
+        >
+          {isFullscreen ? '✕ Exit' : '⛶'}
+        </button>
+      )}
     </div>
   );
 }
@@ -614,6 +651,44 @@ function MaterialDetailView({ data, onBack }: { data: SapData; onBack: () => voi
   );
 }
 
+/* ─── Skeleton Loading Shimmer ─────────────────────────────────────── */
+function SkeletonTable() {
+  const t = useFioriTokens();
+  const widths = [
+    ['60%', '45%', '30%', '50%'],
+    ['40%', '55%', '25%', '35%'],
+    ['70%', '35%', '40%', '55%'],
+    ['50%', '50%', '35%', '45%'],
+    ['55%', '40%', '30%', '40%'],
+  ];
+  return (
+    <div style={{ border: `1px solid ${t.borderColor}`, overflow: 'hidden' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ backgroundColor: t.listHeaderBg }}>
+            {['', '', '', ''].map((_, i) => (
+              <th key={i} style={{ padding: '12px 16px', borderBottom: `1px solid ${t.borderColor}` }}>
+                <div className="skel" style={{ width: '60%', height: '10px' }} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {widths.map((row, ri) => (
+            <tr key={ri} style={{ backgroundColor: t.surfaceColor, borderBottom: `1px solid ${t.borderColor}` }}>
+              {row.map((w, ci) => (
+                <td key={ci} style={{ padding: '10px 16px' }}>
+                  <div className="skel" style={{ width: w }} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────────────
 export function SapApp() {
   injectFioriGlobalStyles();
@@ -622,6 +697,17 @@ export function SapApp() {
   const { callTool } = useMcpBridge();
   const toast = useToast();
   const [detailData, setDetailData] = useState<SapData | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: next ? 'fullscreen' : 'inline' },
+    }, '*');
+  }, [isFullscreen]);
 
   const handleViewDetail = useCallback(async (product: string) => {
     try {
@@ -639,24 +725,27 @@ export function SapApp() {
   }, []);
 
   const shellStyle: React.CSSProperties = {
-    maxWidth: '1120px',
+    maxWidth: isFullscreen ? '100%' : '1120px',
     margin: '0 auto',
     backgroundColor: t.bgColor,
     minHeight: '100vh',
+    fontSize: isFullscreen ? '15px' : '13px',
   };
 
   const contentStyle: React.CSSProperties = {
-    padding: '16px',
+    padding: isFullscreen ? '24px 32px' : '16px',
   };
 
   // Loading state
   if (!data) {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title="SAP S/4HANA" />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 16px', gap: '16px' }}>
-          <Spinner size="large" />
-          <span style={{ fontSize: '13px', color: t.textSecondary }}>Loading SAP data…</span>
+        <FioriShellBar title="SAP S/4HANA" isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+        <div style={contentStyle}>
+          <div style={{ marginBottom: '16px' }}>
+            <div className="skel" style={{ width: '180px', height: '18px', marginBottom: '16px' }} />
+          </div>
+          <SkeletonTable />
         </div>
       </div>
     );
@@ -677,7 +766,7 @@ export function SapApp() {
   if (detailData && detailData.type === 'material_detail') {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title={shellTitle} />
+        <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
         <div style={contentStyle}>
           <MaterialDetailView data={detailData} onBack={handleBackFromDetail} />
           <McpFooter label="SAP S/4HANA" />
@@ -690,7 +779,7 @@ export function SapApp() {
   if (data.type === 'material_detail') {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title={shellTitle} />
+        <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
         <div style={contentStyle}>
           <MaterialDetailView data={data} onBack={handleBackFromDetail} />
           <McpFooter label="SAP S/4HANA" />
@@ -701,7 +790,7 @@ export function SapApp() {
 
   return (
     <div style={shellStyle}>
-      <FioriShellBar title={shellTitle} />
+      <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
       <div style={contentStyle}>
         {data.type === 'purchase_orders' && (
           <PurchaseOrdersView

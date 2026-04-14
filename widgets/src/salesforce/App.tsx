@@ -4,7 +4,6 @@ import {
   Button,
   Field,
   Input,
-  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -85,7 +84,6 @@ function formatAmount(val: number | null | undefined): string {
 // ── Styles ─────────────────────────────────────────────────────────────────
 const useStyles = makeStyles({
   shell: {
-    maxWidth: '1120px',
     margin: '0 auto',
     padding: '12px',
     fontFamily: "'Salesforce Sans', 'Segoe UI', system-ui, -apple-system, sans-serif",
@@ -95,6 +93,7 @@ const useStyles = makeStyles({
     borderRadius: '4px',
     overflow: 'hidden',
     boxShadow: '0 2px 4px rgba(0,0,0,0.07)',
+    overflowX: 'auto' as const,
   },
   headerBar: {
     display: 'flex',
@@ -109,15 +108,19 @@ const useStyles = makeStyles({
   },
   headerCell: {
     fontWeight: 700 as any,
-    fontSize: '11px',
+    fontSize: '10px',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.5px',
-    padding: '8px 16px',
+    padding: '6px 10px',
   },
   cell: {
-    padding: '8px 16px',
+    padding: '6px 10px',
     verticalAlign: 'middle',
-    fontSize: '13px',
+    fontSize: '12px',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden' as const,
+    textOverflow: 'ellipsis' as const,
+    maxWidth: '180px',
   },
   formPanel: {
     padding: '14px 16px',
@@ -244,11 +247,14 @@ function FormSelect({ label, value, options, onChange, theme }: {
 }
 
 // ── Leads View ────────────────────────────────────────────────────────────
-function LeadsView({ items, callTool, toast, theme }: {
+function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
   items: Lead[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
+  isFullscreen: boolean;
+  onRequestFullscreen: () => void;
+  onExitFullscreen: () => void;
 }) {
   const styles = useStyles();
   const t = slds(theme);
@@ -310,9 +316,19 @@ function LeadsView({ items, callTool, toast, theme }: {
 
   const formBg = theme === 'dark' ? '#1a3050' : '#F3F3F3';
 
+  const colSpan = isFullscreen ? 7 : 5;
+
+  const cellStyle: React.CSSProperties = isFullscreen
+    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
+    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+
+  const headerCellStyle: React.CSSProperties = isFullscreen
+    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
+    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+
   const renderForm = (title: string) => (
     <TableRow>
-      <TableCell colSpan={7} style={{ padding: 0 }}>
+      <TableCell colSpan={colSpan} style={{ padding: 0 }}>
         <div className={styles.formPanel} style={{
           background: formBg,
           borderColor: t.brand,
@@ -351,7 +367,6 @@ function LeadsView({ items, callTool, toast, theme }: {
       </TableCell>
     </TableRow>
   );
-
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <div className={styles.headerBar} style={{ background: t.brand }}>
@@ -363,30 +378,43 @@ function LeadsView({ items, callTool, toast, theme }: {
             {items.length} record{items.length !== 1 ? 's' : ''}
           </Badge>
         </div>
-        <Button appearance="primary" size="small" icon={<AddRegular />}
-          onClick={openCreate}
-          style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
-          + New Lead
-        </Button>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <Button appearance="primary" size="small" icon={<AddRegular />}
+            onClick={openCreate}
+            style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
+            + New Lead
+          </Button>
+          {isFullscreen ? (
+            <button onClick={onExitFullscreen} title="Exit fullscreen"
+              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
+              ✕ Exit
+            </button>
+          ) : (
+            <button onClick={onRequestFullscreen} title="Fullscreen"
+              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
+              ⛶
+            </button>
+          )}
+        </div>
       </div>
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Name</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Company</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Email</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Phone</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Status</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Source</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ width: 50, color: t.textWeak }} />
+            <TableHeaderCell style={headerCellStyle}>Name</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Company</TableHeaderCell>
+            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Email</TableHeaderCell>}
+            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Phone</TableHeaderCell>}
+            <TableHeaderCell style={headerCellStyle}>Status</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Source</TableHeaderCell>
+            <TableHeaderCell style={{ ...headerCellStyle, width: 50 }} />
           </TableRow>
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New Lead')}
           {items.length === 0 && !creating && (
             <TableRow>
-              <TableCell colSpan={7} className={styles.empty}>
+              <TableCell colSpan={colSpan} className={styles.empty}>
                 <Text>No leads found.</Text>
               </TableCell>
             </TableRow>
@@ -400,15 +428,15 @@ function LeadsView({ items, callTool, toast, theme }: {
                   ...(lastSavedId === lead.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}),
                 }}
               >
-                <TableCell className={styles.cell}>{lead.first_name} {lead.last_name}</TableCell>
-                <TableCell className={styles.cell}>{lead.company || '—'}</TableCell>
-                <TableCell className={styles.cell}>{lead.email || '—'}</TableCell>
-                <TableCell className={styles.cell}>{lead.phone || '—'}</TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>{lead.first_name} {lead.last_name}</TableCell>
+                <TableCell style={cellStyle}>{lead.company || '—'}</TableCell>
+                {isFullscreen && <TableCell style={cellStyle}>{lead.email || '—'}</TableCell>}
+                {isFullscreen && <TableCell style={cellStyle}>{lead.phone || '—'}</TableCell>}
+                <TableCell style={cellStyle}>
                   <StatusPill status={lead.status} theme={theme} />
                 </TableCell>
-                <TableCell className={styles.cell}>{lead.lead_source || '—'}</TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>{lead.lead_source || '—'}</TableCell>
+                <TableCell style={cellStyle}>
                   <button
                     title="Edit"
                     onClick={() => openEdit(lead)}
@@ -433,11 +461,14 @@ function LeadsView({ items, callTool, toast, theme }: {
 }
 
 // ── Opportunities View ──────────────────────────────────────────────────────
-function OpportunitiesView({ items, callTool, toast, theme }: {
+function OpportunitiesView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
   items: Opportunity[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
+  isFullscreen: boolean;
+  onRequestFullscreen: () => void;
+  onExitFullscreen: () => void;
 }) {
   const styles = useStyles();
   const t = slds(theme);
@@ -507,6 +538,14 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
 
   const formBg = theme === 'dark' ? '#1a3050' : '#F3F3F3';
 
+  const cellStyle: React.CSSProperties = isFullscreen
+    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
+    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+
+  const headerCellStyle: React.CSSProperties = isFullscreen
+    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
+    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+
   const renderForm = (title: string) => (
     <TableRow>
       <TableCell colSpan={7} style={{ padding: 0 }}>
@@ -559,23 +598,36 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
             {items.length} record{items.length !== 1 ? 's' : ''}
           </Badge>
         </div>
-        <Button appearance="primary" size="small" icon={<AddRegular />}
-          onClick={openCreate}
-          style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
-          + New Opportunity
-        </Button>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <Button appearance="primary" size="small" icon={<AddRegular />}
+            onClick={openCreate}
+            style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
+            + New Opportunity
+          </Button>
+          {isFullscreen ? (
+            <button onClick={onExitFullscreen} title="Exit fullscreen"
+              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
+              ✕ Exit
+            </button>
+          ) : (
+            <button onClick={onRequestFullscreen} title="Fullscreen"
+              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
+              ⛶
+            </button>
+          )}
+        </div>
       </div>
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Name</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Account</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Stage</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Amount</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Close Date</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ color: t.textWeak }}>Probability</TableHeaderCell>
-            <TableHeaderCell className={styles.headerCell} style={{ width: 50, color: t.textWeak }} />
+            <TableHeaderCell style={headerCellStyle}>Name</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Account</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Stage</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Amount</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Close Date</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Probability</TableHeaderCell>
+            <TableHeaderCell style={{ ...headerCellStyle, width: 50 }} />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -596,19 +648,19 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
                   ...(lastSavedId === opp.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}),
                 }}
               >
-                <TableCell className={styles.cell}>{opp.name}</TableCell>
-                <TableCell className={styles.cell}>{opp.account_name || '—'}</TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>{opp.name}</TableCell>
+                <TableCell style={cellStyle}>{opp.account_name || '—'}</TableCell>
+                <TableCell style={cellStyle}>
                   <StatusPill status={opp.stage} theme={theme} />
                 </TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>
                   <span className={styles.amount}>{formatAmount(opp.amount)}</span>
                 </TableCell>
-                <TableCell className={styles.cell}>{opp.close_date || '—'}</TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>{opp.close_date || '—'}</TableCell>
+                <TableCell style={cellStyle}>
                   <span className={styles.probability}>{opp.probability != null ? opp.probability + '%' : '—'}</span>
                 </TableCell>
-                <TableCell className={styles.cell}>
+                <TableCell style={cellStyle}>
                   <button
                     title="Edit"
                     onClick={() => openEdit(opp)}
@@ -667,6 +719,46 @@ if (typeof document !== 'undefined' && !document.getElementById(sldsStyleId)) {
   document.head.appendChild(style);
 }
 
+// ── Skeleton Loading Shimmer ──────────────────────────────────────────────
+function SkeletonTable() {
+  return (
+    <div style={{ padding: '16px' }}>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .skel {
+          height: 14px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
+        [data-theme="dark"] .skel {
+          background: linear-gradient(90deg, #333 25%, #444 50%, #333 75%);
+          background-size: 200% 100%;
+        }
+      `}</style>
+      {/* Header skeleton */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <div className="skel" style={{ width: '200px', height: '24px' }} />
+        <div className="skel" style={{ width: '80px', height: '24px' }} />
+      </div>
+      {/* Row skeletons */}
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+          <div className="skel" style={{ width: '120px' }} />
+          <div className="skel" style={{ width: '150px' }} />
+          <div className="skel" style={{ width: '180px' }} />
+          <div className="skel" style={{ width: '100px' }} />
+          <div className="skel" style={{ width: '90px' }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main App ────────────────────────────────────────────────────────────
 export function SalesforceApp() {
   const styles = useStyles();
@@ -675,23 +767,53 @@ export function SalesforceApp() {
   const toast = useToast();
   const theme = useTheme();
   const t = slds(theme);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const requestFullscreen = useCallback(() => {
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: 'fullscreen' },
+    }, '*');
+    setIsFullscreen(true);
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: 'inline' },
+    }, '*');
+    setIsFullscreen(false);
+  }, []);
+
+  // Listen for external display-mode changes
+  React.useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      const msg = e.data;
+      if (msg && msg.method === 'ui/display-mode-changed') {
+        setIsFullscreen(msg.params?.mode === 'fullscreen');
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const shellStyle: React.CSSProperties = isFullscreen
+    ? { maxWidth: '1200px', padding: '24px', fontSize: '14px' }
+    : { padding: '12px', fontSize: '12px' };
 
   if (!data) {
     return (
-      <div className={styles.shell}>
-        <div className={styles.loadingContainer}>
-          <Spinner size="large" />
-          <Text size={300} style={{ color: t.textWeak }}>
-            Loading CRM data…
-          </Text>
-        </div>
+      <div className={styles.shell} style={shellStyle}>
+        <SkeletonTable />
       </div>
     );
   }
 
   if (data.error) {
     return (
-      <div className={styles.shell}>
+      <div className={styles.shell} style={shellStyle}>
         <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
           <div className={styles.headerBar} style={{ background: t.brand }}>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>⚠️ Error</span>
@@ -710,13 +832,16 @@ export function SalesforceApp() {
   }
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} style={shellStyle}>
       {data.type === 'leads' && (
         <LeadsView
           items={(data.items || []) as Lead[]}
           callTool={callTool}
           toast={toast}
           theme={theme}
+          isFullscreen={isFullscreen}
+          onRequestFullscreen={requestFullscreen}
+          onExitFullscreen={exitFullscreen}
         />
       )}
       {data.type === 'opportunities' && (
@@ -725,9 +850,13 @@ export function SalesforceApp() {
           callTool={callTool}
           toast={toast}
           theme={theme}
+          isFullscreen={isFullscreen}
+          onRequestFullscreen={requestFullscreen}
+          onExitFullscreen={exitFullscreen}
         />
       )}
     </div>
   );
 }
+
 
