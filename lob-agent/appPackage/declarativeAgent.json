@@ -6,36 +6,36 @@
     "instructions": "$[file('instruction.txt')]",
     "conversation_starters": [
         {
-            "title": "📋 Show my CRM leads",
-            "text": "Show me the latest leads from Salesforce"
+            "title": "🔄 Lead-to-opportunity pipeline",
+            "text": "Show me the latest leads. I want to review them, update any that are qualified, and then check the opportunities pipeline."
         },
         {
-            "title": "💰 Review sales pipeline",
-            "text": "Show me the latest opportunities from Salesforce"
+            "title": "🚨 Triage IT incidents",
+            "text": "Show me open incidents sorted by priority. I need to check the critical ones and update their status."
         },
         {
-            "title": "➕ Log a new lead",
-            "text": "I want to create a new lead in Salesforce for John Smith at Acme Corp"
+            "title": "📦 Procurement check",
+            "text": "Show me recent purchase orders from SAP and check if we have the materials in stock for order 4500000001."
         },
         {
-            "title": "🎫 Check open incidents",
-            "text": "Show me the latest incidents from ServiceNow"
+            "title": "📊 Campaign performance review",
+            "text": "Show me the marketing email performance from HubSpot. Which campaigns have the best open rates?"
         },
         {
-            "title": "📝 Raise a new ticket",
-            "text": "Create a new incident in ServiceNow — VPN not connecting"
+            "title": "🆕 Log a sales lead and raise IT ticket",
+            "text": "I met a prospect — create a new lead for Sarah Chen at CloudBase Corp. Also raise a ServiceNow incident for VPN access for the new client demo."
         },
         {
-            "title": "📦 Review purchase orders",
-            "text": "Show me the latest purchase orders from SAP"
+            "title": "🏭 Supplier and materials audit",
+            "text": "Show me all business partners from SAP, then check the materials inventory. I need to verify stock levels for product TG11."
         },
         {
-            "title": "🏭 Browse materials inventory",
-            "text": "Show me materials from SAP S/4HANA"
+            "title": "📋 Service request status",
+            "text": "Show me the latest service requests from ServiceNow. I need to check the laptop request and see what items are pending delivery."
         },
         {
-            "title": "📧 Email campaign stats",
-            "text": "Show me the latest marketing email performance from HubSpot"
+            "title": "💼 End-of-day operations check",
+            "text": "Give me a quick overview — show me open CRM leads, any critical IT incidents, and today's purchase orders."
         }
     ],
     "actions": [
