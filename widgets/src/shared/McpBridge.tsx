@@ -5,6 +5,9 @@ interface McpBridgeContextType {
   theme: 'light' | 'dark';
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   notifyHeight: () => void;
+  requestFullscreen: () => void;
+  exitFullscreen: () => void;
+  isFullscreen: boolean;
 }
 
 const McpBridgeContext = createContext<McpBridgeContextType | null>(null);
@@ -12,9 +15,11 @@ const McpBridgeContext = createContext<McpBridgeContextType | null>(null);
 export function McpBridgeProvider({ appName, children }: { appName: string; children: React.ReactNode }) {
   const [toolData, setToolData] = useState<any>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const pendingCalls = useRef<Record<number, { resolve: (v: any) => void; reject: (e: Error) => void }>>({});
   const callIdRef = useRef(0);
   const initDone = useRef(false);
+  const lastHeight = useRef(0);
 
   // Send ui/initialize handshake
   const sendInit = useCallback(() => {
@@ -36,14 +41,44 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     }, '*');
   }, []);
 
-  // Notify height
+  // Notify height — deduplicated to avoid flicker
   const notifyHeight = useCallback(() => {
     const h = document.body.scrollHeight;
+    if (h === lastHeight.current) return;
+    lastHeight.current = h;
+    if ((window as any).openai?.notifyIntrinsicHeight) {
+      (window as any).openai.notifyIntrinsicHeight({ height: h });
+    }
     window.parent.postMessage({
       jsonrpc: '2.0',
       method: 'ui/notifyIntrinsicHeight',
       params: { height: h }
     }, '*');
+  }, []);
+
+  // Fullscreen
+  const requestFullscreen = useCallback(() => {
+    if ((window as any).openai?.requestDisplayMode) {
+      (window as any).openai.requestDisplayMode({ mode: 'fullscreen' });
+    }
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: 'fullscreen' }
+    }, '*');
+    setIsFullscreen(true);
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    if ((window as any).openai?.requestDisplayMode) {
+      (window as any).openai.requestDisplayMode({ mode: 'inline' });
+    }
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/request-display-mode',
+      params: { mode: 'inline' }
+    }, '*');
+    setIsFullscreen(false);
   }, []);
 
   // callTool
@@ -125,24 +160,24 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   // Notify height whenever toolData changes
   useEffect(() => {
     if (toolData) {
-      // Multiple notifications to catch layout shifts
-      setTimeout(notifyHeight, 50);
-      setTimeout(notifyHeight, 200);
-      setTimeout(notifyHeight, 500);
+      setTimeout(notifyHeight, 100);
+      setTimeout(notifyHeight, 300);
     }
   }, [toolData, notifyHeight]);
 
-  // Also observe DOM changes for dynamic content
+  // Debounced ResizeObserver instead of MutationObserver (less noisy)
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setTimeout(notifyHeight, 50);
+    let timer: ReturnType<typeof setTimeout>;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(notifyHeight, 100);
     });
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-    return () => observer.disconnect();
+    observer.observe(document.body);
+    return () => { observer.disconnect(); clearTimeout(timer); };
   }, [notifyHeight]);
 
   return (
-    <McpBridgeContext.Provider value={{ toolData, theme, callTool, notifyHeight }}>
+    <McpBridgeContext.Provider value={{ toolData, theme, callTool, notifyHeight, requestFullscreen, exitFullscreen, isFullscreen }}>
       {children}
     </McpBridgeContext.Provider>
   );
