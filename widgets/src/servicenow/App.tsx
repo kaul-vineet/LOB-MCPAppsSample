@@ -952,7 +952,7 @@ export function ServiceNowApp() {
   }, []);
 
   const shellStyle: React.CSSProperties = isFullscreen
-    ? { maxWidth: '1200px', padding: '24px', fontSize: '14px' }
+    ? { maxWidth: '100%', padding: '24px 32px', minHeight: '100vh', boxSizing: 'border-box' as const, fontSize: '14px' }
     : { padding: '12px', fontSize: '12px' };
 
   if (!data) {
@@ -1011,3 +1011,4 @@ export function ServiceNowApp() {
     </div>
   );
 }
+
