@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useApp, type App } from '@modelcontextprotocol/ext-apps/react';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps';
 
 interface McpBridgeContextType {
   toolData: any;
@@ -8,6 +10,8 @@ interface McpBridgeContextType {
   requestFullscreen: () => void;
   exitFullscreen: () => void;
   isFullscreen: boolean;
+  isConnected: boolean;
+  isLoading: boolean;
 }
 
 const McpBridgeContext = createContext<McpBridgeContextType | null>(null);
@@ -16,32 +20,47 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   const [toolData, setToolData] = useState<any>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const pendingCalls = useRef<Record<number, { resolve: (v: any) => void; reject: (e: Error) => void }>>({});
-  const callIdRef = useRef(0);
-  const initDone = useRef(false);
   const lastHeight = useRef(0);
 
-  // Send ui/initialize handshake
-  const sendInit = useCallback(() => {
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      id: 'mcp-ui-init',
-      method: 'ui/initialize',
-      params: { appInfo: { name: appName, version: '1.0' }, appCapabilities: {} }
-    }, '*');
-  }, [appName]);
+  // Use the official ext-apps React hook for connection lifecycle
+  const { app, isConnected, error } = useApp({
+    appInfo: { name: appName, version: '1.0.0' },
+    capabilities: {},
+    onAppCreated: (app: App) => {
+      app.ontoolresult = (result) => {
+        if (result?.structuredContent) {
+          setToolData(result.structuredContent);
+        }
+      };
+      app.onhostcontextchanged = (ctx: McpUiHostContext) => {
+        if (ctx?.theme) {
+          setTheme(ctx.theme === 'dark' ? 'dark' : 'light');
+        }
+        if (ctx?.displayMode) {
+          setIsFullscreen(ctx.displayMode === 'fullscreen');
+        }
+      };
+    },
+  });
 
-  // Send ui/notifications/initialized
-  const sendInitialized = useCallback(() => {
-    if (initDone.current) return;
-    initDone.current = true;
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/notifications/initialized'
-    }, '*');
+  // Apply initial host context on connection
+  useEffect(() => {
+    if (!app || !isConnected) return;
+    const ctx = app.getHostContext();
+    if (ctx?.theme) setTheme(ctx.theme === 'dark' ? 'dark' : 'light');
+    if (ctx?.displayMode) setIsFullscreen(ctx.displayMode === 'fullscreen');
+  }, [app, isConnected]);
+
+  // Legacy fallback: window.openai toolOutput (for older hosts)
+  useEffect(() => {
+    if ((window as any).openai?.toolOutput) {
+      const out = (window as any).openai.toolOutput;
+      setToolData(out.structuredContent ?? out);
+    }
   }, []);
 
   // Notify height — deduplicated to avoid flicker
+  // Kept as fallback alongside ext-apps autoResize (which handles standard hosts)
   const notifyHeight = useCallback(() => {
     const h = document.body.scrollHeight;
     if (h === lastHeight.current) return;
@@ -49,115 +68,64 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     if ((window as any).openai?.notifyIntrinsicHeight) {
       (window as any).openai.notifyIntrinsicHeight({ height: h });
     }
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/notifyIntrinsicHeight',
-      params: { height: h }
-    }, '*');
   }, []);
 
-  // Fullscreen
-  const requestFullscreen = useCallback(() => {
+  // Fullscreen via official SDK
+  const requestFullscreen = useCallback(async () => {
+    if (app && isConnected) {
+      try {
+        const result = await app.requestDisplayMode({ mode: 'fullscreen' });
+        setIsFullscreen(result.mode === 'fullscreen');
+        return;
+      } catch { /* fall through to legacy */ }
+    }
+    // Legacy fallback
     if ((window as any).openai?.requestDisplayMode) {
       (window as any).openai.requestDisplayMode({ mode: 'fullscreen' });
     }
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'fullscreen' }
-    }, '*');
     setIsFullscreen(true);
-  }, []);
+  }, [app, isConnected]);
 
-  const exitFullscreen = useCallback(() => {
+  const exitFullscreen = useCallback(async () => {
+    if (app && isConnected) {
+      try {
+        const result = await app.requestDisplayMode({ mode: 'inline' });
+        setIsFullscreen(result.mode === 'fullscreen');
+        return;
+      } catch { /* fall through to legacy */ }
+    }
+    // Legacy fallback
     if ((window as any).openai?.requestDisplayMode) {
       (window as any).openai.requestDisplayMode({ mode: 'inline' });
     }
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'inline' }
-    }, '*');
     setIsFullscreen(false);
-  }, []);
+  }, [app, isConnected]);
 
-  // callTool
-  const callTool = useCallback((name: string, args?: Record<string, any>) => {
-    return new Promise<any>((resolve, reject) => {
-      const id = ++callIdRef.current;
-      pendingCalls.current[id] = { resolve, reject };
-      window.parent.postMessage({
-        jsonrpc: '2.0', id,
-        method: 'tools/call',
-        params: { name, arguments: args || {} }
-      }, '*');
-      setTimeout(() => {
-        if (pendingCalls.current[id]) {
-          delete pendingCalls.current[id];
-          reject(new Error('Tool call timed out'));
-        }
-      }, 20000);
-    });
-  }, []);
-
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      const msg = event.data;
-      if (!msg || typeof msg !== 'object') return;
-
-      // SANDBOX_PROXY_READY
-      if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
-        sendInit();
-        return;
+  // callTool with single retry on failure
+  const callToolOnce = useCallback(async (name: string, args?: Record<string, any>): Promise<any> => {
+    if (app && isConnected) {
+      const result = await app.callServerTool({ name, arguments: args || {} });
+      if (result.isError) {
+        throw new Error(
+          result.content?.map((c: any) => ('text' in c ? c.text : '')).join('') || 'Tool call failed'
+        );
       }
-
-      // Init response
-      if (msg.id === 'mcp-ui-init') {
-        if (msg.result?.theme) setTheme(msg.result.theme === 'dark' ? 'dark' : 'light');
-        sendInitialized();
-        return;
-      }
-
-      // Theme change
-      if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
-        setTheme(msg.params?.theme === 'dark' ? 'dark' : 'light');
-        return;
-      }
-
-      // Tool result
-      if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
-        const sc = msg.params?.structuredContent;
-        if (sc !== undefined) setToolData(sc);
-        return;
-      }
-
-      // callTool response
-      if (msg.jsonrpc === '2.0' && msg.id && pendingCalls.current[msg.id]) {
-        const cb = pendingCalls.current[msg.id];
-        delete pendingCalls.current[msg.id];
-        if (msg.result) {
-          cb.resolve(msg.result.structuredContent || msg.result);
-        } else {
-          cb.reject(new Error(msg.error?.message || 'Tool call failed'));
-        }
-        return;
-      }
-    };
-
-    window.addEventListener('message', handler);
-    // Send init on load
-    sendInit();
-
-    // Legacy fallback: window.openai
-    if ((window as any).openai?.toolOutput) {
-      const out = (window as any).openai.toolOutput;
-      setToolData(out.structuredContent ?? out);
+      return result.structuredContent || result;
     }
+    throw new Error('Not connected to MCP host');
+  }, [app, isConnected]);
 
-    return () => window.removeEventListener('message', handler);
-  }, [sendInit, sendInitialized]);
+  const callTool = useCallback(async (name: string, args?: Record<string, any>) => {
+    try {
+      return await callToolOnce(name, args);
+    } catch (e) {
+      // Retry once after 1s for transient errors
+      await new Promise(r => setTimeout(r, 1000));
+      return callToolOnce(name, args);
+    }
+  }, [callToolOnce]);
 
-  // Notify height whenever toolData changes
+  // Notify height whenever toolData changes (legacy host support)
   useEffect(() => {
     if (toolData) {
       setTimeout(notifyHeight, 100);
@@ -165,7 +133,8 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     }
   }, [toolData, notifyHeight]);
 
-  // Debounced ResizeObserver instead of MutationObserver (less noisy)
+  // Debounced ResizeObserver for legacy height notifications
+  // (ext-apps autoResize handles the standard protocol path)
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     const observer = new ResizeObserver(() => {
@@ -176,8 +145,21 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     return () => { observer.disconnect(); clearTimeout(timer); };
   }, [notifyHeight]);
 
+  // Log connection errors for diagnostics
+  useEffect(() => {
+    if (error) {
+      console.warn('[McpBridge] Connection error:', error.message);
+    }
+  }, [error]);
+
+  const isLoading = !isConnected && !error;
+
   return (
-    <McpBridgeContext.Provider value={{ toolData, theme, callTool, notifyHeight, requestFullscreen, exitFullscreen, isFullscreen }}>
+    <McpBridgeContext.Provider value={{
+      toolData, theme, callTool, notifyHeight,
+      requestFullscreen, exitFullscreen, isFullscreen,
+      isConnected, isLoading,
+    }}>
       {children}
     </McpBridgeContext.Provider>
   );
