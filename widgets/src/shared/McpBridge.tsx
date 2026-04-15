@@ -10,6 +10,7 @@ interface McpBridgeContextType {
   requestFullscreen: () => void;
   exitFullscreen: () => void;
   isFullscreen: boolean;
+  canExpand: boolean;
   isConnected: boolean;
   isLoading: boolean;
 }
@@ -154,10 +155,14 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
 
   const isLoading = !isConnected && !error;
 
+  // Check if host supports display mode changes
+  const canExpand = !!(app && typeof app.requestDisplayMode === 'function') ||
+    !!(typeof (window as any).openai?.requestDisplayMode === 'function');
+
   return (
     <McpBridgeContext.Provider value={{
       toolData, theme, callTool, notifyHeight,
-      requestFullscreen, exitFullscreen, isFullscreen,
+      requestFullscreen, exitFullscreen, isFullscreen, canExpand,
       isConnected, isLoading,
     }}>
       {children}

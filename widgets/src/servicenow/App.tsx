@@ -14,6 +14,7 @@ import {
   makeStyles,
 } from '@fluentui/react-components';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
+import { ExpandButton } from '../shared/ExpandButton';
 import { useToast } from '../shared/Toast';
 import type { SnowData, Incident, ServiceRequest, RequestItem } from './types';
 
@@ -495,6 +496,7 @@ function IncidentsView({ items, callTool, toast, theme }: {
             }}>
             + New Incident
           </button>
+          <ExpandButton />
         </div>
       </div>
 
@@ -710,6 +712,7 @@ function RequestsView({ items, callTool, toast, theme }: {
             }}>
             + New Request
           </button>
+          <ExpandButton />
         </div>
       </div>
 

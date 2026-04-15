@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
+import { ExpandButton } from '../shared/ExpandButton';
 import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
 import type { SapData, PurchaseOrder, BusinessPartner, Material } from './types';
@@ -223,6 +224,7 @@ function FioriShellBar({ title }: {
     }}>
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="2" fill="#FFFFFF" fillOpacity="0.15"/><text x="3" y="14" fill="#FFFFFF" fontSize="11" fontWeight="bold">S/4</text></svg>
       <span style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '0.2px', flex: 1 }}>{title}</span>
+      <ExpandButton />
     </div>
   );
 }

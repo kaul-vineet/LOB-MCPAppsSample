@@ -23,6 +23,7 @@ import {
   PersonRegular,
 } from '@fluentui/react-icons';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
+import { ExpandButton } from '../shared/ExpandButton';
 import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
 import type { HubSpotData, Email, ContactList, Contact } from './types';
@@ -514,6 +515,7 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
           >
             <PeopleRegular style={{ fontSize: 16 }} /> View Lists
           </button>
+          <ExpandButton />
         </div>
       </div>
 
@@ -747,6 +749,7 @@ function ListsView({ items, total, onBack, onViewContacts, callTool, toast }: {
           >
             <ArrowLeftRegular style={{ fontSize: 14 }} /> Back to Emails
           </button>
+          <ExpandButton />
         </div>
       </div>
 
@@ -960,6 +963,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
           >
             <AddRegular style={{ fontSize: 14 }} /> Add Contact
           </button>
+          <ExpandButton />
         </div>
       </div>
 

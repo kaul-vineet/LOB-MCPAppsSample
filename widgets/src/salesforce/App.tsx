@@ -16,6 +16,7 @@ import {
 } from '@fluentui/react-components';
 import { EditRegular, AddRegular } from '@fluentui/react-icons';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
+import { ExpandButton } from '../shared/ExpandButton';
 import { useToast } from '../shared/Toast';
 import type { SfData, Lead, Opportunity } from './types';
 
@@ -381,6 +382,7 @@ function LeadsView({ items, callTool, toast, theme }: {
             style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
             + New Lead
           </Button>
+          <ExpandButton />
         </div>
       </div>
 
@@ -583,6 +585,7 @@ function OpportunitiesView({ items, callTool, toast, theme }: {
             style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
             + New Opportunity
           </Button>
+          <ExpandButton />
         </div>
       </div>
 
