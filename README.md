@@ -1,37 +1,37 @@
 # ⚓ The Great Trading Company — LOB MCP Apps
 
 <p align="center">
-  <em>A colonial trading house for enterprise operations — four LOB systems, one agent, one tunnel</em>
+  <em>Four enterprise LOB systems, one M365 Copilot agent, interactive React widgets with side-by-side support</em>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/🏛️_Salesforce-Trade_Ledger-00A1E0?style=for-the-badge" alt="Salesforce" />
-  <img src="https://img.shields.io/badge/🎫_ServiceNow-Service_Manifest-293E40?style=for-the-badge" alt="ServiceNow" />
-  <img src="https://img.shields.io/badge/📦_SAP-Cargo_Manifest-0FAAFF?style=for-the-badge" alt="SAP" />
-  <img src="https://img.shields.io/badge/🧡_HubSpot-Spice_Bazaar-FF7A59?style=for-the-badge" alt="HubSpot" />
+  <img src="https://img.shields.io/badge/🏛️_Salesforce-Lightning_SLDS-00A1E0?style=for-the-badge" alt="Salesforce" />
+  <img src="https://img.shields.io/badge/🎫_ServiceNow-Now_Design-293E40?style=for-the-badge" alt="ServiceNow" />
+  <img src="https://img.shields.io/badge/📦_SAP-Fiori-0FAAFF?style=for-the-badge" alt="SAP" />
+  <img src="https://img.shields.io/badge/🧡_HubSpot-Canvas-FF7A59?style=for-the-badge" alt="HubSpot" />
 </p>
 
 | | |
 |---|---|
-| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — Salesforce CRM, ServiceNow ITSM, SAP S/4HANA ERP, and HubSpot CRM in one agent |
+| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — Salesforce CRM, ServiceNow ITSM, SAP S/4HANA ERP, and HubSpot Marketing in one agent |
 | **Author** | Vineet Kaul, PM Architect – Agentic AI, Microsoft |
 | **Date** | April 2026 |
-| **Stack** | Python · FastMCP 1.26 · Salesforce REST API · ServiceNow Table API · SAP OData · HubSpot REST API · Microsoft Dev Tunnels · M365 Agents Toolkit |
+| **Stack** | Python · FastMCP 1.26 · React 19 · Fluent UI v9 · Vite · @modelcontextprotocol/ext-apps · Docker · Dev Tunnels · M365 Agents Toolkit |
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Fluent UI](https://img.shields.io/badge/Fluent_UI-v9-0078D4?logo=microsoft&logoColor=white)
 ![MCP SDK](https://img.shields.io/badge/FastMCP-1.26-green)
+![MCP Apps](https://img.shields.io/badge/MCP_Apps-ext--apps-purple)
 ![M365](https://img.shields.io/badge/M365_Copilot-Public_Preview-orange?logo=microsoft&logoColor=white)
-![Salesforce](https://img.shields.io/badge/Salesforce-v62.0-00A1E0?logo=salesforce&logoColor=white)
-![ServiceNow](https://img.shields.io/badge/ServiceNow-Table_API-81B5A1?logo=servicenow&logoColor=white)
-![SAP](https://img.shields.io/badge/SAP-S%2F4HANA-0FAAFF?logo=sap&logoColor=white)
-![HubSpot](https://img.shields.io/badge/HubSpot-CRM-FF7A59?logo=hubspot&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-**Tags:** `mcp` `copilot` `python` `m365` `salesforce` `servicenow` `sap` `hubspot` `agentic-ai` `declarative-agent` `mcp-apps` `crm` `itsm` `erp`
+**Tags:** `mcp` `mcp-apps` `copilot` `python` `react` `fluent-ui` `m365` `salesforce` `servicenow` `sap` `hubspot` `agentic-ai` `declarative-agent` `side-by-side` `docker`
 
 ---
 
-> **TL;DR** — Four Python MCP servers (Salesforce CRM + ServiceNow ITSM + SAP S/4HANA + HubSpot CRM) behind a single dev tunnel, orchestrated by one declarative agent — *The Great Trading Company*. Each server renders interactive CRUD widgets directly inside M365 Copilot chat. The agent routes utterances to the right LOB system automatically.
+> **TL;DR** — Four Python MCP servers (Salesforce CRM + ServiceNow ITSM + SAP S/4HANA + HubSpot Marketing) with React + Fluent UI widgets, running in Docker behind a single dev tunnel, orchestrated by one M365 Copilot declarative agent. Each widget renders interactively inside Copilot chat with full CRUD, side-by-side expansion, LOB-native theming, and the official MCP Apps protocol.
 
 ---
 
@@ -460,14 +460,28 @@ If the widget is not rendering in M365 Copilot, check these items in order:
 
 ## Widget Architecture
 
-React 19 + Fluent UI v9 widgets compiled into single-file HTML via Vite. Each widget is styled to match its LOB's native design language:
+React 19 + Fluent UI v9 widgets compiled into single-file HTML via Vite, using the official `@modelcontextprotocol/ext-apps` package. Each widget is styled to match its LOB's native design language:
 
-| Widget | Design System | Key Visual Elements | Size |
-|--------|--------------|-------------------|------|
-| **Salesforce** | Lightning (SLDS) | Blue header, pill badges, compact forms, flash-on-save | 396 KB |
-| **SAP** | Fiori | Shell bar, '72' font, semantic badges, Object Page layout | 460 KB |
-| **HubSpot** | Canvas | Metric cards, percentage bars, coral/teal palette, 3-level drill-down | 398 KB |
-| **ServiceNow** | Now Design | *Planned* |  |
+| Widget | Design System | Key Visual Elements |
+|--------|--------------|-------------------|
+| **Salesforce** | Lightning (SLDS) | Blue header, pill status badges, compact CRUD forms, flash-on-save |
+| **SAP** | Fiori | Shell bar, '72' font, semantic badges, Object Page layout |
+| **HubSpot** | Canvas | Metric cards, percentage bars, coral/teal palette, 3-level drill-down |
+| **ServiceNow** | Now Design | Teal shell, P1-P4 priority colors, expandable request rows, nested items |
+
+### Platform features
+
+| Feature | Implementation |
+|---------|---------------|
+| **MCP Apps protocol** | `@modelcontextprotocol/ext-apps` — official handshake, tool-result delivery |
+| **Side-by-side mode** | `app.requestDisplayMode('fullscreen')` — widget expands alongside chat |
+| **Inline mode** | Compact widget in chat flow — default experience |
+| **Auto theming** | Light/dark via host context — FluentProvider + LOB brand overrides |
+| **Skeleton loading** | CSS shimmer animation while data loads |
+| **Error boundaries** | Widget crashes show recovery UI with "Try Again" button |
+| **callTool retry** | Automatic single retry on failure |
+| **CRUD operations** | Create, read, update across all 4 LOB systems from within the widget |
+| **Toast notifications** | Success/error feedback after save operations |
 
 ### Building widgets
 
@@ -489,18 +503,7 @@ Test any widget locally without M365 Copilot:
 tests/harness.html
 ```
 
-The harness simulates the full MCP Apps protocol (handshake, tool-result delivery, callTool responses, theme changes) with embedded mock data.
-
-### Key capabilities
-
-| Feature | Details |
-|---------|---------|
-| **Look & feel** | LOB-native design systems (SLDS, Fiori, Canvas) |
-| **Components** | Fluent DataGrid, Dialog, Badge, Button, Field |
-| **Theming** | FluentProvider auto light/dark/high-contrast |
-| **Loading states** | Spinner components |
-| **Forms** | Field, Input, Dropdown with validation |
-| **Accessibility** | Built-in keyboard nav, screen reader, focus |
+The harness simulates the full MCP Apps protocol (handshake, tool-result delivery, callTool responses, theme changes) with embedded mock data and an event log.
 
 ---
 
