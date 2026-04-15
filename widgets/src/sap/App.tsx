@@ -735,7 +735,7 @@ export function SapApp() {
         <FioriShellBar title={shellTitle} />
         <div style={contentStyle}>
           <MaterialDetailView data={detailData} onBack={handleBackFromDetail} />
-          <McpFooter label="SAP S/4HANA" />
+          <McpFooter label="SAP S/4HANA" openInLabel="Open in SAP" openInUrl="https://api.sap.com" />
         </div>
       </div>
     );
@@ -748,7 +748,7 @@ export function SapApp() {
         <FioriShellBar title={shellTitle} />
         <div style={contentStyle}>
           <MaterialDetailView data={data} onBack={handleBackFromDetail} />
-          <McpFooter label="SAP S/4HANA" />
+          <McpFooter label="SAP S/4HANA" openInLabel="Open in SAP" openInUrl="https://api.sap.com" />
         </div>
       </div>
     );
@@ -778,9 +778,10 @@ export function SapApp() {
           />
         )}
 
-        <McpFooter label="SAP S/4HANA" />
+        <McpFooter label="SAP S/4HANA" openInLabel="Open in SAP" openInUrl="https://api.sap.com" />
       </div>
     </div>
   );
 }
+
 

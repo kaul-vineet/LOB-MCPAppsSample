@@ -7,6 +7,7 @@ interface McpBridgeContextType {
   theme: 'light' | 'dark';
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   notifyHeight: () => void;
+  openExternal: (url: string) => void;
   requestFullscreen: () => void;
   exitFullscreen: () => void;
   isFullscreen: boolean;
@@ -102,6 +103,18 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     setIsFullscreen(false);
   }, [app, isConnected]);
 
+  // openExternal — open a URL in the user's browser
+  const openExternal = useCallback((url: string) => {
+    if (app && isConnected && typeof app.openLink === 'function') {
+      try { app.openLink({ url }); return; } catch { /* fall through */ }
+    }
+    if ((window as any).openai?.openExternal) {
+      (window as any).openai.openExternal({ href: url });
+      return;
+    }
+    window.open(url, '_blank');
+  }, [app, isConnected]);
+
   // callTool with single retry on failure
   const callToolOnce = useCallback(async (name: string, args?: Record<string, any>): Promise<any> => {
     if (app && isConnected) {
@@ -161,7 +174,7 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
 
   return (
     <McpBridgeContext.Provider value={{
-      toolData, theme, callTool, notifyHeight,
+      toolData, theme, callTool, notifyHeight, openExternal,
       requestFullscreen, exitFullscreen, isFullscreen, canExpand,
       isConnected, isLoading,
     }}>

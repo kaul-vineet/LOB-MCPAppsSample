@@ -202,6 +202,7 @@ function StatusPill({ status, theme }: { status: string; theme: 'light' | 'dark'
 function SldsFooter({ theme }: { theme: 'light' | 'dark' }) {
   const styles = useStyles();
   const t = slds(theme);
+  const { openExternal } = useMcpBridge();
   return (
     <div className={styles.mcpFooter} style={{
       background: theme === 'dark' ? '#0f2440' : '#F3F3F3',
@@ -209,7 +210,13 @@ function SldsFooter({ theme }: { theme: 'light' | 'dark' }) {
       color: t.textWeak,
     }}>
       <span>⚡ <strong>MCP Widget</strong> · Salesforce CRM</span>
-      <span>⚓ GTC</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => openExternal('https://login.salesforce.com')}>
+          Open in Salesforce ↗
+        </span>
+        <span>⚓ GTC</span>
+      </div>
     </div>
   );
 }

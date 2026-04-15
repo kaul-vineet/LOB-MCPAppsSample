@@ -1172,7 +1172,7 @@ export function HubSpotApp() {
           callTool={callTool}
           toast={toast}
         />
-        <McpFooter label="HubSpot Marketing" />
+        <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
       </div>
     );
   }
@@ -1192,7 +1192,7 @@ export function HubSpotApp() {
           callTool={callTool}
           toast={toast}
         />
-        <McpFooter label="HubSpot Marketing" />
+        <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
       </div>
     );
   }
@@ -1213,7 +1213,7 @@ export function HubSpotApp() {
           callTool={callTool}
           toast={toast}
         />
-        <McpFooter label="HubSpot Marketing" />
+        <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
       </div>
     );
   }
@@ -1230,7 +1230,7 @@ export function HubSpotApp() {
           callTool={callTool}
           toast={toast}
         />
-        <McpFooter label="HubSpot Marketing" />
+        <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
       </div>
     );
   }
@@ -1245,8 +1245,9 @@ export function HubSpotApp() {
         callTool={callTool}
         toast={toast}
       />
-      <McpFooter label="HubSpot Marketing" />
+      <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
     </div>
   );
 }
+
 

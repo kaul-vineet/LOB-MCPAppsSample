@@ -246,13 +246,20 @@ function FormSelect({ label, value, options, labels, onChange, theme }: {
 function NowFooter({ theme }: { theme: 'light' | 'dark' }) {
   const styles = useStyles();
   const t = now(theme);
+  const { openExternal } = useMcpBridge();
   return (
     <div className={styles.mcpFooter} style={{
       background: theme === 'dark' ? '#1C2229' : '#F4F5F7',
       borderTop: `1px solid ${t.border}`, color: t.textWeak,
     }}>
       <span>⚡ <strong>MCP Widget</strong> · ServiceNow ITSM</span>
-      <span>⚓ GTC</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => openExternal('https://developer.servicenow.com')}>
+          Open in ServiceNow ↗
+        </span>
+        <span>⚓ GTC</span>
+      </div>
     </div>
   );
 }

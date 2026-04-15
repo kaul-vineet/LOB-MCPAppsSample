@@ -365,17 +365,64 @@ Open DevTools (`F12`) in M365 Copilot and check:
 
 ---
 
-## Test Harness
+## Demo Screens & Prompts
 
-Each MCP app includes standalone HTML test files that can be opened in a browser to test the widget rendering without M365 Copilot:
+### Salesforce CRM (port 3000)
 
-- `sf-mcp-app/tests/widget_test.html` — Salesforce CRM widget test
-- `snow-mcp-app/tests/widget_test.html` — ServiceNow widget test
-- `snow-mcp-app/tests/widget-preview.html` — ServiceNow widget preview
-- `sap-mcp-app/tests/widget_test.html` — SAP S/4HANA widget test
-- `hubspot-mcp-app/tests/widget_test.html` — HubSpot CRM widget test
+| Screen | Prompt |
+|--------|--------|
+| Leads table | "Show me the latest leads" |
+| Opportunities table | "Show me the latest opportunities" |
+| Create lead (with confirmation) | "Create a new lead for Sarah Chen at CloudBase Corp" |
+| Edit lead | Click ✏️ on any lead row in the widget |
+| Create opportunity | "Create a new opportunity for Acme deal, Prospecting stage, closing June 30" |
 
-These files mock the MCP host environment and let you iterate on widget HTML/CSS/JS independently.
+### ServiceNow ITSM (port 3001)
+
+| Screen | Prompt |
+|--------|--------|
+| Incidents table | "Show me open incidents" |
+| Requests table | "Show me service requests" |
+| Request items (nested expand) | Click expand on any request row |
+| Create incident | "Raise a new incident — VPN not connecting for Building A" |
+| Edit incident | Click ✏️ on any incident row |
+
+### SAP S/4HANA (port 3002)
+
+| Screen | Prompt |
+|--------|--------|
+| Purchase Orders table | "Show me recent purchase orders" |
+| Business Partners table | "Show me suppliers" |
+| Materials table | "Show me materials inventory" |
+| Material detail card | Click "View Detail" on any material row |
+| Create PO | "Create a new purchase order for Domestic US Supplier 1" |
+
+### HubSpot Marketing (port 3003)
+
+| Screen | Prompt |
+|--------|--------|
+| Emails + metric cards | "Show me marketing email performance" |
+| Contact Lists | Click "View Lists" in the emails widget |
+| Contacts in list | Click "View Contacts" on any list row |
+| Add / remove contact | Click "+ Add Contact" or "Remove" in contacts view |
+
+### Cross-LOB Workflows
+
+| Workflow | Prompt |
+|----------|--------|
+| Multi-LOB customer check | "Check on Acme" → SF leads + SNOW incidents |
+| Operations summary | "Give me an end-of-day operations check" → leads + incidents + POs |
+| Create across LOBs | "Log a lead for John at TechCorp and raise a VPN incident" |
+| Side-by-side mode | Click "⤢ Expand" in any widget header |
+
+### Widget States
+
+| State | Description |
+|-------|-------------|
+| Skeleton shimmer | Animated loading placeholder while data loads |
+| Toast (success) | "✓ Record updated successfully" after save |
+| Error boundary | "⚠️ Widget Error" with "Try Again" on widget crash |
+| "Open in [LOB]" link | Footer link opens the LOB portal in a new tab |
 
 ---
 
