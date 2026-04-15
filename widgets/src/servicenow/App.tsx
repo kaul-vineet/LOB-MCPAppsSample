@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Badge,
   Button,
@@ -359,15 +359,12 @@ function RequestItemsTable({ items, callTool, toast, theme }: {
 }
 
 // ── Incidents View ──────────────────────────────────────────────────────────
-function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
+function IncidentsView({ items, callTool, toast, theme }: {
   items: Incident[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-  isFullscreen: boolean;
-  onRequestFullscreen: () => void;
-  onExitFullscreen: () => void;
-}) {
+}){
   const styles = useStyles();
   const t = now(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -434,15 +431,15 @@ function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestF
   }, [lastSavedId]);
 
   const formBg = theme === 'dark' ? '#1A2E25' : '#F4F5F7';
-  const colSpan = isFullscreen ? 7 : 5;
+  const colSpan = 5;
 
-  const cellStyle: React.CSSProperties = isFullscreen
-    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
-    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
 
-  const headerCellStyle: React.CSSProperties = isFullscreen
-    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
-    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
 
   const renderForm = (title: string) => (
     <TableRow>
@@ -498,17 +495,6 @@ function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestF
             }}>
             + New Incident
           </button>
-          {isFullscreen ? (
-            <button onClick={onExitFullscreen} title="Exit fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
-              ✕ Exit
-            </button>
-          ) : (
-            <button onClick={onRequestFullscreen} title="Fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
-              ⛶
-            </button>
-          )}
         </div>
       </div>
 
@@ -516,11 +502,9 @@ function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestF
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Description</TableHeaderCell>}
             <TableHeaderCell style={headerCellStyle}>Priority</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Assigned To</TableHeaderCell>
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Created</TableHeaderCell>}
             <TableHeaderCell style={{ ...headerCellStyle, width: 50 }} />
           </TableRow>
         </TableHeader>
@@ -545,11 +529,9 @@ function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestF
                 <TableCell style={cellStyle}>
                   <span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{inc.number}</span>
                 </TableCell>
-                {isFullscreen && <TableCell style={cellStyle}>{inc.short_description || '—'}</TableCell>}
                 <TableCell style={cellStyle}><PriorityPill priority={inc.priority} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}><StatePill state={inc.state} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}>{inc.assigned_to || '—'}</TableCell>
-                {isFullscreen && <TableCell style={cellStyle}>{inc.sys_created_on || '—'}</TableCell>}
                 <TableCell style={cellStyle}>
                   <button title="Edit" onClick={() => openEdit(inc)} className="snow-edit-btn"
                     style={{
@@ -571,15 +553,12 @@ function IncidentsView({ items, callTool, toast, theme, isFullscreen, onRequestF
 }
 
 // ── Requests View ───────────────────────────────────────────────────────────
-function RequestsView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
+function RequestsView({ items, callTool, toast, theme }: {
   items: ServiceRequest[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-  isFullscreen: boolean;
-  onRequestFullscreen: () => void;
-  onExitFullscreen: () => void;
-}) {
+}){
   const styles = useStyles();
   const t = now(theme);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -665,15 +644,15 @@ function RequestsView({ items, callTool, toast, theme, isFullscreen, onRequestFu
   }, [lastSavedId]);
 
   const formBg = theme === 'dark' ? '#1A2E25' : '#F4F5F7';
-  const colSpan = isFullscreen ? 7 : 5;
+  const colSpan = 5;
 
-  const cellStyle: React.CSSProperties = isFullscreen
-    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
-    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
 
-  const headerCellStyle: React.CSSProperties = isFullscreen
-    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
-    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
 
   const renderForm = (title: string) => (
     <TableRow>
@@ -731,17 +710,6 @@ function RequestsView({ items, callTool, toast, theme, isFullscreen, onRequestFu
             }}>
             + New Request
           </button>
-          {isFullscreen ? (
-            <button onClick={onExitFullscreen} title="Exit fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
-              ✕ Exit
-            </button>
-          ) : (
-            <button onClick={onRequestFullscreen} title="Fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
-              ⛶
-            </button>
-          )}
         </div>
       </div>
 
@@ -749,11 +717,9 @@ function RequestsView({ items, callTool, toast, theme, isFullscreen, onRequestFu
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Description</TableHeaderCell>}
             <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Priority</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Approval</TableHeaderCell>
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Created</TableHeaderCell>}
             <TableHeaderCell style={{ ...headerCellStyle, width: 50 }} />
           </TableRow>
         </TableHeader>
@@ -783,11 +749,9 @@ function RequestsView({ items, callTool, toast, theme, isFullscreen, onRequestFu
                     {expandedId === req.sys_id ? '▼' : '▶'} {req.number}
                   </span>
                 </TableCell>
-                {isFullscreen && <TableCell style={cellStyle}>{req.short_description || '—'}</TableCell>}
                 <TableCell style={cellStyle}><StatePill state={req.request_state} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}><PriorityPill priority={req.priority} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}><ApprovalPill approval={req.approval} theme={theme} /></TableCell>
-                {isFullscreen && <TableCell style={cellStyle}>{req.sys_created_on || '—'}</TableCell>}
                 <TableCell style={cellStyle}>
                   <button title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(req); }} className="snow-edit-btn"
                     style={{
@@ -920,40 +884,8 @@ export function ServiceNowApp() {
   const toast = useToast();
   const theme = useTheme();
   const t = now(theme);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const requestFullscreen = useCallback(() => {
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'fullscreen' },
-    }, '*');
-    setIsFullscreen(true);
-  }, []);
-
-  const exitFullscreen = useCallback(() => {
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'inline' },
-    }, '*');
-    setIsFullscreen(false);
-  }, []);
-
-  React.useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      const msg = e.data;
-      if (msg && msg.method === 'ui/display-mode-changed') {
-        setIsFullscreen(msg.params?.mode === 'fullscreen');
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
-
-  const shellStyle: React.CSSProperties = isFullscreen
-    ? { maxWidth: '100%', padding: '24px 32px', minHeight: '100vh', boxSizing: 'border-box' as const, fontSize: '14px' }
-    : { padding: '12px', fontSize: '12px' };
+  const shellStyle: React.CSSProperties = { padding: '12px', fontSize: '12px' };
 
   if (!data) {
     return (
@@ -992,9 +924,6 @@ export function ServiceNowApp() {
           callTool={callTool}
           toast={toast}
           theme={theme}
-          isFullscreen={isFullscreen}
-          onRequestFullscreen={requestFullscreen}
-          onExitFullscreen={exitFullscreen}
         />
       )}
       {data.type === 'requests' && (
@@ -1003,9 +932,6 @@ export function ServiceNowApp() {
           callTool={callTool}
           toast={toast}
           theme={theme}
-          isFullscreen={isFullscreen}
-          onRequestFullscreen={requestFullscreen}
-          onExitFullscreen={exitFullscreen}
         />
       )}
     </div>

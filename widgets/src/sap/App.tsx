@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { McpFooter } from '../shared/McpFooter';
@@ -206,10 +206,8 @@ function FioriInput({ label, value, onChange }: {
 }
 
 /* ─── Fiori Shell Bar ─────────────────────────────────────────────── */
-function FioriShellBar({ title, isFullscreen, onToggleFullscreen }: {
+function FioriShellBar({ title }: {
   title: string;
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
 }) {
   const t = useFioriTokens();
   return (
@@ -225,28 +223,6 @@ function FioriShellBar({ title, isFullscreen, onToggleFullscreen }: {
     }}>
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="2" fill="#FFFFFF" fillOpacity="0.15"/><text x="3" y="14" fill="#FFFFFF" fontSize="11" fontWeight="bold">S/4</text></svg>
       <span style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '0.2px', flex: 1 }}>{title}</span>
-      {onToggleFullscreen && (
-        <button
-          onClick={onToggleFullscreen}
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            background: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            borderRadius: '4px',
-            color: '#FFFFFF',
-            fontSize: '12px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '4px 10px',
-            height: '28px',
-          }}
-        >
-          {isFullscreen ? '✕ Exit' : '⛶'}
-        </button>
-      )}
     </div>
   );
 }
@@ -697,17 +673,6 @@ export function SapApp() {
   const { callTool } = useMcpBridge();
   const toast = useToast();
   const [detailData, setDetailData] = useState<SapData | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const toggleFullscreen = useCallback(() => {
-    const next = !isFullscreen;
-    setIsFullscreen(next);
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: next ? 'fullscreen' : 'inline' },
-    }, '*');
-  }, [isFullscreen]);
 
   const handleViewDetail = useCallback(async (product: string) => {
     try {
@@ -725,22 +690,21 @@ export function SapApp() {
   }, []);
 
   const shellStyle: React.CSSProperties = {
-    maxWidth: isFullscreen ? '100%' : '1120px',
+    maxWidth: '1120px',
     margin: '0 auto',
     backgroundColor: t.bgColor,
-    minHeight: '100vh',
-    fontSize: isFullscreen ? '15px' : '13px',
+    fontSize: '13px',
   };
 
   const contentStyle: React.CSSProperties = {
-    padding: isFullscreen ? '24px 32px' : '16px',
+    padding: '16px',
   };
 
   // Loading state
   if (!data) {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title="SAP S/4HANA" isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+        <FioriShellBar title="SAP S/4HANA" />
         <div style={contentStyle}>
           <div style={{ marginBottom: '16px' }}>
             <div className="skel" style={{ width: '180px', height: '18px', marginBottom: '16px' }} />
@@ -766,7 +730,7 @@ export function SapApp() {
   if (detailData && detailData.type === 'material_detail') {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+        <FioriShellBar title={shellTitle} />
         <div style={contentStyle}>
           <MaterialDetailView data={detailData} onBack={handleBackFromDetail} />
           <McpFooter label="SAP S/4HANA" />
@@ -779,7 +743,7 @@ export function SapApp() {
   if (data.type === 'material_detail') {
     return (
       <div style={shellStyle}>
-        <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+        <FioriShellBar title={shellTitle} />
         <div style={contentStyle}>
           <MaterialDetailView data={data} onBack={handleBackFromDetail} />
           <McpFooter label="SAP S/4HANA" />
@@ -790,7 +754,7 @@ export function SapApp() {
 
   return (
     <div style={shellStyle}>
-      <FioriShellBar title={shellTitle} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
+      <FioriShellBar title={shellTitle} />
       <div style={contentStyle}>
         {data.type === 'purchase_orders' && (
           <PurchaseOrdersView

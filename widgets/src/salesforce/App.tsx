@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Badge,
   Button,
@@ -247,15 +247,12 @@ function FormSelect({ label, value, options, onChange, theme }: {
 }
 
 // ── Leads View ────────────────────────────────────────────────────────────
-function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
+function LeadsView({ items, callTool, toast, theme }: {
   items: Lead[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-  isFullscreen: boolean;
-  onRequestFullscreen: () => void;
-  onExitFullscreen: () => void;
-}) {
+}){
   const styles = useStyles();
   const t = slds(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -316,19 +313,19 @@ function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFulls
 
   const formBg = theme === 'dark' ? '#1a3050' : '#F3F3F3';
 
-  const colSpan = isFullscreen ? 7 : 5;
+  const colSpan = 5;
 
-  const cellStyle: React.CSSProperties = isFullscreen
-    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
-    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
 
-  const headerCellStyle: React.CSSProperties = isFullscreen
-    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
-    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
 
   const renderForm = (title: string) => (
     <TableRow>
-      <TableCell colSpan={colSpan} style={{ padding: 0 }}>
+      <TableCell colSpan={colSpan}style={{ padding: 0 }}>
         <div className={styles.formPanel} style={{
           background: formBg,
           borderColor: t.brand,
@@ -384,17 +381,6 @@ function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFulls
             style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
             + New Lead
           </Button>
-          {isFullscreen ? (
-            <button onClick={onExitFullscreen} title="Exit fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
-              ✕ Exit
-            </button>
-          ) : (
-            <button onClick={onRequestFullscreen} title="Fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
-              ⛶
-            </button>
-          )}
         </div>
       </div>
 
@@ -403,8 +389,6 @@ function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFulls
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={headerCellStyle}>Name</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Company</TableHeaderCell>
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Email</TableHeaderCell>}
-            {isFullscreen && <TableHeaderCell style={headerCellStyle}>Phone</TableHeaderCell>}
             <TableHeaderCell style={headerCellStyle}>Status</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Source</TableHeaderCell>
             <TableHeaderCell style={{ ...headerCellStyle, width: 50 }} />
@@ -430,8 +414,6 @@ function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFulls
               >
                 <TableCell style={cellStyle}>{lead.first_name} {lead.last_name}</TableCell>
                 <TableCell style={cellStyle}>{lead.company || '—'}</TableCell>
-                {isFullscreen && <TableCell style={cellStyle}>{lead.email || '—'}</TableCell>}
-                {isFullscreen && <TableCell style={cellStyle}>{lead.phone || '—'}</TableCell>}
                 <TableCell style={cellStyle}>
                   <StatusPill status={lead.status} theme={theme} />
                 </TableCell>
@@ -461,15 +443,12 @@ function LeadsView({ items, callTool, toast, theme, isFullscreen, onRequestFulls
 }
 
 // ── Opportunities View ──────────────────────────────────────────────────────
-function OpportunitiesView({ items, callTool, toast, theme, isFullscreen, onRequestFullscreen, onExitFullscreen }: {
+function OpportunitiesView({ items, callTool, toast, theme }: {
   items: Opportunity[];
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-  isFullscreen: boolean;
-  onRequestFullscreen: () => void;
-  onExitFullscreen: () => void;
-}) {
+}){
   const styles = useStyles();
   const t = slds(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -538,13 +517,13 @@ function OpportunitiesView({ items, callTool, toast, theme, isFullscreen, onRequ
 
   const formBg = theme === 'dark' ? '#1a3050' : '#F3F3F3';
 
-  const cellStyle: React.CSSProperties = isFullscreen
-    ? { padding: '8px 14px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px', verticalAlign: 'middle' }
-    : { padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle' };
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
 
-  const headerCellStyle: React.CSSProperties = isFullscreen
-    ? { fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '8px 14px', color: t.textWeak }
-    : { fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
 
   const renderForm = (title: string) => (
     <TableRow>
@@ -604,17 +583,6 @@ function OpportunitiesView({ items, callTool, toast, theme, isFullscreen, onRequ
             style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
             + New Opportunity
           </Button>
-          {isFullscreen ? (
-            <button onClick={onExitFullscreen} title="Exit fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
-              ✕ Exit
-            </button>
-          ) : (
-            <button onClick={onRequestFullscreen} title="Fullscreen"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: '4px', height: '32px', padding: '0 10px', cursor: 'pointer', fontSize: '15px', fontFamily: 'inherit' }}>
-              ⛶
-            </button>
-          )}
         </div>
       </div>
 
@@ -767,41 +735,8 @@ export function SalesforceApp() {
   const toast = useToast();
   const theme = useTheme();
   const t = slds(theme);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const requestFullscreen = useCallback(() => {
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'fullscreen' },
-    }, '*');
-    setIsFullscreen(true);
-  }, []);
-
-  const exitFullscreen = useCallback(() => {
-    window.parent.postMessage({
-      jsonrpc: '2.0',
-      method: 'ui/request-display-mode',
-      params: { mode: 'inline' },
-    }, '*');
-    setIsFullscreen(false);
-  }, []);
-
-  // Listen for external display-mode changes
-  React.useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      const msg = e.data;
-      if (msg && msg.method === 'ui/display-mode-changed') {
-        setIsFullscreen(msg.params?.mode === 'fullscreen');
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
-
-  const shellStyle: React.CSSProperties = isFullscreen
-    ? { maxWidth: '100%', padding: '24px 32px', fontSize: '14px', minHeight: '100vh', boxSizing: 'border-box' as const }
-    : { padding: '12px', fontSize: '12px' };
+  const shellStyle: React.CSSProperties = { padding: '12px', fontSize: '12px' };
 
   if (!data) {
     return (
@@ -839,9 +774,6 @@ export function SalesforceApp() {
           callTool={callTool}
           toast={toast}
           theme={theme}
-          isFullscreen={isFullscreen}
-          onRequestFullscreen={requestFullscreen}
-          onExitFullscreen={exitFullscreen}
         />
       )}
       {data.type === 'opportunities' && (
@@ -850,9 +782,6 @@ export function SalesforceApp() {
           callTool={callTool}
           toast={toast}
           theme={theme}
-          isFullscreen={isFullscreen}
-          onRequestFullscreen={requestFullscreen}
-          onExitFullscreen={exitFullscreen}
         />
       )}
     </div>
