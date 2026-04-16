@@ -118,6 +118,13 @@ async def servicenow_request(
 
 # ── Field lists ──────────────────────────────────────────────────────────────
 
+def _val(v):
+    """Extract display_value from ServiceNow reference objects."""
+    if isinstance(v, dict) and "display_value" in v:
+        return v["display_value"]
+    return v
+
+
 INCIDENT_FIELDS = (
     "sys_id,number,short_description,description,state,priority,"
     "urgency,category,assigned_to,sys_created_on,sys_updated_on"
@@ -170,14 +177,14 @@ async def get_incidents(limit: int = 5) -> types.CallToolResult:
 
     incidents = [
         {
-            "sys_id": r.get("sys_id"),
-            "number": r.get("number"),
-            "short_description": r.get("short_description"),
-            "description": r.get("description", ""),
-            "state": r.get("state"),
-            "priority": r.get("priority"),
-            "assigned_to": r.get("assigned_to") or None,
-            "sys_created_on": r.get("sys_created_on"),
+            "sys_id": _val(r.get("sys_id")),
+            "number": _val(r.get("number")),
+            "short_description": _val(r.get("short_description")),
+            "description": _val(r.get("description", "")),
+            "state": _val(r.get("state")),
+            "priority": _val(r.get("priority")),
+            "assigned_to": _val(r.get("assigned_to")) or None,
+            "sys_created_on": _val(r.get("sys_created_on")),
         }
         for r in records
     ]
@@ -227,14 +234,14 @@ async def get_requests(limit: int = 5) -> types.CallToolResult:
 
     requests_list = [
         {
-            "sys_id": r.get("sys_id"),
-            "number": r.get("number"),
-            "short_description": r.get("short_description"),
-            "description": r.get("description", ""),
-            "request_state": r.get("request_state"),
-            "priority": r.get("priority"),
-            "approval": r.get("approval"),
-            "sys_created_on": r.get("sys_created_on"),
+            "sys_id": _val(r.get("sys_id")),
+            "number": _val(r.get("number")),
+            "short_description": _val(r.get("short_description")),
+            "description": _val(r.get("description", "")),
+            "request_state": _val(r.get("request_state")),
+            "priority": _val(r.get("priority")),
+            "approval": _val(r.get("approval")),
+            "sys_created_on": _val(r.get("sys_created_on")),
         }
         for r in records
     ]

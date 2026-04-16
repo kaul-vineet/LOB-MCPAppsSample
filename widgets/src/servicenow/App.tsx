@@ -155,6 +155,7 @@ const useStyles = makeStyles({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '10px 16px',
+    color: '#fff',
   },
   headerLeft: {
     display: 'flex',

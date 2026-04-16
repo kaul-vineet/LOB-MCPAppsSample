@@ -31,6 +31,42 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
+# ── Helper: animated wave ─────────────────────────────────────────────────────
+
+function Show-Waves {
+    param([int]$Cycles = 3, [int]$DelayMs = 120)
+    $frames = @(
+        "   ~  ~~   ~~~  ~~   ~  ~~~  ~~   ~  ~~   ~~~  ~",
+        "  ~~   ~  ~~  ~~~  ~~  ~   ~~  ~~~  ~~   ~  ~~  ",
+        " ~~~  ~~   ~  ~~   ~~~  ~~   ~  ~~   ~~~  ~~   ~",
+        "  ~~  ~~~  ~~   ~  ~~  ~~~  ~~   ~  ~~  ~~~  ~~ "
+    )
+    for ($i = 0; $i -lt $Cycles * $frames.Count; $i++) {
+        $pos = [Console]::CursorTop
+        [Console]::SetCursorPosition(0, $pos)
+        Write-Host $frames[$i % $frames.Count] -ForegroundColor Blue -NoNewline
+        Start-Sleep -Milliseconds $DelayMs
+        [Console]::SetCursorPosition(0, $pos)
+    }
+    Write-Host $frames[0] -ForegroundColor DarkBlue
+}
+
+function Show-Spinner {
+    param([string]$Message, [scriptblock]$Action)
+    $spinChars = @('🌊','🌊','🌊','⚓','⚓','🏴‍☠️','🏴‍☠️','🏴‍☠️')
+    $job = Start-Job -ScriptBlock $Action
+    $i = 0
+    while ($job.State -eq 'Running') {
+        $char = $spinChars[$i % $spinChars.Count]
+        Write-Host "`r  $char $Message..." -NoNewline -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 250
+        $i++
+    }
+    Write-Host "`r  ✓ $Message   " -ForegroundColor Green
+    Receive-Job $job -ErrorAction SilentlyContinue | Out-Null
+    Remove-Job $job -ErrorAction SilentlyContinue
+}
+
 # ── Fleet manifest ────────────────────────────────────────────────────────────
 
 $Fleet = @(
@@ -42,22 +78,38 @@ $Fleet = @(
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 
+Clear-Host
 Write-Host ""
-Write-Host "              |    |    |                 " -ForegroundColor DarkYellow
-Write-Host "             )_)  )_)  )_)               " -ForegroundColor DarkYellow
-Write-Host "            )___))___))___)               " -ForegroundColor DarkYellow
-Write-Host "           )____)____)_____)              " -ForegroundColor DarkYellow
-Write-Host "         _____|____|____|____\___         " -ForegroundColor White
-Write-Host "  ------\                       /------   " -ForegroundColor Cyan
-Write-Host "    ^^^^ \_____________________/          " -ForegroundColor Blue
-Write-Host "      ^^^^       ^^^^     ^^^    ^^       " -ForegroundColor Blue
-Write-Host "           ^^^^      ^^^                  " -ForegroundColor DarkBlue
+Write-Host "                                        " -ForegroundColor DarkYellow
+Write-Host "          🏴‍☠️                              " -ForegroundColor DarkYellow
+Write-Host "              |    |    |                " -ForegroundColor DarkYellow
+Write-Host "             )_)  )_)  )_)              " -ForegroundColor DarkYellow
+Write-Host "            )___))___))___)     🦜      " -ForegroundColor DarkYellow
+Write-Host "           )____)____)_____)            " -ForegroundColor DarkYellow
+Write-Host "         _____|____|____|____\___       " -ForegroundColor White
+Write-Host "  ------\  The Great Trading    /------  " -ForegroundColor Cyan
+Write-Host "    ^^^^ \     Company ⚓      /         " -ForegroundColor Blue
+Write-Host "      ^^^^ \__________________/   ^^     " -ForegroundColor Blue
+Write-Host "         ^^^^       ^^^^     ^^^   ^^    " -ForegroundColor DarkBlue
+Write-Host "    ^^        ^^^^      ^^^        ^^    " -ForegroundColor DarkBlue
+Write-Host "       ^^^^        ^^^^       ^^^^       " -ForegroundColor DarkCyan
 Write-Host ""
-Write-Host "  ⚓ The Great Trading Company — Setting Sail!" -ForegroundColor Cyan
-Write-Host "  ════════════════════════════════════════════" -ForegroundColor DarkCyan
+Show-Waves -Cycles 2 -DelayMs 100
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════╗" -ForegroundColor DarkCyan
+Write-Host "  ║   ⚓  S E T T I N G   S A I L  ! ! !   ⚓   ║" -ForegroundColor Cyan
+Write-Host "  ╚══════════════════════════════════════════════╝" -ForegroundColor DarkCyan
 Write-Host ""
 
 # ── Pre-flight checks ────────────────────────────────────────────────────────
+
+Write-Host "  🗺️  Checking the treasure map..." -ForegroundColor Yellow
+Write-Host "  ┌─────────────────────────────────────┐" -ForegroundColor DarkGray
+Write-Host "  │  ☠  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 🏝️  │" -ForegroundColor DarkGray
+Write-Host "  │  ~ Docker? ~ .env? ~ Tunnel? ~ ~ ~  │" -ForegroundColor DarkGray
+Write-Host "  │  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 💰  │" -ForegroundColor DarkGray
+Write-Host "  └─────────────────────────────────────┘" -ForegroundColor DarkGray
+Write-Host ""
 
 $errors = @()
 
@@ -117,7 +169,14 @@ if ($errors.Count -gt 0) {
 # ── Launch the fleet ──────────────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "  Launching trading posts..." -ForegroundColor Cyan
+Write-Host "  ⚔️  Hoisting the sails..." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "       ⛵         ⛵         ⛵         ⛵      " -ForegroundColor Yellow
+Write-Host "      /|  \      /|  \      /|  \      /|  \    " -ForegroundColor DarkYellow
+Write-Host "     / | SF\    / | SN\    / |SAP\    / | HS\   " -ForegroundColor DarkYellow
+Write-Host "    /__|____\  /__|____\  /__|____\  /__|____\  " -ForegroundColor White
+Write-Host "    \_______/  \_______/  \_______/  \_______/  " -ForegroundColor DarkCyan
+Write-Host "   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~  ~~  ~" -ForegroundColor Blue
 Write-Host ""
 
 if (-not $Native) {
@@ -127,16 +186,31 @@ if (-not $Native) {
     Invoke-Expression "docker compose up -d $services"
     Write-Host ""
 
-    # Wait for healthy
+    # Wait for healthy — release the kraken!
+    Write-Host "  🐙 Releasing the Kraken (health checks)..." -ForegroundColor Magenta
     $maxWait = 30
     $waited = 0
+    $krakenFrames = @(
+        "       🐙         ",
+        "      🐙          ",
+        "     🐙           ",
+        "    🐙            ",
+        "   🐙             ",
+        "    🐙            ",
+        "     🐙           ",
+        "      🐙          "
+    )
     do {
         Start-Sleep 2
         $waited += 2
         $health = docker compose ps --format "{{.Status}}" 2>$null
         $allHealthy = ($health | Where-Object { $_ -match "healthy" }).Count
         $total = ($health | Measure-Object).Count
+        $frame = $krakenFrames[($waited / 2) % $krakenFrames.Count]
+        Write-Host "`r  $frame Checking $allHealthy/$total containers..." -NoNewline -ForegroundColor DarkMagenta
     } while ($allHealthy -lt $total -and $waited -lt $maxWait)
+    Write-Host ""
+    Write-Host ""
 
     foreach ($ship in $Fleet) {
         if ($Only -and $Only -notcontains $ship.Name) { continue }
@@ -165,7 +239,13 @@ if (-not $Native) {
 
 if (-not $SkipTunnel) {
     Write-Host ""
-    Write-Host "  Opening the harbour tunnel..." -ForegroundColor Cyan
+    Write-Host "  🚇 Opening the harbour tunnel..." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "       ╔═══════════════════════════╗       " -ForegroundColor DarkGray
+    Write-Host "  🌊 ══╣  ░░░ TUNNEL ░░░  🕳️  ░░  ╠══ 🌍 " -ForegroundColor DarkYellow
+    Write-Host "       ╚═══════════════════════════╝       " -ForegroundColor DarkGray
+    Write-Host "    localhost ──────────────► internet      " -ForegroundColor Gray
+    Write-Host ""
 
     $tunnelExists = devtunnel show $TunnelName 2>$null
     if ($LASTEXITCODE -ne 0) {
@@ -188,24 +268,39 @@ if (-not $SkipTunnel) {
 # ── Fleet status ──────────────────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "  ════════════════════════════════════════════" -ForegroundColor DarkCyan
-Write-Host "  ⚓ All hands on deck! The fleet has sailed." -ForegroundColor Cyan
+Show-Waves -Cycles 2 -DelayMs 80
 Write-Host ""
-Write-Host "  Mode: $(if ($Native) { 'Native (Python venvs)' } else { 'Docker' })" -ForegroundColor White
+Write-Host "  💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  Trading posts:" -ForegroundColor White
+Write-Host "        🏴‍☠️  ALL HANDS ON DECK!  🏴‍☠️            " -ForegroundColor Green
+Write-Host "         The fleet has sailed!               " -ForegroundColor Green
+Write-Host ""
+Write-Host "              🦜                             " -ForegroundColor Green
+Write-Host "             /|                              " -ForegroundColor Green
+Write-Host "            / |  'SQUAWK! All systems go!'   " -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  ╔══════════════════════════════════════════════╗" -ForegroundColor DarkCyan
+Write-Host "  ║  Mode: $(if ($Native) { 'Native (Python venvs) 🐍' } else { 'Docker 🐳             ' })              ║" -ForegroundColor White
+Write-Host "  ╠══════════════════════════════════════════════╣" -ForegroundColor DarkCyan
+Write-Host "  ║  Trading Posts:                              ║" -ForegroundColor White
 foreach ($ship in $Fleet) {
     if ($Only -and $Only -notcontains $ship.Name) { continue }
-    Write-Host "    $($ship.Title)  →  http://localhost:$($ship.Port)/mcp" -ForegroundColor Gray
+    Write-Host "  ║  ⛵ $($ship.Title)  →  http://localhost:$($ship.Port)/mcp" -ForegroundColor Gray -NoNewline
+    Write-Host "" # close line
 }
 if (-not $SkipTunnel) {
-    Write-Host ""
-    Write-Host "  Tunnel: devtunnel host $TunnelName --allow-anonymous" -ForegroundColor Gray
+    Write-Host "  ╠══════════════════════════════════════════════╣" -ForegroundColor DarkCyan
+    Write-Host "  ║  🚇 Tunnel: $TunnelName (--allow-anonymous)  " -ForegroundColor Gray
 }
+Write-Host "  ╚══════════════════════════════════════════════╝" -ForegroundColor DarkCyan
 Write-Host ""
 if (-not $Native) {
-    Write-Host "  To stop: docker compose down" -ForegroundColor DarkGray
+    Write-Host "  🛑 To scuttle the fleet: docker compose down" -ForegroundColor DarkGray
 } else {
-    Write-Host "  To stop: close the individual terminal windows" -ForegroundColor DarkGray
+    Write-Host "  🛑 To scuttle the fleet: close the terminal windows" -ForegroundColor DarkGray
 }
+Write-Host ""
+Write-Host "  ⚓ Fair winds and following seas, Captain! ⚓" -ForegroundColor Cyan
 Write-Host ""
