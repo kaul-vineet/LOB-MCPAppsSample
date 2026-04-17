@@ -120,11 +120,13 @@ async def get_leads() -> types.CallToolResult:
         "items": items,
     }
 
-    summary = (
-        "No leads found."
-        if not items
-        else f"Retrieved {len(items)} lead(s). See the widget for details."
-    )
+    if not items:
+        summary = "No leads found."
+    else:
+        lines = [f"Retrieved {len(items)} lead(s):"]
+        for ld in items:
+            lines.append(f"- {ld['first_name']} {ld['last_name']} | {ld['company']} | {ld['status']} | {ld['lead_source']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
@@ -293,11 +295,13 @@ async def get_opportunities() -> types.CallToolResult:
         "items": items,
     }
 
-    summary = (
-        "No opportunities found."
-        if not items
-        else f"Retrieved {len(items)} opportunity(ies). See the widget for details."
-    )
+    if not items:
+        summary = "No opportunities found."
+    else:
+        lines = [f"Retrieved {len(items)} opportunity(ies):"]
+        for opp in items:
+            lines.append(f"- {opp['name']} | {opp['stage']} | ${opp.get('amount') or 0:,.0f} | Close: {opp['close_date']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],

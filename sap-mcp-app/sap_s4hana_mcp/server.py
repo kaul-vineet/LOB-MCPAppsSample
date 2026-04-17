@@ -134,11 +134,13 @@ async def get_purchase_orders(limit: int = 5) -> types.CallToolResult:
         "sandbox": get_client().is_sandbox,
     }
 
-    summary = (
-        "No purchase orders found."
-        if not items
-        else f"Retrieved {len(items)} purchase order(s). See the widget for details."
-    )
+    if not items:
+        summary = "No purchase orders found."
+    else:
+        lines = [f"Retrieved {len(items)} purchase order(s):"]
+        for po in items:
+            lines.append(f"- PO {po['purchase_order']} | Supplier: {po['supplier']} | Org: {po['purchasing_org']} | Date: {po['order_date']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
@@ -172,11 +174,13 @@ async def get_business_partners(limit: int = 5) -> types.CallToolResult:
         "sandbox": get_client().is_sandbox,
     }
 
-    summary = (
-        "No business partners found."
-        if not items
-        else f"Retrieved {len(items)} business partner(s). See the widget for details."
-    )
+    if not items:
+        summary = "No business partners found."
+    else:
+        lines = [f"Retrieved {len(items)} business partner(s):"]
+        for bp in items:
+            lines.append(f"- {bp['id']} | {bp['name']} | {bp['organization']} | Category: {bp['category']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
@@ -210,11 +214,13 @@ async def get_materials(limit: int = 5) -> types.CallToolResult:
         "sandbox": get_client().is_sandbox,
     }
 
-    summary = (
-        "No materials found."
-        if not items
-        else f"Retrieved {len(items)} material(s). See the widget for details."
-    )
+    if not items:
+        summary = "No materials found."
+    else:
+        lines = [f"Retrieved {len(items)} material(s):"]
+        for m in items:
+            lines.append(f"- {m['product']} | Type: {m['product_type']} | Group: {m['product_group']} | Unit: {m['base_unit']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],

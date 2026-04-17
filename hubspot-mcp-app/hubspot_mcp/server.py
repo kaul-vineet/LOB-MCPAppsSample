@@ -143,7 +143,14 @@ async def get_emails() -> types.CallToolResult:
         return _error_result(f"Unexpected error fetching emails: {exc}")
 
     structured = {"type": "emails", "total": len(items), "items": items}
-    summary = "No marketing emails found." if not items else f"Retrieved {len(items)} marketing email(s). See the widget for details."
+    if not items:
+        summary = "No marketing emails found."
+    else:
+        lines = [f"Retrieved {len(items)} marketing email(s):"]
+        for em in items:
+            s = em.get("stats", {})
+            lines.append(f"- {em['name']} | {em['status']} | Sent: {s.get('sent',0)} | Opened: {s.get('opened',0)} | Clicked: {s.get('clicked',0)}")
+        summary = "\n".join(lines)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,

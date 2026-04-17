@@ -191,11 +191,13 @@ async def get_incidents(limit: int = 5) -> types.CallToolResult:
 
     structured = {"type": "incidents", "total": len(incidents), "incidents": incidents}
 
-    summary = (
-        f"No incidents found."
-        if not incidents
-        else f"Found {len(incidents)} incident(s). See the widget for details."
-    )
+    if not incidents:
+        summary = "No incidents found."
+    else:
+        lines = [f"Found {len(incidents)} incident(s):"]
+        for inc in incidents:
+            lines.append(f"- {inc['number']} | P{inc['priority']} | {inc['state']} | {inc['short_description']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
@@ -248,11 +250,13 @@ async def get_requests(limit: int = 5) -> types.CallToolResult:
 
     structured = {"type": "requests", "total": len(requests_list), "requests": requests_list}
 
-    summary = (
-        f"No requests found."
-        if not requests_list
-        else f"Found {len(requests_list)} request(s). See the widget for details."
-    )
+    if not requests_list:
+        summary = "No requests found."
+    else:
+        lines = [f"Found {len(requests_list)} request(s):"]
+        for req in requests_list:
+            lines.append(f"- {req['number']} (sys_id={req['sys_id']}) | {req['request_state']} | {req['priority']} | {req['short_description']}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
@@ -309,11 +313,13 @@ async def get_request_items(request_sys_id: str) -> types.CallToolResult:
         "items": items,
     }
 
-    summary = (
-        f"No request items found for request {request_sys_id}."
-        if not items
-        else f"Found {len(items)} request item(s). See the widget for details."
-    )
+    if not items:
+        summary = f"No request items found for request {request_sys_id}."
+    else:
+        lines = [f"Found {len(items)} request item(s):"]
+        for it in items:
+            lines.append(f"- {it.get('number','')} | {it.get('short_description','')} | qty={it.get('quantity','')} | {it.get('stage','')}")
+        summary = "\n".join(lines)
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
