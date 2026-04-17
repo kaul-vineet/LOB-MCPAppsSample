@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚓ The Great Trading Company — Widget Dockyard</title>
+<title>⚓ The Great Trading Company — LOB MCP Apps Gallery</title>
 <style>
   :root {
     --bg: #f5f5f0;
@@ -13,86 +13,160 @@
     --border: #e0ddd5;
     --gold: #C9A84C;
     --gold-dark: #a08030;
+    --sf-color: #00A1E0;
+    --snow-color: #293E40;
+    --sap-color: #0FAAFF;
+    --hs-color: #FF7A59;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1a1a2e;
-      --surface: #16213e;
-      --text: #e0e0e0;
-      --text-light: #a0a0a0;
-      --border: #3a3a5c;
+      --bg: #0d1117;
+      --surface: #161b22;
+      --text: #e6edf3;
+      --text-light: #8b949e;
+      --border: #30363d;
       --gold: #d4b85c;
       --gold-dark: #C9A84C;
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+  /* ── Hero ── */
   .hero {
     text-align: center;
-    padding: 60px 20px 40px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    color: #e0e0e0;
+    padding: 72px 24px 56px;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 40%, #1a2332 70%, #0f3460 100%);
+    color: #e6edf3;
+    position: relative;
+    overflow: hidden;
   }
-  .hero h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 8px; }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 50%, rgba(15,52,96,0.15) 0%, transparent 60%);
+    animation: shimmer 8s ease-in-out infinite alternate;
+  }
+  @keyframes shimmer {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-5%, 3%); }
+  }
+  .hero > * { position: relative; z-index: 1; }
+  .hero .anchor { font-size: 56px; display: block; margin-bottom: 20px; filter: drop-shadow(0 4px 12px rgba(201,168,76,0.3)); }
+  .hero h1 { font-size: 32px; font-weight: 300; letter-spacing: 3px; margin-bottom: 6px; }
   .hero h1 span { color: var(--gold); font-weight: 600; }
-  .hero p { font-size: 14px; color: #a0a0a0; margin-top: 8px; }
-  .hero .anchor { font-size: 48px; display: block; margin-bottom: 16px; }
+  .hero .subtitle { font-size: 16px; color: #8b949e; margin-top: 12px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+  .hero .badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .hero .badge { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); color: #a0a0a0; background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); }
 
+  /* ── Section titles ── */
+  .section-title {
+    text-align: center;
+    max-width: 700px;
+    margin: 40px auto 24px;
+    padding: 0 20px;
+  }
+  .section-title h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .section-title p { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+
+  /* ── Card grid ── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 20px;
     max-width: 1100px;
-    margin: -30px auto 40px;
-    padding: 0 20px;
-    position: relative;
-    z-index: 1;
+    margin: 0 auto 40px;
+    padding: 0 24px;
   }
 
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 14px;
+    padding: 0;
     text-decoration: none;
     color: var(--text);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    overflow: hidden;
   }
-  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
 
-  .card .logo { height: 32px; width: 32px; }
+  .card-accent { height: 4px; }
+  .card-accent.sf { background: linear-gradient(90deg, #00A1E0, #0070D2); }
+  .card-accent.snow { background: linear-gradient(90deg, #293E40, #81B5A1); }
+  .card-accent.sap { background: linear-gradient(90deg, #0FAAFF, #354A5F); }
+  .card-accent.hs { background: linear-gradient(90deg, #FF7A59, #FF5C35); }
+
+  .card-body { padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
   .card .top { display: flex; align-items: center; gap: 12px; }
-  .card h2 { font-size: 18px; font-weight: 600; }
-  .card .desc { font-size: 13px; color: var(--text-light); line-height: 1.5; }
-  .card .port { font-size: 11px; font-family: monospace; color: var(--gold-dark); background: rgba(201,168,76,0.1); padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+  .card .logo { height: 30px; width: 30px; }
+  .card h2 { font-size: 17px; font-weight: 600; }
+  .card .design-tag { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
+  .card .desc { font-size: 13px; color: var(--text-light); line-height: 1.55; flex: 1; }
+  .card .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .card .chip { font-size: 11px; font-family: 'Segoe UI', monospace; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-light); background: transparent; }
+  .card .chip.port { color: var(--gold-dark); border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.06); }
 
+  /* ── Note ── */
+  .note {
+    max-width: 720px;
+    margin: 0 auto 40px;
+    padding: 18px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text-light);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .note code { background: rgba(201,168,76,0.12); padding: 2px 7px; border-radius: 4px; font-size: 12px; color: var(--text); }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    margin: 0 auto 48px;
+    padding: 0 20px;
+  }
+  .cta a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: #1a1a2e;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .cta a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.35); }
+  .cta .secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    margin-left: 12px;
+  }
+  .cta .secondary:hover { border-color: var(--gold); color: var(--gold-dark); box-shadow: none; }
+
+  /* ── Footer ── */
   .footer {
     text-align: center;
-    padding: 30px 20px;
+    padding: 32px 20px;
     font-size: 12px;
     color: var(--text-light);
     border-top: 1px solid var(--border);
   }
   .footer a { color: var(--gold-dark); text-decoration: none; }
   .footer a:hover { text-decoration: underline; }
-
-  .note {
-    max-width: 700px;
-    margin: 0 auto 30px;
-    padding: 16px 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--text-light);
-    line-height: 1.6;
-    text-align: center;
-  }
-  .note code { background: rgba(201,168,76,0.15); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -100,54 +174,112 @@
 <div class="hero">
   <span class="anchor">⚓</span>
   <h1>The <span>Great Trading Company</span></h1>
-  <p>Widget Dockyard — Interactive test harnesses for all LOB MCP Apps</p>
+  <p class="subtitle">A gallery of LOB MCP Apps for M365 Copilot — interactive React widgets rendered directly in chat with LOB-native design</p>
+  <div class="badges">
+    <span class="badge">MCP Apps</span>
+    <span class="badge">React 19</span>
+    <span class="badge">Fluent UI v9</span>
+    <span class="badge">Python</span>
+    <span class="badge">Docker</span>
+    <span class="badge">M365 Copilot</span>
+  </div>
+</div>
+
+<div class="section-title">
+  <h2>🎨 Widget Gallery</h2>
+  <p>Click any card to open its interactive test harness — runs entirely in the browser with mock data, no setup needed.</p>
 </div>
 
 <div class="grid">
   <a class="card" href="sf-widget-test.html">
-    <div class="top">
-      <img class="logo" src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="Salesforce">
-      <h2>Salesforce CRM</h2>
+    <div class="card-accent sf"></div>
+    <div class="card-body">
+      <div class="top">
+        <img class="logo" src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="Salesforce">
+        <div>
+          <h2>Salesforce CRM</h2>
+          <div class="design-tag">Lightning SLDS</div>
+        </div>
+      </div>
+      <div class="desc">Browse leads & opportunities, create new leads, update pipeline stages, drill into deal details with inline editing.</div>
+      <div class="meta">
+        <span class="chip port">:3000</span>
+        <span class="chip">6 tools</span>
+        <span class="chip">CRUD</span>
+      </div>
     </div>
-    <div class="desc">Leads & Opportunities — inline Create, Edit, and table rendering with Lightning Design System colours.</div>
-    <span class="port">Port 3000 · 6 tools</span>
   </a>
 
   <a class="card" href="snow-widget-test.html">
-    <div class="top">
-      <img class="logo" src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="ServiceNow">
-      <h2>ServiceNow ITSM</h2>
+    <div class="card-accent snow"></div>
+    <div class="card-body">
+      <div class="top">
+        <img class="logo" src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="ServiceNow">
+        <div>
+          <h2>ServiceNow ITSM</h2>
+          <div class="design-tag">Now Design</div>
+        </div>
+      </div>
+      <div class="desc">View incidents by priority, track service requests & request items with expandable rows and P1–P4 color coding.</div>
+      <div class="meta">
+        <span class="chip port">:3001</span>
+        <span class="chip">8 tools</span>
+        <span class="chip">CRUD</span>
+      </div>
     </div>
-    <div class="desc">Incidents, Requests & Request Items — expandable rows, inline CRUD, priority badges.</div>
-    <span class="port">Port 3001 · 8 tools</span>
   </a>
 
   <a class="card" href="sap-widget-test.html">
-    <div class="top">
-      <img class="logo" src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP">
-      <h2>SAP S/4HANA</h2>
+    <div class="card-accent sap"></div>
+    <div class="card-body">
+      <div class="top">
+        <img class="logo" src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP">
+        <div>
+          <h2>SAP S/4HANA</h2>
+          <div class="design-tag">Fiori</div>
+        </div>
+      </div>
+      <div class="desc">Purchase orders, business partners, materials master — drill into material details with Object Page layout.</div>
+      <div class="meta">
+        <span class="chip port">:3002</span>
+        <span class="chip">6 tools</span>
+        <span class="chip">Sandbox</span>
+      </div>
     </div>
-    <div class="desc">Purchase Orders, Business Partners & Materials — Fiori-inspired UI with sandbox mode banner and material detail drill-down.</div>
-    <span class="port">Port 3002 · 6 tools · Sandbox</span>
   </a>
 
   <a class="card" href="hs-widget-test.html">
-    <div class="top">
-      <img class="logo" src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot">
-      <h2>HubSpot Marketing</h2>
+    <div class="card-accent hs"></div>
+    <div class="card-body">
+      <div class="top">
+        <img class="logo" src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot">
+        <div>
+          <h2>HubSpot Marketing</h2>
+          <div class="design-tag">Canvas</div>
+        </div>
+      </div>
+      <div class="desc">Email campaign analytics with 3-level drill-down: campaigns → contact lists → individual subscribers with engagement metrics.</div>
+      <div class="meta">
+        <span class="chip port">:3003</span>
+        <span class="chip">7 tools</span>
+        <span class="chip">Drill-down</span>
+      </div>
     </div>
-    <div class="desc">Marketing Emails → Contact Lists → List Contacts — single-ask drill-down with add/remove/edit.</div>
-    <span class="port">Port 3003 · 7 tools · Single-ask</span>
   </a>
 </div>
 
 <div class="note">
   These test harnesses run entirely in the browser with <strong>mock data</strong> — no server or credentials needed.<br>
-  They simulate the M365 Copilot <code>postMessage</code> bridge so you can test widget rendering, CRUD forms, error states, and dark mode independently.
+  They simulate the M365 Copilot <code>postMessage</code> bridge so you can test widget rendering, CRUD forms, error states, and dark mode.
+</div>
+
+<div class="cta">
+  <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">⭐ View on GitHub</a>
+  <a class="secondary" href="https://github.com/kaul-vineet/LOB-MCPAppsSample/blob/main/SETUP.md">📖 Setup Guide</a>
 </div>
 
 <div class="footer">
-  ⚓ The Great Trading Company · <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">GitHub</a> · MIT License
+  ⚓ The Great Trading Company · Built by <a href="https://github.com/kaul-vineet">Vineet Kaul</a> · PM Architect, Agentic AI · MIT License
 </div>
 
 </body>
