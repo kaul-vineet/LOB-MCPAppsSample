@@ -9,17 +9,38 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
+import structlog
 import uvicorn
 from dotenv import load_dotenv
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
+from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 
 from .salesforce import SalesforceAPIError, SalesforceAuthError, get_client
 
 load_dotenv()
+
+log = structlog.get_logger("sf")
+
+
+# ── Typed Configuration ───────────────────────────────────────────────────────
+
+class SFSettings(BaseSettings):
+    sf_instance_url: str = ""
+    sf_client_id: str = ""
+    sf_client_secret: str = ""
+    port: int = 3000
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+settings = SFSettings()
+
 
 # ── Widget ─────────────────────────────────────────────────────────────────────
 
@@ -103,15 +124,19 @@ async def _fetch_opportunities() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_leads() -> types.CallToolResult:
+async def sf__get_leads() -> types.CallToolResult:
     """Fetch latest 5 Leads from Salesforce."""
+    log.info("sf__get_leads")
     try:
         items = await _fetch_leads()
     except SalesforceAuthError as exc:
+        log.error("auth_failed", error=str(exc))
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
+        log.error("api_error", error=str(exc))
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
+        log.error("unexpected_error", error=str(exc))
         return _error_result(f"Unexpected error fetching leads: {exc}")
 
     structured = {
@@ -128,6 +153,7 @@ async def get_leads() -> types.CallToolResult:
             lines.append(f"- {ld['first_name']} {ld['last_name']} | {ld['company']} | {ld['status']} | {ld['lead_source']}")
         summary = "\n".join(lines)
 
+    log.info("sf__get_leads_done", count=len(items))
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -142,7 +168,7 @@ async def get_leads() -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_lead(
+async def sf__create_lead(
     last_name: str,
     company: str,
     first_name: str = "",
@@ -205,7 +231,7 @@ async def create_lead(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_lead(
+async def sf__update_lead(
     lead_id: str,
     first_name: str = "",
     last_name: str = "",
@@ -278,8 +304,9 @@ async def update_lead(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_opportunities() -> types.CallToolResult:
+async def sf__get_opportunities() -> types.CallToolResult:
     """Fetch latest 5 Opportunities from Salesforce."""
+    log.info("sf__get_opportunities")
     try:
         items = await _fetch_opportunities()
     except SalesforceAuthError as exc:
@@ -317,7 +344,7 @@ async def get_opportunities() -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_opportunity(
+async def sf__create_opportunity(
     name: str,
     stage: str,
     close_date: str,
@@ -377,7 +404,7 @@ async def create_opportunity(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_opportunity(
+async def sf__update_opportunity(
     opportunity_id: str,
     name: str = "",
     stage: str = "",
@@ -497,41 +524,38 @@ def manage_crm() -> list[PromptMessage]:
 
 def _validate_env() -> None:
     """Check required environment variables and print startup checklist."""
-    instance = os.environ.get("SF_INSTANCE_URL", "")
-    client_id = os.environ.get("SF_CLIENT_ID", "")
-    client_secret = os.environ.get("SF_CLIENT_SECRET", "")
-
+    log.info("validating_env")
     print("  ┌─ Environment ─────────────────────────────────")
-    print(f"  │ SF_INSTANCE_URL   {'✓ ' + instance[:40] if instance else '✗ MISSING'}")
-    print(f"  │ SF_CLIENT_ID      {'✓ ' + client_id[:8] + '...' if client_id else '✗ MISSING'}")
-    print(f"  │ SF_CLIENT_SECRET  {'✓ (set)' if client_secret else '✗ MISSING'}")
+    print(f"  │ SF_INSTANCE_URL   {'✓ ' + settings.sf_instance_url[:40] if settings.sf_instance_url else '✗ MISSING'}")
+    print(f"  │ SF_CLIENT_ID      {'✓ ' + settings.sf_client_id[:8] + '...' if settings.sf_client_id else '✗ MISSING'}")
+    print(f"  │ SF_CLIENT_SECRET  {'✓ (set)' if settings.sf_client_secret else '✗ MISSING'}")
     print("  └────────────────────────────────────────────────")
 
     missing = []
-    if not instance: missing.append("SF_INSTANCE_URL")
-    if not client_id: missing.append("SF_CLIENT_ID")
-    if not client_secret: missing.append("SF_CLIENT_SECRET")
+    if not settings.sf_instance_url: missing.append("SF_INSTANCE_URL")
+    if not settings.sf_client_id: missing.append("SF_CLIENT_ID")
+    if not settings.sf_client_secret: missing.append("SF_CLIENT_SECRET")
     if missing:
+        log.error("missing_env_vars", vars=missing)
         print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
         print("  Copy .env.example to .env and fill in your Salesforce credentials.")
         sys.exit(1)
 
 
 def main():
-    port = int(os.environ.get("PORT", 3000))
-    cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
     _validate_env()
-    print(f"⚓ GTC — Salesforce Trading Post starting on port {port}")
+    log.info("starting", port=settings.port)
+    print(f"⚓ GTC — Salesforce Trading Post starting on port {settings.port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=settings.cors_origins.split(","),
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
     )
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port)
 
 
 if __name__ == "__main__":

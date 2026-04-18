@@ -15,17 +15,35 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 import os
 import sys
 from pathlib import Path
+from typing import Literal
 
+import structlog
 import uvicorn
 from dotenv import load_dotenv
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
+from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 
 from .hubspot_client import HubSpotAPIError, HubSpotAuthError, get_client
 
 load_dotenv()
+
+log = structlog.get_logger("hs")
+
+
+# ── Typed Configuration ───────────────────────────────────────────────────────
+
+class HSSettings(BaseSettings):
+    hubspot_access_token: str = ""
+    port: int = 3003
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+settings = HSSettings()
 
 WIDGET_URI = "ui://widget/hubspot.html"
 RESOURCE_MIME_TYPE = "text/html;profile=mcp-app"
@@ -131,7 +149,7 @@ async def _fetch_list_contacts(list_id: str) -> tuple[list[dict], str]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_emails() -> types.CallToolResult:
+async def hs__get_emails() -> types.CallToolResult:
     """Fetch latest marketing emails from HubSpot with performance stats."""
     try:
         items = await _fetch_emails()
@@ -166,7 +184,7 @@ async def get_emails() -> types.CallToolResult:
     description="Get contact lists from HubSpot. Called by the widget for drill-down navigation.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_lists() -> types.CallToolResult:
+async def hs__get_lists() -> types.CallToolResult:
     """Fetch contact lists (segments) from HubSpot."""
     try:
         items = await _fetch_lists()
@@ -189,7 +207,7 @@ async def get_lists() -> types.CallToolResult:
     description="Get contacts in a specific list. Called by the widget when drilling into a list.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_list_contacts(list_id: str) -> types.CallToolResult:
+async def hs__get_list_contacts(list_id: str) -> types.CallToolResult:
     """Fetch contacts belonging to a specific list.
 
     Args:
@@ -221,7 +239,7 @@ async def get_list_contacts(list_id: str) -> types.CallToolResult:
     description="Add a contact to a static list by email. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
+async def hs__add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
     """Add a contact to a list by email address.
 
     Args:
@@ -253,7 +271,7 @@ async def add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
     description="Remove a contact from a static list. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def remove_from_list(list_id: str, contact_id: str) -> types.CallToolResult:
+async def hs__remove_from_list(list_id: str, contact_id: str) -> types.CallToolResult:
     """Remove a contact from a list.
 
     Args:
@@ -287,7 +305,7 @@ async def remove_from_list(list_id: str, contact_id: str) -> types.CallToolResul
     description="Update a marketing email's name or subject. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_email(email_id: str, name: str = "", subject: str = "") -> types.CallToolResult:
+async def hs__update_email(email_id: str, name: str = "", subject: str = "") -> types.CallToolResult:
     """Update a marketing email's name or subject.
 
     Args:
@@ -322,7 +340,7 @@ async def update_email(email_id: str, name: str = "", subject: str = "") -> type
     description="Update a list's name. Called by the widget.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_list(list_id: str, name: str) -> types.CallToolResult:
+async def hs__update_list(list_id: str, name: str) -> types.CallToolResult:
     """Rename a contact list.
 
     Args:
@@ -373,33 +391,34 @@ def show_marketing() -> list[PromptMessage]:
 
 def _validate_env() -> None:
     """Check required environment variables and print startup checklist."""
-    token = os.environ.get("HUBSPOT_ACCESS_TOKEN", "")
+    log.info("validating_env")
+    token = settings.hubspot_access_token
 
     print("  ┌─ Environment ─────────────────────────────────")
     print(f"  │ HUBSPOT_ACCESS_TOKEN  {'✓ ' + token[:12] + '...' if token else '✗ MISSING'}")
     print("  └────────────────────────────────────────────────")
 
     if not token:
+        log.error("missing_env_vars", vars=["HUBSPOT_ACCESS_TOKEN"])
         print("\n  ❌ Missing required env var: HUBSPOT_ACCESS_TOKEN")
         print("  Copy .env.example to .env and fill in your HubSpot Private App token.")
         sys.exit(1)
 
 
 def main():
-    port = int(os.environ.get("PORT", 3003))
-    cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
     _validate_env()
-    print(f"⚓ GTC — HubSpot Trading Post starting on port {port}")
+    log.info("starting", port=settings.port)
+    print(f"⚓ GTC — HubSpot Trading Post starting on port {settings.port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=settings.cors_origins.split(","),
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
     )
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port)
 
 
 if __name__ == "__main__":

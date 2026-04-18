@@ -9,17 +9,39 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Literal
 
+import structlog
 import uvicorn
 from dotenv import load_dotenv
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
+from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 
 from .sap_client import SAPAPIError, SAPAuthError, get_client
 
 load_dotenv()
+
+log = structlog.get_logger("sap")
+
+
+# ── Typed Configuration ───────────────────────────────────────────────────────
+
+class SAPSettings(BaseSettings):
+    sap_mode: str = "sandbox"
+    sap_api_key: str = ""
+    sap_tenant_url: str = ""
+    sap_username: str = ""
+    sap_password: str = ""
+    port: int = 3002
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+settings = SAPSettings()
 
 # ── Widget ─────────────────────────────────────────────────────────────────────
 
@@ -115,7 +137,7 @@ async def _fetch_materials(limit: int = 5) -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_purchase_orders(limit: int = 5) -> types.CallToolResult:
+async def sap__get_purchase_orders(limit: int = 5) -> types.CallToolResult:
     """Fetch latest purchase orders from SAP S/4HANA."""
     try:
         sap = get_client()
@@ -155,7 +177,7 @@ async def get_purchase_orders(limit: int = 5) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_business_partners(limit: int = 5) -> types.CallToolResult:
+async def sap__get_business_partners(limit: int = 5) -> types.CallToolResult:
     """Fetch business partners from SAP S/4HANA."""
     try:
         sap = get_client()
@@ -195,7 +217,7 @@ async def get_business_partners(limit: int = 5) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_materials(limit: int = 5) -> types.CallToolResult:
+async def sap__get_materials(limit: int = 5) -> types.CallToolResult:
     """Fetch materials from SAP S/4HANA."""
     try:
         sap = get_client()
@@ -241,7 +263,7 @@ async def get_materials(limit: int = 5) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_purchase_order(
+async def sap__create_purchase_order(
     supplier: str,
     purchasing_org: str,
     purchase_order_type: str = "NB",
@@ -309,7 +331,7 @@ async def create_purchase_order(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_purchase_order(
+async def sap__update_purchase_order(
     purchase_order_id: str,
     purchasing_org: str = "",
     supplier: str = "",
@@ -368,7 +390,7 @@ async def update_purchase_order(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_material_details(material_id: str) -> types.CallToolResult:
+async def sap__get_material_details(material_id: str) -> types.CallToolResult:
     """
     Args:
         material_id:  SAP Material / Product number (required)
@@ -472,51 +494,46 @@ def manage_erp() -> list[PromptMessage]:
 
 def _validate_env() -> None:
     """Check required environment variables and print startup checklist."""
-    mode = os.environ.get("SAP_MODE", "sandbox").lower()
-    api_key = os.environ.get("SAP_API_KEY", "")
-    tenant_url = os.environ.get("SAP_TENANT_URL", "")
-    username = os.environ.get("SAP_USERNAME", "")
-    password = os.environ.get("SAP_PASSWORD", "")
-
+    log.info("validating_env")
+    mode = settings.sap_mode.lower()
     print("  ┌─ Environment ─────────────────────────────────")
     print(f"  │ SAP_MODE           ✓ {mode}")
     if mode == "sandbox":
-        print(f"  │ SAP_API_KEY        {'✓ ' + api_key[:8] + '...' if api_key else '✗ MISSING'}")
+        print(f"  │ SAP_API_KEY        {'✓ ' + settings.sap_api_key[:8] + '...' if settings.sap_api_key else '✗ MISSING'}")
     else:
-        print(f"  │ SAP_TENANT_URL     {'✓ ' + tenant_url[:40] if tenant_url else '✗ MISSING'}")
-        print(f"  │ SAP_USERNAME       {'✓ ' + username if username else '✗ MISSING'}")
-        print(f"  │ SAP_PASSWORD       {'✓ (set)' if password else '✗ MISSING'}")
+        print(f"  │ SAP_TENANT_URL     {'✓ ' + settings.sap_tenant_url[:40] if settings.sap_tenant_url else '✗ MISSING'}")
+        print(f"  │ SAP_USERNAME       {'✓ ' + settings.sap_username if settings.sap_username else '✗ MISSING'}")
+        print(f"  │ SAP_PASSWORD       {'✓ (set)' if settings.sap_password else '✗ MISSING'}")
     print("  └────────────────────────────────────────────────")
 
     missing = []
     if mode == "sandbox":
-        if not api_key: missing.append("SAP_API_KEY")
+        if not settings.sap_api_key: missing.append("SAP_API_KEY")
     else:
-        if not tenant_url: missing.append("SAP_TENANT_URL")
-        if not username: missing.append("SAP_USERNAME")
-        if not password: missing.append("SAP_PASSWORD")
+        if not settings.sap_tenant_url: missing.append("SAP_TENANT_URL")
+        if not settings.sap_username: missing.append("SAP_USERNAME")
+        if not settings.sap_password: missing.append("SAP_PASSWORD")
     if missing:
+        log.error("missing_env_vars", vars=missing)
         print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
         print("  Copy .env.example to .env and fill in your SAP credentials.")
         sys.exit(1)
 
 
 def main():
-    port = int(os.environ.get("PORT", 3002))
     _validate_env()
-    mode = os.environ.get("SAP_MODE", "sandbox").lower()
-    print(f"⚓ GTC — SAP S/4HANA Trading Post starting on port {port} (mode: {mode})")
-    cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
+    log.info("starting", port=settings.port, mode=settings.sap_mode)
+    print(f"⚓ GTC — SAP S/4HANA Trading Post starting on port {settings.port} (mode: {settings.sap_mode})")
 
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=settings.cors_origins.split(","),
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
     )
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port)
 
 
 if __name__ == "__main__":

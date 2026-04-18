@@ -11,26 +11,41 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Literal
 
 import httpx
+import structlog
 import uvicorn
 from dotenv import load_dotenv
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
+from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 load_dotenv()
 
-# ── Configuration (all from .env) ─────────────────────────────────────────────
+log = structlog.get_logger("sn")
 
-INSTANCE = os.environ.get("SERVICENOW_INSTANCE", "")
-AUTH_MODE = os.environ.get("SERVICENOW_AUTH_MODE", "oauth").lower()
-CLIENT_ID = os.environ.get("SERVICENOW_CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("SERVICENOW_CLIENT_SECRET", "")
-USERNAME = os.environ.get("SERVICENOW_USERNAME", "")
-PASSWORD = os.environ.get("SERVICENOW_PASSWORD", "")
-BASE_URL = f"https://{INSTANCE}.service-now.com"
+
+# ── Typed Configuration ───────────────────────────────────────────────────────
+
+class SNSettings(BaseSettings):
+    servicenow_instance: str = ""
+    servicenow_auth_mode: str = "oauth"
+    servicenow_client_id: str = ""
+    servicenow_client_secret: str = ""
+    servicenow_username: str = ""
+    servicenow_password: str = ""
+    port: int = 3001
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+settings = SNSettings()
+BASE_URL = f"https://{settings.servicenow_instance}.service-now.com"
 
 # ── Widget ────────────────────────────────────────────────────────────────────
 
@@ -74,8 +89,8 @@ async def get_servicenow_token() -> str:
             f"{BASE_URL}/oauth_token.do",
             data={
                 "grant_type": "client_credentials",
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
+                "client_id": settings.servicenow_client_id,
+                "client_secret": settings.servicenow_client_secret,
             },
         )
         resp.raise_for_status()
@@ -87,6 +102,12 @@ async def get_servicenow_token() -> str:
 
 # ── Unified HTTP helper ──────────────────────────────────────────────────────
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type(httpx.RequestError),
+    reraise=True,
+)
 async def servicenow_request(
     method: str, path: str, params: dict | None = None, json_body: dict | None = None
 ) -> httpx.Response:
@@ -97,11 +118,11 @@ async def servicenow_request(
     """
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-    if AUTH_MODE == "oauth":
+    if settings.servicenow_auth_mode.lower() == "oauth":
         token = await get_servicenow_token()
         headers["Authorization"] = f"Bearer {token}"
     else:
-        creds = base64.b64encode(f"{USERNAME}:{PASSWORD}".encode()).decode()
+        creds = base64.b64encode(f"{settings.servicenow_username}:{settings.servicenow_password}".encode()).decode()
         headers["Authorization"] = f"Basic {creds}"
 
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -153,7 +174,7 @@ REQUEST_ITEM_FIELDS = (
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_incidents(limit: int = 5) -> types.CallToolResult:
+async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
     """
     Args:
         limit: Maximum number of incidents to return (default 5)
@@ -212,7 +233,7 @@ async def get_incidents(limit: int = 5) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_requests(limit: int = 5) -> types.CallToolResult:
+async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
     """
     Args:
         limit: Maximum number of requests to return (default 5)
@@ -272,7 +293,7 @@ async def get_requests(limit: int = 5) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_request_items(request_sys_id: str) -> types.CallToolResult:
+async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
     """
     Args:
         request_sys_id: The sys_id of the parent request
@@ -338,7 +359,7 @@ async def get_request_items(request_sys_id: str) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_incident(
+async def sn__create_incident(
     short_description: str,
     description: str = "",
     priority: str = "3",
@@ -387,7 +408,7 @@ async def create_incident(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def create_request(
+async def sn__create_request(
     short_description: str,
     description: str = "",
     priority: str = "3",
@@ -435,7 +456,7 @@ async def create_request(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_incident(
+async def sn__update_incident(
     sys_id: str,
     description: str | None = None,
     priority: str | None = None,
@@ -484,7 +505,7 @@ async def update_incident(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_request(
+async def sn__update_request(
     sys_id: str,
     approval: str | None = None,
 ) -> types.CallToolResult:
@@ -529,7 +550,7 @@ async def update_request(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def update_request_item(
+async def sn__update_request_item(
     sys_id: str,
     quantity: str | None = None,
 ) -> types.CallToolResult:
@@ -633,45 +654,48 @@ def incident_summary() -> list[PromptMessage]:
 
 def _validate_env() -> None:
     """Check required environment variables and print startup checklist."""
+    log.info("validating_env")
+    inst = settings.servicenow_instance
+    mode = settings.servicenow_auth_mode.lower()
     print("  ┌─ Environment ─────────────────────────────────")
-    print(f"  │ SERVICENOW_INSTANCE  {'✓ ' + INSTANCE if INSTANCE else '✗ MISSING'}")
-    print(f"  │ AUTH_MODE            ✓ {AUTH_MODE}")
-    if AUTH_MODE == "oauth":
-        print(f"  │ CLIENT_ID           {'✓ ' + CLIENT_ID[:8] + '...' if CLIENT_ID else '✗ MISSING'}")
-        print(f"  │ CLIENT_SECRET       {'✓ (set)' if CLIENT_SECRET else '✗ MISSING'}")
+    print(f"  │ SERVICENOW_INSTANCE  {'✓ ' + inst if inst else '✗ MISSING'}")
+    print(f"  │ AUTH_MODE            ✓ {mode}")
+    if mode == "oauth":
+        print(f"  │ CLIENT_ID           {'✓ ' + settings.servicenow_client_id[:8] + '...' if settings.servicenow_client_id else '✗ MISSING'}")
+        print(f"  │ CLIENT_SECRET       {'✓ (set)' if settings.servicenow_client_secret else '✗ MISSING'}")
     else:
-        print(f"  │ USERNAME            {'✓ ' + USERNAME if USERNAME else '✗ MISSING'}")
-        print(f"  │ PASSWORD            {'✓ (set)' if PASSWORD else '✗ MISSING'}")
+        print(f"  │ USERNAME            {'✓ ' + settings.servicenow_username if settings.servicenow_username else '✗ MISSING'}")
+        print(f"  │ PASSWORD            {'✓ (set)' if settings.servicenow_password else '✗ MISSING'}")
     print("  └────────────────────────────────────────────────")
 
     missing = []
-    if not INSTANCE: missing.append("SERVICENOW_INSTANCE")
-    if AUTH_MODE == "oauth":
-        if not CLIENT_ID: missing.append("SERVICENOW_CLIENT_ID")
-        if not CLIENT_SECRET: missing.append("SERVICENOW_CLIENT_SECRET")
+    if not inst: missing.append("SERVICENOW_INSTANCE")
+    if mode == "oauth":
+        if not settings.servicenow_client_id: missing.append("SERVICENOW_CLIENT_ID")
+        if not settings.servicenow_client_secret: missing.append("SERVICENOW_CLIENT_SECRET")
     else:
-        if not USERNAME: missing.append("SERVICENOW_USERNAME")
-        if not PASSWORD: missing.append("SERVICENOW_PASSWORD")
+        if not settings.servicenow_username: missing.append("SERVICENOW_USERNAME")
+        if not settings.servicenow_password: missing.append("SERVICENOW_PASSWORD")
     if missing:
+        log.error("missing_env_vars", vars=missing)
         print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
         print("  Copy .env.example to .env and fill in your ServiceNow credentials.")
         sys.exit(1)
 
 
 def main() -> None:
-    port = int(os.environ.get("PORT", 3001))
-    cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
     _validate_env()
-    print(f"⚓ GTC — ServiceNow Trading Post starting on port {port}")
+    log.info("starting", port=settings.port)
+    print(f"⚓ GTC — ServiceNow Trading Post starting on port {settings.port}")
 
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=settings.cors_origins.split(","),
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
     )
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port)
 
 
 if __name__ == "__main__":

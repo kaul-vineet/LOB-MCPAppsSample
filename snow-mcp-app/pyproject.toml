@@ -9,6 +9,9 @@ dependencies = [
     "python-dotenv>=1.0",
     "uvicorn>=0.29",
     "starlette>=0.37",
+    "structlog>=24.1.0",
+    "pydantic-settings>=2.0.0",
+    "tenacity>=8.3.0",
 ]
 
 [project.scripts]
