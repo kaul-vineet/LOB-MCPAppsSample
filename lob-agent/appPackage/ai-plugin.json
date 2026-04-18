@@ -189,6 +189,38 @@
         {
             "name": "ft_get_aircraft_track",
             "description": "Get the flight track (waypoints) for an aircraft. Pass time=0 for most recent track."
+        },
+        {
+            "name": "ds_get_envelopes",
+            "description": "Get the latest envelopes from DocuSign with optional status filter. Returns subject, status, dates, and recipient count."
+        },
+        {
+            "name": "ds_get_envelope_details",
+            "description": "Get detailed information about a specific envelope including all recipients and their signing status."
+        },
+        {
+            "name": "ds_get_templates",
+            "description": "List available DocuSign templates for sending envelopes."
+        },
+        {
+            "name": "ds_send_envelope",
+            "description": "Send a new envelope for signing using a template. Requires template_id, subject, and signers."
+        },
+        {
+            "name": "ds_void_envelope",
+            "description": "Void (cancel) an envelope. Requires envelope_id and void_reason."
+        },
+        {
+            "name": "ds_resend_envelope",
+            "description": "Resend notifications to recipients who haven't signed yet."
+        },
+        {
+            "name": "ds_get_signing_url",
+            "description": "Generate an embedded signing URL for a specific recipient."
+        },
+        {
+            "name": "ds_download_document",
+            "description": "Download a document from an envelope as PDF."
         }
     ],
     "runtimes": [
@@ -303,6 +335,28 @@
                 "ft_get_airport_departures",
                 "ft_get_airport_arrivals",
                 "ft_get_aircraft_track"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-3005.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "ds_get_envelopes",
+                "ds_get_envelope_details",
+                "ds_get_templates",
+                "ds_send_envelope",
+                "ds_void_envelope",
+                "ds_resend_envelope",
+                "ds_get_signing_url",
+                "ds_download_document"
             ],
             "auth": {
                 "type": "None"

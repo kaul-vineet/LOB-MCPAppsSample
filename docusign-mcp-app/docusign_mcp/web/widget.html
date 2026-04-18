@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DocuSign Widget</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f9fa;
+    --text: #1a1a2e;
+    --text-secondary: #6c757d;
+    --border: #e0e0e0;
+    --brand: #4C00FF;
+    --brand-light: #e8e0ff;
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --info: #17a2b8;
+  }
+  .dark {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --text: #eaeaea;
+    --text-secondary: #a0a0b0;
+    --border: #2a2a4a;
+    --brand-light: #2a1a4e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
+
+  .header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    background: linear-gradient(135deg, #4C00FF 0%, #7B2FFF 100%);
+    color: #fff; margin-bottom: 16px;
+  }
+  .header-icon { font-size: 24px; }
+  .header h1 { font-size: 16px; font-weight: 600; }
+  .header .count { font-size: 12px; opacity: 0.8; }
+
+  /* Pipeline stages */
+  .pipeline {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    background: var(--surface); border-radius: 8px; padding: 8px;
+    border: 1px solid var(--border);
+  }
+  .stage {
+    flex: 1; text-align: center; padding: 8px 4px;
+    border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .stage:hover { opacity: 0.85; }
+  .stage.active { box-shadow: 0 2px 8px rgba(0,0,0,0.15); transform: translateY(-1px); }
+  .stage .stage-count { font-size: 18px; font-weight: 700; display: block; }
+  .stage .stage-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stage.draft { background: #e3e8f0; color: #4a5568; }
+  .stage.sent { background: #dbeafe; color: #1e40af; }
+  .stage.delivered { background: #fef3c7; color: #92400e; }
+  .stage.signed { background: #d1fae5; color: #065f46; }
+  .stage.completed { background: #c6f6d5; color: #22543d; }
+  .stage.declined { background: #fed7d7; color: #9b2c2c; }
+  .stage.voided { background: #e2e8f0; color: #718096; }
+
+  .dark .stage.draft { background: #2d3748; color: #a0aec0; }
+  .dark .stage.sent { background: #1e3a5f; color: #90cdf4; }
+  .dark .stage.delivered { background: #5a4e1e; color: #fbd38d; }
+  .dark .stage.signed { background: #1a4731; color: #9ae6b4; }
+  .dark .stage.completed { background: #1c4532; color: #9ae6b4; }
+  .dark .stage.declined { background: #4a1c1c; color: #feb2b2; }
+  .dark .stage.voided { background: #2d3748; color: #a0aec0; }
+
+  /* Table */
+  .table-wrap {
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--surface); font-weight: 600; text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+  td { padding: 10px 12px; border-top: 1px solid var(--border); }
+  tr:hover { background: var(--surface); }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  }
+  .status-badge.sent { background: #dbeafe; color: #1e40af; }
+  .status-badge.delivered { background: #fef3c7; color: #92400e; }
+  .status-badge.completed { background: #d1fae5; color: #065f46; }
+  .status-badge.declined { background: #fed7d7; color: #9b2c2c; }
+  .status-badge.voided { background: #e2e8f0; color: #718096; }
+  .status-badge.created { background: #e3e8f0; color: #4a5568; }
+
+  .dark .status-badge.sent { background: #1e3a5f; color: #90cdf4; }
+  .dark .status-badge.delivered { background: #5a4e1e; color: #fbd38d; }
+  .dark .status-badge.completed { background: #1a4731; color: #9ae6b4; }
+  .dark .status-badge.declined { background: #4a1c1c; color: #feb2b2; }
+  .dark .status-badge.voided { background: #2d3748; color: #a0aec0; }
+  .dark .status-badge.created { background: #2d3748; color: #a0aec0; }
+
+  .subject-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .date-cell { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .id-cell { font-family: monospace; font-size: 11px; color: var(--text-secondary); }
+
+  /* Detail view */
+  .detail-panel {
+    margin-top: 16px; padding: 16px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+  }
+  .detail-panel h3 { font-size: 14px; margin-bottom: 12px; }
+  .signer-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .signer-row:last-child { border-bottom: none; }
+  .signer-info { display: flex; flex-direction: column; gap: 2px; }
+  .signer-name { font-weight: 600; font-size: 13px; }
+  .signer-email { font-size: 12px; color: var(--text-secondary); }
+
+  /* Templates */
+  .template-card {
+    padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 8px; background: var(--surface);
+  }
+  .template-card h4 { font-size: 13px; font-weight: 600; }
+  .template-card p { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Shimmer */
+  .shimmer { height: 16px; background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; margin: 8px 0; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .shimmer-block { padding: 16px; }
+  .shimmer.w60 { width: 60%; }
+  .shimmer.w80 { width: 80%; }
+  .shimmer.w40 { width: 40%; }
+  .shimmer.tall { height: 120px; }
+
+  .empty { text-align: center; padding: 32px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="shimmer-block">
+    <div class="shimmer w80"></div>
+    <div class="shimmer w60"></div>
+    <div class="shimmer tall"></div>
+    <div class="shimmer w40"></div>
+  </div>
+</div>
+<script>
+(function() {
+  const root = document.getElementById('root');
+  let isDark = false;
+
+  // Listen for host messages
+  window.addEventListener('message', (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'ui/notifications/tool-result') {
+      const sc = msg?.data?.metadata?.structured_content;
+      if (sc) render(sc);
+    }
+    if (msg.type === 'ui/notifications/initialized' || msg.type === 'host-context') {
+      if (msg.data?.theme === 'dark' || msg.data?.hostContext?.theme === 'dark') {
+        isDark = true;
+        document.body.classList.add('dark');
+      }
+    }
+  });
+
+  // Notify host we're ready
+  window.parent.postMessage({ type: 'ui/initialize', data: { capabilities: {} } }, '*');
+
+  function render(sc) {
+    const { type, data } = sc;
+    if (type === 'envelopes') renderEnvelopes(data);
+    else if (type === 'envelope_detail') renderDetail(data);
+    else if (type === 'templates') renderTemplates(data);
+    else root.innerHTML = '<div class="empty">Unknown data type</div>';
+  }
+
+  function renderEnvelopes(envelopes) {
+    if (!envelopes || envelopes.length === 0) {
+      root.innerHTML = '<div class="empty">📭 No envelopes found</div>';
+      return;
+    }
+
+    // Count by status
+    const counts = {};
+    envelopes.forEach(e => {
+      const s = (e.status || 'unknown').toLowerCase();
+      counts[s] = (counts[s] || 0) + 1;
+    });
+
+    const stages = ['created','sent','delivered','signed','completed','declined','voided'];
+    const stageEmojis = { created:'📝', sent:'📤', delivered:'📬', signed:'✍️', completed:'✅', declined:'❌', voided:'🚫' };
+
+    let html = `
+      <div class="header">
+        <span class="header-icon">✒️</span>
+        <div>
+          <h1>DocuSign Envelopes</h1>
+          <span class="count">${envelopes.length} envelope(s)</span>
+        </div>
+      </div>
+      <div class="pipeline">
+        ${stages.map(s => `
+          <div class="stage ${s} ${counts[s] ? 'active' : ''}">
+            <span class="stage-count">${counts[s] || 0}</span>
+            <span class="stage-label">${stageEmojis[s]} ${s}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Status</th>
+            <th>Subject</th>
+            <th>Sent</th>
+            <th>ID</th>
+          </tr></thead>
+          <tbody>
+            ${envelopes.map(e => `
+              <tr>
+                <td><span class="status-badge ${(e.status||'').toLowerCase()}">${e.statusEmoji || '📄'} ${e.status}</span></td>
+                <td class="subject-cell" title="${e.emailSubject || ''}">${e.emailSubject || '(no subject)'}</td>
+                <td class="date-cell">${e.sentDateTime ? new Date(e.sentDateTime).toLocaleDateString() : '—'}</td>
+                <td class="id-cell">${(e.envelopeId || '').substring(0, 8)}…</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    root.innerHTML = html;
+  }
+
+  function renderDetail(detail) {
+    const signers = detail.signers || [];
+    let html = `
+      <div class="header">
+        <span class="header-icon">${detail.statusEmoji || '📄'}</span>
+        <div>
+          <h1>${detail.emailSubject || 'Envelope Details'}</h1>
+          <span class="count">Status: ${detail.status} · ${signers.length} signer(s)</span>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <h3>Signers</h3>
+        ${signers.map(s => `
+          <div class="signer-row">
+            <div class="signer-info">
+              <span class="signer-name">${s.name}</span>
+              <span class="signer-email">${s.email}</span>
+            </div>
+            <span class="status-badge ${(s.status||'').toLowerCase()}">${s.status}</span>
+          </div>
+        `).join('')}
+        ${signers.length === 0 ? '<div class="empty">No signers</div>' : ''}
+      </div>
+      <div style="margin-top:12px; font-size:12px; color:var(--text-secondary);">
+        Sent: ${detail.sentDateTime ? new Date(detail.sentDateTime).toLocaleString() : '—'} ·
+        Completed: ${detail.completedDateTime ? new Date(detail.completedDateTime).toLocaleString() : '—'}
+      </div>
+    `;
+    root.innerHTML = html;
+  }
+
+  function renderTemplates(templates) {
+    if (!templates || templates.length === 0) {
+      root.innerHTML = '<div class="empty">📋 No templates found</div>';
+      return;
+    }
+    let html = `
+      <div class="header">
+        <span class="header-icon">📋</span>
+        <div>
+          <h1>DocuSign Templates</h1>
+          <span class="count">${templates.length} template(s)</span>
+        </div>
+      </div>
+    `;
+    templates.forEach(t => {
+      html += `
+        <div class="template-card">
+          <h4>${t.name}</h4>
+          <p>${t.description || 'No description'}</p>
+          <p style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+            ID: ${(t.templateId || '').substring(0, 8)}… · Folder: ${t.folderName || '—'}
+          </p>
+        </div>
+      `;
+    });
+    root.innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>
