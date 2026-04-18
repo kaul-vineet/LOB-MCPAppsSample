@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  :root {
+    --color-bg:         #ffffff;
+    --color-surface:    #f5f5f5;
+    --color-text:       #111111;
+    --color-text-muted: #767676;
+    --color-border:     #e0e0e0;
+    --color-header-bg:  #efefef;
+    --color-hover:      #e8f0fe;
+    --color-expanded:   #f0f7ff;
+    --color-accent:     #0066cc;
+    --color-mcp-bar:    #0066cc;
+    --radius:           8px;
+    --space-xs:         4px;
+    --space-sm:         8px;
+    --space-md:         12px;
+    --space-lg:         16px;
+  }
+  [data-theme="dark"] {
+    --color-bg:         #1a1a1a;
+    --color-surface:    #1e1e1e;
+    --color-text:       #f0f0f0;
+    --color-text-muted: #a0a0a0;
+    --color-border:     #333333;
+    --color-header-bg:  #2a2a2a;
+    --color-hover:      #1a2a3a;
+    --color-expanded:   #162030;
+    --color-accent:     #4da3ff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding: var(--space-md);
+  }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-header-bg);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+  }
+
+  tr.flight-row {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  tr.flight-row:hover { background: var(--color-hover); }
+  tr.flight-row.expanded { background: var(--color-hover); }
+  tr.flight-row.no-expand { cursor: default; }
+  tr.flight-row.no-expand:hover { background: none; }
+  tr.flight-row.checked { background: #edf7ed; }
+  tr.flight-row.checked:hover { background: #dff0df; }
+  tr.flight-row.checked.expanded { background: #dff0df; }
+  [data-theme="dark"] tr.flight-row.checked { background: #1a2e1a; }
+  [data-theme="dark"] tr.flight-row.checked:hover { background: #1f3a1f; }
+  [data-theme="dark"] tr.flight-row.checked.expanded { background: #1f3a1f; }
+  td.toggle-cell.done { color: #2a7a2a; font-size: 13px; font-weight: 600; }
+  [data-theme="dark"] td.toggle-cell.done { color: #5cb85c; }
+
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  td.toggle-cell {
+    width: 24px;
+    padding-right: 0;
+    color: var(--color-text-muted);
+    font-size: 10px;
+  }
+
+  tr.detail-row td {
+    background: var(--color-expanded);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-md);
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-sm) var(--space-lg);
+  }
+
+  .detail-item { display: flex; flex-direction: column; gap: 2px; }
+  .detail-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted);
+  }
+  .detail-value { font-size: 13px; font-weight: 500; color: var(--color-text); }
+
+  .map-link {
+    display: inline-block;
+    margin-top: var(--space-sm);
+    font-size: 12px;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .map-link:hover { text-decoration: underline; }
+
+  .loading {
+    color: var(--color-text-muted);
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .callsign-link {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .callsign-link:hover { text-decoration: underline; }
+
+  .icao-link {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    font-family: monospace;
+    font-size: 13px;
+  }
+  .icao-link:hover { text-decoration: underline; }
+
+  .empty {
+    padding: var(--space-lg);
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Live state section (aircraft view) ── */
+  .state-section {
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .state-link {
+    font-size: 12px;
+    color: var(--color-accent);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+  }
+  .state-link:hover { text-decoration: underline; }
+
+  /* ── MCP identity bar ── */
+  .mcp-bar {
+    height: 3px;
+    background: var(--color-mcp-bar);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .mcp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-header-bg);
+  }
+
+  .mcp-badge {
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  .mcp-badge strong {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .mcp-source {
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+</style>
+</head>
+<body>
+<div id="root"><div class="empty">Loading flight data...</div></div>
+
+<script>
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  }
+  if (window.openai && window.openai.theme) { applyTheme(window.openai.theme); }
+
+  // ── MCP Apps initialization handshake ─────────────────────────────────────
+  // Protocol: widget sends ui/initialize → host responds → widget sends
+  // ui/notifications/initialized → host delivers ui/notifications/tool-result
+  var INIT_REQ_ID = 'mcp-ui-init';
+  var mcpHandshakeDone = false;
+
+  function sendMcpInitialize() {
+    window.parent.postMessage({
+      jsonrpc: '2.0', id: INIT_REQ_ID,
+      method: 'ui/initialize',
+      params: {
+        appInfo: { name: 'flight-tracker-widget', version: '1.0' },
+        appCapabilities: {}
+      }
+    }, '*');
+  }
+
+  function sendMcpInitialized() {
+    if (mcpHandshakeDone) return;
+    mcpHandshakeDone = true;
+    window.parent.postMessage({
+      jsonrpc: '2.0',
+      method: 'ui/notifications/initialized'
+    }, '*');
+  }
+
+  // ── callTool abstraction ───────────────────────────────────────────────────
+  var pendingCalls = {};
+  var callId = 0;
+
+  function callTool(name, args) {
+    if (window.openai && window.openai.callTool) {
+      return window.openai.callTool(name, args).then(function(r) {
+        return r.structuredContent;
+      });
+    }
+    return new Promise(function(resolve, reject) {
+      var id = ++callId;
+      pendingCalls[id] = { resolve: resolve, reject: reject };
+      window.parent.postMessage({
+        jsonrpc: '2.0', id: id,
+        method: 'tools/call',
+        params: { name: name, arguments: args || {} }
+      }, '*');
+      setTimeout(function() {
+        if (pendingCalls[id]) {
+          delete pendingCalls[id];
+          reject(new Error('Timed out'));
+        }
+      }, 20000);
+    });
+  }
+
+  // ── Notify host of our height ──────────────────────────────────────────────
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    if (window.openai && window.openai.notifyIntrinsicHeight) {
+      window.openai.notifyIntrinsicHeight({ height: h });
+    }
+    // jsonrpc: '2.0' is required — mcpwidget.js forwards this to M365 Copilot
+    // which validates the jsonrpc envelope before acting on the height.
+    window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifyIntrinsicHeight', params: { height: h } }, '*');
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  var flightData   = null;
+  var expandedIdx  = -1;
+  var viewMode     = 'aircraft'; // 'aircraft' | 'departures' | 'arrivals'
+  var checkedRows  = {}; // idx → true once data has loaded for that row
+
+  // ── MCP footer HTML ────────────────────────────────────────────────────────
+  var MCP_FOOTER =
+    '<div class="mcp-footer">' +
+      '<span class="mcp-badge">&#9889; <strong>MCP Widget</strong> &middot; flight-tracker-mcp</span>' +
+      '<span class="mcp-source">Data: OpenSky Network</span>' +
+    '</div>';
+
+  // ── Main render dispatcher ─────────────────────────────────────────────────
+  function render(data) {
+    flightData  = data;
+    expandedIdx = -1;
+    checkedRows = {};
+    var root = document.getElementById('root');
+
+    if (!data) {
+      root.innerHTML = '<div class="empty">No data received.</div>';
+      notifyHeight(); return;
+    }
+
+    // Standalone get_aircraft_state result
+    if (!data.flights && data.icao24 && data.found !== undefined) {
+      renderStateCard(data);
+      return;
+    }
+
+    if (!data.flights) {
+      root.innerHTML = '<div class="empty">No data received.</div>';
+      notifyHeight(); return;
+    }
+
+    if (data.type === 'departures') {
+      viewMode = 'departures';
+      renderAirportView(data);
+    } else if (data.type === 'arrivals') {
+      viewMode = 'arrivals';
+      renderAirportView(data);
+    } else {
+      viewMode = 'aircraft';
+      renderAircraftView(data);
+    }
+  }
+
+  // ── Render: aircraft flight history ───────────────────────────────────────
+  // Rows are not expandable. A "Check Live State" link sits above the footer.
+  function renderAircraftView(data) {
+    var root  = document.getElementById('root');
+    var count = data.flights.length;
+
+    if (count === 0) {
+      root.innerHTML = '<div class="empty">No flights found for this aircraft in the selected period.</div>';
+      notifyHeight(); return;
+    }
+
+    var rows = data.flights.map(function(f, i) {
+      var callsign = f.callsign
+        ? '<a class="callsign-link" href="https://www.flightradar24.com/' + f.callsign + '" target="_blank">' + f.callsign + '</a>'
+        : '&mdash;';
+      return '<tr class="flight-row no-expand">' +
+        '<td>' + callsign + '</td>' +
+        '<td>' + (f.from || '&mdash;') + '</td>' +
+        '<td>' + (f.to   || '&mdash;') + '</td>' +
+        '<td>' + f.departed + '</td>' +
+        '<td>' + f.arrived  + '</td>' +
+      '</tr>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">&#9992; ' + data.icao24.toUpperCase() +
+          ' &mdash; ' + count + ' flight' + (count !== 1 ? 's' : '') +
+        '</div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th>Callsign</th><th>From</th><th>To</th>' +
+            '<th>Departed (UTC)</th><th>Arrived (UTC)</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '<div class="state-section" id="state-section">' +
+          '<button class="state-link" onclick="fetchLiveState()">&#9992; Check Live State &rarr;</button>' +
+        '</div>' +
+        MCP_FOOTER +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // Fetch and render live state in the aircraft view footer section
+  function fetchLiveState() {
+    var section = document.getElementById('state-section');
+    if (!section) return;
+    section.innerHTML = '<div class="loading">Fetching live state...</div>';
+    notifyHeight();
+
+    callTool('get_aircraft_state', { icao24: flightData.icao24 })
+      .then(function(state) {
+        if (!state || !state.found) {
+          section.innerHTML = '<div class="loading">No live state available — aircraft may be on ground or out of coverage.</div>';
+          notifyHeight(); return;
+        }
+        var statusIcon = state.on_ground ? '&#128376; On ground' : '&#9992; Airborne';
+        var mapUrl = (state.latitude != null && state.longitude != null)
+          ? 'https://maps.google.com/?q=' + state.latitude + ',' + state.longitude
+          : null;
+        var items = [
+          { label: 'Status',       value: statusIcon },
+          { label: 'Altitude',     value: state.altitude_ft != null ? state.altitude_ft.toLocaleString() + ' ft (' + state.altitude_m + ' m)' : '—' },
+          { label: 'Speed',        value: state.velocity_kmh != null ? state.velocity_kmh + ' km/h' : '—' },
+          { label: 'Heading',      value: state.heading_deg != null ? state.heading_deg + '° ' + state.heading_compass : '—' },
+          { label: 'Country',      value: state.origin_country || '—' },
+          { label: 'Last Contact', value: state.last_contact || '—' },
+        ];
+        var grid = items.map(function(item) {
+          return '<div class="detail-item">' +
+            '<span class="detail-label">' + item.label + '</span>' +
+            '<span class="detail-value">' + item.value + '</span>' +
+          '</div>';
+        }).join('');
+        section.innerHTML = '<div class="detail-grid">' + grid + '</div>' +
+          (mapUrl ? '<a class="map-link" href="' + mapUrl + '" target="_blank">&#128205; View on Google Maps</a>' : '');
+        notifyHeight();
+      })
+      .catch(function(err) {
+        section.innerHTML = '<div class="loading">Error: ' + err.message + '</div>';
+        notifyHeight();
+      });
+  }
+
+  // ── Render: airport departures / arrivals ──────────────────────────────────
+  function renderAirportView(data) {
+    var root  = document.getElementById('root');
+    var count = data.flights.length;
+    var isDep = data.type === 'departures';
+    var label = isDep ? 'Departures from' : 'Arrivals at';
+    var icon  = isDep ? '&#9992;' : '&#128381;';
+    var hint  = isDep ? 'Click a row for live state' : 'Click a row to view track';
+
+    if (count === 0) {
+      root.innerHTML = '<div class="empty">No ' + data.type + ' found for ' + data.airport + '.</div>';
+      notifyHeight(); return;
+    }
+
+    var rows = data.flights.map(function(f, i) {
+      var icao24 = f.icao24
+        ? '<a class="icao-link" href="https://opensky-network.org/aircraft-profile?icao24=' + f.icao24 + '" target="_blank">' + f.icao24.toUpperCase() + '</a>'
+        : '&mdash;';
+      var callsign = f.callsign
+        ? '<a class="callsign-link" href="https://www.flightradar24.com/' + f.callsign + '" target="_blank">' + f.callsign + '</a>'
+        : '&mdash;';
+      return '<tr class="flight-row" data-idx="' + i + '" onclick="toggleRow(' + i + ')">' +
+        '<td class="toggle-cell">&#9654;</td>' +
+        '<td>' + icao24   + '</td>' +
+        '<td>' + callsign + '</td>' +
+        '<td>' + (f.from || '&mdash;') + '</td>' +
+        '<td>' + (f.to   || '&mdash;') + '</td>' +
+        '<td>' + f.departed + '</td>' +
+        '<td>' + f.arrived  + '</td>' +
+      '</tr>' +
+      '<tr class="detail-row" id="detail-' + i + '" style="display:none">' +
+        '<td colspan="7"><div class="loading">' + (isDep ? 'Fetching live state...' : 'Fetching track...') + '</div></td>' +
+      '</tr>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">' + icon + ' ' + label + ' ' + data.airport +
+          ' &mdash; ' + count + ' flight' + (count !== 1 ? 's' : '') +
+          '<span class="hint">' + hint + '</span>' +
+        '</div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th></th>' +
+            '<th>Aircraft</th><th>Callsign</th><th>From</th><th>To</th>' +
+            '<th>Departed (UTC)</th><th>Arrived (UTC)</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        MCP_FOOTER +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ── Render: standalone aircraft state card ─────────────────────────────────
+  function renderStateCard(state) {
+    var root = document.getElementById('root');
+
+    if (!state.found) {
+      root.innerHTML =
+        '<div class="card">' +
+          '<div class="mcp-bar"></div>' +
+          '<div class="card-header">&#9992; ' + state.icao24.toUpperCase() + '</div>' +
+          '<div class="empty">No live state available — aircraft may be on ground or out of coverage.</div>' +
+          MCP_FOOTER +
+        '</div>';
+      notifyHeight(); return;
+    }
+
+    var statusIcon = state.on_ground ? '&#128376; On ground' : '&#9992; Airborne';
+    var mapUrl = (state.latitude != null && state.longitude != null)
+      ? 'https://maps.google.com/?q=' + state.latitude + ',' + state.longitude
+      : null;
+
+    var items = [
+      { label: 'Status',       value: statusIcon },
+      { label: 'Altitude',     value: state.altitude_ft != null ? state.altitude_ft.toLocaleString() + ' ft (' + state.altitude_m + ' m)' : '—' },
+      { label: 'Speed',        value: state.velocity_kmh != null ? state.velocity_kmh + ' km/h' : '—' },
+      { label: 'Heading',      value: state.heading_deg != null ? state.heading_deg + '° ' + state.heading_compass : '—' },
+      { label: 'Country',      value: state.origin_country || '—' },
+      { label: 'Last Contact', value: state.last_contact || '—' },
+    ];
+
+    var grid = items.map(function(item) {
+      return '<div class="detail-item">' +
+        '<span class="detail-label">' + item.label + '</span>' +
+        '<span class="detail-value">' + item.value + '</span>' +
+      '</div>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="card">' +
+        '<div class="mcp-bar"></div>' +
+        '<div class="card-header">&#9992; ' + state.icao24.toUpperCase() +
+          (state.callsign ? ' &mdash; ' + state.callsign : '') +
+        '</div>' +
+        '<div style="padding:var(--space-md)">' +
+          '<div class="detail-grid">' + grid + '</div>' +
+          (mapUrl ? '<a class="map-link" href="' + mapUrl + '" target="_blank">&#128205; View on Google Maps</a>' : '') +
+        '</div>' +
+        MCP_FOOTER +
+      '</div>';
+
+    notifyHeight();
+  }
+
+  // ── Toggle expanded detail row (airport views only) ────────────────────────
+  function toggleRow(idx) {
+    var detailRow  = document.getElementById('detail-' + idx);
+    var flightRow  = document.querySelector('[data-idx="' + idx + '"]');
+    var toggleCell = flightRow.querySelector('.toggle-cell');
+
+    if (expandedIdx === idx) {
+      detailRow.style.display = 'none';
+      flightRow.classList.remove('expanded');
+      toggleCell.innerHTML    = checkedRows[idx] ? '&#10003;' : '&#9654;';
+      toggleCell.className    = 'toggle-cell' + (checkedRows[idx] ? ' done' : '');
+      expandedIdx = -1;
+      notifyHeight();
+      return;
+    }
+
+    // Collapse previously expanded
+    if (expandedIdx >= 0) {
+      var prev    = document.getElementById('detail-' + expandedIdx);
+      var prevRow = document.querySelector('[data-idx="' + expandedIdx + '"]');
+      if (prev) prev.style.display = 'none';
+      if (prevRow) {
+        prevRow.classList.remove('expanded');
+        var prevCell = prevRow.querySelector('.toggle-cell');
+        prevCell.innerHTML = checkedRows[expandedIdx] ? '&#10003;' : '&#9654;';
+        prevCell.className = 'toggle-cell' + (checkedRows[expandedIdx] ? ' done' : '');
+      }
+    }
+
+    expandedIdx = idx;
+    flightRow.classList.add('expanded');
+    toggleCell.innerHTML = '&#9660;';
+    detailRow.style.display = '';
+    notifyHeight();
+
+    var f = flightData.flights[idx];
+
+    if (viewMode === 'departures') {
+      // Departures: show live state for the aircraft
+      detailRow.querySelector('td').innerHTML = '<div class="loading">Fetching live state...</div>';
+      callTool('get_aircraft_state', { icao24: f.icao24 })
+        .then(function(state) { renderDetail(idx, state); })
+        .catch(function(err)  { renderDetailError(idx, err.message); });
+
+    } else if (viewMode === 'arrivals') {
+      // Arrivals: show historical track for this flight
+      detailRow.querySelector('td').innerHTML = '<div class="loading">Fetching track...</div>';
+      callTool('get_aircraft_track', { icao24: f.icao24, time: f.first_seen_ts || 0 })
+        .then(function(track) { renderTrackDetail(idx, track); })
+        .catch(function(err)  { renderDetailError(idx, err.message); });
+    }
+  }
+
+  // ── Render expanded: live aircraft state ───────────────────────────────────
+  function renderDetail(idx, state) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    if (!cell) return;
+
+    if (!state || !state.found) {
+      cell.innerHTML = '<div class="loading">No live state available — aircraft may be on ground or out of coverage.</div>';
+      notifyHeight(); return;
+    }
+
+    var statusIcon = state.on_ground ? '&#128376; On ground' : '&#9992; Airborne';
+    var mapUrl = (state.latitude != null && state.longitude != null)
+      ? 'https://maps.google.com/?q=' + state.latitude + ',' + state.longitude
+      : null;
+
+    var items = [
+      { label: 'Status',       value: statusIcon },
+      { label: 'Altitude',     value: state.altitude_ft != null ? state.altitude_ft.toLocaleString() + ' ft (' + state.altitude_m + ' m)' : '—' },
+      { label: 'Speed',        value: state.velocity_kmh != null ? state.velocity_kmh + ' km/h' : '—' },
+      { label: 'Heading',      value: state.heading_deg != null ? state.heading_deg + '° ' + state.heading_compass : '—' },
+      { label: 'Country',      value: state.origin_country || '—' },
+      { label: 'Last Contact', value: state.last_contact || '—' },
+    ];
+
+    var grid = items.map(function(item) {
+      return '<div class="detail-item">' +
+        '<span class="detail-label">' + item.label + '</span>' +
+        '<span class="detail-value">' + item.value + '</span>' +
+      '</div>';
+    }).join('');
+
+    cell.innerHTML = '<div class="detail-grid">' + grid + '</div>' +
+      (mapUrl ? '<a class="map-link" href="' + mapUrl + '" target="_blank">&#128205; View on Google Maps</a>' : '');
+
+    // Mark row as checked
+    checkedRows[idx] = true;
+    var row      = document.querySelector('[data-idx="' + idx + '"]');
+    var cell2    = row && row.querySelector('.toggle-cell');
+    if (row)   row.classList.add('checked');
+    if (cell2) { cell2.innerHTML = '&#9660;'; cell2.className = 'toggle-cell done'; }
+
+    notifyHeight();
+  }
+
+  // ── Render expanded: flight track ──────────────────────────────────────────
+  function renderTrackDetail(idx, track) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    if (!cell) return;
+
+    if (!track || !track.found) {
+      cell.innerHTML = '<div class="loading">No track available for this flight.</div>';
+      notifyHeight(); return;
+    }
+
+    var mapUrl = track.last_position
+      ? 'https://maps.google.com/?q=' + track.last_position.lat + ',' + track.last_position.lon
+      : null;
+
+    var items = [
+      { label: 'Callsign',       value: track.callsign || '—' },
+      { label: 'Track Start',    value: track.start_time || '—' },
+      { label: 'Track End',      value: track.end_time || '—' },
+      { label: 'Waypoints',      value: track.waypoints != null ? track.waypoints : '—' },
+      { label: 'First Position', value: track.first_position ? track.first_position.lat.toFixed(4) + ', ' + track.first_position.lon.toFixed(4) : '—' },
+      { label: 'Last Position',  value: track.last_position  ? track.last_position.lat.toFixed(4)  + ', ' + track.last_position.lon.toFixed(4)  : '—' },
+    ];
+
+    var grid = items.map(function(item) {
+      return '<div class="detail-item">' +
+        '<span class="detail-label">' + item.label + '</span>' +
+        '<span class="detail-value">' + item.value + '</span>' +
+      '</div>';
+    }).join('');
+
+    cell.innerHTML = '<div class="detail-grid">' + grid + '</div>' +
+      (mapUrl ? '<a class="map-link" href="' + mapUrl + '" target="_blank">&#128205; View last position on Google Maps</a>' : '');
+
+    // Mark row as checked
+    checkedRows[idx] = true;
+    var row      = document.querySelector('[data-idx="' + idx + '"]');
+    var cell2    = row && row.querySelector('.toggle-cell');
+    if (row)   row.classList.add('checked');
+    if (cell2) { cell2.innerHTML = '&#9660;'; cell2.className = 'toggle-cell done'; }
+
+    notifyHeight();
+  }
+
+  function renderDetailError(idx, msg) {
+    var cell = document.querySelector('#detail-' + idx + ' td');
+    if (cell) cell.innerHTML = '<div class="loading">Error: ' + msg + '</div>';
+    notifyHeight();
+  }
+
+  // ── Message listener ──────────────────────────────────────────────────────
+  var diagMessages = [];
+  window.addEventListener('message', function(event) {
+    var msg = event.data;
+    if (!msg) return;
+
+    try { diagMessages.push(JSON.stringify(msg)); } catch(e) { diagMessages.push(String(msg)); }
+
+    // MCP Apps handshake step 1 — sandbox proxy signals it is ready
+    // (mcpwidget.js sends SANDBOX_PROXY_READY / SANDBOX_RESOURCE_READY to inner iframe)
+    if (msg.type === 'SANDBOX_PROXY_READY' || msg.type === 'SANDBOX_RESOURCE_READY') {
+      sendMcpInitialize();
+      return;
+    }
+
+    // MCP Apps handshake step 2 — host responded to our ui/initialize
+    if (msg.id === INIT_REQ_ID) {
+      sendMcpInitialized();
+      return;
+    }
+
+    // Theme change
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/theme-change') {
+      applyTheme(msg.params && msg.params.theme);
+      return;
+    }
+
+    // Tool result — primary delivery path after handshake
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/notifications/tool-result') {
+      rendered = true;
+      render(msg.params && msg.params.structuredContent);
+      return;
+    }
+
+    // callTool response
+    if (msg.jsonrpc === '2.0' && msg.id && pendingCalls[msg.id]) {
+      var cb = pendingCalls[msg.id];
+      delete pendingCalls[msg.id];
+      if (msg.result) { cb.resolve(msg.result.structuredContent !== undefined ? msg.result.structuredContent : msg.result); }
+      else { cb.reject(new Error((msg.error && msg.error.message) || 'Tool call failed')); }
+      return;
+    }
+
+    // Fallback — try to extract structuredContent from any shape
+    var sc = (msg.params && msg.params.structuredContent) ||
+             (msg.result && msg.result.structuredContent) ||
+             (msg.structuredContent) ||
+             (msg.data && msg.data.structuredContent);
+    if (!rendered && sc !== undefined) {
+      rendered = true;
+      render(sc);
+    }
+  }, { passive: true });
+
+  // ── window.openai.toolOutput — watch via setter so timing doesn't matter ──
+  var rendered = false;
+
+  function extractData(out) {
+    if (!out) return null;
+    return (out.structuredContent !== undefined) ? out.structuredContent : out;
+  }
+
+  function tryRenderFromOpenAI() {
+    if (rendered) return;
+    if (window.openai) {
+      if (window.openai.theme) { applyTheme(window.openai.theme); }
+      if (window.openai.toolOutput) {
+        render(extractData(window.openai.toolOutput));
+        rendered = true;
+      }
+    }
+  }
+
+  // Install a property-setter trap on window.openai so we fire the moment
+  // the sandbox proxy injects toolOutput — no polling gap possible.
+  (function() {
+    var _oa = window.openai;
+    function watchObj(obj) {
+      if (!obj) return;
+      var _to = obj.toolOutput;
+      try {
+        Object.defineProperty(obj, 'toolOutput', {
+          configurable: true,
+          get: function() { return _to; },
+          set: function(v) {
+            _to = v;
+            if (!rendered && v) { render(extractData(v)); rendered = true; }
+          }
+        });
+      } catch(e) {}
+      if (_to && !rendered) { render(extractData(_to)); rendered = true; }
+    }
+    if (_oa) {
+      watchObj(_oa);
+    } else {
+      try {
+        Object.defineProperty(window, 'openai', {
+          configurable: true,
+          get: function() { return _oa; },
+          set: function(v) { _oa = v; watchObj(v); }
+        });
+      } catch(e) {}
+    }
+  })();
+
+  // Resolve host shimmer immediately so "Loading flight data..." is visible.
+  notifyHeight();
+
+  // Step 1 of MCP Apps handshake — send on load (also re-sent on SANDBOX_PROXY_READY)
+  sendMcpInitialize();
+
+  tryRenderFromOpenAI();
+
+  // Fallback poll — covers any edge cases the setter trap misses
+  if (!rendered) {
+    var attempts = 0;
+    var poll = setInterval(function() {
+      attempts++;
+      tryRenderFromOpenAI();
+      if (rendered || attempts >= 300) { clearInterval(poll); }
+    }, 100);
+  }
+
+  // Diagnostic overlay — if still no data after 8s, show all received messages
+  // so we can identify the sandbox message protocol.
+  setTimeout(function() {
+    if (rendered) return;
+    var root = document.getElementById('root');
+    var msgs = diagMessages.length
+      ? diagMessages.map(function(m, i) { return '<b>' + (i+1) + ':</b> ' + m; }).join('<br><br>')
+      : '(none)';
+    var oa = window.openai;
+    var oaKeys = oa ? Object.keys(oa).join(', ') : 'undefined';
+    root.innerHTML =
+      '<div class="empty" style="text-align:left;padding:12px;font-size:11px">' +
+        '<b>No data after 8s — sandbox protocol diagnostic</b><br><br>' +
+        '<b>window.openai keys:</b> ' + oaKeys + '<br><br>' +
+        '<b>Messages received (' + diagMessages.length + '):</b><br>' + msgs +
+      '</div>';
+    notifyHeight();
+  }, 8000);
+</script>
+</body>
+</html>

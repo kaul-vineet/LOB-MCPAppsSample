@@ -31,6 +31,30 @@
             "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities."
         },
         {
+            "name": "get_accounts",
+            "description": "Get the latest 5 Accounts from Salesforce. Returns company name, industry, phone, website, and employee count."
+        },
+        {
+            "name": "create_account",
+            "description": "Create a new Account in Salesforce. Requires name at minimum. Returns the updated list of latest 5 accounts."
+        },
+        {
+            "name": "update_account",
+            "description": "Update an existing Account in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 accounts."
+        },
+        {
+            "name": "get_contacts",
+            "description": "Get the latest 5 Contacts from Salesforce. Returns first name, last name, email, phone, title, and associated account."
+        },
+        {
+            "name": "create_contact",
+            "description": "Create a new Contact in Salesforce. Requires last_name at minimum. Returns the updated list of latest 5 contacts."
+        },
+        {
+            "name": "update_contact",
+            "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
+        },
+        {
             "name": "get_incidents",
             "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending."
         },
@@ -61,6 +85,18 @@
         {
             "name": "update_request_item",
             "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity."
+        },
+        {
+            "name": "resolve_incident",
+            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
+        },
+        {
+            "name": "add_work_note",
+            "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IT staff."
+        },
+        {
+            "name": "get_knowledge_articles",
+            "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query."
         },
         {
             "name": "get_purchase_orders",
@@ -113,6 +149,46 @@
         {
             "name": "update_list",
             "description": "Update a list's name. Called by the widget."
+        },
+        {
+            "name": "hs_get_contacts",
+            "description": "Get the latest 5 Contacts from HubSpot CRM. Returns name, email, phone, company, and lifecycle stage."
+        },
+        {
+            "name": "hs_create_contact",
+            "description": "Create a new Contact in HubSpot CRM. Requires email at minimum. Returns the updated list of latest 5 contacts."
+        },
+        {
+            "name": "hs_update_contact",
+            "description": "Update an existing Contact in HubSpot CRM by its record Id. Only fields provided will be updated."
+        },
+        {
+            "name": "hs_get_deals",
+            "description": "Get the latest 5 Deals from HubSpot CRM. Returns deal name, stage, amount, close date, and pipeline."
+        },
+        {
+            "name": "hs_create_deal",
+            "description": "Create a new Deal in HubSpot CRM. Requires deal_name at minimum. Returns the updated list of latest 5 deals."
+        },
+        {
+            "name": "ft_get_flights_by_aircraft",
+            "description": "Retrieve flight history for an aircraft by its ICAO 24-bit transponder address. Date range max 2 days."
+        },
+        {
+            "name": "ft_get_aircraft_state",
+            "description": "Get the last known live state of an aircraft: position, altitude, speed, heading."
+        },
+        {
+            "name": "ft_get_airport_departures",
+            "description": "Retrieve flights departing from an airport within a date range. ICAO airport code required. Max 1 day."
+        },
+        {
+            "name": "ft_get_airport_arrivals",
+            "description": "Retrieve flights arriving at an airport within a date range. ICAO airport code required. Max 1 day."
+        },
+        {
+            "name": "ft_get_aircraft_track",
+            "description": "Get the flight track (waypoints) for an aircraft. Pass time=0 for most recent track."
         }
     ],
     "runtimes": [
@@ -130,7 +206,13 @@
                 "update_lead",
                 "get_opportunities",
                 "create_opportunity",
-                "update_opportunity"
+                "update_opportunity",
+                "get_accounts",
+                "create_account",
+                "update_account",
+                "get_contacts",
+                "create_contact",
+                "update_contact"
             ],
             "auth": {
                 "type": "None"
@@ -152,7 +234,10 @@
                 "create_request",
                 "update_incident",
                 "update_request",
-                "update_request_item"
+                "update_request_item",
+                "resolve_incident",
+                "add_work_note",
+                "get_knowledge_articles"
             ],
             "auth": {
                 "type": "None"
@@ -193,7 +278,31 @@
                 "add_to_list",
                 "remove_from_list",
                 "update_email",
-                "update_list"
+                "update_list",
+                "hs_get_contacts",
+                "hs_create_contact",
+                "hs_update_contact",
+                "hs_get_deals",
+                "hs_create_deal"
+            ],
+            "auth": {
+                "type": "None"
+            }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-3004.inc1.devtunnels.ms/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "run_for_functions": [
+                "ft_get_flights_by_aircraft",
+                "ft_get_aircraft_state",
+                "ft_get_airport_departures",
+                "ft_get_airport_arrivals",
+                "ft_get_aircraft_track"
             ],
             "auth": {
                 "type": "None"
@@ -201,5 +310,4 @@
         }
     ]
 }
-
 

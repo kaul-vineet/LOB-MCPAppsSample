@@ -103,6 +103,7 @@
   .card-accent.snow { background: linear-gradient(90deg, #293E40, #81B5A1); }
   .card-accent.sap { background: linear-gradient(90deg, #0FAAFF, #354A5F); }
   .card-accent.hs { background: linear-gradient(90deg, #FF7A59, #FF5C35); }
+  .card-accent.ft { background: linear-gradient(90deg, #1B9CFC, #0652DD); }
 
   .card-body { padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
   .card .top { display: flex; align-items: center; gap: 12px; }
@@ -111,6 +112,7 @@
   .card .logo.snow { background: #293E40; }
   .card .logo.sap { background: #0FAAFF; }
   .card .logo.hs { background: #FF7A59; }
+  .card .logo.ft { background: #1B9CFC; }
   .card h2 { font-size: 17px; font-weight: 600; }
   .card .design-tag { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
   .card .desc { font-size: 13px; color: var(--text-light); line-height: 1.55; flex: 1; }
@@ -208,7 +210,7 @@
       <div class="desc">Browse leads & opportunities, create new leads, update pipeline stages, drill into deal details with inline editing.</div>
       <div class="meta">
         <span class="chip port">:3000</span>
-        <span class="chip">6 tools</span>
+        <span class="chip">12 tools</span>
         <span class="chip">CRUD</span>
       </div>
     </div>
@@ -227,7 +229,7 @@
       <div class="desc">View incidents by priority, track service requests & request items with expandable rows and P1–P4 color coding.</div>
       <div class="meta">
         <span class="chip port">:3001</span>
-        <span class="chip">8 tools</span>
+        <span class="chip">11 tools</span>
         <span class="chip">CRUD</span>
       </div>
     </div>
@@ -265,8 +267,27 @@
       <div class="desc">Email campaign analytics with 3-level drill-down: campaigns → contact lists → individual subscribers with engagement metrics.</div>
       <div class="meta">
         <span class="chip port">:3003</span>
-        <span class="chip">7 tools</span>
+        <span class="chip">12 tools</span>
         <span class="chip">Drill-down</span>
+      </div>
+    </div>
+  </a>
+
+  <a class="card" href="#">
+    <div class="card-accent ft"></div>
+    <div class="card-body">
+      <div class="top">
+        <div class="logo ft">FT</div>
+        <div>
+          <h2>Flight Tracker</h2>
+          <div class="design-tag">Aviation</div>
+        </div>
+      </div>
+      <div class="desc">Live aircraft tracking via OpenSky Network — flight history, departures, arrivals, real-time state vectors, and waypoint tracks.</div>
+      <div class="meta">
+        <span class="chip port">:3004</span>
+        <span class="chip">5 tools</span>
+        <span class="chip">OpenSky API</span>
       </div>
     </div>
   </a>

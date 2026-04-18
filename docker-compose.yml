@@ -1,7 +1,7 @@
 # ══════════════════════════════════════════════════════════════════════════════
 # The Great Trading Company — Docker Compose
 #
-# Start all 4 MCP trading posts with one command:
+# Start all 5 MCP trading posts with one command:
 #   docker compose up              — start all
 #   docker compose up salesforce   — start only Salesforce
 #   docker compose up -d           — start in background
@@ -68,6 +68,21 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3003),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Flight Tracker (The Sky Watch) ────────────────────────────────────────
+  flight:
+    build: ./flight-mcp-app
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./flight-mcp-app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3004),2); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3
