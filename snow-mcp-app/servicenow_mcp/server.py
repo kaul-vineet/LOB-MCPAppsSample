@@ -1,5 +1,6 @@
 """
-ServiceNow ITSM MCP Server — 8 tools for Incidents, Requests & Request Items.
+ServiceNow ITSM MCP Server — 11 tools for Incidents, Requests, Request Items,
+Knowledge Articles & operational actions.
 
 Supports both OAuth 2.0 (client credentials) and Basic Auth, controlled by
 SERVICENOW_AUTH_MODE env var. All tools return structuredContent for the widget,
@@ -584,6 +585,157 @@ async def sn__update_request_item(
 
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=structured["message"])],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# RESOLVE / WORK-NOTE / KNOWLEDGE TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Resolve an incident in ServiceNow by setting state to Resolved. "
+        "Requires close_code and close_notes."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__resolve_incident(
+    sys_id: str,
+    close_code: str,
+    close_notes: str,
+) -> types.CallToolResult:
+    """
+    Args:
+        sys_id:       The sys_id of the incident to resolve
+        close_code:   Resolution code (e.g. 'Solved (Permanently)', 'Solved (Workaround/Temporarily)', 'Not Solved')
+        close_notes:  Description of how the incident was resolved
+    """
+    body = {
+        "state": "6",
+        "close_code": close_code,
+        "close_notes": close_notes,
+    }
+    try:
+        resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
+        record = resp.json().get("result", {})
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"Failed to resolve incident: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error resolving incident: {e}")
+
+    number = _val(record.get("number", ""))
+    structured = {
+        "type": "resolved",
+        "record_type": "incident",
+        "sys_id": sys_id,
+        "number": number,
+        "close_code": close_code,
+        "message": f"Incident {number} resolved ({close_code}): {close_notes}",
+    }
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Add a work note to an existing incident in ServiceNow. "
+        "Work notes are internal comments visible only to IT staff."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__add_work_note(
+    sys_id: str,
+    work_note: str,
+) -> types.CallToolResult:
+    """
+    Args:
+        sys_id:    The sys_id of the incident to add a work note to
+        work_note: The work note text to append
+    """
+    body = {"work_notes": work_note}
+    try:
+        resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
+        record = resp.json().get("result", {})
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"Failed to add work note: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error adding work note: {e}")
+
+    number = _val(record.get("number", ""))
+    structured = {
+        "type": "work_note_added",
+        "record_type": "incident",
+        "sys_id": sys_id,
+        "number": number,
+        "message": f"Work note added to incident {number}: {work_note[:80]}{'...' if len(work_note) > 80 else ''}",
+    }
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Search knowledge articles in ServiceNow. "
+        "Returns articles from the kb_knowledge table matching the query. "
+        "Useful for finding solutions before creating incidents."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__get_knowledge_articles(
+    query: str = "",
+    limit: int = 5,
+) -> types.CallToolResult:
+    """
+    Args:
+        query:  Free-text search string to find relevant knowledge articles
+        limit:  Maximum number of articles to return (default 5)
+    """
+    params: dict = {
+        "sysparm_limit": limit,
+        "sysparm_display_value": "true",
+        "sysparm_fields": "sys_id,number,short_description,text,kb_category,author,sys_updated_on,workflow_state",
+        "sysparm_query": f"workflow_state=published^ORDERBYDESCsys_updated_on",
+    }
+    if query:
+        params["sysparm_query"] = f"short_descriptionLIKE{query}^ORtextLIKE{query}^workflow_state=published^ORDERBYDESCsys_updated_on"
+
+    try:
+        resp = await servicenow_request("GET", "/api/now/table/kb_knowledge", params=params)
+        records = resp.json().get("result", [])
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"Failed to fetch knowledge articles: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching knowledge articles: {e}")
+
+    items = [
+        {
+            "sys_id":            r.get("sys_id", ""),
+            "number":            _val(r.get("number", "")),
+            "short_description": _val(r.get("short_description", "")),
+            "category":          _val(r.get("kb_category", "")),
+            "author":            _val(r.get("author", "")),
+            "updated_on":        _val(r.get("sys_updated_on", "")),
+            "state":             _val(r.get("workflow_state", "")),
+        }
+        for r in records
+    ]
+
+    structured = {"type": "knowledge_articles", "total": len(items), "items": items}
+
+    lines = [f"Found {len(items)} knowledge article(s){' matching: ' + query if query else ''}:"]
+    for a in items:
+        lines.append(f"- {a['number']}: {a['short_description']} (Category: {a['category']})")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
     )
 

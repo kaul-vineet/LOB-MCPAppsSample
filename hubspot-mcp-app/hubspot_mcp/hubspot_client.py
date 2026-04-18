@@ -162,6 +162,22 @@ class HubSpotClient:
         result = resp.json()
         return result["id"]
 
+    # ── Update ────────────────────────────────────────────────────────────────
+
+    async def update_object(
+        self,
+        object_type: str,
+        object_id: str,
+        properties: dict[str, Any],
+    ) -> None:
+        """Update an existing HubSpot CRM record by id."""
+        resp = await self._request(
+            "PATCH",
+            f"/crm/v3/objects/{object_type}/{object_id}",
+            json_body={"properties": properties},
+        )
+        self._raise_for_error(resp, f"update {object_type}/{object_id}")
+
     # ── Marketing Emails ─────────────────────────────────────────────────────
 
     async def list_emails(self, limit: int = 5) -> list[dict]:

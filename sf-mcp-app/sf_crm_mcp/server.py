@@ -1,5 +1,5 @@
 """
-Salesforce CRM MCP Server — 6 tools for Leads & Opportunities CRUD.
+Salesforce CRM MCP Server — 12 tools for Leads, Opportunities, Accounts & Contacts CRUD.
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -107,6 +107,49 @@ async def _fetch_opportunities() -> list[dict]:
             "amount":       r.get("Amount"),
             "close_date":   r.get("CloseDate") or "",
             "probability":  r.get("Probability"),
+        }
+        for r in records
+    ]
+
+
+async def _fetch_accounts() -> list[dict]:
+    """Fetch the 5 most recently created Accounts."""
+    sf = get_client()
+    records = await sf.query(
+        "SELECT Id, Name, Industry, Phone, Website, BillingCity, Type, NumberOfEmployees "
+        "FROM Account ORDER BY CreatedDate DESC LIMIT 5"
+    )
+    return [
+        {
+            "id":           r.get("Id"),
+            "name":         r.get("Name") or "",
+            "industry":     r.get("Industry") or "",
+            "phone":        r.get("Phone") or "",
+            "website":      r.get("Website") or "",
+            "billing_city": r.get("BillingCity") or "",
+            "type":         r.get("Type") or "",
+            "employees":    r.get("NumberOfEmployees"),
+        }
+        for r in records
+    ]
+
+
+async def _fetch_contacts() -> list[dict]:
+    """Fetch the 5 most recently created Contacts."""
+    sf = get_client()
+    records = await sf.query(
+        "SELECT Id, FirstName, LastName, Email, Phone, Title, Account.Name "
+        "FROM Contact ORDER BY CreatedDate DESC LIMIT 5"
+    )
+    return [
+        {
+            "id":           r.get("Id"),
+            "first_name":   r.get("FirstName") or "",
+            "last_name":    r.get("LastName") or "",
+            "email":        r.get("Email") or "",
+            "phone":        r.get("Phone") or "",
+            "title":        r.get("Title") or "",
+            "account_name": (r.get("Account") or {}).get("Name") or "",
         }
         for r in records
     ]
@@ -460,6 +503,302 @@ async def sf__update_opportunity(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ACCOUNT TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the latest 5 Accounts from Salesforce. "
+        "Returns company name, industry, phone, website, and employee count."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_accounts() -> types.CallToolResult:
+    try:
+        items = await _fetch_accounts()
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except Exception as exc:
+        return _error_result(f"Failed to fetch accounts: {exc}")
+
+    structured = {"type": "accounts", "total": len(items), "items": items}
+
+    lines = [f"Found {len(items)} account(s):"]
+    for a in items:
+        lines.append(f"- {a['name']} | Industry: {a['industry']} | City: {a['billing_city']} | Employees: {a.get('employees', 'N/A')}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Account in Salesforce. "
+        "Requires name at minimum. "
+        "Returns the updated list of latest 5 accounts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_account(
+    name: str,
+    industry: str = "",
+    phone: str = "",
+    website: str = "",
+    billing_city: str = "",
+    account_type: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        name:          Account / company name (required)
+        industry:      Industry (e.g. 'Technology', 'Finance')
+        phone:         Phone number
+        website:       Company website URL
+        billing_city:  Billing city
+        account_type:  Account type (e.g. 'Customer', 'Partner', 'Prospect')
+    """
+    try:
+        sf = get_client()
+        data: dict = {"Name": name}
+        if industry:     data["Industry"] = industry
+        if phone:        data["Phone"] = phone
+        if website:      data["Website"] = website
+        if billing_city: data["BillingCity"] = billing_city
+        if account_type: data["Type"] = account_type
+
+        new_id = await sf.create("Account", data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to create account: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating account: {exc}")
+
+    try:
+        items = await _fetch_accounts()
+    except Exception:
+        items = []
+
+    structured = {"type": "accounts", "total": len(items), "items": items, "_createdId": new_id}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Account '{name}' created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Update an existing Account in Salesforce by its record Id. "
+        "Only fields provided will be updated. "
+        "Returns the updated list of latest 5 accounts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__update_account(
+    account_id: str,
+    name: str = "",
+    industry: str = "",
+    phone: str = "",
+    website: str = "",
+    billing_city: str = "",
+    account_type: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        account_id:    Salesforce Account record Id (required)
+        name:          Updated company name
+        industry:      Updated industry
+        phone:         Updated phone number
+        website:       Updated website URL
+        billing_city:  Updated billing city
+        account_type:  Updated account type
+    """
+    try:
+        sf = get_client()
+        data: dict = {}
+        if name:         data["Name"] = name
+        if industry:     data["Industry"] = industry
+        if phone:        data["Phone"] = phone
+        if website:      data["Website"] = website
+        if billing_city: data["BillingCity"] = billing_city
+        if account_type: data["Type"] = account_type
+
+        if not data:
+            return _error_result("No fields provided to update.")
+
+        await sf.update("Account", account_id, data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to update account: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating account: {exc}")
+
+    try:
+        items = await _fetch_accounts()
+    except Exception:
+        items = []
+
+    structured = {"type": "accounts", "total": len(items), "items": items}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Account {account_id} updated. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTACT TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the latest 5 Contacts from Salesforce. "
+        "Returns first name, last name, email, phone, title, and associated account."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_contacts() -> types.CallToolResult:
+    try:
+        items = await _fetch_contacts()
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except Exception as exc:
+        return _error_result(f"Failed to fetch contacts: {exc}")
+
+    structured = {"type": "contacts", "total": len(items), "items": items}
+
+    lines = [f"Found {len(items)} contact(s):"]
+    for c in items:
+        lines.append(f"- {c['first_name']} {c['last_name']} | {c['email']} | Title: {c['title']} | Account: {c['account_name']}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Contact in Salesforce. "
+        "Requires last_name at minimum. "
+        "Returns the updated list of latest 5 contacts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_contact(
+    last_name: str,
+    first_name: str = "",
+    email: str = "",
+    phone: str = "",
+    title: str = "",
+    account_id: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        last_name:   Contact last name (required)
+        first_name:  Contact first name
+        email:       Email address
+        phone:       Phone number
+        title:       Job title
+        account_id:  Salesforce Account Id to link this contact to
+    """
+    try:
+        sf = get_client()
+        data: dict = {"LastName": last_name}
+        if first_name: data["FirstName"] = first_name
+        if email:      data["Email"] = email
+        if phone:      data["Phone"] = phone
+        if title:      data["Title"] = title
+        if account_id: data["AccountId"] = account_id
+
+        new_id = await sf.create("Contact", data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to create contact: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating contact: {exc}")
+
+    try:
+        items = await _fetch_contacts()
+    except Exception:
+        items = []
+
+    structured = {"type": "contacts", "total": len(items), "items": items, "_createdId": new_id}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact '{first_name} {last_name}' created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Update an existing Contact in Salesforce by its record Id. "
+        "Only fields provided will be updated. "
+        "Returns the updated list of latest 5 contacts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__update_contact(
+    contact_id: str,
+    first_name: str = "",
+    last_name: str = "",
+    email: str = "",
+    phone: str = "",
+    title: str = "",
+    account_id: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        contact_id:  Salesforce Contact record Id (required)
+        first_name:  Updated first name
+        last_name:   Updated last name
+        email:       Updated email address
+        phone:       Updated phone number
+        title:       Updated job title
+        account_id:  Updated Account Id link
+    """
+    try:
+        sf = get_client()
+        data: dict = {}
+        if first_name: data["FirstName"] = first_name
+        if last_name:  data["LastName"] = last_name
+        if email:      data["Email"] = email
+        if phone:      data["Phone"] = phone
+        if title:      data["Title"] = title
+        if account_id: data["AccountId"] = account_id
+
+        if not data:
+            return _error_result("No fields provided to update.")
+
+        await sf.update("Contact", contact_id, data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to update contact: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating contact: {exc}")
+
+    try:
+        items = await _fetch_contacts()
+    except Exception:
+        items = []
+
+    structured = {"type": "contacts", "total": len(items), "items": items}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PROMPTS
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -500,7 +839,7 @@ def show_opportunities() -> list[PromptMessage]:
 
 @mcp.prompt()
 def manage_crm() -> list[PromptMessage]:
-    """Help manage Salesforce CRM data — leads and opportunities."""
+    """Help manage Salesforce CRM data — leads, opportunities, accounts, and contacts."""
     return [
         PromptMessage(
             role="user",
@@ -510,7 +849,7 @@ def manage_crm() -> list[PromptMessage]:
                     "I want to manage my Salesforce CRM data. "
                     "Start by showing me the latest 5 leads with get_leads. "
                     "I may want to create new leads, edit existing ones, "
-                    "or switch to viewing opportunities."
+                    "or switch to viewing opportunities, accounts, or contacts."
                 ),
             ),
         )

@@ -1,5 +1,6 @@
 """
-HubSpot Marketing MCP Server — 7 tools for Email Performance, Contact Lists & Membership.
+HubSpot Marketing MCP Server — 12 tools for Email Performance, Contact Lists,
+Membership, Contacts & Deals management.
 
 Single entry point: get_emails. The widget handles all drill-down navigation
 via callTool — from emails → lists → contacts in list. Tools support:
@@ -7,6 +8,8 @@ via callTool — from emails → lists → contacts in list. Tools support:
 - Contact lists: view, rename
 - List membership: view contacts, add by email, remove
 - Contact editing (inline from list view)
+- Contact CRUD (standalone get/create/update)
+- Deal CRUD (get/create)
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -361,6 +364,286 @@ async def hs__update_list(list_id: str, name: str) -> types.CallToolResult:
     structured = {"type": "lists", "total": len(items), "items": items}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"List renamed to '{name}'.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTACT & DEAL HELPERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+async def _fetch_contacts() -> list[dict]:
+    """Fetch the 5 most recently created contacts via Search API."""
+    client = get_client()
+    records = await client.list_objects(
+        "contacts",
+        properties=["firstname", "lastname", "email", "phone", "company", "lifecyclestage"],
+        limit=5,
+    )
+    return [
+        {
+            "id":             r.get("id", ""),
+            "firstname":      r.get("firstname", ""),
+            "lastname":       r.get("lastname", ""),
+            "email":          r.get("email", ""),
+            "phone":          r.get("phone", ""),
+            "company":        r.get("company", ""),
+            "lifecyclestage": r.get("lifecyclestage", ""),
+        }
+        for r in records
+    ]
+
+
+async def _fetch_deals() -> list[dict]:
+    """Fetch the 5 most recently created deals via Search API."""
+    client = get_client()
+    records = await client.list_objects(
+        "deals",
+        properties=["dealname", "dealstage", "amount", "closedate", "pipeline", "hubspot_owner_id"],
+        limit=5,
+    )
+    return [
+        {
+            "id":        r.get("id", ""),
+            "dealname":  r.get("dealname", ""),
+            "dealstage": r.get("dealstage", ""),
+            "amount":    r.get("amount", ""),
+            "closedate": r.get("closedate", ""),
+            "pipeline":  r.get("pipeline", ""),
+        }
+        for r in records
+    ]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTACT TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the latest 5 Contacts from HubSpot CRM. "
+        "Returns name, email, phone, company, and lifecycle stage."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__get_contacts() -> types.CallToolResult:
+    try:
+        items = await _fetch_contacts()
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except Exception as exc:
+        return _error_result(f"Failed to fetch contacts: {exc}")
+
+    structured = {"type": "contacts", "total": len(items), "items": items}
+
+    lines = [f"Found {len(items)} contact(s):"]
+    for c in items:
+        lines.append(f"- {c['firstname']} {c['lastname']} | {c['email']} | Company: {c['company']} | Stage: {c['lifecyclestage']}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Contact in HubSpot CRM. "
+        "Requires email at minimum. "
+        "Returns the updated list of latest 5 contacts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__create_contact(
+    email: str,
+    firstname: str = "",
+    lastname: str = "",
+    phone: str = "",
+    company: str = "",
+    lifecyclestage: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        email:          Contact email address (required)
+        firstname:      First name
+        lastname:       Last name
+        phone:          Phone number
+        company:        Company name
+        lifecyclestage: Lifecycle stage (e.g. 'subscriber', 'lead', 'customer')
+    """
+    try:
+        client = get_client()
+        props: dict = {"email": email}
+        if firstname:      props["firstname"] = firstname
+        if lastname:       props["lastname"] = lastname
+        if phone:          props["phone"] = phone
+        if company:        props["company"] = company
+        if lifecyclestage: props["lifecyclestage"] = lifecyclestage
+
+        new_id = await client.create_object("contacts", props)
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to create contact: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating contact: {exc}")
+
+    try:
+        items = await _fetch_contacts()
+    except Exception:
+        items = []
+
+    structured = {"type": "contacts", "total": len(items), "items": items, "_createdId": new_id}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact '{firstname} {lastname}' ({email}) created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Update an existing Contact in HubSpot CRM by its record Id. "
+        "Only fields provided will be updated. "
+        "Returns the updated list of latest 5 contacts."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__update_contact(
+    contact_id: str,
+    email: str = "",
+    firstname: str = "",
+    lastname: str = "",
+    phone: str = "",
+    company: str = "",
+    lifecyclestage: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        contact_id:     HubSpot Contact record Id (required)
+        email:          Updated email address
+        firstname:      Updated first name
+        lastname:       Updated last name
+        phone:          Updated phone number
+        company:        Updated company name
+        lifecyclestage: Updated lifecycle stage
+    """
+    try:
+        client = get_client()
+        props: dict = {}
+        if email:          props["email"] = email
+        if firstname:      props["firstname"] = firstname
+        if lastname:       props["lastname"] = lastname
+        if phone:          props["phone"] = phone
+        if company:        props["company"] = company
+        if lifecyclestage: props["lifecyclestage"] = lifecyclestage
+
+        if not props:
+            return _error_result("No fields provided to update.")
+
+        await client.update_object("contacts", contact_id, props)
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to update contact: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating contact: {exc}")
+
+    try:
+        items = await _fetch_contacts()
+    except Exception:
+        items = []
+
+    structured = {"type": "contacts", "total": len(items), "items": items}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DEAL TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the latest 5 Deals from HubSpot CRM. "
+        "Returns deal name, stage, amount, close date, and pipeline."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__get_deals() -> types.CallToolResult:
+    try:
+        items = await _fetch_deals()
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except Exception as exc:
+        return _error_result(f"Failed to fetch deals: {exc}")
+
+    structured = {"type": "deals", "total": len(items), "items": items}
+
+    lines = [f"Found {len(items)} deal(s):"]
+    for d in items:
+        lines.append(f"- {d['dealname']} | Stage: {d['dealstage']} | Amount: {d['amount']} | Close: {d['closedate']}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Deal in HubSpot CRM. "
+        "Requires deal_name at minimum. "
+        "Returns the updated list of latest 5 deals."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__create_deal(
+    deal_name: str,
+    deal_stage: str = "",
+    amount: str = "",
+    close_date: str = "",
+    pipeline: str = "",
+) -> types.CallToolResult:
+    """
+    Args:
+        deal_name:   Deal name (required)
+        deal_stage:  Deal stage (e.g. 'appointmentscheduled', 'qualifiedtobuy', 'closedwon')
+        amount:      Deal amount (string, e.g. '50000')
+        close_date:  Expected close date YYYY-MM-DD
+        pipeline:    Pipeline name or ID (default pipeline used if omitted)
+    """
+    try:
+        client = get_client()
+        props: dict = {"dealname": deal_name}
+        if deal_stage: props["dealstage"] = deal_stage
+        if amount:     props["amount"] = amount
+        if close_date: props["closedate"] = close_date
+        if pipeline:   props["pipeline"] = pipeline
+
+        new_id = await client.create_object("deals", props)
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to create deal: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating deal: {exc}")
+
+    try:
+        items = await _fetch_deals()
+    except Exception:
+        items = []
+
+    structured = {"type": "deals", "total": len(items), "items": items, "_createdId": new_id}
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Deal '{deal_name}' created (Id: {new_id}). Refreshed list returned.")],
         structuredContent=structured,
     )
 
