@@ -1,5 +1,5 @@
 """
-Salesforce CRM MCP Server — 12 tools for Leads, Opportunities, Accounts & Contacts CRUD.
+Salesforce CRM MCP Server — 15 tools for Leads, Opportunities, Accounts & Contacts CRUD.
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -795,6 +795,47 @@ async def sf__update_contact(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
         structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FORM TOOLS — open interactive create-forms in the widget
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description="Opens a form to create a new Salesforce Lead. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_lead_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new Salesforce Lead."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Lead creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "lead"},
+    )
+
+
+@mcp.tool(
+    description="Opens a form to create a new Salesforce Account. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_account_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new Salesforce Account."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Account creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "account"},
+    )
+
+
+@mcp.tool(
+    description="Opens a form to create a new Salesforce Contact. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_contact_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new Salesforce Contact."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "contact"},
     )
 
 

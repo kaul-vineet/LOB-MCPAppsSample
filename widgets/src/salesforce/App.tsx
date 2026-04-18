@@ -4,6 +4,9 @@ import {
   Button,
   Field,
   Input,
+  Label,
+  Select,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -18,7 +21,7 @@ import { EditRegular, AddRegular } from '@fluentui/react-icons';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { ExpandButton } from '../shared/ExpandButton';
 import { useToast } from '../shared/Toast';
-import type { SfData, Lead, Opportunity } from './types';
+import type { SfData, SfListData, Lead, Opportunity } from './types';
 
 // ── SLDS Color Tokens ───────────────────────────────────────────────────────
 const SLDS_LIGHT = {
@@ -57,6 +60,7 @@ function slds(theme: 'light' | 'dark') {
 const LEAD_STATUSES = ['Open - Not Contacted', 'Working - Contacted', 'Closed - Converted', 'Closed - Not Converted'];
 const LEAD_SOURCES = ['Web', 'Phone Inquiry', 'Partner Referral', 'Purchased List', 'Other'];
 const OPP_STAGES = ['Prospecting', 'Qualification', 'Needs Analysis', 'Proposal/Price Quote', 'Negotiation/Review', 'Closed Won', 'Closed Lost'];
+const ACCOUNT_INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Manufacturing', 'Retail', 'Other'];
 
 // ── Status → pill style maps ────────────────────────────────────────────────────
 type PillStyle = { background: string; color: string; border: string };
@@ -737,6 +741,155 @@ function SkeletonTable() {
   );
 }
 
+// ── Form View (standalone create form) ────────────────────────────────────
+const FORM_FIELDS: Record<string, { name: string; key: string; required?: boolean; type?: 'select'; options?: string[] }[]> = {
+  lead: [
+    { name: 'First Name', key: 'FirstName' },
+    { name: 'Last Name', key: 'LastName', required: true },
+    { name: 'Company', key: 'Company', required: true },
+    { name: 'Email', key: 'Email' },
+    { name: 'Phone', key: 'Phone' },
+    { name: 'Status', key: 'Status', type: 'select', options: LEAD_STATUSES },
+    { name: 'Lead Source', key: 'LeadSource', type: 'select', options: LEAD_SOURCES },
+  ],
+  account: [
+    { name: 'Name', key: 'Name', required: true },
+    { name: 'Industry', key: 'Industry', type: 'select', options: ACCOUNT_INDUSTRIES },
+    { name: 'Phone', key: 'Phone' },
+    { name: 'Website', key: 'Website' },
+  ],
+  contact: [
+    { name: 'First Name', key: 'FirstName' },
+    { name: 'Last Name', key: 'LastName', required: true },
+    { name: 'Email', key: 'Email' },
+    { name: 'Phone', key: 'Phone' },
+    { name: 'Title', key: 'Title' },
+  ],
+};
+
+const ENTITY_TOOL: Record<string, string> = {
+  lead: 'sf__create_lead',
+  account: 'sf__create_account',
+  contact: 'sf__create_contact',
+};
+
+const ENTITY_LABEL: Record<string, string> = {
+  lead: '✨ New Lead',
+  account: '✨ New Account',
+  contact: '✨ New Contact',
+};
+
+function FormView({ entity, prefill, callTool, toast, theme }: {
+  entity: 'lead' | 'account' | 'contact';
+  prefill?: Record<string, string>;
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  theme: 'light' | 'dark';
+}) {
+  const styles = useStyles();
+  const t = slds(theme);
+  const fields = FORM_FIELDS[entity] || [];
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    fields.forEach((f) => { init[f.key] = prefill?.[f.key] || ''; });
+    return init;
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const args: Record<string, string> = {};
+      for (const f of fields) {
+        if (values[f.key]) args[f.key.charAt(0).toLowerCase() + f.key.slice(1)] = values[f.key];
+      }
+      await callTool(ENTITY_TOOL[entity], args);
+      toast(`${entity.charAt(0).toUpperCase() + entity.slice(1)} created successfully!`, 'success');
+      setDone(true);
+    } catch (err: any) {
+      toast(err?.message || 'Failed to create record.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    const init: Record<string, string> = {};
+    fields.forEach((f) => { init[f.key] = ''; });
+    setValues(init);
+    setDone(false);
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      {/* Header */}
+      <div className={styles.headerBar} style={{
+        background: `linear-gradient(135deg, ${t.brand}, ${t.brandHover})`,
+      }}>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{ENTITY_LABEL[entity]}</span>
+      </div>
+
+      {done ? (
+        <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '36px', marginBottom: '12px' }}>✅</div>
+          <Text weight="semibold" size={400} style={{ color: t.text }}>
+            {entity.charAt(0).toUpperCase() + entity.slice(1)} created successfully!
+          </Text>
+          <div style={{ marginTop: '16px' }}>
+            <Button appearance="primary" onClick={handleReset}
+              style={{ background: t.brand, borderColor: t.brand, color: '#fff' }}>
+              Create Another
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '16px' }}>
+          <div className={styles.formGrid}>
+            {fields.map((f) =>
+              f.type === 'select' ? (
+                <FormSelect
+                  key={f.key}
+                  label={f.required ? `${f.name} *` : f.name}
+                  value={values[f.key]}
+                  options={f.options || []}
+                  onChange={(v) => set(f.key, v)}
+                  theme={theme}
+                />
+              ) : (
+                <Field key={f.key} label={f.required ? `${f.name} *` : f.name} size="small">
+                  <Input
+                    size="small"
+                    value={values[f.key]}
+                    onChange={(_, d) => set(f.key, d.value)}
+                    style={{ background: t.surface, color: t.text }}
+                  />
+                </Field>
+              )
+            )}
+          </div>
+
+          <div className={styles.formActions}>
+            <Button size="small" appearance="subtle" onClick={handleReset}
+              style={{ color: t.textWeak }}>
+              Cancel
+            </Button>
+            <Button size="small" appearance="primary" onClick={handleSubmit}
+              disabled={submitting}
+              style={{ background: t.brand, borderColor: t.brand, color: '#fff', minWidth: '90px' }}>
+              {submitting ? <Spinner size="tiny" /> : 'Submit'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <SldsFooter theme={theme} />
+    </div>
+  );
+}
+
 // ── Main App ────────────────────────────────────────────────────────────
 export function SalesforceApp() {
   const styles = useStyles();
@@ -756,7 +909,25 @@ export function SalesforceApp() {
     );
   }
 
-  if (data.error) {
+  // Form data has no error/items — render FormView directly
+  if (data.type === 'form') {
+    return (
+      <div className={styles.shell} style={shellStyle}>
+        <FormView
+          entity={data.entity}
+          prefill={data.prefill}
+          callTool={callTool}
+          toast={toast}
+          theme={theme}
+        />
+      </div>
+    );
+  }
+
+  // List data — may have error
+  const listData = data as SfListData;
+
+  if (listData.error) {
     return (
       <div className={styles.shell} style={shellStyle}>
         <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
@@ -768,7 +939,7 @@ export function SalesforceApp() {
             color: theme === 'dark' ? '#fe9f9b' : t.danger,
             borderLeft: `3px solid ${t.danger}`,
           }}>
-            {data.message || 'An unknown error occurred.'}
+            {listData.message || 'An unknown error occurred.'}
           </div>
           <SldsFooter theme={theme} />
         </div>
@@ -778,17 +949,17 @@ export function SalesforceApp() {
 
   return (
     <div className={styles.shell} style={shellStyle}>
-      {data.type === 'leads' && (
+      {listData.type === 'leads' && (
         <LeadsView
-          items={(data.items || []) as Lead[]}
+          items={(listData.items || []) as Lead[]}
           callTool={callTool}
           toast={toast}
           theme={theme}
         />
       )}
-      {data.type === 'opportunities' && (
+      {listData.type === 'opportunities' && (
         <OpportunitiesView
-          items={(data.items || []) as Opportunity[]}
+          items={(listData.items || []) as Opportunity[]}
           callTool={callTool}
           toast={toast}
           theme={theme}
