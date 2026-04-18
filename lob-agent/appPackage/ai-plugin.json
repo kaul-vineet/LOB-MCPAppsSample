@@ -55,6 +55,18 @@
             "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
         },
         {
+            "name": "sf_create_lead_form",
+            "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits."
+        },
+        {
+            "name": "sf_create_account_form",
+            "description": "Opens a form to create a new Salesforce Account. The user fills in details and submits."
+        },
+        {
+            "name": "sf_create_contact_form",
+            "description": "Opens a form to create a new Salesforce Contact. The user fills in details and submits."
+        },
+        {
             "name": "get_incidents",
             "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending."
         },
@@ -97,6 +109,14 @@
         {
             "name": "get_knowledge_articles",
             "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query."
+        },
+        {
+            "name": "sn_create_incident_form",
+            "description": "Opens a form to create a new ServiceNow Incident. The user fills in details and submits."
+        },
+        {
+            "name": "sn_create_request_form",
+            "description": "Opens a form to create a new ServiceNow Request. The user fills in details and submits."
         },
         {
             "name": "get_purchase_orders",
@@ -171,6 +191,14 @@
             "description": "Create a new Deal in HubSpot CRM. Requires deal_name at minimum. Returns the updated list of latest 5 deals."
         },
         {
+            "name": "hs_create_contact_form",
+            "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits."
+        },
+        {
+            "name": "hs_create_deal_form",
+            "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits."
+        },
+        {
             "name": "ft_get_flights_by_aircraft",
             "description": "Retrieve flight history for an aircraft by its ICAO 24-bit transponder address. Date range max 2 days."
         },
@@ -221,6 +249,10 @@
         {
             "name": "ds_download_document",
             "description": "Download a document from an envelope as PDF."
+        },
+        {
+            "name": "ds_send_envelope_form",
+            "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits."
         }
     ],
     "runtimes": [
@@ -244,7 +276,10 @@
                 "update_account",
                 "get_contacts",
                 "create_contact",
-                "update_contact"
+                "update_contact",
+                "sf_create_lead_form",
+                "sf_create_account_form",
+                "sf_create_contact_form"
             ],
             "auth": {
                 "type": "None"
@@ -269,7 +304,9 @@
                 "update_request_item",
                 "resolve_incident",
                 "add_work_note",
-                "get_knowledge_articles"
+                "get_knowledge_articles",
+                "sn_create_incident_form",
+                "sn_create_request_form"
             ],
             "auth": {
                 "type": "None"
@@ -315,7 +352,9 @@
                 "hs_create_contact",
                 "hs_update_contact",
                 "hs_get_deals",
-                "hs_create_deal"
+                "hs_create_deal",
+                "hs_create_contact_form",
+                "hs_create_deal_form"
             ],
             "auth": {
                 "type": "None"
@@ -356,7 +395,8 @@
                 "ds_void_envelope",
                 "ds_resend_envelope",
                 "ds_get_signing_url",
-                "ds_download_document"
+                "ds_download_document",
+                "ds_send_envelope_form"
             ],
             "auth": {
                 "type": "None"

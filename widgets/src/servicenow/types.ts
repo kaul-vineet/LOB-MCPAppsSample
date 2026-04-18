@@ -31,7 +31,9 @@ export interface RequestItem {
 }
 
 export interface SnowData {
-  type: 'incidents' | 'requests' | 'request_items';
+  type: 'incidents' | 'requests' | 'request_items' | 'form';
+  entity?: 'incident' | 'request';
+  prefill?: Record<string, string>;
   total?: number;
   incidents?: Incident[];
   requests?: ServiceRequest[];

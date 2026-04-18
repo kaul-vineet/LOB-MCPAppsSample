@@ -32,7 +32,7 @@ export interface Contact {
   lifecyclestage: string;
 }
 
-export type HubSpotViewType = 'emails' | 'lists' | 'list_contacts';
+export type HubSpotViewType = 'emails' | 'lists' | 'list_contacts' | 'form';
 
 export interface HubSpotData {
   type: HubSpotViewType;
@@ -40,4 +40,6 @@ export interface HubSpotData {
   items?: (Email | ContactList | Contact)[];
   list_id?: string;
   list_name?: string;
+  entity?: 'contact' | 'deal';
+  prefill?: Record<string, string>;
 }

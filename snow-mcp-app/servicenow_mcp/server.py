@@ -1,5 +1,5 @@
 """
-ServiceNow ITSM MCP Server — 11 tools for Incidents, Requests, Request Items,
+ServiceNow ITSM MCP Server — 13 tools for Incidents, Requests, Request Items,
 Knowledge Articles & operational actions.
 
 Supports both OAuth 2.0 (client credentials) and Basic Auth, controlled by
@@ -737,6 +737,35 @@ async def sn__get_knowledge_articles(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FORM TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description="Opens a form to create a new ServiceNow Incident. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__create_incident_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new ServiceNow Incident."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Incident creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "incident"},
+    )
+
+
+@mcp.tool(
+    description="Opens a form to create a new ServiceNow Request. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__create_request_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new ServiceNow Request."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Request creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "request"},
     )
 
 

@@ -3,6 +3,8 @@ import {
   Button,
   Field,
   Input,
+  Select,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -1070,6 +1072,200 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
   );
 }
 
+// ── FormView (Create Contact / Deal) ─────────────────────────────────
+const DEAL_STAGES = [
+  { value: '', label: '— Select —' },
+  { value: 'appointmentscheduled', label: 'Appointment Scheduled' },
+  { value: 'qualifiedtobuy', label: 'Qualified to Buy' },
+  { value: 'presentationscheduled', label: 'Presentation Scheduled' },
+  { value: 'decisionmakerboughtin', label: 'Decision Maker Bought-In' },
+  { value: 'contractsent', label: 'Contract Sent' },
+  { value: 'closedwon', label: 'Closed Won' },
+  { value: 'closedlost', label: 'Closed Lost' },
+];
+
+function FormView({
+  entity,
+  prefill,
+  callTool,
+  toast,
+}: {
+  entity: 'contact' | 'deal';
+  prefill?: Record<string, string>;
+  callTool: (tool: string, args: Record<string, unknown>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  theme?: string;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const isContact = entity === 'contact';
+
+  const [fields, setFields] = useState<Record<string, string>>(() => ({
+    ...(prefill || {}),
+  }));
+  const [submitting, setSubmitting] = useState(false);
+
+  const set = (key: string, value: string) =>
+    setFields((prev) => ({ ...prev, [key]: value }));
+
+  const handleSubmit = async () => {
+    if (isContact && !fields.email) {
+      toast('Email is required', 'error');
+      return;
+    }
+    if (!isContact && !fields.deal_name) {
+      toast('Deal Name is required', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      if (isContact) {
+        await callTool('hs__create_contact', {
+          email: fields.email || '',
+          firstname: fields.firstname || '',
+          lastname: fields.lastname || '',
+          phone: fields.phone || '',
+          company: fields.company || '',
+        });
+        toast('Contact created successfully!', 'success');
+      } else {
+        await callTool('hs__create_deal', {
+          deal_name: fields.deal_name || '',
+          amount: fields.amount || '',
+          pipeline: fields.pipeline || '',
+          deal_stage: fields.deal_stage || '',
+        });
+        toast('Deal created successfully!', 'success');
+      }
+    } catch (e: any) {
+      toast(e.message || `Failed to create ${entity}`, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => setFields(prefill ? { ...prefill } : {});
+
+  return (
+    <>
+      <div
+        className={styles.header}
+        style={{
+          background: `linear-gradient(135deg, ${c.coral}, ${c.coralDark})`,
+          color: '#fff',
+        }}
+      >
+        <div className={styles.titleRow}>
+          <Text size={500} weight="bold" style={{ color: '#fff' }}>
+            ✨ {isContact ? 'New Contact' : 'New Deal'}
+          </Text>
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: c.surface,
+          border: `1px solid ${c.border}`,
+          borderRadius: '8px',
+          padding: '20px',
+        }}
+      >
+        {isContact ? (
+          <>
+            <Field label="First Name" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.firstname || ''}
+                onChange={(_, d) => set('firstname', d.value)}
+                placeholder="Jane"
+              />
+            </Field>
+            <Field label="Last Name *" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.lastname || ''}
+                onChange={(_, d) => set('lastname', d.value)}
+                placeholder="Doe"
+              />
+            </Field>
+            <Field label="Email *" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.email || ''}
+                onChange={(_, d) => set('email', d.value)}
+                placeholder="jane@example.com"
+                type="email"
+              />
+            </Field>
+            <Field label="Phone" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.phone || ''}
+                onChange={(_, d) => set('phone', d.value)}
+                placeholder="+1 555-0100"
+              />
+            </Field>
+            <Field label="Company" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.company || ''}
+                onChange={(_, d) => set('company', d.value)}
+                placeholder="Acme Inc."
+              />
+            </Field>
+          </>
+        ) : (
+          <>
+            <Field label="Deal Name *" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.deal_name || ''}
+                onChange={(_, d) => set('deal_name', d.value)}
+                placeholder="Enterprise License"
+              />
+            </Field>
+            <Field label="Amount" style={{ marginBottom: 12 }}>
+              <Input
+                value={fields.amount || ''}
+                onChange={(_, d) => set('amount', d.value)}
+                placeholder="50000"
+              />
+            </Field>
+            <Field label="Pipeline" style={{ marginBottom: 12 }}>
+              <Select
+                value={fields.pipeline || 'default'}
+                onChange={(_, d) => set('pipeline', d.value)}
+              >
+                <option value="default">Default</option>
+              </Select>
+            </Field>
+            <Field label="Deal Stage" style={{ marginBottom: 12 }}>
+              <Select
+                value={fields.deal_stage || ''}
+                onChange={(_, d) => set('deal_stage', d.value)}
+              >
+                {DEAL_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+          <Button
+            appearance="primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={!submitting ? { backgroundColor: c.coral, borderColor: c.coral } : undefined}
+          >
+            {submitting ? <Spinner size="tiny" /> : 'Submit'}
+          </Button>
+          <Button appearance="subtle" onClick={handleCancel} disabled={submitting}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Main App ─────────────────────────────────────────────────────────
 type ViewState =
   | { view: 'emails' }
@@ -1199,6 +1395,21 @@ export function HubSpotApp() {
 
   // Emails view (entry point) — also handle toolData pushing lists/contacts
   const data = initialData!;
+
+  if (data.type === 'form') {
+    return (
+      <div className={styles.shell}>
+        <FormView
+          entity={data.entity || 'contact'}
+          prefill={data.prefill}
+          callTool={callTool}
+          toast={toast}
+        />
+        <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
+      </div>
+    );
+  }
+
   if (data.type === 'lists') {
     return (
       <div className={styles.shell}>

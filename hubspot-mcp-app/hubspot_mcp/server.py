@@ -1,5 +1,5 @@
 """
-HubSpot Marketing MCP Server — 12 tools for Email Performance, Contact Lists,
+HubSpot Marketing MCP Server — 14 tools for Email Performance, Contact Lists,
 Membership, Contacts & Deals management.
 
 Single entry point: get_emails. The widget handles all drill-down navigation
@@ -10,6 +10,7 @@ via callTool — from emails → lists → contacts in list. Tools support:
 - Contact editing (inline from list view)
 - Contact CRUD (standalone get/create/update)
 - Deal CRUD (get/create)
+- Interactive form widgets for creating contacts and deals
 
 All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
@@ -645,6 +646,30 @@ async def hs__create_deal(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Deal '{deal_name}' created (Id: {new_id}). Refreshed list returned.")],
         structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description="Opens a form to create a new HubSpot Contact. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__create_contact_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new HubSpot Contact."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "contact"},
+    )
+
+
+@mcp.tool(
+    description="Opens a form to create a new HubSpot Deal. The user fills in details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def hs__create_deal_form() -> types.CallToolResult:
+    """Opens an interactive form widget for creating a new HubSpot Deal."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Deal creation form. Fill in the details and click Submit.")],
+        structuredContent={"type": "form", "entity": "deal"},
     )
 
 

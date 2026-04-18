@@ -4,6 +4,7 @@ import {
   Button,
   Field,
   Input,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -11,6 +12,7 @@ import {
   TableHeaderCell,
   TableRow,
   Text,
+  Textarea,
   makeStyles,
 } from '@fluentui/react-components';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
@@ -864,6 +866,162 @@ if (typeof document !== 'undefined' && !document.getElementById(nowStyleId)) {
   document.head.appendChild(style);
 }
 
+// ── Form View (standalone create form) ──────────────────────────────────────
+const FORM_URGENCIES = ['1', '2', '3'];
+const FORM_URGENCY_LABELS: Record<string, string> = { '1': '1 – High', '2': '2 – Medium', '3': '3 – Low' };
+const FORM_IMPACTS = ['1', '2', '3'];
+const FORM_IMPACT_LABELS: Record<string, string> = { '1': '1 – High', '2': '2 – Medium', '3': '3 – Low' };
+const FORM_CATEGORIES_LIST = ['inquiry', 'software', 'hardware', 'network', 'database'];
+const FORM_CATEGORY_LABELS: Record<string, string> = {
+  inquiry: 'Inquiry', software: 'Software', hardware: 'Hardware', network: 'Network', database: 'Database',
+};
+
+function FormView({ entity, prefill, callTool, toast, theme }: {
+  entity: 'incident' | 'request';
+  prefill?: Record<string, string>;
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  theme: 'light' | 'dark';
+}) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [shortDesc, setShortDesc] = useState(prefill?.short_description || '');
+  const [description, setDescription] = useState(prefill?.description || '');
+  const [urgency, setUrgency] = useState(prefill?.urgency || '2');
+  const [impact, setImpact] = useState(prefill?.impact || '2');
+  const [category, setCategory] = useState(prefill?.category || '');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const isIncident = entity === 'incident';
+  const title = isIncident ? '✨ New Incident' : '✨ New Request';
+
+  const handleSubmit = async () => {
+    if (!shortDesc.trim()) { toast('Short Description is required', 'error'); return; }
+    setSubmitting(true);
+    try {
+      if (isIncident) {
+        await callTool('sn__create_incident', {
+          short_description: shortDesc.trim(),
+          description: description.trim(),
+          priority: urgency,
+          category,
+        });
+      } else {
+        await callTool('sn__create_request', {
+          short_description: shortDesc.trim(),
+          description: description.trim(),
+          priority: urgency,
+        });
+      }
+      toast(`✓ ${isIncident ? 'Incident' : 'Request'} created successfully`, 'success');
+      setSubmitted(true);
+    } catch (e: any) {
+      toast(e.message || `Failed to create ${entity}`, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setShortDesc(''); setDescription(''); setUrgency('2'); setImpact('2'); setCategory('');
+    setSubmitted(false);
+  };
+
+  const labelStyle: React.CSSProperties = { color: t.text, fontSize: '12px', fontWeight: 600 };
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '6px 10px', borderRadius: '4px',
+    border: `1px solid ${t.border}`, background: t.surface,
+    color: t.text, fontSize: '13px', fontFamily: 'inherit',
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      {/* Header */}
+      <div className={styles.headerBar} style={{
+        background: 'linear-gradient(135deg, #293E40 0%, #3A5A5C 100%)',
+        borderBottom: '2px solid #81B5A1',
+      }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{title}</span>
+        </div>
+      </div>
+
+      {submitted ? (
+        <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+          <Text weight="semibold" style={{ color: t.success, fontSize: '14px' }}>
+            {isIncident ? 'Incident' : 'Request'} created successfully!
+          </Text>
+          <div style={{ marginTop: '12px' }}>
+            <Button appearance="primary" size="small" onClick={handleReset}
+              style={{ background: '#81B5A1', borderColor: '#81B5A1' }}>
+              Create Another
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '16px' }}>
+          {/* Short Description (required) */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={labelStyle}>Short Description *</label>
+            <Input
+              size="small"
+              value={shortDesc}
+              onChange={(_, d) => setShortDesc(d.value)}
+              placeholder={`Brief summary of the ${entity}`}
+              style={{ width: '100%', marginTop: '4px' }}
+            />
+          </div>
+
+          {/* Description */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={labelStyle}>Description</label>
+            <Textarea
+              size="small"
+              value={description}
+              onChange={(_, d) => setDescription(d.value)}
+              placeholder="Detailed description (optional)"
+              rows={3}
+              resize="vertical"
+              style={{ width: '100%', marginTop: '4px' }}
+            />
+          </div>
+
+          {/* Dropdowns */}
+          <div className={styles.formGrid}>
+            <FormSelect label="Urgency" value={urgency} options={FORM_URGENCIES}
+              labels={FORM_URGENCY_LABELS} onChange={setUrgency} theme={theme} />
+            {isIncident && (
+              <FormSelect label="Impact" value={impact} options={FORM_IMPACTS}
+                labels={FORM_IMPACT_LABELS} onChange={setImpact} theme={theme} />
+            )}
+            {isIncident && (
+              <FormSelect label="Category" value={category} options={FORM_CATEGORIES_LIST}
+                labels={FORM_CATEGORY_LABELS} onChange={setCategory} theme={theme} />
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className={styles.formActions}>
+            <Button size="small" appearance="primary" onClick={handleSubmit}
+              disabled={submitting || !shortDesc.trim()}
+              style={{ background: '#81B5A1', borderColor: '#81B5A1', minWidth: '90px' }}>
+              {submitting ? <Spinner size="tiny" /> : 'Submit'}
+            </Button>
+            <Button size="small" appearance="subtle" onClick={handleReset}
+              disabled={submitting} style={{ color: t.textWeak }}>
+              Reset
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
 // ── Skeleton Loading Shimmer ────────────────────────────────────────────────
 function SkeletonTable() {
   return (
@@ -940,6 +1098,15 @@ export function ServiceNowApp() {
       {data.type === 'requests' && (
         <RequestsView
           items={(data.requests || []) as ServiceRequest[]}
+          callTool={callTool}
+          toast={toast}
+          theme={theme}
+        />
+      )}
+      {data.type === 'form' && (
+        <FormView
+          entity={data.entity || 'incident'}
+          prefill={data.prefill}
           callTool={callTool}
           toast={toast}
           theme={theme}

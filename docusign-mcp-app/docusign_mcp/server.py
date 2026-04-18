@@ -1,6 +1,6 @@
 """DocuSign eSignature MCP server for The Great Trading Company.
 
-Provides 8 tools for envelope management, templates, and embedded signing
+Provides 9 tools for envelope management, templates, and embedded signing
 via the DocuSign REST API v2.1 with JWT Grant authentication.
 """
 
@@ -501,6 +501,24 @@ async def download_document(
         return _error_result(str(exc))
 
 
+@mcp.tool(
+    name="ds__send_envelope_form",
+    description="Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def send_envelope_form() -> list[dict]:
+    """Opens an interactive form widget for sending a new DocuSign envelope."""
+    return [
+        {"type": "text", "text": "Opening envelope sending form. Fill in the recipient details and click Send."},
+        {
+            "type": "resource",
+            "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
+            "annotations": {"audience": ["user"]},
+            "metadata": {"structured_content": {"type": "form", "entity": "send_envelope"}},
+        },
+    ]
+
+
 # ── Prompts ──────────────────────────────────────────────────────────────────
 
 @mcp.prompt(
@@ -517,7 +535,8 @@ def overview_prompt() -> str:
         "• ds__void_envelope — cancel an envelope\n"
         "• ds__resend_envelope — resend to pending signers\n"
         "• ds__get_signing_url — generate embedded signing URL\n"
-        "• ds__download_document — download signed documents\n\n"
+        "• ds__download_document — download signed documents\n"
+        "• ds__send_envelope_form — open interactive form to send envelope\n\n"
         "Typical workflows:\n"
         "1. Browse templates → send envelope → track status\n"
         "2. Check envelope details → resend to unsigned recipients\n"
@@ -533,7 +552,7 @@ def main():
     app = Starlette(
         routes=[Mount("/mcp", app=mcp.sse_app())],
     )
-    log.info("starting_docusign_mcp", port=cfg.port, tools=8)
+    log.info("starting_docusign_mcp", port=cfg.port, tools=9)
     uvicorn.run(app, host="0.0.0.0", port=cfg.port)
 
 
