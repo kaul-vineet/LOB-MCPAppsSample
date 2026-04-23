@@ -259,7 +259,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3000.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sf/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -288,7 +288,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3001.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sn/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -315,7 +315,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3002.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sap/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -335,7 +335,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3003.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/hs/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -363,7 +363,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3004.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/ft/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }
@@ -382,7 +382,7 @@
         {
             "type": "RemoteMCPServer",
             "spec": {
-                "url": "https://1pgd9z7m-3005.inc1.devtunnels.ms/mcp",
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/ds/mcp",
                 "mcp_tool_description": {
                     "file": "mcp-tools.json"
                 }

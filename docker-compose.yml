@@ -102,3 +102,33 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+  # ── ASGI Gateway — single port for all 6 LOBs ─────────────────────────────
+  # Starts all 6 MCP servers in one process on port 8080.
+  # Use instead of the 6 individual services above:
+  #   docker compose --profile gateway up gateway
+  # Tunnel: devtunnel port create gtc-tunnel -p 8080
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./sf-mcp-app/.env
+      - ./snow-mcp-app/.env
+      - ./sap-mcp-app/.env
+      - ./hubspot-mcp-app/.env
+      - ./flight-mcp-app/.env
+      - ./docusign-mcp-app/.env
+    environment:
+      GATEWAY_PORT: "8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',8080),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    profiles:
+      - gateway

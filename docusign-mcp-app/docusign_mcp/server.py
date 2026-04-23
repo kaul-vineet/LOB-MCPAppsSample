@@ -32,8 +32,7 @@ def _load_env() -> None:
     load_dotenv()
 from mcp.server.fastmcp import FastMCP
 from pydantic_settings import BaseSettings
-from starlette.applications import Starlette
-from starlette.routing import Mount
+from starlette.middleware.cors import CORSMiddleware
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 _load_env()
@@ -656,8 +655,13 @@ def overview_prompt() -> str:
 def main():
     import uvicorn
 
-    app = Starlette(
-        routes=[Mount("/mcp", app=mcp.sse_app())],
+    app = mcp.streamable_http_app()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cfg.cors_origins.split(","),
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
+        allow_credentials=False,
     )
     log.info("starting_docusign_mcp", port=cfg.port, tools=9)
     uvicorn.run(app, host="0.0.0.0", port=cfg.port)
