@@ -547,6 +547,7 @@ async def ft__get_airport_arrivals(
         "icao24 must be a 6-character lowercase hex string (e.g. '3c675a'). "
         "time is a Unix timestamp within the flight's time window; pass 0 for most recent track."
     ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallToolResult:
     """

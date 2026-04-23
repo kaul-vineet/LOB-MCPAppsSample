@@ -1,13 +1,13 @@
 {
     "tools": [
         {
-            "name": "get_leads",
+            "name": "sf__get_leads",
             "description": "Get the 5 most recent Leads from Salesforce. Returns lead name, company, email, phone, status, and lead source.",
             "inputSchema": {
                 "properties": {},
-                "required": [],
-                "title": "get_leadsArguments",
-                "type": "object"
+                "title": "sf__get_leadsArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get leads",
             "_meta": {
@@ -17,20 +17,49 @@
             }
         },
         {
-            "name": "create_lead",
+            "name": "sf__create_lead",
             "description": "Create a new Lead in Salesforce. Requires last_name and company at minimum. Returns the updated list of latest 5 leads.",
             "inputSchema": {
                 "properties": {
-                    "last_name":   { "title": "Last Name",   "type": "string" },
-                    "company":     { "title": "Company",     "type": "string" },
-                    "first_name":  { "title": "First Name",  "type": "string", "default": "" },
-                    "email":       { "title": "Email",       "type": "string", "default": "" },
-                    "phone":       { "title": "Phone",       "type": "string", "default": "" },
-                    "status":      { "title": "Status",      "type": "string", "default": "Open - Not Contacted" },
-                    "lead_source": { "title": "Lead Source",  "type": "string", "default": "" }
+                    "last_name": {
+                        "title": "Last Name",
+                        "type": "string"
+                    },
+                    "company": {
+                        "title": "Company",
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "default": "",
+                        "title": "First Name",
+                        "type": "string"
+                    },
+                    "email": {
+                        "default": "",
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "status": {
+                        "default": "Open - Not Contacted",
+                        "title": "Status",
+                        "type": "string"
+                    },
+                    "lead_source": {
+                        "default": "",
+                        "title": "Lead Source",
+                        "type": "string"
+                    }
                 },
-                "required": ["last_name", "company"],
-                "title": "create_leadArguments",
+                "required": [
+                    "last_name",
+                    "company"
+                ],
+                "title": "sf__create_leadArguments",
                 "type": "object"
             },
             "title": "Create lead",
@@ -41,21 +70,54 @@
             }
         },
         {
-            "name": "update_lead",
+            "name": "sf__update_lead",
             "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads.",
             "inputSchema": {
                 "properties": {
-                    "lead_id":     { "title": "Lead ID",     "type": "string" },
-                    "first_name":  { "title": "First Name",  "type": "string", "default": "" },
-                    "last_name":   { "title": "Last Name",   "type": "string", "default": "" },
-                    "company":     { "title": "Company",     "type": "string", "default": "" },
-                    "email":       { "title": "Email",       "type": "string", "default": "" },
-                    "phone":       { "title": "Phone",       "type": "string", "default": "" },
-                    "status":      { "title": "Status",      "type": "string", "default": "" },
-                    "lead_source": { "title": "Lead Source",  "type": "string", "default": "" }
+                    "lead_id": {
+                        "title": "Lead Id",
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "default": "",
+                        "title": "First Name",
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "default": "",
+                        "title": "Last Name",
+                        "type": "string"
+                    },
+                    "company": {
+                        "default": "",
+                        "title": "Company",
+                        "type": "string"
+                    },
+                    "email": {
+                        "default": "",
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "status": {
+                        "default": "",
+                        "title": "Status",
+                        "type": "string"
+                    },
+                    "lead_source": {
+                        "default": "",
+                        "title": "Lead Source",
+                        "type": "string"
+                    }
                 },
-                "required": ["lead_id"],
-                "title": "update_leadArguments",
+                "required": [
+                    "lead_id"
+                ],
+                "title": "sf__update_leadArguments",
                 "type": "object"
             },
             "title": "Update lead",
@@ -66,13 +128,13 @@
             }
         },
         {
-            "name": "get_opportunities",
+            "name": "sf__get_opportunities",
             "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability.",
             "inputSchema": {
                 "properties": {},
-                "required": [],
-                "title": "get_opportunitiesArguments",
-                "type": "object"
+                "title": "sf__get_opportunitiesArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get opportunities",
             "_meta": {
@@ -82,18 +144,39 @@
             }
         },
         {
-            "name": "create_opportunity",
+            "name": "sf__create_opportunity",
             "description": "Create a new Opportunity in Salesforce. Requires name, stage, and close_date at minimum. Returns the updated list of latest 5 opportunities.",
             "inputSchema": {
                 "properties": {
-                    "name":        { "title": "Name",        "type": "string" },
-                    "stage":       { "title": "Stage",       "type": "string" },
-                    "close_date":  { "title": "Close Date",  "type": "string" },
-                    "amount":      { "title": "Amount",      "type": "number", "default": 0 },
-                    "probability": { "title": "Probability", "type": "integer", "default": 0 }
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "stage": {
+                        "title": "Stage",
+                        "type": "string"
+                    },
+                    "close_date": {
+                        "title": "Close Date",
+                        "type": "string"
+                    },
+                    "amount": {
+                        "default": 0.0,
+                        "title": "Amount",
+                        "type": "number"
+                    },
+                    "probability": {
+                        "default": 0,
+                        "title": "Probability",
+                        "type": "integer"
+                    }
                 },
-                "required": ["name", "stage", "close_date"],
-                "title": "create_opportunityArguments",
+                "required": [
+                    "name",
+                    "stage",
+                    "close_date"
+                ],
+                "title": "sf__create_opportunityArguments",
                 "type": "object"
             },
             "title": "Create opportunity",
@@ -104,19 +187,44 @@
             }
         },
         {
-            "name": "update_opportunity",
+            "name": "sf__update_opportunity",
             "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities.",
             "inputSchema": {
                 "properties": {
-                    "opportunity_id": { "title": "Opportunity ID", "type": "string" },
-                    "name":           { "title": "Name",           "type": "string", "default": "" },
-                    "stage":          { "title": "Stage",          "type": "string", "default": "" },
-                    "amount":         { "title": "Amount",         "type": "number", "default": 0 },
-                    "close_date":     { "title": "Close Date",     "type": "string", "default": "" },
-                    "probability":    { "title": "Probability",    "type": "integer", "default": 0 }
+                    "opportunity_id": {
+                        "title": "Opportunity Id",
+                        "type": "string"
+                    },
+                    "name": {
+                        "default": "",
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "stage": {
+                        "default": "",
+                        "title": "Stage",
+                        "type": "string"
+                    },
+                    "amount": {
+                        "default": 0.0,
+                        "title": "Amount",
+                        "type": "number"
+                    },
+                    "close_date": {
+                        "default": "",
+                        "title": "Close Date",
+                        "type": "string"
+                    },
+                    "probability": {
+                        "default": 0,
+                        "title": "Probability",
+                        "type": "integer"
+                    }
                 },
-                "required": ["opportunity_id"],
-                "title": "update_opportunityArguments",
+                "required": [
+                    "opportunity_id"
+                ],
+                "title": "sf__update_opportunityArguments",
                 "type": "object"
             },
             "title": "Update opportunity",
@@ -127,15 +235,301 @@
             }
         },
         {
-            "name": "get_incidents",
-            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending.",
+            "name": "sf__get_accounts",
+            "description": "Get the latest 5 Accounts from Salesforce. Returns company name, industry, phone, website, and employee count.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_accountsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get accounts",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_account",
+            "description": "Create a new Account in Salesforce. Requires name at minimum. Returns the updated list of latest 5 accounts.",
             "inputSchema": {
                 "properties": {
-                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "industry": {
+                        "default": "",
+                        "title": "Industry",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "website": {
+                        "default": "",
+                        "title": "Website",
+                        "type": "string"
+                    },
+                    "billing_city": {
+                        "default": "",
+                        "title": "Billing City",
+                        "type": "string"
+                    },
+                    "account_type": {
+                        "default": "",
+                        "title": "Account Type",
+                        "type": "string"
+                    }
                 },
-                "required": [],
-                "title": "get_incidentsArguments",
+                "required": [
+                    "name"
+                ],
+                "title": "sf__create_accountArguments",
                 "type": "object"
+            },
+            "title": "Create account",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__update_account",
+            "description": "Update an existing Account in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 accounts.",
+            "inputSchema": {
+                "properties": {
+                    "account_id": {
+                        "title": "Account Id",
+                        "type": "string"
+                    },
+                    "name": {
+                        "default": "",
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "industry": {
+                        "default": "",
+                        "title": "Industry",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "website": {
+                        "default": "",
+                        "title": "Website",
+                        "type": "string"
+                    },
+                    "billing_city": {
+                        "default": "",
+                        "title": "Billing City",
+                        "type": "string"
+                    },
+                    "account_type": {
+                        "default": "",
+                        "title": "Account Type",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "account_id"
+                ],
+                "title": "sf__update_accountArguments",
+                "type": "object"
+            },
+            "title": "Update account",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__get_contacts",
+            "description": "Get the latest 5 Contacts from Salesforce. Returns first name, last name, email, phone, title, and associated account.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_contactsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get contacts",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_contact",
+            "description": "Create a new Contact in Salesforce. Requires last_name at minimum. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "last_name": {
+                        "title": "Last Name",
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "default": "",
+                        "title": "First Name",
+                        "type": "string"
+                    },
+                    "email": {
+                        "default": "",
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "title": {
+                        "default": "",
+                        "title": "Title",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "default": "",
+                        "title": "Account Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "last_name"
+                ],
+                "title": "sf__create_contactArguments",
+                "type": "object"
+            },
+            "title": "Create contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__update_contact",
+            "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "contact_id": {
+                        "title": "Contact Id",
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "default": "",
+                        "title": "First Name",
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "default": "",
+                        "title": "Last Name",
+                        "type": "string"
+                    },
+                    "email": {
+                        "default": "",
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "title": {
+                        "default": "",
+                        "title": "Title",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "default": "",
+                        "title": "Account Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "contact_id"
+                ],
+                "title": "sf__update_contactArguments",
+                "type": "object"
+            },
+            "title": "Update contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_lead_form",
+            "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__create_lead_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create lead form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_account_form",
+            "description": "Opens a form to create a new Salesforce Account. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__create_account_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create account form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_contact_form",
+            "description": "Opens a form to create a new Salesforce Contact. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__create_contact_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create contact form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_incidents",
+            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending. Use sysparm_display_value=true to get human-readable field values.",
+            "inputSchema": {
+                "properties": {
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_incidentsArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get incidents",
             "_meta": {
@@ -145,15 +539,19 @@
             }
         },
         {
-            "name": "get_requests",
+            "name": "sn__get_requests",
             "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending.",
             "inputSchema": {
                 "properties": {
-                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
                 },
-                "required": [],
-                "title": "get_requestsArguments",
-                "type": "object"
+                "title": "sn__get_requestsArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get requests",
             "_meta": {
@@ -163,14 +561,19 @@
             }
         },
         {
-            "name": "get_request_items",
-            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record.",
+            "name": "sn__get_request_items",
+            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record. This tool is called from the widget when expanding a request row.",
             "inputSchema": {
                 "properties": {
-                    "request_sys_id": { "title": "Request Sys ID", "type": "string" }
+                    "request_sys_id": {
+                        "title": "Request Sys Id",
+                        "type": "string"
+                    }
                 },
-                "required": ["request_sys_id"],
-                "title": "get_request_itemsArguments",
+                "required": [
+                    "request_sys_id"
+                ],
+                "title": "sn__get_request_itemsArguments",
                 "type": "object"
             },
             "title": "Get request items",
@@ -181,17 +584,34 @@
             }
         },
         {
-            "name": "create_incident",
+            "name": "sn__create_incident",
             "description": "Create a new incident in ServiceNow. Requires short_description. Optional: description, priority (1-4), category.",
             "inputSchema": {
                 "properties": {
-                    "short_description": { "title": "Short Description", "type": "string" },
-                    "description":       { "title": "Description",       "type": "string", "default": "" },
-                    "priority":          { "title": "Priority",          "type": "string", "default": "3" },
-                    "category":          { "title": "Category",          "type": "string", "default": "" }
+                    "short_description": {
+                        "title": "Short Description",
+                        "type": "string"
+                    },
+                    "description": {
+                        "default": "",
+                        "title": "Description",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "3",
+                        "title": "Priority",
+                        "type": "string"
+                    },
+                    "category": {
+                        "default": "",
+                        "title": "Category",
+                        "type": "string"
+                    }
                 },
-                "required": ["short_description"],
-                "title": "create_incidentArguments",
+                "required": [
+                    "short_description"
+                ],
+                "title": "sn__create_incidentArguments",
                 "type": "object"
             },
             "title": "Create incident",
@@ -202,16 +622,29 @@
             }
         },
         {
-            "name": "create_request",
-            "description": "Create a new service request in ServiceNow. Requires short_description. Optional: description, priority (1-4).",
+            "name": "sn__create_request",
+            "description": "Create a new service request in ServiceNow. Requires short_description. Optional: description, priority (1-4). Does not create request items.",
             "inputSchema": {
                 "properties": {
-                    "short_description": { "title": "Short Description", "type": "string" },
-                    "description":       { "title": "Description",       "type": "string", "default": "" },
-                    "priority":          { "title": "Priority",          "type": "string", "default": "3" }
+                    "short_description": {
+                        "title": "Short Description",
+                        "type": "string"
+                    },
+                    "description": {
+                        "default": "",
+                        "title": "Description",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "3",
+                        "title": "Priority",
+                        "type": "string"
+                    }
                 },
-                "required": ["short_description"],
-                "title": "create_requestArguments",
+                "required": [
+                    "short_description"
+                ],
+                "title": "sn__create_requestArguments",
                 "type": "object"
             },
             "title": "Create request",
@@ -222,16 +655,43 @@
             }
         },
         {
-            "name": "update_incident",
+            "name": "sn__update_incident",
             "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
             "inputSchema": {
                 "properties": {
-                    "sys_id":      { "title": "Sys ID",      "type": "string" },
-                    "description": { "title": "Description", "type": "string" },
-                    "priority":    { "title": "Priority",    "type": "string" }
+                    "sys_id": {
+                        "title": "Sys Id",
+                        "type": "string"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "Description"
+                    },
+                    "priority": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "Priority"
+                    }
                 },
-                "required": ["sys_id"],
-                "title": "update_incidentArguments",
+                "required": [
+                    "sys_id"
+                ],
+                "title": "sn__update_incidentArguments",
                 "type": "object"
             },
             "title": "Update incident",
@@ -242,15 +702,31 @@
             }
         },
         {
-            "name": "update_request",
+            "name": "sn__update_request",
             "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval.",
             "inputSchema": {
                 "properties": {
-                    "sys_id":   { "title": "Sys ID",   "type": "string" },
-                    "approval": { "title": "Approval", "type": "string" }
+                    "sys_id": {
+                        "title": "Sys Id",
+                        "type": "string"
+                    },
+                    "approval": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "Approval"
+                    }
                 },
-                "required": ["sys_id"],
-                "title": "update_requestArguments",
+                "required": [
+                    "sys_id"
+                ],
+                "title": "sn__update_requestArguments",
                 "type": "object"
             },
             "title": "Update request",
@@ -261,15 +737,31 @@
             }
         },
         {
-            "name": "update_request_item",
+            "name": "sn__update_request_item",
             "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity.",
             "inputSchema": {
                 "properties": {
-                    "sys_id":   { "title": "Sys ID",   "type": "string" },
-                    "quantity": { "title": "Quantity",  "type": "string" }
+                    "sys_id": {
+                        "title": "Sys Id",
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "Quantity"
+                    }
                 },
-                "required": ["sys_id"],
-                "title": "update_request_itemArguments",
+                "required": [
+                    "sys_id"
+                ],
+                "title": "sn__update_request_itemArguments",
                 "type": "object"
             },
             "title": "Update request item",
@@ -280,15 +772,139 @@
             }
         },
         {
-            "name": "get_purchase_orders",
+            "name": "sn__resolve_incident",
+            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id": {
+                        "title": "Sys Id",
+                        "type": "string"
+                    },
+                    "close_code": {
+                        "title": "Close Code",
+                        "type": "string"
+                    },
+                    "close_notes": {
+                        "title": "Close Notes",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sys_id",
+                    "close_code",
+                    "close_notes"
+                ],
+                "title": "sn__resolve_incidentArguments",
+                "type": "object"
+            },
+            "title": "Resolve incident",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__add_work_note",
+            "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IT staff.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id": {
+                        "title": "Sys Id",
+                        "type": "string"
+                    },
+                    "work_note": {
+                        "title": "Work Note",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sys_id",
+                    "work_note"
+                ],
+                "title": "sn__add_work_noteArguments",
+                "type": "object"
+            },
+            "title": "Add work note",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_knowledge_articles",
+            "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query. Useful for finding solutions before creating incidents.",
+            "inputSchema": {
+                "properties": {
+                    "query": {
+                        "default": "",
+                        "title": "Query",
+                        "type": "string"
+                    },
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_knowledge_articlesArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get knowledge articles",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__create_incident_form",
+            "description": "Opens a form to create a new ServiceNow Incident. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sn__create_incident_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create incident form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__create_request_form",
+            "description": "Opens a form to create a new ServiceNow Request. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sn__create_request_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create request form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sap__get_purchase_orders",
             "description": "Fetch the latest purchase orders from SAP S/4HANA. Returns PO number, supplier, purchasing org, date, and deletion code.",
             "inputSchema": {
                 "properties": {
-                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
                 },
-                "required": [],
-                "title": "get_purchase_ordersArguments",
-                "type": "object"
+                "title": "sap__get_purchase_ordersArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get purchase orders",
             "_meta": {
@@ -298,15 +914,19 @@
             }
         },
         {
-            "name": "get_business_partners",
+            "name": "sap__get_business_partners",
             "description": "Fetch business partners from SAP S/4HANA. Returns partner ID, full name, category, and organization name.",
             "inputSchema": {
                 "properties": {
-                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
                 },
-                "required": [],
-                "title": "get_business_partnersArguments",
-                "type": "object"
+                "title": "sap__get_business_partnersArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get business partners",
             "_meta": {
@@ -316,15 +936,19 @@
             }
         },
         {
-            "name": "get_materials",
+            "name": "sap__get_materials",
             "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit.",
             "inputSchema": {
                 "properties": {
-                    "limit": { "title": "Limit", "type": "integer", "default": 5 }
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
                 },
-                "required": [],
-                "title": "get_materialsArguments",
-                "type": "object"
+                "title": "sap__get_materialsArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get materials",
             "_meta": {
@@ -334,16 +958,29 @@
             }
         },
         {
-            "name": "create_purchase_order",
+            "name": "sap__create_purchase_order",
             "description": "Create a new Purchase Order in SAP S/4HANA. Requires supplier and purchasing_org. Returns the updated list of latest purchase orders.",
             "inputSchema": {
                 "properties": {
-                    "supplier":            { "title": "Supplier",            "type": "string" },
-                    "purchasing_org":      { "title": "Purchasing Org",      "type": "string" },
-                    "purchase_order_type": { "title": "Purchase Order Type", "type": "string", "default": "NB" }
+                    "supplier": {
+                        "title": "Supplier",
+                        "type": "string"
+                    },
+                    "purchasing_org": {
+                        "title": "Purchasing Org",
+                        "type": "string"
+                    },
+                    "purchase_order_type": {
+                        "default": "NB",
+                        "title": "Purchase Order Type",
+                        "type": "string"
+                    }
                 },
-                "required": ["supplier", "purchasing_org"],
-                "title": "create_purchase_orderArguments",
+                "required": [
+                    "supplier",
+                    "purchasing_org"
+                ],
+                "title": "sap__create_purchase_orderArguments",
                 "type": "object"
             },
             "title": "Create purchase order",
@@ -354,16 +991,29 @@
             }
         },
         {
-            "name": "update_purchase_order",
+            "name": "sap__update_purchase_order",
             "description": "Update an existing Purchase Order in SAP S/4HANA by its PO number. Only fields provided will be updated. Returns the updated list of latest purchase orders.",
             "inputSchema": {
                 "properties": {
-                    "purchase_order_id": { "title": "Purchase Order ID", "type": "string" },
-                    "purchasing_org":    { "title": "Purchasing Org",    "type": "string", "default": "" },
-                    "supplier":          { "title": "Supplier",          "type": "string", "default": "" }
+                    "purchase_order_id": {
+                        "title": "Purchase Order Id",
+                        "type": "string"
+                    },
+                    "purchasing_org": {
+                        "default": "",
+                        "title": "Purchasing Org",
+                        "type": "string"
+                    },
+                    "supplier": {
+                        "default": "",
+                        "title": "Supplier",
+                        "type": "string"
+                    }
                 },
-                "required": ["purchase_order_id"],
-                "title": "update_purchase_orderArguments",
+                "required": [
+                    "purchase_order_id"
+                ],
+                "title": "sap__update_purchase_orderArguments",
                 "type": "object"
             },
             "title": "Update purchase order",
@@ -374,14 +1024,19 @@
             }
         },
         {
-            "name": "get_material_details",
+            "name": "sap__get_material_details",
             "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material.",
             "inputSchema": {
                 "properties": {
-                    "material_id": { "title": "Material ID", "type": "string" }
+                    "material_id": {
+                        "title": "Material Id",
+                        "type": "string"
+                    }
                 },
-                "required": ["material_id"],
-                "title": "get_material_detailsArguments",
+                "required": [
+                    "material_id"
+                ],
+                "title": "sap__get_material_detailsArguments",
                 "type": "object"
             },
             "title": "Get material details",
@@ -392,15 +1047,15 @@
             }
         },
         {
-            "name": "get_emails",
-            "description": "Get the latest marketing emails from HubSpot with performance stats. Entry point — the widget handles drill-down to lists and contacts.",
+            "name": "hs__get_emails",
+            "description": "Get the latest marketing emails from HubSpot with performance stats. This is the entry point \u2014 the widget handles drill-down to lists and contacts.",
             "inputSchema": {
                 "properties": {},
-                "required": [],
-                "title": "get_emailsArguments",
-                "type": "object"
+                "title": "hs__get_emailsArguments",
+                "type": "object",
+                "required": []
             },
-            "title": "Get marketing emails",
+            "title": "Get emails",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -408,13 +1063,13 @@
             }
         },
         {
-            "name": "get_lists",
-            "description": "Get contact lists from HubSpot. Called by the widget for drill-down.",
+            "name": "hs__get_lists",
+            "description": "Get contact lists from HubSpot. Called by the widget for drill-down navigation.",
             "inputSchema": {
                 "properties": {},
-                "required": [],
-                "title": "get_listsArguments",
-                "type": "object"
+                "title": "hs__get_listsArguments",
+                "type": "object",
+                "required": []
             },
             "title": "Get lists",
             "_meta": {
@@ -424,14 +1079,19 @@
             }
         },
         {
-            "name": "get_list_contacts",
-            "description": "Get contacts in a specific HubSpot list. Called by the widget.",
+            "name": "hs__get_list_contacts",
+            "description": "Get contacts in a specific list. Called by the widget when drilling into a list.",
             "inputSchema": {
                 "properties": {
-                    "list_id": { "title": "List ID", "type": "string" }
+                    "list_id": {
+                        "title": "List Id",
+                        "type": "string"
+                    }
                 },
-                "required": ["list_id"],
-                "title": "get_list_contactsArguments",
+                "required": [
+                    "list_id"
+                ],
+                "title": "hs__get_list_contactsArguments",
                 "type": "object"
             },
             "title": "Get list contacts",
@@ -442,15 +1102,24 @@
             }
         },
         {
-            "name": "add_to_list",
-            "description": "Add a contact to a static HubSpot list by email. Called by the widget.",
+            "name": "hs__add_to_list",
+            "description": "Add a contact to a static list by email. Called by the widget.",
             "inputSchema": {
                 "properties": {
-                    "list_id":       { "title": "List ID",       "type": "string" },
-                    "contact_email": { "title": "Contact Email", "type": "string" }
+                    "list_id": {
+                        "title": "List Id",
+                        "type": "string"
+                    },
+                    "contact_email": {
+                        "title": "Contact Email",
+                        "type": "string"
+                    }
                 },
-                "required": ["list_id", "contact_email"],
-                "title": "add_to_listArguments",
+                "required": [
+                    "list_id",
+                    "contact_email"
+                ],
+                "title": "hs__add_to_listArguments",
                 "type": "object"
             },
             "title": "Add to list",
@@ -461,15 +1130,24 @@
             }
         },
         {
-            "name": "remove_from_list",
-            "description": "Remove a contact from a static HubSpot list. Called by the widget.",
+            "name": "hs__remove_from_list",
+            "description": "Remove a contact from a static list. Called by the widget.",
             "inputSchema": {
                 "properties": {
-                    "list_id":    { "title": "List ID",    "type": "string" },
-                    "contact_id": { "title": "Contact ID", "type": "string" }
+                    "list_id": {
+                        "title": "List Id",
+                        "type": "string"
+                    },
+                    "contact_id": {
+                        "title": "Contact Id",
+                        "type": "string"
+                    }
                 },
-                "required": ["list_id", "contact_id"],
-                "title": "remove_from_listArguments",
+                "required": [
+                    "list_id",
+                    "contact_id"
+                ],
+                "title": "hs__remove_from_listArguments",
                 "type": "object"
             },
             "title": "Remove from list",
@@ -480,16 +1158,29 @@
             }
         },
         {
-            "name": "update_email",
+            "name": "hs__update_email",
             "description": "Update a marketing email's name or subject. Called by the widget.",
             "inputSchema": {
                 "properties": {
-                    "email_id": { "title": "Email ID", "type": "string" },
-                    "name":     { "title": "Name",     "type": "string", "default": "" },
-                    "subject":  { "title": "Subject",  "type": "string", "default": "" }
+                    "email_id": {
+                        "title": "Email Id",
+                        "type": "string"
+                    },
+                    "name": {
+                        "default": "",
+                        "title": "Name",
+                        "type": "string"
+                    },
+                    "subject": {
+                        "default": "",
+                        "title": "Subject",
+                        "type": "string"
+                    }
                 },
-                "required": ["email_id"],
-                "title": "update_emailArguments",
+                "required": [
+                    "email_id"
+                ],
+                "title": "hs__update_emailArguments",
                 "type": "object"
             },
             "title": "Update email",
@@ -500,21 +1191,654 @@
             }
         },
         {
-            "name": "update_list",
+            "name": "hs__update_list",
             "description": "Update a list's name. Called by the widget.",
             "inputSchema": {
                 "properties": {
-                    "list_id": { "title": "List ID", "type": "string" },
-                    "name":    { "title": "Name",    "type": "string" }
+                    "list_id": {
+                        "title": "List Id",
+                        "type": "string"
+                    },
+                    "name": {
+                        "title": "Name",
+                        "type": "string"
+                    }
                 },
-                "required": ["list_id", "name"],
-                "title": "update_listArguments",
+                "required": [
+                    "list_id",
+                    "name"
+                ],
+                "title": "hs__update_listArguments",
                 "type": "object"
             },
             "title": "Update list",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__get_contacts",
+            "description": "Get the latest 5 Contacts from HubSpot CRM. Returns name, email, phone, company, and lifecycle stage.",
+            "inputSchema": {
+                "properties": {},
+                "title": "hs__get_contactsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get contacts",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__create_contact",
+            "description": "Create a new Contact in HubSpot CRM. Requires email at minimum. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "email": {
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "firstname": {
+                        "default": "",
+                        "title": "Firstname",
+                        "type": "string"
+                    },
+                    "lastname": {
+                        "default": "",
+                        "title": "Lastname",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "company": {
+                        "default": "",
+                        "title": "Company",
+                        "type": "string"
+                    },
+                    "lifecyclestage": {
+                        "default": "",
+                        "title": "Lifecyclestage",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "hs__create_contactArguments",
+                "type": "object"
+            },
+            "title": "Create contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__update_contact",
+            "description": "Update an existing Contact in HubSpot CRM by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts.",
+            "inputSchema": {
+                "properties": {
+                    "contact_id": {
+                        "title": "Contact Id",
+                        "type": "string"
+                    },
+                    "email": {
+                        "default": "",
+                        "title": "Email",
+                        "type": "string"
+                    },
+                    "firstname": {
+                        "default": "",
+                        "title": "Firstname",
+                        "type": "string"
+                    },
+                    "lastname": {
+                        "default": "",
+                        "title": "Lastname",
+                        "type": "string"
+                    },
+                    "phone": {
+                        "default": "",
+                        "title": "Phone",
+                        "type": "string"
+                    },
+                    "company": {
+                        "default": "",
+                        "title": "Company",
+                        "type": "string"
+                    },
+                    "lifecyclestage": {
+                        "default": "",
+                        "title": "Lifecyclestage",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "contact_id"
+                ],
+                "title": "hs__update_contactArguments",
+                "type": "object"
+            },
+            "title": "Update contact",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__get_deals",
+            "description": "Get the latest 5 Deals from HubSpot CRM. Returns deal name, stage, amount, close date, and pipeline.",
+            "inputSchema": {
+                "properties": {},
+                "title": "hs__get_dealsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get deals",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__create_deal",
+            "description": "Create a new Deal in HubSpot CRM. Requires deal_name at minimum. Returns the updated list of latest 5 deals.",
+            "inputSchema": {
+                "properties": {
+                    "deal_name": {
+                        "title": "Deal Name",
+                        "type": "string"
+                    },
+                    "deal_stage": {
+                        "default": "",
+                        "title": "Deal Stage",
+                        "type": "string"
+                    },
+                    "amount": {
+                        "default": "",
+                        "title": "Amount",
+                        "type": "string"
+                    },
+                    "close_date": {
+                        "default": "",
+                        "title": "Close Date",
+                        "type": "string"
+                    },
+                    "pipeline": {
+                        "default": "",
+                        "title": "Pipeline",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "deal_name"
+                ],
+                "title": "hs__create_dealArguments",
+                "type": "object"
+            },
+            "title": "Create deal",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__create_contact_form",
+            "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "hs__create_contact_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create contact form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__create_deal_form",
+            "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "hs__create_deal_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Create deal form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "ft__get_flights_by_aircraft",
+            "description": "Retrieve flight history for an aircraft by its ICAO 24-bit transponder address. icao24 must be a 6-character lowercase hex string (e.g. '3c675a'). Date range must not exceed 2 days. Current-day and recent historical flights are available.",
+            "inputSchema": {
+                "properties": {
+                    "icao24": {
+                        "title": "Icao24",
+                        "type": "string"
+                    },
+                    "begin_date": {
+                        "title": "Begin Date",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "title": "End Date",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "icao24",
+                    "begin_date",
+                    "end_date"
+                ],
+                "title": "ft__get_flights_by_aircraftArguments",
+                "type": "object"
+            },
+            "title": "Get flights by aircraft",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/flights.html"
+                }
+            }
+        },
+        {
+            "name": "ft__get_aircraft_state",
+            "description": "Get the last known live state of an aircraft: position, altitude, speed, heading. icao24 must be a 6-character lowercase hex string (e.g. '3c675a').",
+            "inputSchema": {
+                "properties": {
+                    "icao24": {
+                        "title": "Icao24",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "icao24"
+                ],
+                "title": "ft__get_aircraft_stateArguments",
+                "type": "object"
+            },
+            "title": "Get aircraft state",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/flights.html"
+                }
+            }
+        },
+        {
+            "name": "ft__get_airport_departures",
+            "description": "Retrieve flights departing from an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day.",
+            "inputSchema": {
+                "properties": {
+                    "airport": {
+                        "title": "Airport",
+                        "type": "string"
+                    },
+                    "begin_date": {
+                        "title": "Begin Date",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "title": "End Date",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "airport",
+                    "begin_date",
+                    "end_date"
+                ],
+                "title": "ft__get_airport_departuresArguments",
+                "type": "object"
+            },
+            "title": "Get airport departures",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/flights.html"
+                }
+            }
+        },
+        {
+            "name": "ft__get_airport_arrivals",
+            "description": "Retrieve flights arriving at an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day. Use yesterday's date \u2014 same-day arrival data is not yet available.",
+            "inputSchema": {
+                "properties": {
+                    "airport": {
+                        "title": "Airport",
+                        "type": "string"
+                    },
+                    "begin_date": {
+                        "title": "Begin Date",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "title": "End Date",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "airport",
+                    "begin_date",
+                    "end_date"
+                ],
+                "title": "ft__get_airport_arrivalsArguments",
+                "type": "object"
+            },
+            "title": "Get airport arrivals",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/flights.html"
+                }
+            }
+        },
+        {
+            "name": "ft__get_aircraft_track",
+            "description": "Get the flight track (waypoints) for an aircraft. icao24 must be a 6-character lowercase hex string (e.g. '3c675a'). time is a Unix timestamp within the flight's time window; pass 0 for most recent track.",
+            "inputSchema": {
+                "properties": {
+                    "icao24": {
+                        "title": "Icao24",
+                        "type": "string"
+                    },
+                    "time": {
+                        "default": 0,
+                        "title": "Time",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "icao24"
+                ],
+                "title": "ft__get_aircraft_trackArguments",
+                "type": "object"
+            },
+            "title": "Get aircraft track",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/flights.html"
+                }
+            }
+        },
+        {
+            "name": "ds__get_envelopes",
+            "description": "Get the latest envelopes from DocuSign. Optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10).",
+            "inputSchema": {
+                "properties": {
+                    "from_date": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "From Date"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "title": "Status"
+                    },
+                    "count": {
+                        "default": 10,
+                        "title": "Count",
+                        "type": "integer"
+                    }
+                },
+                "title": "get_envelopesArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get envelopes",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__get_envelope_details",
+            "description": "Get detailed information about a specific envelope including recipients and their signing status.",
+            "inputSchema": {
+                "properties": {
+                    "envelope_id": {
+                        "title": "Envelope Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "envelope_id"
+                ],
+                "title": "get_envelope_detailsArguments",
+                "type": "object"
+            },
+            "title": "Get envelope details",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__get_templates",
+            "description": "List available DocuSign templates. Returns template name, description, and ID.",
+            "inputSchema": {
+                "properties": {
+                    "count": {
+                        "default": 10,
+                        "title": "Count",
+                        "type": "integer"
+                    }
+                },
+                "title": "get_templatesArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get templates",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__send_envelope",
+            "description": "Send a new envelope for signing. Requires template_id, subject, and signers (list of {name, email, role_name}). Returns envelope ID and status.",
+            "inputSchema": {
+                "properties": {
+                    "template_id": {
+                        "title": "Template Id",
+                        "type": "string"
+                    },
+                    "subject": {
+                        "title": "Subject",
+                        "type": "string"
+                    },
+                    "signers": {
+                        "items": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        },
+                        "title": "Signers",
+                        "type": "array"
+                    },
+                    "email_body": {
+                        "default": "Please sign this document.",
+                        "title": "Email Body",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "template_id",
+                    "subject",
+                    "signers"
+                ],
+                "title": "send_envelopeArguments",
+                "type": "object"
+            },
+            "title": "Send envelope",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__void_envelope",
+            "description": "Void (cancel) an envelope. Requires envelope_id and void_reason.",
+            "inputSchema": {
+                "properties": {
+                    "envelope_id": {
+                        "title": "Envelope Id",
+                        "type": "string"
+                    },
+                    "void_reason": {
+                        "title": "Void Reason",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "envelope_id",
+                    "void_reason"
+                ],
+                "title": "void_envelopeArguments",
+                "type": "object"
+            },
+            "title": "Void envelope",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__resend_envelope",
+            "description": "Resend notifications for an envelope to recipients who haven't signed yet.",
+            "inputSchema": {
+                "properties": {
+                    "envelope_id": {
+                        "title": "Envelope Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "envelope_id"
+                ],
+                "title": "resend_envelopeArguments",
+                "type": "object"
+            },
+            "title": "Resend envelope",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__get_signing_url",
+            "description": "Generate an embedded signing URL for a recipient. Requires envelope_id, signer_name, signer_email, and a return_url.",
+            "inputSchema": {
+                "properties": {
+                    "envelope_id": {
+                        "title": "Envelope Id",
+                        "type": "string"
+                    },
+                    "signer_name": {
+                        "title": "Signer Name",
+                        "type": "string"
+                    },
+                    "signer_email": {
+                        "title": "Signer Email",
+                        "type": "string"
+                    },
+                    "return_url": {
+                        "default": "https://example.com/signing-complete",
+                        "title": "Return Url",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "envelope_id",
+                    "signer_name",
+                    "signer_email"
+                ],
+                "title": "get_signing_urlArguments",
+                "type": "object"
+            },
+            "title": "Get signing url",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__download_document",
+            "description": "Download a document from an envelope. Pass document_id='combined' for all documents as one PDF.",
+            "inputSchema": {
+                "properties": {
+                    "envelope_id": {
+                        "title": "Envelope Id",
+                        "type": "string"
+                    },
+                    "document_id": {
+                        "default": "combined",
+                        "title": "Document Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "envelope_id"
+                ],
+                "title": "download_documentArguments",
+                "type": "object"
+            },
+            "title": "Download document",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
+                }
+            }
+        },
+        {
+            "name": "ds__send_envelope_form",
+            "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
+            "inputSchema": {
+                "properties": {},
+                "title": "send_envelope_formArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Send envelope form",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "docusign://widget"
                 }
             }
         }

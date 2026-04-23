@@ -7,251 +7,251 @@
     "namespace": "gtc",
     "functions": [
         {
-            "name": "get_leads",
+            "name": "sf__get_leads",
             "description": "Get the 5 most recent Leads from Salesforce. Returns lead name, company, email, phone, status, and lead source."
         },
         {
-            "name": "create_lead",
+            "name": "sf__create_lead",
             "description": "Create a new Lead in Salesforce. Requires last_name and company at minimum. Returns the updated list of latest 5 leads."
         },
         {
-            "name": "update_lead",
+            "name": "sf__update_lead",
             "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads."
         },
         {
-            "name": "get_opportunities",
+            "name": "sf__get_opportunities",
             "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability."
         },
         {
-            "name": "create_opportunity",
+            "name": "sf__create_opportunity",
             "description": "Create a new Opportunity in Salesforce. Requires name, stage, and close_date at minimum. Returns the updated list of latest 5 opportunities."
         },
         {
-            "name": "update_opportunity",
+            "name": "sf__update_opportunity",
             "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities."
         },
         {
-            "name": "get_accounts",
+            "name": "sf__get_accounts",
             "description": "Get the latest 5 Accounts from Salesforce. Returns company name, industry, phone, website, and employee count."
         },
         {
-            "name": "create_account",
+            "name": "sf__create_account",
             "description": "Create a new Account in Salesforce. Requires name at minimum. Returns the updated list of latest 5 accounts."
         },
         {
-            "name": "update_account",
+            "name": "sf__update_account",
             "description": "Update an existing Account in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 accounts."
         },
         {
-            "name": "get_contacts",
+            "name": "sf__get_contacts",
             "description": "Get the latest 5 Contacts from Salesforce. Returns first name, last name, email, phone, title, and associated account."
         },
         {
-            "name": "create_contact",
+            "name": "sf__create_contact",
             "description": "Create a new Contact in Salesforce. Requires last_name at minimum. Returns the updated list of latest 5 contacts."
         },
         {
-            "name": "update_contact",
+            "name": "sf__update_contact",
             "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
         },
         {
-            "name": "sf_create_lead_form",
+            "name": "sf__create_lead_form",
             "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits."
         },
         {
-            "name": "sf_create_account_form",
+            "name": "sf__create_account_form",
             "description": "Opens a form to create a new Salesforce Account. The user fills in details and submits."
         },
         {
-            "name": "sf_create_contact_form",
+            "name": "sf__create_contact_form",
             "description": "Opens a form to create a new Salesforce Contact. The user fills in details and submits."
         },
         {
-            "name": "get_incidents",
-            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending."
+            "name": "sn__get_incidents",
+            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending. Use sysparm_display_value=true to get human-readable field values."
         },
         {
-            "name": "get_requests",
+            "name": "sn__get_requests",
             "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending."
         },
         {
-            "name": "get_request_items",
-            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record. Called from the widget when expanding a request row."
+            "name": "sn__get_request_items",
+            "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record. This tool is called from the widget when expanding a request row."
         },
         {
-            "name": "create_incident",
+            "name": "sn__create_incident",
             "description": "Create a new incident in ServiceNow. Requires short_description. Optional: description, priority (1-4), category."
         },
         {
-            "name": "create_request",
+            "name": "sn__create_request",
             "description": "Create a new service request in ServiceNow. Requires short_description. Optional: description, priority (1-4). Does not create request items."
         },
         {
-            "name": "update_incident",
+            "name": "sn__update_incident",
             "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority."
         },
         {
-            "name": "update_request",
-            "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval (not requested, requested, approved, rejected)."
+            "name": "sn__update_request",
+            "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval."
         },
         {
-            "name": "update_request_item",
+            "name": "sn__update_request_item",
             "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity."
         },
         {
-            "name": "resolve_incident",
+            "name": "sn__resolve_incident",
             "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
         },
         {
-            "name": "add_work_note",
+            "name": "sn__add_work_note",
             "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IT staff."
         },
         {
-            "name": "get_knowledge_articles",
-            "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query."
+            "name": "sn__get_knowledge_articles",
+            "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query. Useful for finding solutions before creating incidents."
         },
         {
-            "name": "sn_create_incident_form",
+            "name": "sn__create_incident_form",
             "description": "Opens a form to create a new ServiceNow Incident. The user fills in details and submits."
         },
         {
-            "name": "sn_create_request_form",
+            "name": "sn__create_request_form",
             "description": "Opens a form to create a new ServiceNow Request. The user fills in details and submits."
         },
         {
-            "name": "get_purchase_orders",
+            "name": "sap__get_purchase_orders",
             "description": "Fetch the latest purchase orders from SAP S/4HANA. Returns PO number, supplier, purchasing org, date, and deletion code."
         },
         {
-            "name": "get_business_partners",
+            "name": "sap__get_business_partners",
             "description": "Fetch business partners from SAP S/4HANA. Returns partner ID, full name, category, and organization name."
         },
         {
-            "name": "get_materials",
+            "name": "sap__get_materials",
             "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit."
         },
         {
-            "name": "create_purchase_order",
+            "name": "sap__create_purchase_order",
             "description": "Create a new Purchase Order in SAP S/4HANA. Requires supplier and purchasing_org. Returns the updated list of latest purchase orders."
         },
         {
-            "name": "update_purchase_order",
+            "name": "sap__update_purchase_order",
             "description": "Update an existing Purchase Order in SAP S/4HANA by its PO number. Only fields provided will be updated. Returns the updated list of latest purchase orders."
         },
         {
-            "name": "get_material_details",
+            "name": "sap__get_material_details",
             "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material."
         },
         {
-            "name": "get_emails",
-            "description": "Get the latest marketing emails from HubSpot with performance stats. Entry point — the widget handles drill-down to lists and contacts."
+            "name": "hs__get_emails",
+            "description": "Get the latest marketing emails from HubSpot with performance stats. This is the entry point \u2014 the widget handles drill-down to lists and contacts."
         },
         {
-            "name": "get_lists",
-            "description": "Get contact lists from HubSpot. Called by the widget for drill-down."
+            "name": "hs__get_lists",
+            "description": "Get contact lists from HubSpot. Called by the widget for drill-down navigation."
         },
         {
-            "name": "get_list_contacts",
-            "description": "Get contacts in a specific HubSpot list. Called by the widget."
+            "name": "hs__get_list_contacts",
+            "description": "Get contacts in a specific list. Called by the widget when drilling into a list."
         },
         {
-            "name": "add_to_list",
-            "description": "Add a contact to a static HubSpot list by email. Called by the widget."
+            "name": "hs__add_to_list",
+            "description": "Add a contact to a static list by email. Called by the widget."
         },
         {
-            "name": "remove_from_list",
-            "description": "Remove a contact from a static HubSpot list. Called by the widget."
+            "name": "hs__remove_from_list",
+            "description": "Remove a contact from a static list. Called by the widget."
         },
         {
-            "name": "update_email",
+            "name": "hs__update_email",
             "description": "Update a marketing email's name or subject. Called by the widget."
         },
         {
-            "name": "update_list",
+            "name": "hs__update_list",
             "description": "Update a list's name. Called by the widget."
         },
         {
-            "name": "hs_get_contacts",
+            "name": "hs__get_contacts",
             "description": "Get the latest 5 Contacts from HubSpot CRM. Returns name, email, phone, company, and lifecycle stage."
         },
         {
-            "name": "hs_create_contact",
+            "name": "hs__create_contact",
             "description": "Create a new Contact in HubSpot CRM. Requires email at minimum. Returns the updated list of latest 5 contacts."
         },
         {
-            "name": "hs_update_contact",
-            "description": "Update an existing Contact in HubSpot CRM by its record Id. Only fields provided will be updated."
+            "name": "hs__update_contact",
+            "description": "Update an existing Contact in HubSpot CRM by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
         },
         {
-            "name": "hs_get_deals",
+            "name": "hs__get_deals",
             "description": "Get the latest 5 Deals from HubSpot CRM. Returns deal name, stage, amount, close date, and pipeline."
         },
         {
-            "name": "hs_create_deal",
+            "name": "hs__create_deal",
             "description": "Create a new Deal in HubSpot CRM. Requires deal_name at minimum. Returns the updated list of latest 5 deals."
         },
         {
-            "name": "hs_create_contact_form",
+            "name": "hs__create_contact_form",
             "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits."
         },
         {
-            "name": "hs_create_deal_form",
+            "name": "hs__create_deal_form",
             "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits."
         },
         {
-            "name": "ft_get_flights_by_aircraft",
-            "description": "Retrieve flight history for an aircraft by its ICAO 24-bit transponder address. Date range max 2 days."
+            "name": "ft__get_flights_by_aircraft",
+            "description": "Retrieve flight history for an aircraft by its ICAO 24-bit transponder address. icao24 must be a 6-character lowercase hex string (e.g. '3c675a'). Date range must not exceed 2 days. Current-day and recent historical flights are available."
         },
         {
-            "name": "ft_get_aircraft_state",
-            "description": "Get the last known live state of an aircraft: position, altitude, speed, heading."
+            "name": "ft__get_aircraft_state",
+            "description": "Get the last known live state of an aircraft: position, altitude, speed, heading. icao24 must be a 6-character lowercase hex string (e.g. '3c675a')."
         },
         {
-            "name": "ft_get_airport_departures",
-            "description": "Retrieve flights departing from an airport within a date range. ICAO airport code required. Max 1 day."
+            "name": "ft__get_airport_departures",
+            "description": "Retrieve flights departing from an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day."
         },
         {
-            "name": "ft_get_airport_arrivals",
-            "description": "Retrieve flights arriving at an airport within a date range. ICAO airport code required. Max 1 day."
+            "name": "ft__get_airport_arrivals",
+            "description": "Retrieve flights arriving at an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day. Use yesterday's date \u2014 same-day arrival data is not yet available."
         },
         {
-            "name": "ft_get_aircraft_track",
-            "description": "Get the flight track (waypoints) for an aircraft. Pass time=0 for most recent track."
+            "name": "ft__get_aircraft_track",
+            "description": "Get the flight track (waypoints) for an aircraft. icao24 must be a 6-character lowercase hex string (e.g. '3c675a'). time is a Unix timestamp within the flight's time window; pass 0 for most recent track."
         },
         {
-            "name": "ds_get_envelopes",
-            "description": "Get the latest envelopes from DocuSign with optional status filter. Returns subject, status, dates, and recipient count."
+            "name": "ds__get_envelopes",
+            "description": "Get the latest envelopes from DocuSign. Optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10)."
         },
         {
-            "name": "ds_get_envelope_details",
-            "description": "Get detailed information about a specific envelope including all recipients and their signing status."
+            "name": "ds__get_envelope_details",
+            "description": "Get detailed information about a specific envelope including recipients and their signing status."
         },
         {
-            "name": "ds_get_templates",
-            "description": "List available DocuSign templates for sending envelopes."
+            "name": "ds__get_templates",
+            "description": "List available DocuSign templates. Returns template name, description, and ID."
         },
         {
-            "name": "ds_send_envelope",
-            "description": "Send a new envelope for signing using a template. Requires template_id, subject, and signers."
+            "name": "ds__send_envelope",
+            "description": "Send a new envelope for signing. Requires template_id, subject, and signers (list of {name, email, role_name}). Returns envelope ID and status."
         },
         {
-            "name": "ds_void_envelope",
+            "name": "ds__void_envelope",
             "description": "Void (cancel) an envelope. Requires envelope_id and void_reason."
         },
         {
-            "name": "ds_resend_envelope",
-            "description": "Resend notifications to recipients who haven't signed yet."
+            "name": "ds__resend_envelope",
+            "description": "Resend notifications for an envelope to recipients who haven't signed yet."
         },
         {
-            "name": "ds_get_signing_url",
-            "description": "Generate an embedded signing URL for a specific recipient."
+            "name": "ds__get_signing_url",
+            "description": "Generate an embedded signing URL for a recipient. Requires envelope_id, signer_name, signer_email, and a return_url."
         },
         {
-            "name": "ds_download_document",
-            "description": "Download a document from an envelope as PDF."
+            "name": "ds__download_document",
+            "description": "Download a document from an envelope. Pass document_id='combined' for all documents as one PDF."
         },
         {
-            "name": "ds_send_envelope_form",
+            "name": "ds__send_envelope_form",
             "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits."
         }
     ],
@@ -265,21 +265,21 @@
                 }
             },
             "run_for_functions": [
-                "get_leads",
-                "create_lead",
-                "update_lead",
-                "get_opportunities",
-                "create_opportunity",
-                "update_opportunity",
-                "get_accounts",
-                "create_account",
-                "update_account",
-                "get_contacts",
-                "create_contact",
-                "update_contact",
-                "sf_create_lead_form",
-                "sf_create_account_form",
-                "sf_create_contact_form"
+                "sf__get_leads",
+                "sf__create_lead",
+                "sf__update_lead",
+                "sf__get_opportunities",
+                "sf__create_opportunity",
+                "sf__update_opportunity",
+                "sf__get_accounts",
+                "sf__create_account",
+                "sf__update_account",
+                "sf__get_contacts",
+                "sf__create_contact",
+                "sf__update_contact",
+                "sf__create_lead_form",
+                "sf__create_account_form",
+                "sf__create_contact_form"
             ],
             "auth": {
                 "type": "None"
@@ -294,19 +294,19 @@
                 }
             },
             "run_for_functions": [
-                "get_incidents",
-                "get_requests",
-                "get_request_items",
-                "create_incident",
-                "create_request",
-                "update_incident",
-                "update_request",
-                "update_request_item",
-                "resolve_incident",
-                "add_work_note",
-                "get_knowledge_articles",
-                "sn_create_incident_form",
-                "sn_create_request_form"
+                "sn__get_incidents",
+                "sn__get_requests",
+                "sn__get_request_items",
+                "sn__create_incident",
+                "sn__create_request",
+                "sn__update_incident",
+                "sn__update_request",
+                "sn__update_request_item",
+                "sn__resolve_incident",
+                "sn__add_work_note",
+                "sn__get_knowledge_articles",
+                "sn__create_incident_form",
+                "sn__create_request_form"
             ],
             "auth": {
                 "type": "None"
@@ -321,12 +321,12 @@
                 }
             },
             "run_for_functions": [
-                "get_purchase_orders",
-                "get_business_partners",
-                "get_materials",
-                "create_purchase_order",
-                "update_purchase_order",
-                "get_material_details"
+                "sap__get_purchase_orders",
+                "sap__get_business_partners",
+                "sap__get_materials",
+                "sap__create_purchase_order",
+                "sap__update_purchase_order",
+                "sap__get_material_details"
             ],
             "auth": {
                 "type": "None"
@@ -341,20 +341,20 @@
                 }
             },
             "run_for_functions": [
-                "get_emails",
-                "get_lists",
-                "get_list_contacts",
-                "add_to_list",
-                "remove_from_list",
-                "update_email",
-                "update_list",
-                "hs_get_contacts",
-                "hs_create_contact",
-                "hs_update_contact",
-                "hs_get_deals",
-                "hs_create_deal",
-                "hs_create_contact_form",
-                "hs_create_deal_form"
+                "hs__get_emails",
+                "hs__get_lists",
+                "hs__get_list_contacts",
+                "hs__add_to_list",
+                "hs__remove_from_list",
+                "hs__update_email",
+                "hs__update_list",
+                "hs__get_contacts",
+                "hs__create_contact",
+                "hs__update_contact",
+                "hs__get_deals",
+                "hs__create_deal",
+                "hs__create_contact_form",
+                "hs__create_deal_form"
             ],
             "auth": {
                 "type": "None"
@@ -369,11 +369,11 @@
                 }
             },
             "run_for_functions": [
-                "ft_get_flights_by_aircraft",
-                "ft_get_aircraft_state",
-                "ft_get_airport_departures",
-                "ft_get_airport_arrivals",
-                "ft_get_aircraft_track"
+                "ft__get_flights_by_aircraft",
+                "ft__get_aircraft_state",
+                "ft__get_airport_departures",
+                "ft__get_airport_arrivals",
+                "ft__get_aircraft_track"
             ],
             "auth": {
                 "type": "None"
@@ -388,15 +388,15 @@
                 }
             },
             "run_for_functions": [
-                "ds_get_envelopes",
-                "ds_get_envelope_details",
-                "ds_get_templates",
-                "ds_send_envelope",
-                "ds_void_envelope",
-                "ds_resend_envelope",
-                "ds_get_signing_url",
-                "ds_download_document",
-                "ds_send_envelope_form"
+                "ds__get_envelopes",
+                "ds__get_envelope_details",
+                "ds__get_templates",
+                "ds__send_envelope",
+                "ds__void_envelope",
+                "ds__resend_envelope",
+                "ds__get_signing_url",
+                "ds__download_document",
+                "ds__send_envelope_form"
             ],
             "auth": {
                 "type": "None"
@@ -404,4 +404,3 @@
         }
     ]
 }
-

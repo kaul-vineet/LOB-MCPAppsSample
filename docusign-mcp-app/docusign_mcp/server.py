@@ -505,6 +505,7 @@ async def send_envelope(
 @mcp.tool(
     name="ds__void_envelope",
     description="Void (cancel) an envelope. Requires envelope_id and void_reason.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def void_envelope(envelope_id: str, void_reason: str) -> list[dict]:
     if _is_mock():
@@ -524,6 +525,7 @@ async def void_envelope(envelope_id: str, void_reason: str) -> list[dict]:
 @mcp.tool(
     name="ds__resend_envelope",
     description="Resend notifications for an envelope to recipients who haven't signed yet.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def resend_envelope(envelope_id: str) -> list[dict]:
     if _is_mock():
@@ -546,6 +548,7 @@ async def resend_envelope(envelope_id: str) -> list[dict]:
         "Generate an embedded signing URL for a recipient. "
         "Requires envelope_id, signer_name, signer_email, and a return_url."
     ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def get_signing_url(
     envelope_id: str,
@@ -580,6 +583,7 @@ async def get_signing_url(
         "Download a document from an envelope. "
         "Pass document_id='combined' for all documents as one PDF."
     ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
 )
 async def download_document(
     envelope_id: str, document_id: str = "combined"

@@ -131,9 +131,10 @@ def check(verbose: bool = False) -> bool:
 
         server_normalised = {_normalise(t["name"]): t for t in server_tools}
         server_norm_names = set(server_normalised)
+        manifest_norm_names = {_normalise(n) for n in manifest_names}
 
         # Tools in server but not in manifest (could be new tools not yet manifested)
-        unmanifested = server_norm_names - manifest_names
+        unmanifested = server_norm_names - manifest_norm_names
         # Tools in manifest that match this LOB's server but missing from server
         lob_manifest = {n for n in manifest_names if n in server_norm_names or
                         any(n == _normalise(st["name"]) for st in server_tools)}
@@ -145,7 +146,7 @@ def check(verbose: bool = False) -> bool:
             print(f"\n  {lob} ({len(server_tools)} tools in server.py):")
             for t in server_tools:
                 norm = _normalise(t["name"])
-                in_manifest = "[OK]" if norm in manifest_names else "[FAIL] not manifested"
+                in_manifest = "[OK]" if norm in manifest_norm_names else "[FAIL] not manifested"
                 has_meta = "meta[OK]" if t["resourceUri"] else "meta[FAIL]"
                 print(f"    {in_manifest:20s}  {has_meta}  {t['name']}")
         else:
