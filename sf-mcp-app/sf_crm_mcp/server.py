@@ -8,12 +8,25 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 import os
 import sys
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 import structlog
 import uvicorn
 from dotenv import load_dotenv
+
+
+def _load_env() -> None:
+    explicit = os.environ.get("MCP_SERVERS_ENV_FILE")
+    if explicit:
+        load_dotenv(explicit, override=True)
+        return
+    project_env = Path.cwd() / "env" / ".env.sf"
+    if project_env.exists():
+        load_dotenv(project_env, override=True)
+        return
+    load_dotenv()
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
@@ -22,7 +35,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .salesforce import SalesforceAPIError, SalesforceAuthError, get_client
 
-load_dotenv()
+_load_env()
 
 log = structlog.get_logger("sf")
 
@@ -39,7 +52,16 @@ class SFSettings(BaseSettings):
     model_config = {"env_prefix": "", "case_sensitive": False}
 
 
-settings = SFSettings()
+@lru_cache(maxsize=1)
+def get_settings() -> SFSettings:
+    return SFSettings()
+
+
+def reset_settings_cache() -> None:
+    get_settings.cache_clear()
+
+
+settings = get_settings()
 
 
 # ── Widget ─────────────────────────────────────────────────────────────────────

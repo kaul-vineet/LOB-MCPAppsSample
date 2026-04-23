@@ -235,3 +235,11 @@ def get_client() -> SalesforceClient:
     if _client is None:
         _client = SalesforceClient()
     return _client
+
+
+def clear_token_cache() -> None:
+    """Force re-authentication on the next API call."""
+    global _client
+    if _client is not None:
+        _client._access_token = None
+        _client._token_expires_at = 0.0

@@ -8,13 +8,32 @@ decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 
 import os
 import sys
+import time
 from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
 from pathlib import Path
 
 import httpx
 import structlog
 import uvicorn
 from dotenv import load_dotenv
+
+
+def _load_env() -> None:
+    explicit = os.environ.get("MCP_SERVERS_ENV_FILE")
+    if explicit:
+        load_dotenv(explicit, override=True)
+        return
+    # Sibling project convention: C:\demoprojects\flight-tracker\.env
+    sibling_env = Path(__file__).parent.parent.parent.parent / "flight-tracker" / ".env"
+    if sibling_env.exists():
+        load_dotenv(sibling_env, override=True)
+        return
+    project_env = Path.cwd() / "env" / ".env.flight"
+    if project_env.exists():
+        load_dotenv(project_env, override=True)
+        return
+    load_dotenv()
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
@@ -22,7 +41,7 @@ from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-load_dotenv()
+_load_env()
 
 log = structlog.get_logger()
 
@@ -33,15 +52,23 @@ log = structlog.get_logger()
 class FTSettings(BaseSettings):
     opensky_client_id: str = ""
     opensky_client_secret: str = ""
+    mock_mode: bool = False
     port: int = 3004
     cors_origins: str = "*"
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
 
-settings = FTSettings()
+@lru_cache(maxsize=1)
+def get_settings() -> FTSettings:
+    return FTSettings()
+
+
+def reset_settings_cache() -> None:
+    get_settings.cache_clear()
+
+
+settings = get_settings()
 
 
 # ── Widget ─────────────────────────────────────────────────────────────────────
@@ -78,7 +105,19 @@ async def _opensky_request(method: str, path: str, **kwargs) -> httpx.Response:
     return resp
 
 
+_token_cache: dict = {"token": None, "expires_at": 0.0}
+
+
+def clear_token_cache() -> None:
+    """Force re-authentication on the next API call."""
+    _token_cache["token"] = None
+    _token_cache["expires_at"] = 0.0
+
+
 async def get_opensky_token() -> str:
+    now = time.time()
+    if _token_cache["token"] and now < _token_cache["expires_at"] - 60:
+        return _token_cache["token"]
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(
             "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token",
@@ -89,7 +128,10 @@ async def get_opensky_token() -> str:
             },
         )
         resp.raise_for_status()
-        return resp.json()["access_token"]
+        data = resp.json()
+        _token_cache["token"] = data["access_token"]
+        _token_cache["expires_at"] = now + data.get("expires_in", 3600)
+        return _token_cache["token"]
 
 
 def format_unix(ts: int) -> str:
@@ -106,6 +148,106 @@ def _error_result(msg: str) -> types.CallToolResult:
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=msg)],
         isError=True,
+    )
+
+
+def _is_mock() -> bool:
+    return settings.mock_mode or (not settings.opensky_client_id and not settings.opensky_client_secret)
+
+
+# ── Mock Data ─────────────────────────────────────────────────────────────────
+
+def _mock_flights_by_aircraft(icao24: str, begin_date: str, end_date: str) -> types.CallToolResult:
+    flights = [
+        {"callsign": "GTC001", "from": "EGLL", "to": "KJFK",  "departed": "2026-04-22 08:15 UTC", "arrived": "2026-04-22 16:40 UTC"},
+        {"callsign": "GTC002", "from": "KJFK", "to": "OMDB",  "departed": "2026-04-21 22:00 UTC", "arrived": "2026-04-22 18:30 UTC"},
+        {"callsign": "GTC003", "from": "OMDB", "to": "VHHH",  "departed": "2026-04-20 14:00 UTC", "arrived": "2026-04-20 22:05 UTC"},
+    ]
+    structured = {"icao24": icao24, "total_flights": len(flights), "flights": flights, "_mock": True}
+    lines = [f"[demo] Found {len(flights)} flight(s) for {icao24} ({begin_date} – {end_date}):"]
+    for fl in flights:
+        lines.append(f"  {fl['callsign']}: {fl['from']} -> {fl['to']} | Dep: {fl['departed']} | Arr: {fl['arrived']}")
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+def _mock_aircraft_state(icao24: str) -> types.CallToolResult:
+    structured = {
+        "icao24": icao24, "found": True,
+        "callsign": "GTC001", "origin_country": "Ireland",
+        "latitude": 51.477, "longitude": -0.461,
+        "altitude_m": 10670, "altitude_ft": 35009,
+        "on_ground": False,
+        "velocity_kmh": 892, "heading_deg": 270, "heading_compass": "W",
+        "vertical_rate": 0.0,
+        "last_contact": "2026-04-22 14:32 UTC",
+        "_mock": True,
+    }
+    summary = (
+        f"[demo] Aircraft {icao24} (GTC001) is airborne. "
+        f"Alt: 35009ft | Speed: 892 km/h | Heading: 270° W"
+    )
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+def _mock_airport_departures(airport: str, begin_date: str, end_date: str) -> types.CallToolResult:
+    flights = [
+        {"icao24": "4ca2bf", "callsign": "GTC001", "from": airport, "to": "KJFK",  "departed": "2026-04-22 06:00 UTC", "arrived": "2026-04-22 14:15 UTC", "first_seen_ts": 1745294400},
+        {"icao24": "4ca2c0", "callsign": "GTC004", "from": airport, "to": "OMDB",  "departed": "2026-04-22 09:30 UTC", "arrived": "2026-04-22 19:55 UTC", "first_seen_ts": 1745306200},
+        {"icao24": "4ca2c1", "callsign": "GTC007", "from": airport, "to": "VHHH",  "departed": "2026-04-22 11:00 UTC", "arrived": "2026-04-22 23:40 UTC", "first_seen_ts": 1745312400},
+        {"icao24": "4ca2c2", "callsign": "GTC010", "from": airport, "to": "YSSY",  "departed": "2026-04-22 13:20 UTC", "arrived": "2026-04-23 09:10 UTC", "first_seen_ts": 1745320200},
+        {"icao24": "4ca2c3", "callsign": "GTC013", "from": airport, "to": "FACT",  "departed": "2026-04-22 15:45 UTC", "arrived": "2026-04-22 23:00 UTC", "first_seen_ts": 1745329500},
+    ]
+    structured = {"type": "departures", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
+    lines = [f"[demo] Found {len(flights)} departure(s) from {airport} ({begin_date}):"]
+    for fl in flights:
+        lines.append(f"  {fl['callsign']}: -> {fl['to']} | Dep: {fl['departed']}")
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+def _mock_airport_arrivals(airport: str, begin_date: str, end_date: str) -> types.CallToolResult:
+    flights = [
+        {"icao24": "4ca2bf", "callsign": "GTC002", "from": "KJFK",  "to": airport, "departed": "2026-04-21 22:00 UTC", "arrived": "2026-04-22 08:20 UTC", "first_seen_ts": 1745281200},
+        {"icao24": "4ca2c4", "callsign": "GTC005", "from": "OMDB",  "to": airport, "departed": "2026-04-21 18:30 UTC", "arrived": "2026-04-22 06:45 UTC", "first_seen_ts": 1745277900},
+        {"icao24": "4ca2c5", "callsign": "GTC008", "from": "VHHH",  "to": airport, "departed": "2026-04-21 08:00 UTC", "arrived": "2026-04-22 13:55 UTC", "first_seen_ts": 1745319300},
+        {"icao24": "4ca2c6", "callsign": "GTC011", "from": "YSSY",  "to": airport, "departed": "2026-04-20 20:00 UTC", "arrived": "2026-04-22 05:30 UTC", "first_seen_ts": 1745274600},
+    ]
+    structured = {"type": "arrivals", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
+    lines = [f"[demo] Found {len(flights)} arrival(s) at {airport} ({begin_date}):"]
+    for fl in flights:
+        lines.append(f"  {fl['callsign']}: {fl['from']} -> | Arr: {fl['arrived']}")
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
+        structuredContent=structured,
+    )
+
+
+def _mock_aircraft_track(icao24: str) -> types.CallToolResult:
+    structured = {
+        "icao24": icao24, "found": True,
+        "callsign": "GTC001",
+        "start_time": "2026-04-22 06:00 UTC",
+        "end_time":   "2026-04-22 14:15 UTC",
+        "waypoints": 312,
+        "first_position": {"lat": 51.477, "lon": -0.461},
+        "last_position":  {"lat": 40.641, "lon": -73.778},
+        "_mock": True,
+    }
+    summary = (
+        f"[demo] Track for {icao24} (GTC001): "
+        f"312 waypoints from 2026-04-22 06:00 UTC to 2026-04-22 14:15 UTC."
+    )
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
     )
 
 
@@ -134,6 +276,9 @@ async def ft__get_flights_by_aircraft(
         begin_date: Start date YYYY-MM-DD
         end_date:   End date YYYY-MM-DD (max 2 days from begin_date)
     """
+    if _is_mock():
+        return _mock_flights_by_aircraft(icao24, begin_date, end_date)
+
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
     end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
@@ -189,6 +334,9 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallToolResult:
     Args:
         icao24: Aircraft transponder address, e.g. '3c675a'
     """
+    if _is_mock():
+        return _mock_aircraft_state(icao24)
+
     try:
         resp = await _opensky_request("GET", "/states/all", params={"icao24": icao24})
         if resp.status_code == 404:
@@ -256,6 +404,9 @@ async def ft__get_airport_departures(
         begin_date: Start date YYYY-MM-DD
         end_date:   End date YYYY-MM-DD (same as begin_date for a single day)
     """
+    if _is_mock():
+        return _mock_airport_departures(airport, begin_date, end_date)
+
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
     end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
@@ -328,6 +479,9 @@ async def ft__get_airport_arrivals(
         begin_date: Start date YYYY-MM-DD
         end_date:   End date YYYY-MM-DD (same as begin_date for a single day)
     """
+    if _is_mock():
+        return _mock_airport_arrivals(airport, begin_date, end_date)
+
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
     end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
@@ -400,6 +554,9 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallToolRe
         icao24: Aircraft transponder address, e.g. '3c675a'
         time:   Unix timestamp within the flight window, or 0 for most recent track
     """
+    if _is_mock():
+        return _mock_aircraft_track(icao24)
+
     try:
         resp = await _opensky_request("GET", "/tracks/all", params={"icao24": icao24, "time": time})
         if resp.status_code == 404:
@@ -512,10 +669,14 @@ def _validate_env() -> None:
     if not settings.opensky_client_secret:
         missing.append("OPENSKY_CLIENT_SECRET")
     if missing:
-        log.error("missing_env_vars", vars=missing)
-        print(f"\n  ❌ Missing required env vars: {', '.join(missing)}")
-        print("  Copy .env.example to .env and fill in your OpenSky credentials.")
-        sys.exit(1)
+        if _is_mock():
+            print("  [demo mode] No OpenSky credentials — running with mock data (set MOCK_MODE=false to use live API)")
+        else:
+            log.error("missing_env_vars", vars=missing)
+            print(f"\n  Missing required env vars: {', '.join(missing)}")
+            print("  Copy .env.example to .env and fill in your OpenSky credentials.")
+            print("  Or set MOCK_MODE=true to run with demo data.")
+            sys.exit(1)
 
 
 def main() -> None:

@@ -11,6 +11,7 @@ import base64
 import os
 import sys
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -18,6 +19,18 @@ import httpx
 import structlog
 import uvicorn
 from dotenv import load_dotenv
+
+
+def _load_env() -> None:
+    explicit = os.environ.get("MCP_SERVERS_ENV_FILE")
+    if explicit:
+        load_dotenv(explicit, override=True)
+        return
+    project_env = Path.cwd() / "env" / ".env.sn"
+    if project_env.exists():
+        load_dotenv(project_env, override=True)
+        return
+    load_dotenv()
 from mcp import types
 from mcp.server.fastmcp import FastMCP
 from mcp.types import PromptMessage, TextContent
@@ -25,7 +38,7 @@ from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-load_dotenv()
+_load_env()
 
 log = structlog.get_logger("sn")
 
@@ -45,7 +58,16 @@ class SNSettings(BaseSettings):
     model_config = {"env_prefix": "", "case_sensitive": False}
 
 
-settings = SNSettings()
+@lru_cache(maxsize=1)
+def get_settings() -> SNSettings:
+    return SNSettings()
+
+
+def reset_settings_cache() -> None:
+    get_settings.cache_clear()
+
+
+settings = get_settings()
 BASE_URL = f"https://{settings.servicenow_instance}.service-now.com"
 
 # ── Widget ────────────────────────────────────────────────────────────────────
@@ -77,6 +99,12 @@ async def servicenow_widget() -> str:
 # ── OAuth Token Cache ─────────────────────────────────────────────────────────
 
 _token_cache: dict = {"token": None, "expires_at": 0.0}
+
+
+def clear_token_cache() -> None:
+    """Force re-authentication on the next API call."""
+    _token_cache["token"] = None
+    _token_cache["expires_at"] = 0.0
 
 
 async def get_servicenow_token() -> str:
