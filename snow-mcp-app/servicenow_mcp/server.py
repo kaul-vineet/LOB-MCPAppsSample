@@ -773,6 +773,285 @@ async def sn__get_knowledge_articles(
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CHANGE REQUEST TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+CHANGE_FIELDS = "sys_id,number,short_description,state,priority,risk,category,assigned_to,sys_created_on"
+
+
+@mcp.tool(
+    description=(
+        "Get the latest Change Requests from ServiceNow. "
+        "Returns up to 'limit' records (default 5) ordered by creation date descending."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
+    try:
+        resp = await servicenow_request(
+            "GET",
+            "/api/now/table/change_request",
+            params={
+                "sysparm_limit": limit,
+                "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": CHANGE_FIELDS,
+                "sysparm_display_value": "true",
+            },
+        )
+        records = resp.json().get("result", [])
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching change requests: {e}")
+
+    items = [
+        {
+            "sys_id":            _val(r.get("sys_id")),
+            "number":            _val(r.get("number")),
+            "short_description": _val(r.get("short_description")),
+            "state":             _val(r.get("state")),
+            "priority":          _val(r.get("priority")),
+            "risk":              _val(r.get("risk")),
+            "category":          _val(r.get("category")),
+            "assigned_to":       _val(r.get("assigned_to")) or None,
+            "sys_created_on":    _val(r.get("sys_created_on")),
+        }
+        for r in records
+    ]
+    structured = {"type": "change_requests", "total": len(items), "items": items}
+    if not items:
+        summary = "No change requests found."
+    else:
+        lines = [f"Found {len(items)} change request(s):"]
+        for cr in items:
+            lines.append(f"- {cr['number']} | {cr['priority']} | {cr['state']} | {cr['short_description']}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Change Request in ServiceNow. "
+        "Required: short_description. Optional: category (Normal/Standard/Emergency), "
+        "risk (low/medium/high), priority (1-4)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__create_change_request(
+    short_description: str,
+    category: str = "Normal",
+    risk: str = "medium",
+    priority: str = "3",
+) -> types.CallToolResult:
+    try:
+        resp = await servicenow_request(
+            "POST",
+            "/api/now/table/change_request",
+            json_body={
+                "short_description": short_description,
+                "category": category,
+                "risk": risk,
+                "priority": priority,
+            },
+        )
+        resp.raise_for_status()
+        created = resp.json().get("result", {})
+        new_id = _val(created.get("number")) or created.get("sys_id", "")
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error creating change request: {e}")
+
+    try:
+        refresh_resp = await servicenow_request(
+            "GET",
+            "/api/now/table/change_request",
+            params={"sysparm_limit": 5, "sysparm_query": "ORDERBYDESCsys_created_on",
+                    "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
+        )
+        items = [
+            {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+             "short_description": _val(r.get("short_description")), "state": _val(r.get("state")),
+             "priority": _val(r.get("priority")), "risk": _val(r.get("risk"))}
+            for r in refresh_resp.json().get("result", [])
+        ]
+    except Exception:
+        items = []
+
+    structured = {"type": "change_requests", "total": len(items), "items": items, "_createdId": new_id}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Change request {new_id} created. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PROBLEM, APPROVAL & SERVICE CATALOG TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the latest Problem records from ServiceNow. "
+        "Returns up to 'limit' problems (default 5) ordered by creation date descending."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
+    try:
+        resp = await servicenow_request(
+            "GET",
+            "/api/now/table/problem",
+            params={
+                "sysparm_limit": limit,
+                "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": "sys_id,number,short_description,state,priority,assigned_to,sys_created_on",
+                "sysparm_display_value": "true",
+            },
+        )
+        records = resp.json().get("result", [])
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching problems: {e}")
+
+    items = [
+        {
+            "sys_id":            _val(r.get("sys_id")),
+            "number":            _val(r.get("number")),
+            "short_description": _val(r.get("short_description")),
+            "state":             _val(r.get("state")),
+            "priority":          _val(r.get("priority")),
+            "assigned_to":       _val(r.get("assigned_to")) or None,
+            "sys_created_on":    _val(r.get("sys_created_on")),
+        }
+        for r in records
+    ]
+    structured = {"type": "problems", "total": len(items), "items": items}
+    if not items:
+        summary = "No problems found."
+    else:
+        lines = [f"Found {len(items)} problem(s):"]
+        for p in items:
+            lines.append(f"- {p['number']} | P{p['priority']} | {p['state']} | {p['short_description']}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Get pending approval requests in ServiceNow. "
+        "Returns up to 'limit' approvals (default 10) with approver, document, and state."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
+    try:
+        resp = await servicenow_request(
+            "GET",
+            "/api/now/table/sysapproval_approver",
+            params={
+                "sysparm_limit": limit,
+                "sysparm_query": "state=requested^ORDERBYDESCsys_created_on",
+                "sysparm_fields": "sys_id,approver,sysapproval,state,due_date,sys_created_on",
+                "sysparm_display_value": "true",
+            },
+        )
+        records = resp.json().get("result", [])
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching approvals: {e}")
+
+    items = [
+        {
+            "sys_id":       _val(r.get("sys_id")),
+            "approver":     _val(r.get("approver")),
+            "document":     _val(r.get("sysapproval")),
+            "state":        _val(r.get("state")),
+            "due_date":     _val(r.get("due_date")),
+            "created_on":   _val(r.get("sys_created_on")),
+        }
+        for r in records
+    ]
+    structured = {"type": "approvals", "total": len(items), "items": items}
+    if not items:
+        summary = "No pending approvals."
+    else:
+        lines = [f"Found {len(items)} pending approval(s):"]
+        for a in items:
+            lines.append(f"- {a['document']} | approver: {a['approver']} | due: {a['due_date'] or 'N/A'}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Get available items from the ServiceNow Service Catalog. "
+        "Returns up to 'limit' catalog items (default 10)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sn__get_service_catalog_items(limit: int = 10) -> types.CallToolResult:
+    try:
+        resp = await servicenow_request(
+            "GET",
+            "/api/now/table/sc_cat_item",
+            params={
+                "sysparm_limit": limit,
+                "sysparm_query": "active=true^ORDERBYname",
+                "sysparm_fields": "sys_id,name,short_description,category,price,sys_class_name",
+                "sysparm_display_value": "true",
+            },
+        )
+        records = resp.json().get("result", [])
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching service catalog: {e}")
+
+    items = [
+        {
+            "sys_id":            _val(r.get("sys_id")),
+            "name":              _val(r.get("name")),
+            "short_description": _val(r.get("short_description")),
+            "category":          _val(r.get("category")),
+            "price":             _val(r.get("price")),
+        }
+        for r in records
+    ]
+    structured = {"type": "service_catalog", "total": len(items), "items": items}
+    if not items:
+        summary = "No catalog items found."
+    else:
+        lines = [f"Found {len(items)} catalog item(s):"]
+        for item in items:
+            lines.append(f"- {item['name']} | {item['category']} | {item['price'] or 'free'}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FORM TOOLS — open interactive create-forms in the widget
+# ══════════════════════════════════════════════════════════════════════════════
+
 @mcp.tool(
     description="Opens a form to create a new ServiceNow Incident. The user fills in details and submits.",
     meta={"ui": {"resourceUri": WIDGET_URI}},

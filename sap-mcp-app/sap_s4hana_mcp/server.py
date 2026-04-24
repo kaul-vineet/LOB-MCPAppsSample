@@ -306,7 +306,10 @@ async def sap__create_purchase_order(
             "PurchasingGroup": "001",       # Demo purchasing group
         }
         result = await sap.create_entity(PO_SERVICE, PO_ENTITY, data)
-        new_id = result.get("id") or result.get("PurchaseOrder", f"MOCK-PO-{int(time.time())}")
+        new_id = result.get("id") or result.get("PurchaseOrder")
+        if not new_id:
+            new_id = f"MOCK-PO-{int(time.time())}"
+            log.warning("create_po_id_fallback", result_keys=list(result.keys()), generated_id=new_id)
     except SAPAuthError as exc:
         return _error_result(f"SAP authentication failed: {exc}")
     except SAPAPIError as exc:

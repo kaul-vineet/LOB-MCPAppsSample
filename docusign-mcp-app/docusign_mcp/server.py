@@ -30,7 +30,9 @@ def _load_env() -> None:
         load_dotenv(project_env, override=True)
         return
     load_dotenv()
+from mcp import types
 from mcp.server.fastmcp import FastMCP
+from mcp.types import TextContent
 from pydantic_settings import BaseSettings
 from starlette.middleware.cors import CORSMiddleware
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -150,22 +152,26 @@ async def _ds_request(
 
 # ── MCP Server ──────────────────────────────────────────────────────────────
 
-WIDGET_URI = "docusign://widget"
+WIDGET_URI = "ui://widget/docusign.html"
+RESOURCE_MIME_TYPE = "text/html;profile=mcp-app"
+WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding="utf-8")
 mcp = FastMCP("DocuSign eSignature")
 
-@mcp.resource(WIDGET_URI)
-def get_widget() -> str:
-    """Serve the DocuSign widget HTML."""
-    html_path = Path(__file__).parent / "web" / "widget.html"
-    return html_path.read_text(encoding="utf-8")
+@mcp.resource(WIDGET_URI, mime_type=RESOURCE_MIME_TYPE)
+async def ds_widget() -> str:
+    """UI widget for displaying DocuSign data."""
+    return WIDGET_HTML
 
 
 def _is_mock() -> bool:
     return cfg.mock_mode or bool(_validate_env())
 
 
-def _error_result(msg: str) -> list[dict]:
-    return [{"type": "text", "text": f"Error: {msg}"}]
+def _error_result(msg: str) -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Error: {msg}")],
+        structuredContent={"error": True, "message": msg},
+    )
 
 
 # ── Mock Data ─────────────────────────────────────────────────────────────────
@@ -201,19 +207,14 @@ def _mock_envelope_rows(envelopes: list[dict]) -> list[dict]:
     ]
 
 
-def _mock_list_response(rows: list[dict], label: str) -> list[dict]:
+def _mock_list_response(rows: list[dict], label: str, data_type: str = "envelopes") -> types.CallToolResult:
     summary_lines = [f"[demo] Found {len(rows)} {label}."]
     for r in rows[:3]:
         summary_lines.append(f"  {r.get('statusEmoji', '')} {r.get('emailSubject', r.get('name', ''))} — {r.get('status', '')}")
-    return [
-        {"type": "text", "text": "\n".join(summary_lines)},
-        {
-            "type": "resource",
-            "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-            "annotations": {"audience": ["user"]},
-            "metadata": {"structured_content": {"type": "envelopes", "data": rows}},
-        },
-    ]
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(summary_lines))],
+        structuredContent={"type": data_type, "total": len(rows), "items": rows},
+    )
 
 
 def _validate_env() -> str | None:
@@ -276,10 +277,10 @@ async def get_envelopes(
     from_date: str | None = None,
     status: str | None = None,
     count: int = 10,
-) -> list[dict]:
+) -> types.CallToolResult:
     if _is_mock():
         filtered = [e for e in _MOCK_ENVELOPES if not status or e["status"] == status]
-        return _mock_list_response(_mock_envelope_rows(filtered[:count]), "envelope(s)")
+        return _mock_list_response(_mock_envelope_rows(filtered[:count]), "envelope(s)", "envelopes")
     try:
         envelopes = await _fetch_envelopes(from_date, status, count)
         rows = []
@@ -300,24 +301,10 @@ async def get_envelopes(
                 f"  {r['statusEmoji']} {r['emailSubject'][:50]} — {r['status']} ({r['envelopeId'][:8]}…)"
             )
 
-        return [
-            {"type": "text", "text": "\n".join(summary_lines)},
-            {
-                "type": "resource",
-                "resource": {
-                    "uri": WIDGET_URI,
-                    "mimeType": "text/html",
-                    "text": get_widget(),
-                },
-                "annotations": {"audience": ["user"]},
-                "metadata": {
-                    "structured_content": {
-                        "type": "envelopes",
-                        "data": rows,
-                    }
-                },
-            },
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(summary_lines))],
+            structuredContent={"type": "envelopes", "total": len(rows), "items": rows},
+        )
     except Exception as exc:
         log.error("ds__get_envelopes_failed", error=str(exc))
         return _error_result(str(exc))
@@ -328,7 +315,7 @@ async def get_envelopes(
     description="Get detailed information about a specific envelope including recipients and their signing status.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_envelope_details(envelope_id: str) -> list[dict]:
+async def get_envelope_details(envelope_id: str) -> types.CallToolResult:
     if _is_mock():
         env = next((e for e in _MOCK_ENVELOPES if e["envelopeId"] == envelope_id), _MOCK_ENVELOPES[0])
         detail = {**env, "statusEmoji": _status_emoji(env["status"]), "signers": [
@@ -336,11 +323,10 @@ async def get_envelope_details(envelope_id: str) -> list[dict]:
             {"name": "James Pemberton",       "email": "j.pemberton@gtc.internal",   "status": "completed", "signedDateTime": "2026-04-21T14:22:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
         ]}
         summary = f"[demo] Envelope: {detail['emailSubject']}\nStatus: {detail['statusEmoji']} {detail['status']}\nSigners: 2\n  • Alexandra Harrington — completed\n  • James Pemberton — completed"
-        return [
-            {"type": "text", "text": summary},
-            {"type": "resource", "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-             "annotations": {"audience": ["user"]}, "metadata": {"structured_content": {"type": "envelope_detail", "data": detail}}},
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=summary)],
+            structuredContent={"type": "envelope_detail", "items": [detail]},
+        )
     try:
         envelope = await _ds_request("GET", f"/envelopes/{envelope_id}")
         recipients = await _ds_request("GET", f"/envelopes/{envelope_id}/recipients")
@@ -373,15 +359,10 @@ async def get_envelope_details(envelope_id: str) -> list[dict]:
         for s in signers:
             summary += f"\n  • {s['name']} ({s['email']}) — {s['status']}"
 
-        return [
-            {"type": "text", "text": summary},
-            {
-                "type": "resource",
-                "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-                "annotations": {"audience": ["user"]},
-                "metadata": {"structured_content": {"type": "envelope_detail", "data": detail}},
-            },
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=summary)],
+            structuredContent={"type": "envelope_detail", "items": [detail]},
+        )
     except Exception as exc:
         log.error("ds__get_envelope_details_failed", error=str(exc))
         return _error_result(str(exc))
@@ -392,15 +373,14 @@ async def get_envelope_details(envelope_id: str) -> list[dict]:
     description="List available DocuSign templates. Returns template name, description, and ID.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def get_templates(count: int = 10) -> list[dict]:
+async def get_templates(count: int = 10) -> types.CallToolResult:
     if _is_mock():
         rows = _MOCK_TEMPLATES[:count]
         lines = [f"[demo] Found {len(rows)} template(s)."] + [f"  {r['name']} ({r['templateId']})" for r in rows]
-        return [
-            {"type": "text", "text": "\n".join(lines)},
-            {"type": "resource", "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-             "annotations": {"audience": ["user"]}, "metadata": {"structured_content": {"type": "templates", "data": rows}}},
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(lines))],
+            structuredContent={"type": "templates", "total": len(rows), "items": rows},
+        )
     try:
         data = await _ds_request("GET", "/templates", params={"count": str(count)})
         templates = data.get("envelopeTemplates", []) if isinstance(data, dict) else []
@@ -419,15 +399,10 @@ async def get_templates(count: int = 10) -> list[dict]:
         for r in rows[:5]:
             summary_lines.append(f"  📋 {r['name']} ({r['templateId'][:8]}…)")
 
-        return [
-            {"type": "text", "text": "\n".join(summary_lines)},
-            {
-                "type": "resource",
-                "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-                "annotations": {"audience": ["user"]},
-                "metadata": {"structured_content": {"type": "templates", "data": rows}},
-            },
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(summary_lines))],
+            structuredContent={"type": "templates", "total": len(rows), "items": rows},
+        )
     except Exception as exc:
         log.error("ds__get_templates_failed", error=str(exc))
         return _error_result(str(exc))
@@ -446,15 +421,14 @@ async def send_envelope(
     subject: str,
     signers: list[dict],
     email_body: str = "Please sign this document.",
-) -> list[dict]:
+) -> types.CallToolResult:
     if _is_mock():
         mock_id = "env-demo-new"
         rows = _mock_envelope_rows([{"envelopeId": mock_id, "emailSubject": subject, "status": "sent", "sentDateTime": "2026-04-22T14:00:00Z", "completedDateTime": ""}] + _MOCK_ENVELOPES[:4])
-        return [
-            {"type": "text", "text": f"[demo] Envelope sent. ID: {mock_id}, Status: sent"},
-            {"type": "resource", "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-             "annotations": {"audience": ["user"]}, "metadata": {"structured_content": {"type": "envelopes", "data": rows}}},
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"[demo] Envelope sent. ID: {mock_id}, Status: sent")],
+            structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": mock_id},
+        )
     try:
         template_roles = []
         for s in signers:
@@ -488,15 +462,10 @@ async def send_envelope(
                 "sentDateTime": e.get("sentDateTime", ""),
             })
 
-        return [
-            {"type": "text", "text": f"Envelope sent. ID: {env_id}, Status: {env_status}"},
-            {
-                "type": "resource",
-                "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-                "annotations": {"audience": ["user"]},
-                "metadata": {"structured_content": {"type": "envelopes", "data": rows}},
-            },
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Envelope sent. ID: {env_id}, Status: {env_status}")],
+            structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": env_id},
+        )
     except Exception as exc:
         log.error("ds__send_envelope_failed", error=str(exc))
         return _error_result(str(exc))
@@ -507,19 +476,23 @@ async def send_envelope(
     description="Void (cancel) an envelope. Requires envelope_id and void_reason.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def void_envelope(envelope_id: str, void_reason: str) -> list[dict]:
-    if _is_mock():
-        return [{"type": "text", "text": f"[demo] Envelope {envelope_id} voided. Reason: {void_reason}"}]
-    try:
-        await _ds_request(
-            "PUT",
-            f"/envelopes/{envelope_id}",
-            json_body={"status": "voided", "voidedReason": void_reason},
-        )
-        return [{"type": "text", "text": f"Envelope {envelope_id} voided. Reason: {void_reason}"}]
-    except Exception as exc:
-        log.error("ds__void_envelope_failed", error=str(exc))
-        return _error_result(str(exc))
+async def void_envelope(envelope_id: str, void_reason: str) -> types.CallToolResult:
+    msg = f"[demo] Envelope {envelope_id} voided. Reason: {void_reason}" if _is_mock() else None
+    if not _is_mock():
+        try:
+            await _ds_request(
+                "PUT",
+                f"/envelopes/{envelope_id}",
+                json_body={"status": "voided", "voidedReason": void_reason},
+            )
+            msg = f"Envelope {envelope_id} voided. Reason: {void_reason}"
+        except Exception as exc:
+            log.error("ds__void_envelope_failed", error=str(exc))
+            return _error_result(str(exc))
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
+        structuredContent={"type": "action_result", "action": "void", "envelopeId": envelope_id, "message": msg},
+    )
 
 
 @mcp.tool(
@@ -527,19 +500,24 @@ async def void_envelope(envelope_id: str, void_reason: str) -> list[dict]:
     description="Resend notifications for an envelope to recipients who haven't signed yet.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def resend_envelope(envelope_id: str) -> list[dict]:
+async def resend_envelope(envelope_id: str) -> types.CallToolResult:
     if _is_mock():
-        return [{"type": "text", "text": f"[demo] Envelope {envelope_id} resent to pending recipients."}]
-    try:
-        await _ds_request(
-            "PUT",
-            f"/envelopes/{envelope_id}",
-            json_body={"resend_envelope": "true"},
-        )
-        return [{"type": "text", "text": f"Envelope {envelope_id} resent to pending recipients."}]
-    except Exception as exc:
-        log.error("ds__resend_envelope_failed", error=str(exc))
-        return _error_result(str(exc))
+        msg = f"[demo] Envelope {envelope_id} resent to pending recipients."
+    else:
+        try:
+            await _ds_request(
+                "PUT",
+                f"/envelopes/{envelope_id}",
+                json_body={"resend_envelope": "true"},
+            )
+            msg = f"Envelope {envelope_id} resent to pending recipients."
+        except Exception as exc:
+            log.error("ds__resend_envelope_failed", error=str(exc))
+            return _error_result(str(exc))
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
+        structuredContent={"type": "action_result", "action": "resend", "envelopeId": envelope_id, "message": msg},
+    )
 
 
 @mcp.tool(
@@ -555,9 +533,13 @@ async def get_signing_url(
     signer_name: str,
     signer_email: str,
     return_url: str = "https://example.com/signing-complete",
-) -> list[dict]:
+) -> types.CallToolResult:
     if _is_mock():
-        return [{"type": "text", "text": f"[demo] Signing URL for {signer_name}: https://demo.docusign.net/signing/mock?env={envelope_id}"}]
+        url = f"https://demo.docusign.net/signing/mock?env={envelope_id}"
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"[demo] Signing URL for {signer_name}: {url}")],
+            structuredContent={"type": "signing_url", "signerName": signer_name, "url": url},
+        )
     try:
         body = {
             "returnUrl": return_url,
@@ -569,9 +551,10 @@ async def get_signing_url(
             "POST", f"/envelopes/{envelope_id}/views/recipient", json_body=body
         )
         signing_url = result.get("url", "")
-        return [
-            {"type": "text", "text": f"Signing URL for {signer_name}: {signing_url}"}
-        ]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Signing URL for {signer_name}: {signing_url}")],
+            structuredContent={"type": "signing_url", "signerName": signer_name, "url": signing_url},
+        )
     except Exception as exc:
         log.error("ds__get_signing_url_failed", error=str(exc))
         return _error_result(str(exc))
@@ -587,25 +570,28 @@ async def get_signing_url(
 )
 async def download_document(
     envelope_id: str, document_id: str = "combined"
-) -> list[dict]:
+) -> types.CallToolResult:
     if _is_mock():
-        return [{"type": "text", "text": f"[demo] Downloaded document '{document_id}' from envelope {envelope_id} (42.3 KB). Binary content available."}]
+        msg = f"[demo] Downloaded document '{document_id}' from envelope {envelope_id} (42.3 KB). Binary content available."
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": 42.3},
+        )
     try:
         content = await _ds_request(
             "GET", f"/envelopes/{envelope_id}/documents/{document_id}"
         )
         if isinstance(content, bytes):
             size_kb = len(content) / 1024
-            return [
-                {
-                    "type": "text",
-                    "text": (
-                        f"Downloaded document '{document_id}' from envelope {envelope_id} "
-                        f"({size_kb:.1f} KB). Binary content available."
-                    ),
-                }
-            ]
-        return [{"type": "text", "text": "Document downloaded (unexpected format)."}]
+            msg = f"Downloaded document '{document_id}' from envelope {envelope_id} ({size_kb:.1f} KB). Binary content available."
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=msg)],
+                structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": round(size_kb, 1)},
+            )
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="Document downloaded (unexpected format).")],
+            structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id},
+        )
     except Exception as exc:
         log.error("ds__download_document_failed", error=str(exc))
         return _error_result(str(exc))
@@ -616,17 +602,12 @@ async def download_document(
     description="Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def send_envelope_form() -> list[dict]:
+async def send_envelope_form() -> types.CallToolResult:
     """Opens an interactive form widget for sending a new DocuSign envelope."""
-    return [
-        {"type": "text", "text": "Opening envelope sending form. Fill in the recipient details and click Send."},
-        {
-            "type": "resource",
-            "resource": {"uri": WIDGET_URI, "mimeType": "text/html", "text": get_widget()},
-            "annotations": {"audience": ["user"]},
-            "metadata": {"structured_content": {"type": "form", "entity": "send_envelope"}},
-        },
-    ]
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening envelope sending form. Fill in the recipient details and click Send.")],
+        structuredContent={"type": "form", "entity": "send_envelope"},
+    )
 
 
 # ── Prompts ──────────────────────────────────────────────────────────────────

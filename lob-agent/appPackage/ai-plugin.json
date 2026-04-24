@@ -55,6 +55,46 @@
             "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts."
         },
         {
+            "name": "sf__get_cases",
+            "description": "Get the 5 most recent Cases from Salesforce. Returns case number, subject, status, priority, and account name."
+        },
+        {
+            "name": "sf__create_case",
+            "description": "Create a new Salesforce Case. Required: subject. Optional: priority (High/Medium/Low), account_id, description."
+        },
+        {
+            "name": "sf__update_case",
+            "description": "Update a Salesforce Case. Required: case_id. Optional: status, resolution (Internal Comments)."
+        },
+        {
+            "name": "sf__get_tasks",
+            "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date."
+        },
+        {
+            "name": "sf__create_task",
+            "description": "Create a new Salesforce Task (activity). Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id)."
+        },
+        {
+            "name": "sf__delete_lead",
+            "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list."
+        },
+        {
+            "name": "sf__convert_lead",
+            "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status (defaults to 'Closed - Converted'), create_opportunity (true/false)."
+        },
+        {
+            "name": "sf__get_pipeline_dashboard",
+            "description": "Get the Salesforce opportunity pipeline grouped by stage. Returns deal count and total amount per stage."
+        },
+        {
+            "name": "sf__get_campaigns",
+            "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count."
+        },
+        {
+            "name": "sf__get_pending_approvals",
+            "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action."
+        },
+        {
             "name": "sf__create_lead_form",
             "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits."
         },
@@ -109,6 +149,26 @@
         {
             "name": "sn__get_knowledge_articles",
             "description": "Search knowledge articles in ServiceNow. Returns articles from the kb_knowledge table matching the query. Useful for finding solutions before creating incidents."
+        },
+        {
+            "name": "sn__get_change_requests",
+            "description": "Get the latest Change Requests from ServiceNow. Returns up to 'limit' records (default 5) ordered by creation date descending."
+        },
+        {
+            "name": "sn__create_change_request",
+            "description": "Create a new Change Request in ServiceNow. Required: short_description. Optional: category (Normal/Standard/Emergency), risk (low/medium/high), priority (1-4)."
+        },
+        {
+            "name": "sn__get_problems",
+            "description": "Get the latest Problem records from ServiceNow. Returns up to 'limit' problems (default 5) ordered by creation date descending."
+        },
+        {
+            "name": "sn__get_pending_approvals",
+            "description": "Get pending approval requests in ServiceNow. Returns up to 'limit' approvals (default 10) with approver, document, and state."
+        },
+        {
+            "name": "sn__get_service_catalog_items",
+            "description": "Get available items from the ServiceNow Service Catalog. Returns up to 'limit' catalog items (default 10)."
         },
         {
             "name": "sn__create_incident_form",
@@ -729,6 +789,16 @@
                 "sf__get_contacts",
                 "sf__create_contact",
                 "sf__update_contact",
+                "sf__get_cases",
+                "sf__create_case",
+                "sf__update_case",
+                "sf__get_tasks",
+                "sf__create_task",
+                "sf__delete_lead",
+                "sf__convert_lead",
+                "sf__get_pipeline_dashboard",
+                "sf__get_campaigns",
+                "sf__get_pending_approvals",
                 "sf__create_lead_form",
                 "sf__create_account_form",
                 "sf__create_contact_form"
@@ -757,6 +827,11 @@
                 "sn__resolve_incident",
                 "sn__add_work_note",
                 "sn__get_knowledge_articles",
+                "sn__get_change_requests",
+                "sn__create_change_request",
+                "sn__get_problems",
+                "sn__get_pending_approvals",
+                "sn__get_service_catalog_items",
                 "sn__create_incident_form",
                 "sn__create_request_form"
             ],

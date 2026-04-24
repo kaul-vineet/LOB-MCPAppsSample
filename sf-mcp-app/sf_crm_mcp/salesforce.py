@@ -222,6 +222,26 @@ class SalesforceClient:
         )
         self._raise_for_error(resp, f"update {sobject}/{record_id}")
 
+    # ── Delete ────────────────────────────────────────────────────────────────
+
+    async def delete(self, sobject: str, record_id: str) -> None:
+        """Delete a Salesforce record by Id (HTTP 204 on success)."""
+        resp = await self._request("DELETE", f"/sobjects/{sobject}/{record_id}")
+        self._raise_for_error(resp, f"delete {sobject}/{record_id}")
+
+    # ── Invocable Actions ──────────────────────────────────────────────────────
+
+    async def invoke_action(self, action_name: str, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Invoke a standard Salesforce invocable action (e.g. convertLead)."""
+        resp = await self._request(
+            "POST",
+            f"/actions/standard/{action_name}",
+            json_body={"inputs": inputs},
+        )
+        self._raise_for_error(resp, f"invoke_action {action_name}")
+        data = resp.json()
+        return data if isinstance(data, list) else data.get("results", [])
+
 
 # ── Module-level singleton ────────────────────────────────────────────────────
 # Lazily initialised so the module can be imported before env vars are loaded.

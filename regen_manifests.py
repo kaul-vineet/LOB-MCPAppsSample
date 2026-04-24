@@ -3,6 +3,7 @@ Regenerate mcp-tools.json and ai-plugin.json from live server tool definitions.
 Run from project root: python regen_manifests.py
 """
 import json
+import os
 import re
 from pathlib import Path
 
@@ -43,7 +44,7 @@ SERVERS = [
     (jira,   "jira",   "/jira/mcp"),
 ]
 
-TUNNEL_BASE = "https://1pgd9z7m-8080.inc1.devtunnels.ms"
+TUNNEL_BASE = os.getenv("MCP_GATEWAY_URL", "https://1pgd9z7m-8080.inc1.devtunnels.ms")
 
 def title_case(name: str) -> str:
     """sf__get_leads -> Get leads"""

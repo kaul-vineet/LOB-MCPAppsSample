@@ -821,6 +821,474 @@ async def sf__update_contact(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# CASE TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+async def _fetch_cases() -> list[dict]:
+    """Fetch the 5 most recently created Cases."""
+    sf = get_client()
+    records = await sf.query(
+        "SELECT Id, CaseNumber, Subject, Status, Priority, Account.Name, CreatedDate "
+        "FROM Case ORDER BY CreatedDate DESC LIMIT 5"
+    )
+    return [
+        {
+            "id":           r.get("Id"),
+            "case_number":  r.get("CaseNumber") or "",
+            "subject":      r.get("Subject") or "",
+            "status":       r.get("Status") or "",
+            "priority":     r.get("Priority") or "",
+            "account_name": (r.get("Account") or {}).get("Name") or "",
+            "created_date": r.get("CreatedDate") or "",
+        }
+        for r in records
+    ]
+
+
+@mcp.tool(
+    description=(
+        "Get the 5 most recent Cases from Salesforce. "
+        "Returns case number, subject, status, priority, and account name."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_cases() -> types.CallToolResult:
+    log.info("sf__get_cases")
+    try:
+        items = await _fetch_cases()
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching cases: {exc}")
+
+    structured = {"type": "cases", "total": len(items), "items": items}
+    if not items:
+        summary = "No cases found."
+    else:
+        lines = [f"Retrieved {len(items)} case(s):"]
+        for c in items:
+            lines.append(f"- {c['case_number']} | {c['priority']} | {c['status']} | {c['subject']}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Salesforce Case. "
+        "Required: subject. Optional: priority (High/Medium/Low), account_id, description."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_case(
+    subject: str,
+    priority: str = "Medium",
+    account_id: str = "",
+    description: str = "",
+) -> types.CallToolResult:
+    log.info("sf__create_case", subject=subject)
+    try:
+        sf = get_client()
+        data: dict = {"Subject": subject, "Priority": priority}
+        if account_id:   data["AccountId"] = account_id
+        if description:  data["Description"] = description
+        new_id = await sf.create("Case", data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to create case: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating case: {exc}")
+
+    try:
+        items = await _fetch_cases()
+    except Exception:
+        items = []
+
+    structured = {"type": "cases", "total": len(items), "items": items, "_createdId": new_id}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Case created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Update a Salesforce Case. "
+        "Required: case_id. Optional: status, resolution (Internal Comments)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__update_case(
+    case_id: str,
+    status: str = "",
+    resolution: str = "",
+) -> types.CallToolResult:
+    log.info("sf__update_case", case_id=case_id)
+    try:
+        sf = get_client()
+        data: dict = {}
+        if status:      data["Status"] = status
+        if resolution:  data["Comments"] = resolution
+        if not data:
+            return _error_result("No fields provided to update.")
+        await sf.update("Case", case_id, data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to update case: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating case: {exc}")
+
+    try:
+        items = await _fetch_cases()
+    except Exception:
+        items = []
+
+    structured = {"type": "cases", "total": len(items), "items": items}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Case {case_id} updated. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TASK TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+async def _fetch_tasks() -> list[dict]:
+    """Fetch the 5 most recently created Tasks."""
+    sf = get_client()
+    records = await sf.query(
+        "SELECT Id, Subject, Status, Priority, ActivityDate, WhoId, WhatId "
+        "FROM Task ORDER BY CreatedDate DESC LIMIT 5"
+    )
+    return [
+        {
+            "id":            r.get("Id"),
+            "subject":       r.get("Subject") or "",
+            "status":        r.get("Status") or "",
+            "priority":      r.get("Priority") or "",
+            "activity_date": r.get("ActivityDate") or "",
+            "who_id":        r.get("WhoId") or "",
+            "what_id":       r.get("WhatId") or "",
+        }
+        for r in records
+    ]
+
+
+@mcp.tool(
+    description=(
+        "Get the 5 most recent Tasks from Salesforce. "
+        "Returns subject, status, priority, and due date."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_tasks() -> types.CallToolResult:
+    log.info("sf__get_tasks")
+    try:
+        items = await _fetch_tasks()
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching tasks: {exc}")
+
+    structured = {"type": "tasks", "total": len(items), "items": items}
+    if not items:
+        summary = "No tasks found."
+    else:
+        lines = [f"Retrieved {len(items)} task(s):"]
+        for t in items:
+            lines.append(f"- {t['subject']} | {t['priority']} | {t['status']} | due: {t['activity_date'] or 'none'}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Create a new Salesforce Task (activity). "
+        "Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__create_task(
+    subject: str,
+    priority: str = "Normal",
+    due_date: str = "",
+    what_id: str = "",
+) -> types.CallToolResult:
+    log.info("sf__create_task", subject=subject)
+    try:
+        sf = get_client()
+        data: dict = {"Subject": subject, "Priority": priority, "Status": "Not Started"}
+        if due_date: data["ActivityDate"] = due_date
+        if what_id:  data["WhatId"] = what_id
+        new_id = await sf.create("Task", data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to create task: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating task: {exc}")
+
+    try:
+        items = await _fetch_tasks()
+    except Exception:
+        items = []
+
+    structured = {"type": "tasks", "total": len(items), "items": items, "_createdId": new_id}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LEAD — DELETE & CONVERT
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description="Delete a Salesforce Lead by Id. Returns the refreshed lead list.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__delete_lead(lead_id: str) -> types.CallToolResult:
+    log.info("sf__delete_lead", lead_id=lead_id)
+    try:
+        sf = get_client()
+        await sf.delete("Lead", lead_id)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to delete lead: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error deleting lead: {exc}")
+
+    try:
+        items = await _fetch_leads()
+    except Exception:
+        items = []
+
+    structured = {"type": "leads", "total": len(items), "items": items}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Lead {lead_id} deleted. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. "
+        "Required: lead_id. Optional: converted_status (defaults to 'Closed - Converted'), "
+        "create_opportunity (true/false)."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__convert_lead(
+    lead_id: str,
+    converted_status: str = "Closed - Converted",
+    create_opportunity: bool = True,
+) -> types.CallToolResult:
+    log.info("sf__convert_lead", lead_id=lead_id)
+    try:
+        sf = get_client()
+        results = await sf.invoke_action(
+            "convertLead",
+            [{"leadId": lead_id, "convertedStatus": converted_status, "doNotCreateOpportunity": not create_opportunity}],
+        )
+        result = results[0] if results else {}
+        account_id = result.get("accountId", "")
+        contact_id = result.get("contactId", "")
+        opp_id     = result.get("opportunityId", "")
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to convert lead: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error converting lead: {exc}")
+
+    summary = (
+        f"Lead {lead_id} converted.\n"
+        f"  Account:     {account_id or 'existing'}\n"
+        f"  Contact:     {contact_id or 'existing'}\n"
+        f"  Opportunity: {opp_id or 'not created'}"
+    )
+    structured = {
+        "type": "lead_convert",
+        "leadId": lead_id,
+        "accountId": account_id,
+        "contactId": contact_id,
+        "opportunityId": opp_id,
+    }
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PIPELINE DASHBOARD, CAMPAIGNS, APPROVALS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the Salesforce opportunity pipeline grouped by stage. "
+        "Returns deal count and total amount per stage."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_pipeline_dashboard() -> types.CallToolResult:
+    log.info("sf__get_pipeline_dashboard")
+    try:
+        sf = get_client()
+        records = await sf.query(
+            "SELECT StageName, COUNT(Id) cnt, SUM(Amount) amount "
+            "FROM Opportunity WHERE IsClosed = false "
+            "GROUP BY StageName ORDER BY StageName"
+        )
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching pipeline: {exc}")
+
+    stages = [
+        {
+            "stage":  r.get("StageName") or "",
+            "count":  r.get("cnt") or 0,
+            "amount": r.get("amount") or 0.0,
+        }
+        for r in records
+    ]
+    total_amount = sum(s["amount"] for s in stages)
+    lines = [f"Pipeline dashboard — {len(stages)} stage(s), total ${total_amount:,.0f}:"]
+    for s in stages:
+        lines.append(f"  {s['stage']}: {s['count']} deal(s), ${s['amount']:,.0f}")
+    summary = "\n".join(lines) if stages else "No open opportunities."
+
+    structured = {"type": "pipeline_dashboard", "total_amount": total_amount, "stages": stages}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Get the 5 most recent Campaigns from Salesforce. "
+        "Returns campaign name, status, type, start/end date, and lead count."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_campaigns() -> types.CallToolResult:
+    log.info("sf__get_campaigns")
+    try:
+        sf = get_client()
+        records = await sf.query(
+            "SELECT Id, Name, Status, Type, StartDate, EndDate, NumberOfLeads "
+            "FROM Campaign ORDER BY CreatedDate DESC LIMIT 5"
+        )
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching campaigns: {exc}")
+
+    items = [
+        {
+            "id":          r.get("Id"),
+            "name":        r.get("Name") or "",
+            "status":      r.get("Status") or "",
+            "type":        r.get("Type") or "",
+            "start_date":  r.get("StartDate") or "",
+            "end_date":    r.get("EndDate") or "",
+            "num_leads":   r.get("NumberOfLeads") or 0,
+        }
+        for r in records
+    ]
+    structured = {"type": "campaigns", "total": len(items), "items": items}
+    if not items:
+        summary = "No campaigns found."
+    else:
+        lines = [f"Retrieved {len(items)} campaign(s):"]
+        for c in items:
+            lines.append(f"- {c['name']} | {c['status']} | {c['type']} | leads: {c['num_leads']}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+@mcp.tool(
+    description=(
+        "Get pending Salesforce approval requests assigned to the current user. "
+        "Returns pending ProcessInstance workitems requiring action."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_pending_approvals() -> types.CallToolResult:
+    log.info("sf__get_pending_approvals")
+    try:
+        sf = get_client()
+        records = await sf.query(
+            "SELECT Id, ProcessInstance.TargetObjectId, "
+            "ProcessInstance.Status, ProcessInstance.TargetObject.Name, "
+            "CreatedDate "
+            "FROM ProcessInstanceWorkitem "
+            "WHERE ProcessInstance.Status = 'Pending' "
+            "ORDER BY CreatedDate DESC LIMIT 10"
+        )
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching approvals: {exc}")
+
+    items = [
+        {
+            "id":            r.get("Id"),
+            "target_id":     (r.get("ProcessInstance") or {}).get("TargetObjectId") or "",
+            "target_name":   ((r.get("ProcessInstance") or {}).get("TargetObject") or {}).get("Name") or "",
+            "status":        (r.get("ProcessInstance") or {}).get("Status") or "",
+            "created_date":  r.get("CreatedDate") or "",
+        }
+        for r in records
+    ]
+    structured = {"type": "approvals", "total": len(items), "items": items}
+    if not items:
+        summary = "No pending approvals."
+    else:
+        lines = [f"Retrieved {len(items)} pending approval(s):"]
+        for a in items:
+            lines.append(f"- {a['target_name'] or a['target_id']} | {a['status']}")
+        summary = "\n".join(lines)
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # FORM TOOLS — open interactive create-forms in the widget
 # ══════════════════════════════════════════════════════════════════════════════
 

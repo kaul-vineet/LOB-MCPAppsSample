@@ -469,6 +469,251 @@
             }
         },
         {
+            "name": "sf__get_cases",
+            "description": "Get the 5 most recent Cases from Salesforce. Returns case number, subject, status, priority, and account name.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_casesArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get cases",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_case",
+            "description": "Create a new Salesforce Case. Required: subject. Optional: priority (High/Medium/Low), account_id, description.",
+            "inputSchema": {
+                "properties": {
+                    "subject": {
+                        "title": "Subject",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "Medium",
+                        "title": "Priority",
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "default": "",
+                        "title": "Account Id",
+                        "type": "string"
+                    },
+                    "description": {
+                        "default": "",
+                        "title": "Description",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "subject"
+                ],
+                "title": "sf__create_caseArguments",
+                "type": "object"
+            },
+            "title": "Create case",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__update_case",
+            "description": "Update a Salesforce Case. Required: case_id. Optional: status, resolution (Internal Comments).",
+            "inputSchema": {
+                "properties": {
+                    "case_id": {
+                        "title": "Case Id",
+                        "type": "string"
+                    },
+                    "status": {
+                        "default": "",
+                        "title": "Status",
+                        "type": "string"
+                    },
+                    "resolution": {
+                        "default": "",
+                        "title": "Resolution",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "case_id"
+                ],
+                "title": "sf__update_caseArguments",
+                "type": "object"
+            },
+            "title": "Update case",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__get_tasks",
+            "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_tasksArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get tasks",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__create_task",
+            "description": "Create a new Salesforce Task (activity). Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id).",
+            "inputSchema": {
+                "properties": {
+                    "subject": {
+                        "title": "Subject",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "Normal",
+                        "title": "Priority",
+                        "type": "string"
+                    },
+                    "due_date": {
+                        "default": "",
+                        "title": "Due Date",
+                        "type": "string"
+                    },
+                    "what_id": {
+                        "default": "",
+                        "title": "What Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "subject"
+                ],
+                "title": "sf__create_taskArguments",
+                "type": "object"
+            },
+            "title": "Create task",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__delete_lead",
+            "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list.",
+            "inputSchema": {
+                "properties": {
+                    "lead_id": {
+                        "title": "Lead Id",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "lead_id"
+                ],
+                "title": "sf__delete_leadArguments",
+                "type": "object"
+            },
+            "title": "Delete lead",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__convert_lead",
+            "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status (defaults to 'Closed - Converted'), create_opportunity (true/false).",
+            "inputSchema": {
+                "properties": {
+                    "lead_id": {
+                        "title": "Lead Id",
+                        "type": "string"
+                    },
+                    "converted_status": {
+                        "default": "Closed - Converted",
+                        "title": "Converted Status",
+                        "type": "string"
+                    },
+                    "create_opportunity": {
+                        "default": true,
+                        "title": "Create Opportunity",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "lead_id"
+                ],
+                "title": "sf__convert_leadArguments",
+                "type": "object"
+            },
+            "title": "Convert lead",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__get_pipeline_dashboard",
+            "description": "Get the Salesforce opportunity pipeline grouped by stage. Returns deal count and total amount per stage.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_pipeline_dashboardArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get pipeline dashboard",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__get_campaigns",
+            "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_campaignsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get campaigns",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
+            "name": "sf__get_pending_approvals",
+            "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action.",
+            "inputSchema": {
+                "properties": {},
+                "title": "sf__get_pending_approvalsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get pending approvals",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
+        },
+        {
             "name": "sf__create_lead_form",
             "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits.",
             "inputSchema": {
@@ -853,6 +1098,132 @@
                 "required": []
             },
             "title": "Get knowledge articles",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_change_requests",
+            "description": "Get the latest Change Requests from ServiceNow. Returns up to 'limit' records (default 5) ordered by creation date descending.",
+            "inputSchema": {
+                "properties": {
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_change_requestsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get change requests",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__create_change_request",
+            "description": "Create a new Change Request in ServiceNow. Required: short_description. Optional: category (Normal/Standard/Emergency), risk (low/medium/high), priority (1-4).",
+            "inputSchema": {
+                "properties": {
+                    "short_description": {
+                        "title": "Short Description",
+                        "type": "string"
+                    },
+                    "category": {
+                        "default": "Normal",
+                        "title": "Category",
+                        "type": "string"
+                    },
+                    "risk": {
+                        "default": "medium",
+                        "title": "Risk",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "3",
+                        "title": "Priority",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "short_description"
+                ],
+                "title": "sn__create_change_requestArguments",
+                "type": "object"
+            },
+            "title": "Create change request",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_problems",
+            "description": "Get the latest Problem records from ServiceNow. Returns up to 'limit' problems (default 5) ordered by creation date descending.",
+            "inputSchema": {
+                "properties": {
+                    "limit": {
+                        "default": 5,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_problemsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get problems",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_pending_approvals",
+            "description": "Get pending approval requests in ServiceNow. Returns up to 'limit' approvals (default 10) with approver, document, and state.",
+            "inputSchema": {
+                "properties": {
+                    "limit": {
+                        "default": 10,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_pending_approvalsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get pending approvals",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
+        },
+        {
+            "name": "sn__get_service_catalog_items",
+            "description": "Get available items from the ServiceNow Service Catalog. Returns up to 'limit' catalog items (default 10).",
+            "inputSchema": {
+                "properties": {
+                    "limit": {
+                        "default": 10,
+                        "title": "Limit",
+                        "type": "integer"
+                    }
+                },
+                "title": "sn__get_service_catalog_itemsArguments",
+                "type": "object",
+                "required": []
+            },
+            "title": "Get service catalog items",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/servicenow.html"
@@ -1618,7 +1989,7 @@
             "title": "Get envelopes",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1641,7 +2012,7 @@
             "title": "Get envelope details",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1663,7 +2034,7 @@
             "title": "Get templates",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1705,7 +2076,7 @@
             "title": "Send envelope",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1733,7 +2104,7 @@
             "title": "Void envelope",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1756,7 +2127,7 @@
             "title": "Resend envelope",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1794,7 +2165,7 @@
             "title": "Get signing url",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1822,7 +2193,7 @@
             "title": "Download document",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
@@ -1838,7 +2209,7 @@
             "title": "Send envelope form",
             "_meta": {
                 "ui": {
-                    "resourceUri": "docusign://widget"
+                    "resourceUri": "ui://widget/docusign.html"
                 }
             }
         },
