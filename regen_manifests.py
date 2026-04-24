@@ -12,26 +12,35 @@ ROOT = Path(__file__).parent
 
 # Pre-load all .env files
 for lob_dir in ["sf-mcp-app", "snow-mcp-app", "sap-mcp-app",
-                 "hubspot-mcp-app", "flight-mcp-app", "docusign-mcp-app"]:
+                 "hubspot-mcp-app", "flight-mcp-app", "docusign-mcp-app",
+                 "saphr-mcp-app", "workday-mcp-app", "coupa-mcp-app", "jira-mcp-app"]:
     env = ROOT / lob_dir / ".env"
     if env.exists():
         load_dotenv(env, override=False)
 
+import coupa_mcp.server as coupa
 import docusign_mcp.server as ds
 import flight_mcp.server as ft
 import hubspot_mcp.server as hs
+import jira_mcp.server as jira
 import sap_s4hana_mcp.server as sap
+import saphr_mcp.server as saphr
 import servicenow_mcp.server as sn
 import sf_crm_mcp.server as sf
+import workday_mcp.server as workday
 
 # (server_module, runtime_prefix, gateway_path)
 SERVERS = [
-    (sf,  "sf",  "/sf/mcp"),
-    (sn,  "sn",  "/sn/mcp"),
-    (sap, "sap", "/sap/mcp"),
-    (hs,  "hs",  "/hs/mcp"),
-    (ft,  "ft",  "/ft/mcp"),
-    (ds,  "ds",  "/ds/mcp"),
+    (sf,     "sf",     "/sf/mcp"),
+    (sn,     "sn",     "/sn/mcp"),
+    (sap,    "sap",    "/sap/mcp"),
+    (hs,     "hs",     "/hs/mcp"),
+    (ft,     "ft",     "/ft/mcp"),
+    (ds,     "ds",     "/ds/mcp"),
+    (saphr,  "saphr",  "/saphr/mcp"),
+    (workday,"workday","/workday/mcp"),
+    (coupa,  "coupa",  "/coupa/mcp"),
+    (jira,   "jira",   "/jira/mcp"),
 ]
 
 TUNNEL_BASE = "https://1pgd9z7m-8080.inc1.devtunnels.ms"
@@ -94,11 +103,19 @@ plugin = json.loads(plugin_path.read_text(encoding="utf-8"))
 
 plugin["functions"] = all_functions
 
+# Rebuild runtimes to match the current SERVERS list (pad or truncate as needed)
+existing = plugin.get("runtimes", [])
+new_runtimes = []
 for i, rt_meta in enumerate(runtimes):
-    plugin["runtimes"][i]["spec"]["url"] = (
-        TUNNEL_BASE + rt_meta["path"]
-    )
-    plugin["runtimes"][i]["run_for_functions"] = rt_meta["function_names"]
+    base = existing[i] if i < len(existing) else {
+        "type": "RemoteMCPServer",
+        "spec": {"url": "", "mcp_tool_description": {"file": "mcp-tools.json"}},
+        "auth": {"type": "None"},
+    }
+    base["spec"]["url"] = TUNNEL_BASE + rt_meta["path"]
+    base["run_for_functions"] = rt_meta["function_names"]
+    new_runtimes.append(base)
+plugin["runtimes"] = new_runtimes
 
 plugin_path.write_text(json.dumps(plugin, indent=4), encoding="utf-8")
 print(f"[OK] ai-plugin.json — {len(all_functions)} functions, {len(runtimes)} runtimes updated")

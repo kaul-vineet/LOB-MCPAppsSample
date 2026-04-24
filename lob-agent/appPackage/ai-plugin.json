@@ -253,6 +253,458 @@
         {
             "name": "ds__send_envelope_form",
             "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits."
+        },
+        {
+            "name": "saphr__get_employee_profile",
+            "description": "Get the current employee's personal and employment details from SAP SuccessFactors, including name, job title, department, location, contact info, and hire date. Results are rendered as an interactive widget."
+        },
+        {
+            "name": "saphr__get_leave_balances",
+            "description": "Get the employee's leave and time-account balances from SAP SuccessFactors, showing remaining days for each leave type (annual, sick, etc.)."
+        },
+        {
+            "name": "saphr__get_time_off_history",
+            "description": "Get the employee's historical time-off records including leave type, dates, duration, and approval status."
+        },
+        {
+            "name": "saphr__prepare_book_leave",
+            "description": "Show an interactive leave booking form with the employee's current balances pre-populated. Use this before book_leave to let the user choose dates and type."
+        },
+        {
+            "name": "saphr__book_leave",
+            "description": "Submit a leave/time-off request for manager approval. Requires user_id, time_type, start_date, and end_date."
+        },
+        {
+            "name": "saphr__prepare_change_personal_data",
+            "description": "Show a form to update personal data (address, phone, email) pre-populated with current values. Use this before change_personal_data."
+        },
+        {
+            "name": "saphr__change_personal_data",
+            "description": "Update personal data (address, phone, email) in SAP SuccessFactors. Requires user_id and a changes dict."
+        },
+        {
+            "name": "saphr__get_org_chart",
+            "description": "Get the organisational hierarchy for an employee \u2014 manager, current role, and direct reports \u2014 rendered as an interactive org chart widget."
+        },
+        {
+            "name": "saphr__get_pay_stubs",
+            "description": "Get the employee's recent payslips showing pay dates, gross/net amounts, and currency."
+        },
+        {
+            "name": "saphr__get_pay_stub_detail",
+            "description": "Get detailed breakdown of a single payslip including earnings, deductions, and net pay."
+        },
+        {
+            "name": "saphr__prepare_move_employee",
+            "description": "Show a form to move an employee to a new position. Pre-populated with current job info. Use this before move_employee."
+        },
+        {
+            "name": "saphr__move_employee",
+            "description": "Submit an employee move to a new position. Requires user_id, new_position_id, and effective_date."
+        },
+        {
+            "name": "saphr__update_hierarchy",
+            "description": "Submit a hierarchy change (new manager assignment) for an employee. Requires user_id, new_manager_id, and effective_date."
+        },
+        {
+            "name": "saphr__trigger_background_check",
+            "description": "Trigger a background check for an employee in SAP SuccessFactors."
+        },
+        {
+            "name": "saphr__get_background_check_status",
+            "description": "Get the status of background checks for an employee."
+        },
+        {
+            "name": "saphr__manage_position",
+            "description": "Create or modify a position in SAP SuccessFactors. Set action to 'create' or 'update'."
+        },
+        {
+            "name": "saphr__request_leave_carryover",
+            "description": "Submit a leave carryover request to carry unused leave days from one year to the next."
+        },
+        {
+            "name": "saphr__get_employee_documents",
+            "description": "List the employee's documents stored in SAP SuccessFactors, such as contracts, letters, and certificates."
+        },
+        {
+            "name": "saphr__generate_employment_verification",
+            "description": "Trigger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready."
+        },
+        {
+            "name": "saphr__generate_employment_reference",
+            "description": "Trigger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready."
+        },
+        {
+            "name": "wday__get_worker",
+            "description": "Get the current Workday worker profile. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "wday__get_leave_balances",
+            "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."
+        },
+        {
+            "name": "wday__get_direct_reports",
+            "description": "List direct reports for the current worker."
+        },
+        {
+            "name": "wday__get_inbox_tasks",
+            "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
+        },
+        {
+            "name": "wday__get_learning_assignments",
+            "description": "Retrieve required learning assignments. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "wday__get_pay_slips",
+            "description": "List recent Workday pay slips."
+        },
+        {
+            "name": "wday__get_time_off_entries",
+            "description": "List time off entries for the current worker."
+        },
+        {
+            "name": "wday__prepare_request_leave",
+            "description": "Book time off \u2014 opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget."
+        },
+        {
+            "name": "wday__book_leave",
+            "description": "Submit leave request to Workday. Widget callback \u2014 called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
+        },
+        {
+            "name": "wday__prepare_change_business_title",
+            "description": "Change business title \u2014 opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
+        },
+        {
+            "name": "wday__change_business_title",
+            "description": "Submit business title change to Workday. Widget callback \u2014 called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
+        },
+        {
+            "name": "wday__search_learning_content",
+            "description": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped."
+        },
+        {
+            "name": "wday__get_org_chart",
+            "description": "Get the organizational chart for the current worker's supervisory organization."
+        },
+        {
+            "name": "wday__get_team_calendar",
+            "description": "Get the team time-off calendar showing who is out in the current worker's team."
+        },
+        {
+            "name": "wday__get_team_overview",
+            "description": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details."
+        },
+        {
+            "name": "wday__get_team_performance_summary",
+            "description": "Get team performance review status for managers including pending inbox items and team absence overview."
+        },
+        {
+            "name": "wday__action_inbox_task",
+            "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
+        },
+        {
+            "name": "wday__get_inbox_task_detail",
+            "description": "Get detailed information about a specific Workday inbox task by its task_id."
+        },
+        {
+            "name": "wday__get_goals",
+            "description": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard."
+        },
+        {
+            "name": "wday__get_feedback",
+            "description": "Get anytime feedback you've received from colleagues and managers."
+        },
+        {
+            "name": "wday__give_feedback",
+            "description": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges)."
+        },
+        {
+            "name": "wday__get_feedback_badges",
+            "description": "List available feedback badges that can be used when giving anytime feedback."
+        },
+        {
+            "name": "wday__get_development_items",
+            "description": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "wday__request_feedback_on_self",
+            "description": "Request feedback on yourself from peers and managers. Optionally include a message."
+        },
+        {
+            "name": "wday__get_learning_records",
+            "description": "Get your learning history with completion status, grades, scores, and expiration dates."
+        },
+        {
+            "name": "wday__get_check_ins",
+            "description": "Get 1:1 check-in records with topics and notes."
+        },
+        {
+            "name": "wday__create_check_in",
+            "description": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids."
+        },
+        {
+            "name": "wday__get_check_in_topics",
+            "description": "List check-in topics available for creating check-ins."
+        },
+        {
+            "name": "wday__get_worker_skills",
+            "description": "Get skills listed on your Workday profile."
+        },
+        {
+            "name": "wday__get_team_goals",
+            "description": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget."
+        },
+        {
+            "name": "wday__request_feedback_on_worker",
+            "description": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool)."
+        },
+        {
+            "name": "wday__prepare_give_feedback",
+            "description": "Open the give feedback widget \u2014 select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
+        },
+        {
+            "name": "wday__prepare_create_check_in",
+            "description": "Open the check-in creation widget \u2014 select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+        },
+        {
+            "name": "wday__get_job_profiles",
+            "description": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire."
+        },
+        {
+            "name": "wday__get_job_profile",
+            "description": "Get details of a single Workday job profile by ID including job family and management level."
+        },
+        {
+            "name": "wday__get_job_families",
+            "description": "List Workday job families with optional search filter. Job families group related job profiles."
+        },
+        {
+            "name": "wday__get_jobs",
+            "description": "List Workday jobs (filled positions) with optional search filter."
+        },
+        {
+            "name": "wday__get_job_requisitions",
+            "description": "List open job requisitions. Use to find requisitions available for hiring into."
+        },
+        {
+            "name": "wday__get_supervisory_orgs",
+            "description": "List supervisory organizations with optional search filter. Use to find the target org for a hire."
+        },
+        {
+            "name": "wday__get_supervisory_org_members",
+            "description": "List members of a supervisory organization by org_id. Use to review current team composition or find internal candidates."
+        },
+        {
+            "name": "wday__get_job_change_reasons",
+            "description": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change."
+        },
+        {
+            "name": "wday__create_job_change",
+            "description": "Initiate a job change for a worker (hire, promote, or transfer). Provide worker_id and reason_id (from get_job_change_reasons). Optionally provide job_profile_id, supervisory_org_id, position_id, or job_requisition_id. Returns a job change event ID for submit_job_change."
+        },
+        {
+            "name": "wday__get_job_change",
+            "description": "Get details and status of a job change event by its ID."
+        },
+        {
+            "name": "wday__submit_job_change",
+            "description": "Submit a job change event for approval. Provide the job_change_id from create_job_change."
+        },
+        {
+            "name": "wday__create_org_assignment_change",
+            "description": "Initiate an organization assignment change for a worker. Assign company, cost center, region, or business unit. Returns a change ID for submit_org_assignment_change."
+        },
+        {
+            "name": "wday__submit_org_assignment_change",
+            "description": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change."
+        },
+        {
+            "name": "coupa__get_invoice_status",
+            "description": "Get invoice payment status from Coupa by invoice number (mocked)."
+        },
+        {
+            "name": "coupa__get_po_status",
+            "description": "Get purchase order status from Coupa by PO number (mocked)."
+        },
+        {
+            "name": "coupa__reject_invoice",
+            "description": "Reject an invoice in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__close_purchase_order",
+            "description": "Close a purchase order in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__list_receipts",
+            "description": "List goods receipts from Coupa, optionally filtered by PO (mocked)."
+        },
+        {
+            "name": "coupa__prepare_create_receipt",
+            "description": "Show the goods receipt creation form for a PO (mocked)."
+        },
+        {
+            "name": "coupa__create_receipt",
+            "description": "Post a goods receipt in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__list_requisitions",
+            "description": "List purchase requisitions from Coupa (mocked)."
+        },
+        {
+            "name": "coupa__prepare_create_requisition",
+            "description": "Show the purchase requisition creation form (mocked)."
+        },
+        {
+            "name": "coupa__create_requisition",
+            "description": "Submit a new purchase requisition in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__update_requisition",
+            "description": "Update an existing purchase requisition in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__list_catalog_items",
+            "description": "Search the Coupa procurement catalog (mocked)."
+        },
+        {
+            "name": "coupa__order_catalog_item",
+            "description": "Create a PR from a catalog item in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__list_suppliers",
+            "description": "Search suppliers in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__get_supplier",
+            "description": "Get supplier details from Coupa (mocked)."
+        },
+        {
+            "name": "coupa__update_supplier_address",
+            "description": "Update a supplier's address in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__update_supplier_bank",
+            "description": "Update a supplier's bank details in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__register_supplier",
+            "description": "Register and onboard a new supplier in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__transfer_purchase_order",
+            "description": "Transfer a purchase order to a new owner in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__list_approvals",
+            "description": "List pending approval items in Coupa (mocked)."
+        },
+        {
+            "name": "coupa__approve_reject",
+            "description": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'."
+        },
+        {
+            "name": "jira__list_issues",
+            "description": "Search Jira issues using JQL or common filters (project, status, assignee). Returns up to 100 issues per call."
+        },
+        {
+            "name": "jira__get_issue",
+            "description": "Get full details, comments, and available transitions for a Jira issue by its key (e.g. PROJ-123). Result is rendered as an interactive widget where the user can view the issue and submit updates."
+        },
+        {
+            "name": "jira__show_create_issue_form",
+            "description": "Create a new Jira issue \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create an issue, log a bug, or file a ticket. Pass any known details to pre-fill fields."
+        },
+        {
+            "name": "jira__add_comment",
+            "description": "Add a comment to a Jira issue. Also used as a widget callback by the issue widget when the user submits a comment."
+        },
+        {
+            "name": "jira__transition_issue",
+            "description": "Transition a Jira issue to a new workflow status. Use get_issue first to see available transitions and their IDs. Also used as a widget callback by the issue widget."
+        },
+        {
+            "name": "jira__show_create_project_form",
+            "description": "Create a new Jira project \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a project. Pass any known details to pre-fill fields."
+        },
+        {
+            "name": "jira__create_project",
+            "description": "Submit project creation to Jira. Widget callback \u2014 called automatically by the project form after the user clicks Submit. To create a project, use show_create_project_form instead."
+        },
+        {
+            "name": "jira__update_project",
+            "description": "Submit project updates to Jira. Widget callback \u2014 called automatically by the project widget after the user clicks Submit."
+        },
+        {
+            "name": "jira__create_issue",
+            "description": "Submit issue creation to Jira. Widget callback \u2014 called automatically by the issue form after the user clicks Submit. To create an issue, use show_create_issue_form instead."
+        },
+        {
+            "name": "jira__update_issue",
+            "description": "Submit issue updates to Jira. Widget callback \u2014 called automatically by the issue widget after the user clicks Submit. To view or edit an issue, use get_issue to load the issue widget."
+        },
+        {
+            "name": "jira__move_issues_to_sprint",
+            "description": "Move one or more issues into a sprint. Provide the sprint ID (from list_sprints) and a list of issue keys."
+        },
+        {
+            "name": "jira__link_issues",
+            "description": "Create a link between two Jira issues. Common link types: 'Blocks', 'Cloners', 'Duplicate', 'Relates'. The inward issue is the one that IS blocked/cloned/etc."
+        },
+        {
+            "name": "jira__list_boards",
+            "description": "List agile boards (Scrum or Kanban) visible to the current user. Optionally filter by project key or board type."
+        },
+        {
+            "name": "jira__get_board",
+            "description": "Get board details including column configuration for an agile board."
+        },
+        {
+            "name": "jira__list_sprints",
+            "description": "List sprints for an agile board. Filter by state: active, future, or closed."
+        },
+        {
+            "name": "jira__get_sprint",
+            "description": "Get sprint details and its issues. Use to view sprint progress and what work is planned, in progress, or done."
+        },
+        {
+            "name": "jira__get_backlog",
+            "description": "Get backlog issues for an agile board -- items not yet assigned to a sprint."
+        },
+        {
+            "name": "jira__list_epics",
+            "description": "List epics for an agile board. Shows epic name, key, summary, and completion status."
+        },
+        {
+            "name": "jira__log_work",
+            "description": "Log work (time tracking) on a Jira issue. Specify time spent in Jira format (e.g. '2h 30m', '1d')."
+        },
+        {
+            "name": "jira__get_my_issues",
+            "description": "Get unresolved issues assigned to the current user -- a quick 'my work' view sorted by last updated."
+        },
+        {
+            "name": "jira__list_projects",
+            "description": "List all Jira projects accessible to the current user."
+        },
+        {
+            "name": "jira__get_team_workload",
+            "description": "Show work distribution across team members -- total issues, breakdown by priority and status, and overload warnings."
+        },
+        {
+            "name": "jira__get_team_sprint_health",
+            "description": "Sprint health overview for engineering managers -- completion percentage, blocked items, per-person contributions, and days remaining."
+        },
+        {
+            "name": "jira__list_versions",
+            "description": "List versions/releases for a Jira project. Shows release status, dates, and whether versions are overdue."
+        },
+        {
+            "name": "jira__create_version",
+            "description": "Create a new version/release in a Jira project with name, description, and planned release date."
+        },
+        {
+            "name": "jira__update_version",
+            "description": "Update a Jira version/release. Use to mark as released, update release date, or archive."
         }
     ],
     "runtimes": [
@@ -401,6 +853,175 @@
             "auth": {
                 "type": "None"
             }
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/saphr/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "saphr__get_employee_profile",
+                "saphr__get_leave_balances",
+                "saphr__get_time_off_history",
+                "saphr__prepare_book_leave",
+                "saphr__book_leave",
+                "saphr__prepare_change_personal_data",
+                "saphr__change_personal_data",
+                "saphr__get_org_chart",
+                "saphr__get_pay_stubs",
+                "saphr__get_pay_stub_detail",
+                "saphr__prepare_move_employee",
+                "saphr__move_employee",
+                "saphr__update_hierarchy",
+                "saphr__trigger_background_check",
+                "saphr__get_background_check_status",
+                "saphr__manage_position",
+                "saphr__request_leave_carryover",
+                "saphr__get_employee_documents",
+                "saphr__generate_employment_verification",
+                "saphr__generate_employment_reference"
+            ]
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/workday/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "wday__get_worker",
+                "wday__get_leave_balances",
+                "wday__get_direct_reports",
+                "wday__get_inbox_tasks",
+                "wday__get_learning_assignments",
+                "wday__get_pay_slips",
+                "wday__get_time_off_entries",
+                "wday__prepare_request_leave",
+                "wday__book_leave",
+                "wday__prepare_change_business_title",
+                "wday__change_business_title",
+                "wday__search_learning_content",
+                "wday__get_org_chart",
+                "wday__get_team_calendar",
+                "wday__get_team_overview",
+                "wday__get_team_performance_summary",
+                "wday__action_inbox_task",
+                "wday__get_inbox_task_detail",
+                "wday__get_goals",
+                "wday__get_feedback",
+                "wday__give_feedback",
+                "wday__get_feedback_badges",
+                "wday__get_development_items",
+                "wday__request_feedback_on_self",
+                "wday__get_learning_records",
+                "wday__get_check_ins",
+                "wday__create_check_in",
+                "wday__get_check_in_topics",
+                "wday__get_worker_skills",
+                "wday__get_team_goals",
+                "wday__request_feedback_on_worker",
+                "wday__prepare_give_feedback",
+                "wday__prepare_create_check_in",
+                "wday__get_job_profiles",
+                "wday__get_job_profile",
+                "wday__get_job_families",
+                "wday__get_jobs",
+                "wday__get_job_requisitions",
+                "wday__get_supervisory_orgs",
+                "wday__get_supervisory_org_members",
+                "wday__get_job_change_reasons",
+                "wday__create_job_change",
+                "wday__get_job_change",
+                "wday__submit_job_change",
+                "wday__create_org_assignment_change",
+                "wday__submit_org_assignment_change"
+            ]
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/coupa/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "coupa__get_invoice_status",
+                "coupa__get_po_status",
+                "coupa__reject_invoice",
+                "coupa__close_purchase_order",
+                "coupa__list_receipts",
+                "coupa__prepare_create_receipt",
+                "coupa__create_receipt",
+                "coupa__list_requisitions",
+                "coupa__prepare_create_requisition",
+                "coupa__create_requisition",
+                "coupa__update_requisition",
+                "coupa__list_catalog_items",
+                "coupa__order_catalog_item",
+                "coupa__list_suppliers",
+                "coupa__get_supplier",
+                "coupa__update_supplier_address",
+                "coupa__update_supplier_bank",
+                "coupa__register_supplier",
+                "coupa__transfer_purchase_order",
+                "coupa__list_approvals",
+                "coupa__approve_reject"
+            ]
+        },
+        {
+            "type": "RemoteMCPServer",
+            "spec": {
+                "url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/jira/mcp",
+                "mcp_tool_description": {
+                    "file": "mcp-tools.json"
+                }
+            },
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "jira__list_issues",
+                "jira__get_issue",
+                "jira__show_create_issue_form",
+                "jira__add_comment",
+                "jira__transition_issue",
+                "jira__show_create_project_form",
+                "jira__create_project",
+                "jira__update_project",
+                "jira__create_issue",
+                "jira__update_issue",
+                "jira__move_issues_to_sprint",
+                "jira__link_issues",
+                "jira__list_boards",
+                "jira__get_board",
+                "jira__list_sprints",
+                "jira__get_sprint",
+                "jira__get_backlog",
+                "jira__list_epics",
+                "jira__log_work",
+                "jira__get_my_issues",
+                "jira__list_projects",
+                "jira__get_team_workload",
+                "jira__get_team_sprint_health",
+                "jira__list_versions",
+                "jira__create_version",
+                "jira__update_version"
+            ]
         }
     ]
 }

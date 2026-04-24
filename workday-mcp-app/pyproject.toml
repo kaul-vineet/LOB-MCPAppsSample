@@ -1,0 +1,21 @@
+[project]
+name = "workday-mcp"
+version = "0.1.0"
+description = "Workday HR MCP server for The Great Trading Company"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]==1.26.0",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    "uvicorn>=0.29",
+    "starlette>=0.37",
+    "structlog>=24.1.0",
+    "pydantic>=2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+workday-mcp = "workday_mcp.server:main"

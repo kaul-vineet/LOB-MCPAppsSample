@@ -103,9 +103,77 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── ASGI Gateway — single port for all 6 LOBs ─────────────────────────────
-  # Starts all 6 MCP servers in one process on port 8080.
-  # Use instead of the 6 individual services above:
+  # ── SAP SuccessFactors HR ─────────────────────────────────────────────────
+  saphr:
+    build:
+      context: .
+      dockerfile: saphr-mcp-app/Dockerfile
+    ports:
+      - "3006:3006"
+    env_file:
+      - ./saphr-mcp-app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3006),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Workday HR ────────────────────────────────────────────────────────────
+  workday:
+    build:
+      context: .
+      dockerfile: workday-mcp-app/Dockerfile
+    ports:
+      - "3007:3007"
+    env_file:
+      - ./workday-mcp-app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3007),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Coupa Procurement ─────────────────────────────────────────────────────
+  coupa:
+    build:
+      context: .
+      dockerfile: coupa-mcp-app/Dockerfile
+    ports:
+      - "3008:3008"
+    env_file:
+      - ./coupa-mcp-app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3008),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Jira Project Management ───────────────────────────────────────────────
+  jira:
+    build:
+      context: .
+      dockerfile: jira-mcp-app/Dockerfile
+    ports:
+      - "3009:3009"
+    env_file:
+      - ./jira-mcp-app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',3009),2); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── ASGI Gateway — single port for all 10 LOBs ────────────────────────────
+  # Starts all 10 MCP servers in one process on port 8080.
+  # Use instead of the individual services above:
   #   docker compose --profile gateway up gateway
   # Tunnel: devtunnel port create gtc-tunnel -p 8080
   gateway:
@@ -121,6 +189,10 @@ services:
       - ./hubspot-mcp-app/.env
       - ./flight-mcp-app/.env
       - ./docusign-mcp-app/.env
+      - ./saphr-mcp-app/.env
+      - ./workday-mcp-app/.env
+      - ./coupa-mcp-app/.env
+      - ./jira-mcp-app/.env
     environment:
       GATEWAY_PORT: "8080"
     restart: unless-stopped

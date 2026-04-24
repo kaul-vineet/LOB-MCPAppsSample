@@ -21,12 +21,16 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 
 SERVERS = {
-    "salesforce": ROOT / "sf-mcp-app"  / "sf_crm_mcp"  / "server.py",
-    "servicenow": ROOT / "snow-mcp-app" / "servicenow_mcp" / "server.py",
-    "sap":        ROOT / "sap-mcp-app"  / "sap_s4hana_mcp" / "server.py",
-    "hubspot":    ROOT / "hubspot-mcp-app" / "hubspot_mcp" / "server.py",
-    "flight":     ROOT / "flight-mcp-app" / "flight_mcp" / "server.py",
-    "docusign":   ROOT / "docusign-mcp-app" / "docusign_mcp" / "server.py",
+    "salesforce": ROOT / "sf-mcp-app"      / "sf_crm_mcp"      / "server.py",
+    "servicenow": ROOT / "snow-mcp-app"    / "servicenow_mcp"   / "server.py",
+    "sap":        ROOT / "sap-mcp-app"     / "sap_s4hana_mcp"   / "server.py",
+    "hubspot":    ROOT / "hubspot-mcp-app" / "hubspot_mcp"       / "server.py",
+    "flight":     ROOT / "flight-mcp-app"  / "flight_mcp"       / "server.py",
+    "docusign":   ROOT / "docusign-mcp-app"/ "docusign_mcp"      / "server.py",
+    "saphr":      ROOT / "saphr-mcp-app"   / "saphr_mcp"        / "server.py",
+    "workday":    ROOT / "workday-mcp-app" / "workday_mcp"       / "server.py",
+    "coupa":      ROOT / "coupa-mcp-app"   / "coupa_mcp"        / "server.py",
+    "jira":       ROOT / "jira-mcp-app"    / "jira_mcp"         / "server.py",
 }
 
 MCP_TOOLS_JSON = ROOT / "lob-agent" / "appPackage" / "mcp-tools.json"
@@ -34,8 +38,12 @@ AI_PLUGIN_JSON = ROOT / "lob-agent" / "appPackage" / "ai-plugin.json"
 
 # Prefixes used in server.py function names that are stripped in mcp-tools.json.
 # Double-underscore variants must come before single-underscore to avoid partial strips.
-_STRIP_PREFIXES = ("sf__", "sn__", "sap__", "hs__", "ft__", "ds__",
-                   "sf_",  "sn_",  "sap_",  "hs_",  "ft_",  "ds_")
+_STRIP_PREFIXES = (
+    "sf__", "sn__", "sap__", "hs__", "ft__", "ds__",
+    "saphr__", "wday__", "coupa__", "jira__",
+    "sf_",  "sn_",  "sap_",  "hs_",  "ft_",  "ds_",
+    "saphr_", "wday_", "coupa_", "jira_",
+)
 
 
 def _normalise(name: str) -> str:

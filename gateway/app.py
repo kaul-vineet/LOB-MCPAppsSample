@@ -1,15 +1,19 @@
 """
-GTC ASGI Gateway — single port (8080) for all 6 LOB MCP servers.
+GTC ASGI Gateway — single port (8080) for all 10 LOB MCP servers.
 
 Starlette mounts each FastMCP app under a path prefix so M365 Copilot
 reaches every runtime through one tunnel port:
 
-  /sf   -> Salesforce CRM       (9 tools)   ai-plugin runtime 1
-  /sn   -> ServiceNow ITSM      (5 tools)   ai-plugin runtime 2
-  /sap  -> SAP S/4HANA           (6 tools)   ai-plugin runtime 3
-  /hs   -> HubSpot Marketing     (7 tools)   ai-plugin runtime 4
-  /ft   -> Flight Tracker        (5 tools)   ai-plugin runtime 5
-  /ds   -> DocuSign eSignature   (9 tools)   ai-plugin runtime 6
+  /sf      -> Salesforce CRM          ai-plugin runtime 1
+  /sn      -> ServiceNow ITSM         ai-plugin runtime 2
+  /sap     -> SAP S/4HANA             ai-plugin runtime 3
+  /hs      -> HubSpot Marketing       ai-plugin runtime 4
+  /ft      -> Flight Tracker          ai-plugin runtime 5
+  /ds      -> DocuSign eSignature     ai-plugin runtime 6
+  /saphr   -> SAP SuccessFactors HR   ai-plugin runtime 7
+  /workday -> Workday HR              ai-plugin runtime 8
+  /coupa   -> Coupa Procurement       ai-plugin runtime 9
+  /jira    -> Jira Projects           ai-plugin runtime 10
 
 Widget resourceUris use the ui:// scheme and are runtime-independent,
 so mcp-tools.json needs no changes when switching to the gateway.
@@ -31,29 +35,41 @@ for _env_path in (
     _ROOT / "hubspot-mcp-app" / ".env",
     _ROOT / "flight-mcp-app" / ".env",
     _ROOT / "docusign-mcp-app" / ".env",
+    _ROOT / "saphr-mcp-app" / ".env",
+    _ROOT / "workday-mcp-app" / ".env",
+    _ROOT / "coupa-mcp-app" / ".env",
+    _ROOT / "jira-mcp-app" / ".env",
 ):
     if _env_path.exists():
         load_dotenv(_env_path, override=False)
 
 # Import after env is loaded — each module runs _load_env() + settings at import time
+import coupa_mcp.server as coupa  # noqa: E402
 import docusign_mcp.server as ds  # noqa: E402
 import flight_mcp.server as ft  # noqa: E402
 import hubspot_mcp.server as hs  # noqa: E402
+import jira_mcp.server as jira  # noqa: E402
 import sap_s4hana_mcp.server as sap  # noqa: E402
+import saphr_mcp.server as saphr  # noqa: E402
 import servicenow_mcp.server as sn  # noqa: E402
 import sf_crm_mcp.server as sf  # noqa: E402
+import workday_mcp.server as workday  # noqa: E402
 from starlette.applications import Starlette  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.routing import Mount  # noqa: E402
 
 app = Starlette(
     routes=[
-        Mount("/sf",  app=sf.mcp.streamable_http_app()),
-        Mount("/sn",  app=sn.mcp.streamable_http_app()),
-        Mount("/sap", app=sap.mcp.streamable_http_app()),
-        Mount("/hs",  app=hs.mcp.streamable_http_app()),
-        Mount("/ft",  app=ft.mcp.streamable_http_app()),
-        Mount("/ds",  app=ds.mcp.streamable_http_app()),
+        Mount("/sf",      app=sf.mcp.streamable_http_app()),
+        Mount("/sn",      app=sn.mcp.streamable_http_app()),
+        Mount("/sap",     app=sap.mcp.streamable_http_app()),
+        Mount("/hs",      app=hs.mcp.streamable_http_app()),
+        Mount("/ft",      app=ft.mcp.streamable_http_app()),
+        Mount("/ds",      app=ds.mcp.streamable_http_app()),
+        Mount("/saphr",   app=saphr.mcp.streamable_http_app()),
+        Mount("/workday", app=workday.mcp.streamable_http_app()),
+        Mount("/coupa",   app=coupa.mcp.streamable_http_app()),
+        Mount("/jira",    app=jira.mcp.streamable_http_app()),
     ]
 )
 
