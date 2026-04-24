@@ -1,24 +1,28 @@
 # ⚓ The Great Trading Company — LOB MCP Apps
 
 <p align="center">
-  <em>Six enterprise LOB systems, one M365 Copilot agent, interactive React widgets with side-by-side support</em>
+  <em>Ten enterprise LOB systems, one M365 Copilot agent, interactive React widgets with side-by-side support</em>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/🏛️_Salesforce-Lightning_SLDS-00A1E0?style=for-the-badge" alt="Salesforce" />
   <img src="https://img.shields.io/badge/🎫_ServiceNow-Now_Design-293E40?style=for-the-badge" alt="ServiceNow" />
-  <img src="https://img.shields.io/badge/📦_SAP-Fiori-0FAAFF?style=for-the-badge" alt="SAP" />
+  <img src="https://img.shields.io/badge/📦_SAP_S4HANA-Fiori-0FAAFF?style=for-the-badge" alt="SAP" />
   <img src="https://img.shields.io/badge/🧡_HubSpot-Canvas-FF7A59?style=for-the-badge" alt="HubSpot" />
   <img src="https://img.shields.io/badge/✈️_Flight-OpenSky-1B6CA8?style=for-the-badge" alt="Flight Tracker" />
   <img src="https://img.shields.io/badge/✒️_DocuSign-eSignature-FFB800?style=for-the-badge" alt="DocuSign" />
+  <img src="https://img.shields.io/badge/👤_SAP_SF-SuccessFactors-0070B1?style=for-the-badge" alt="SAP SuccessFactors" />
+  <img src="https://img.shields.io/badge/💼_Workday-HCM-F5901E?style=for-the-badge" alt="Workday" />
+  <img src="https://img.shields.io/badge/🛒_Coupa-Procurement-E3291B?style=for-the-badge" alt="Coupa" />
+  <img src="https://img.shields.io/badge/📋_Jira-Projects-0052CC?style=for-the-badge" alt="Jira" />
 </p>
 
 | | |
 |---|---|
-| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — Salesforce CRM, ServiceNow ITSM, SAP S/4HANA ERP, HubSpot Marketing, Flight Tracker, and DocuSign eSignature in one agent |
+| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — 10 enterprise systems, 190 tools, 6 React widgets in one agent |
 | **Author** | Vineet Kaul, PM Architect – Agentic AI, Microsoft |
 | **Date** | April 2026 |
-| **Stack** | Python · FastMCP 1.26 · React 19 · Fluent UI v9 · Vite · @modelcontextprotocol/ext-apps · Docker · Dev Tunnels · M365 Agents Toolkit |
+| **Stack** | Python · FastMCP 1.26 · React 19 · Fluent UI v9 · Vite · @modelcontextprotocol/ext-apps · Docker · Dev Tunnels · M365 Agents Toolkit · Azure Container Apps |
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -27,51 +31,45 @@
 ![MCP Apps](https://img.shields.io/badge/MCP_Apps-ext--apps-purple)
 ![M365](https://img.shields.io/badge/M365_Copilot-Public_Preview-orange?logo=microsoft&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Azure](https://img.shields.io/badge/Azure-Container_Apps-0078D4?logo=microsoftazure&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-**Tags:** `mcp` `mcp-apps` `copilot` `python` `react` `fluent-ui` `m365` `salesforce` `servicenow` `sap` `hubspot` `flight-tracker` `docusign` `agentic-ai` `declarative-agent` `side-by-side` `docker`
+**Tags:** `mcp` `mcp-apps` `copilot` `python` `react` `fluent-ui` `m365` `salesforce` `servicenow` `sap` `hubspot` `flight-tracker` `docusign` `sap-successfactors` `workday` `coupa` `jira` `agentic-ai` `declarative-agent` `azure-container-apps` `bicep`
 
 ---
 
-> **TL;DR** — Six Python MCP servers (Salesforce CRM + ServiceNow ITSM + SAP S/4HANA + HubSpot Marketing + Flight Tracker + DocuSign eSignature) with React + Fluent UI widgets, running in Docker behind a single dev tunnel, orchestrated by one M365 Copilot declarative agent. Each widget renders interactively inside Copilot chat with full CRUD, side-by-side expansion, LOB-native theming, and the official MCP Apps protocol. Flight Tracker and DocuSign ship with **mock mode** — fully functional without credentials.
+> **TL;DR** — Ten Python MCP servers (Salesforce CRM · ServiceNow ITSM · SAP S/4HANA · HubSpot Marketing · Flight Tracker · DocuSign eSignature · SAP SuccessFactors HR · Workday HCM · Coupa Procurement · Jira Projects) with React + Fluent UI widgets, running behind a single ASGI gateway (port 8080) or via Docker Compose, orchestrated by one M365 Copilot declarative agent with 190 tools across 10 runtimes. All new LOBs (and Flight/DocuSign) ship with **mock mode** — fully functional without credentials. Deploy to Azure Container Apps with one Bicep file.
 
 ---
 
 ## Contents
 
 - [Architecture](#architecture)
+- [LOBs at a Glance](#lobs-at-a-glance)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
-  - [1. 🏛️ Salesforce](#1-️-salesforce)
-  - [2. 🎫 ServiceNow](#2--servicenow)
-  - [3. 📦 SAP S/4HANA](#3--sap-s4hana)
-  - [4. 🧡 HubSpot](#4--hubspot)
-  - [5. ✈️ Flight Tracker](#5-️-flight-tracker)
-  - [6. ✒️ DocuSign](#6-️-docusign)
-  - [7. 🚇 Dev Tunnel](#7--dev-tunnel)
-  - [8. ⚓ The Agent](#8--the-agent)
-- [Detailed Setup Guide ↗](SETUP.md)
 - [Running](#running)
+  - [Option A: Gateway (Recommended)](#option-a-asgi-gateway-recommended-)
+  - [Option B: Docker Compose](#option-b-docker-compose-)
+  - [Option C: Python Venvs](#option-c-python-venvs-dev)
+- [Deploy to Azure](#deploy-to-azure)
 - [Mock Mode](#mock-mode)
 - [Static Analysis — check_meta.py](#static-analysis--check_metapy)
+- [Manifest Generation — regen_manifests.py](#manifest-generation--regen_manifestspy)
 - [Skills System](#skills-system)
-- [Test Harness](#test-harness)
 - [Tools Reference](#tools-reference)
+- [Widget Architecture](#widget-architecture)
 - [Critical Troubleshooting](#critical-troubleshooting)
 - [References](#references)
 
-> 📖 **New to this?** See [**SETUP.md**](SETUP.md) for a beginner-friendly guide with step-by-step credential setup for every system.
+> 📖 **New to this?** See [**SETUP.md**](SETUP.md) for a beginner-friendly step-by-step credential guide.
 
 ---
 
 ## Architecture
 
 ### MCP Server vs. MCP App — Why custom servers?
-
-You may wonder: *"Salesforce/ServiceNow/SAP already have (or will have) their own MCP servers — can I just use those?"*
-
-**Short answer: not for widgets.** There's a key difference:
 
 | | Generic MCP Server | MCP App (what we built) |
 |---|---|---|
@@ -80,38 +78,49 @@ You may wonder: *"Salesforce/ServiceNow/SAP already have (or will have) their ow
 | **Requires** | Just tools | Tools + `_meta.ui.resourceUri` + widget HTML resource |
 | **Example** | *"You have 5 leads: John Smith at Acme..."* | Live sortable table with ✎ edit buttons |
 
-Our MCP servers are **MCP Apps** — they return structured data that M365 Copilot renders as interactive widgets directly in the chat. A generic LOB MCP server would give you text answers, not visual UI. The widget is the whole point of this project.
-
-> 💡 If a LOB vendor releases their own MCP server and you only need text responses, you can point `ai-plugin.json` at their URL. But for the interactive widget experience, you need the custom servers in this repo.
+Our MCP servers are **MCP Apps** — they return structured data that M365 Copilot renders as interactive widgets directly in the chat.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                M365 Copilot                                    │
-│                                                                                │
-│  "Show leads"  "Show incidents"  "Show POs"  "Show emails"  "Flights"  "Sign" │
-│        └─────────────────────────────┬─────────────────────────────────────┘  │
-│                                      ▼                                         │
-│                  ┌───────────────────────────────────────────┐                 │
-│                  │     The Great Trading Company             │                 │
-│                  │      (Declarative Agent)                  │                 │
-│                  │      62 tools · 6 runtimes                │                 │
-│                  └──┬──────┬──────┬──────┬──────┬───────────┘                 │
-└─────────────────────┼──────┼──────┼──────┼──────┼────────────────────────────┘
-                      │      │      │      │      │
-          ┌───────────┘ ┌────┘  ┌───┘  ┌──┘  ┌───┘
-          ▼             ▼       ▼      ▼     ▼          ▼
-      ┌────────┐ ┌───────────┐ ┌────────┐ ┌──────┐ ┌────────┐ ┌──────────┐
-      │SF MCP  │ │ SN MCP    │ │SAP MCP │ │HSMCP │ │FT MCP  │ │DS MCP    │
-      │:3000   │ │ :3001     │ │ :3002  │ │:3003 │ │ :3004  │ │ :3005    │
-      │9 tools │ │ 5 tools   │ │6 tools │ │7tools│ │5 tools │ │ 9 tools  │
-      └────┬───┘ └─────┬─────┘ └───┬────┘ └──┬───┘ └────┬───┘ └────┬─────┘
-           │           │           │          │          │           │
-           ▼           ▼           ▼          ▼          ▼           ▼
-       Salesforce  ServiceNow   SAP API   HubSpot   OpenSky Net  DocuSign
-       REST API    Table API    Hub/OData REST API  REST API     eSign API
+┌──────────────────────────────────────────────────────────────────────┐
+│                           M365 Copilot                               │
+│                                                                      │
+│  "Show leads"  "Open incidents"  "POs"  "Flights"  "Sign"  "HR"    │
+│        └───────────────────────────┬──────────────────────────────┘  │
+│                                    ▼                                  │
+│         ┌─────────────────────────────────────────────────┐          │
+│         │    The Great Trading Company (Declarative Agent) │          │
+│         │         190 tools · 10 runtimes                 │          │
+│         └──┬──┬──┬──┬──┬──┬──┬──┬──┬──────────────────────┘          │
+└────────────┼──┼──┼──┼──┼──┼──┼──┼──┼──────────────────────────────┘
+             │  │  │  │  │  │  │  │  │
+             ▼  ▼  ▼  ▼  ▼  ▼  ▼  ▼  ▼  ▼
+   ┌───────────────────────────────────────────────────────────────┐
+   │         ASGI Gateway  :8080  (all 10 LOBs in-process)        │
+   │  /sf  /sn  /sap  /hs  /ft  /ds  /saphr  /workday  /coupa  /jira │
+   └───────────────────────────────────────────────────────────────┘
 ```
 
-**Single Persistent Dev Tunnel** — all six servers share one named tunnel (`gtc-tunnel`) with six port mappings. The URL never changes across restarts.
+**Two deployment modes:**
+- **Gateway** — all 10 LOBs in one Python process on port 8080 (dev tunnel / Azure Container Apps)
+- **Docker Compose** — 10 individual services on ports 3000–3009 (optional per-LOB isolation)
+
+---
+
+## LOBs at a Glance
+
+| # | LOB | Port | Tools | Widget | Mock Mode |
+|---|-----|------|-------|--------|-----------|
+| 1 | 🏛️ Salesforce CRM | 3000 | 25 | ✅ React + Fluent UI | — |
+| 2 | 🎫 ServiceNow ITSM | 3001 | 18 | ✅ React + Fluent UI | — |
+| 3 | 📦 SAP S/4HANA | 3002 | 6 | ✅ React + Fluent UI | sandbox default |
+| 4 | 🧡 HubSpot Marketing | 3003 | 14 | ✅ React + Fluent UI | — |
+| 5 | ✈️ Flight Tracker | 3004 | 5 | ✅ React + Fluent UI | ✅ auto if no creds |
+| 6 | ✒️ DocuSign eSignature | 3005 | 9 | ✅ React + Fluent UI | ✅ auto if no creds |
+| 7 | 👤 SAP SuccessFactors HR | 3006 | 20 | ⬜ pending | ✅ auto if no creds |
+| 8 | 💼 Workday HCM | 3007 | 46 | ⬜ pending | ✅ auto if no creds |
+| 9 | 🛒 Coupa Procurement | 3008 | 21 | ⬜ pending | ✅ always (COUPA_MOCK=true) |
+| 10 | 📋 Jira Projects | 3009 | 26 | ⬜ pending | ✅ auto if no creds |
+| | **Gateway** | **8080** | **190** | | |
 
 ---
 
@@ -119,210 +128,274 @@ Our MCP servers are **MCP Apps** — they return structured data that M365 Copil
 
 ```
 lob-mcp-apps/
-├── README.md                          ← you are here
-├── check_meta.py                      ← static analysis: verifies tool/manifest alignment
+├── README.md
+├── .gitignore
+├── check_meta.py              ← static analysis: tool/manifest alignment
+├── regen_manifests.py         ← regenerate mcp-tools.json + ai-plugin.json
 │
-├── sf-mcp-app/                        # Salesforce CRM MCP server (port 3000)
-│   ├── .env.example
+├── shared-mcp-lib/            # Shared auth/HTTP/logging/settings helpers
+│   └── shared_mcp/
+│       ├── auth.py            # get_bearer_token(ctx) — OAuth Bearer extraction
+│       ├── http.py            # create_async_client() — httpx factory
+│       ├── logger.py          # get_logger() — structlog wrapper
+│       └── settings.py        # Dataclass loaders for saphr/workday/coupa/jira
+│
+├── sf-mcp-app/                # Salesforce CRM (port 3000)
 │   ├── sf_crm_mcp/
-│   │   ├── server.py                  # 9 tools — Leads & Opportunities CRUD + Forms
-│   │   ├── salesforce.py              # SF OAuth2 + REST client
-│   │   └── web/widget.html
-│   └── Dockerfile                     # Multi-stage build
+│   │   ├── server.py          # 25 tools — Leads, Opps, Accounts, Contacts,
+│   │   │                      #   Cases, Tasks, Pipeline, Campaigns, Approvals
+│   │   ├── salesforce.py      # OAuth2 + REST client (query/create/update/delete)
+│   │   └── web/widget.html    # React + SLDS widget
+│   └── .env.example
 │
-├── snow-mcp-app/                      # ServiceNow ITSM MCP server (port 3001)
-│   ├── .env.example
+├── snow-mcp-app/              # ServiceNow ITSM (port 3001)
 │   ├── servicenow_mcp/
-│   │   ├── server.py                  # 5 tools — Incidents & Requests
+│   │   ├── server.py          # 18 tools — Incidents, Requests, Change Requests,
+│   │   │                      #   Problems, Approvals, Service Catalog, KB
 │   │   └── web/widget.html
-│   └── Dockerfile
+│   └── .env.example
 │
-├── sap-mcp-app/                       # SAP S/4HANA MCP server (port 3002)
-│   ├── .env.example
+├── sap-mcp-app/               # SAP S/4HANA (port 3002)
 │   ├── sap_s4hana_mcp/
-│   │   ├── server.py                  # 6 tools — POs, Business Partners, Materials
+│   │   ├── server.py          # 6 tools — POs, Business Partners, Materials
 │   │   ├── sap_client.py
 │   │   └── web/widget.html
-│   └── Dockerfile
+│   └── .env.example
 │
-├── hubspot-mcp-app/                   # HubSpot CRM MCP server (port 3003)
-│   ├── .env.example
+├── hubspot-mcp-app/           # HubSpot Marketing (port 3003)
 │   ├── hubspot_mcp/
-│   │   ├── server.py                  # 7 tools — Emails, Lists & Contacts
+│   │   ├── server.py          # 14 tools — Emails, Lists, Contacts, Campaigns
 │   │   ├── hubspot_client.py
 │   │   └── web/widget.html
-│   └── Dockerfile
+│   └── .env.example
 │
-├── flight-mcp-app/                    # Flight Tracker MCP server (port 3004)
-│   ├── .env.example                   # OpenSky credentials (optional — mock mode if absent)
+├── flight-mcp-app/            # Flight Tracker (port 3004) — mock-ready
 │   ├── flight_mcp/
-│   │   ├── server.py                  # 5 tools — departures, arrivals, aircraft state/track
+│   │   ├── server.py          # 5 tools — departures, arrivals, state, track
 │   │   └── web/widget.html
-│   └── Dockerfile
+│   └── .env.example
 │
-├── docusign-mcp-app/                  # DocuSign eSignature MCP server (port 3005)
-│   ├── .env.example                   # DocuSign JWT credentials (optional — mock mode if absent)
+├── docusign-mcp-app/          # DocuSign eSignature (port 3005) — mock-ready
 │   ├── docusign_mcp/
-│   │   ├── server.py                  # 9 tools — envelopes, templates, send, void, sign
+│   │   ├── server.py          # 9 tools — envelopes, templates, send, void, sign
 │   │   └── web/widget.html
-│   └── Dockerfile
+│   └── .env.example
 │
-└── lob-agent/                         # "The Great Trading Company" agent
-    ├── appPackage/
-    │   ├── declarativeAgent.json      # Agent identity & 10 conversation starters
-    │   ├── manifest.json
-    │   ├── ai-plugin.json             # 6 runtimes (SF:3000, SN:3001, SAP:3002, HS:3003, FT:3004, DS:3005)
-    │   ├── mcp-tools.json             # Tool schemas with _meta + widget URIs
-    │   └── instruction.txt            # Combined persona across all 6 LOBs
-    ├── skills/                        # Per-LOB scenario documentation
-    │   ├── crm-pipeline.md
-    │   ├── incident-triage.md
-    │   ├── procurement-check.md
-    │   ├── campaign-performance.md
-    │   ├── flight-tracker.md
-    │   ├── docusign-envelopes.md
-    │   └── cross-lob-operations.md
-    ├── env/.env.dev
-    └── m365agents.yml
+├── saphr-mcp-app/             # SAP SuccessFactors HR (port 3006) — mock-ready
+│   ├── saphr_mcp/
+│   │   └── server.py          # 20 tools — employees, leave, time, performance
+│   └── .env.example
+│
+├── workday-mcp-app/           # Workday HCM (port 3007) — mock-ready
+│   ├── workday_mcp/
+│   │   └── server.py          # 46 tools — workers, skills, learning, org
+│   └── .env.example
+│
+├── coupa-mcp-app/             # Coupa Procurement (port 3008) — mock-ready
+│   ├── coupa_mcp/
+│   │   └── server.py          # 21 tools — requisitions, POs, suppliers, invoices
+│   └── .env.example
+│
+├── jira-mcp-app/              # Jira Projects (port 3009) — mock-ready
+│   ├── jira_mcp/
+│   │   └── server.py          # 26 tools — issues, sprints, boards, projects
+│   └── .env.example
+│
+├── gateway/                   # ASGI gateway — all 10 LOBs on port 8080
+│   ├── app.py                 # Starlette mounts at /sf /sn /sap /hs /ft /ds
+│   │                          #   /saphr /workday /coupa /jira
+│   └── Dockerfile             # Build context must be project root
+│
+├── deploy/                    # Azure Container Apps IaC
+│   ├── main.bicep             # ACR + Log Analytics + CAE + managed identity
+│   │                          #   + gtc-gateway container app
+│   ├── deploy.sh              # Provision → az acr build → az containerapp update
+│   └── parameters.example.bicepparam
+│
+├── widgets/                   # React widget source (6 LOBs)
+│   ├── src/{lob}/             # index.html, main.tsx, App.tsx, types.ts
+│   ├── src/shared/            # McpBridge, FluentWrapper, Toast, ErrorBoundary
+│   └── build.mjs              # Vite single-file build → ../web/widget.html
+│
+├── lob-agent/                 # "The Great Trading Company" Teams agent
+│   ├── appPackage/
+│   │   ├── declarativeAgent.json
+│   │   ├── manifest.json
+│   │   ├── ai-plugin.json     # 190 functions, 10 runtimes
+│   │   ├── mcp-tools.json     # Tool schemas with _meta + widget URIs
+│   │   └── instruction.txt
+│   └── skills/                # Per-LOB scenario prompts
+│
+├── docker-compose.yml         # All 10 LOBs (ports 3000–3009) + gateway profile
+└── Set-Sail.ps1               # One-command startup (Docker + tunnel)
 ```
 
 ---
 
 ## Prerequisites
 
-| Requirement | Version |
+| Requirement | Notes |
 |---|---|
-| **Docker Desktop** | Latest ([install](https://docker.com/products/docker-desktop)) — **recommended**, eliminates Python/venv setup |
-| Python | ≥ 3.11 *(only if not using Docker)* |
-| Node.js | ≥ 18 (for Teams Toolkit CLI) |
+| **Docker Desktop** | Latest — recommended for the gateway or individual LOBs |
+| Python ≥ 3.11 | Only if running without Docker |
+| Node.js ≥ 18 | For widget builds (`cd widgets && npm run build`) |
 | M365 Agents Toolkit | VS Code extension or `teamsapp` CLI |
-| Dev Tunnels CLI | `devtunnel` ([install](https://learn.microsoft.com/azure/developer/dev-tunnels/get-started)) |
-| Salesforce Org | Developer Edition or sandbox with a Connected App (OAuth2 client_credentials) |
-| ServiceNow Instance | Developer instance with OAuth 2.0 or Basic Auth |
-| SAP | Free account on [api.sap.com](https://api.sap.com) for sandbox API key |
-| HubSpot | Free CRM account with a Private App token |
-| OpenSky Network | Free account for Flight Tracker credentials *(optional — mock mode works without)* |
-| DocuSign | Developer sandbox account with JWT Grant app *(optional — mock mode works without)* |
-| M365 Developer Tenant | With Copilot license and sideloading enabled |
+| Dev Tunnels CLI | `devtunnel` — or use Azure Container Apps (no tunnel needed) |
+| M365 Developer Tenant | Copilot license + sideloading enabled |
+
+**LOB credentials** (all optional — servers fall back to mock mode without them):
+
+| LOB | Free tier available? |
+|-----|---------------------|
+| Salesforce | Developer Edition org at developer.salesforce.com |
+| ServiceNow | Developer instance at developer.servicenow.com |
+| SAP S/4HANA | Free sandbox API key at api.sap.com |
+| HubSpot | Free CRM account + Private App token |
+| Flight Tracker | Free account at opensky-network.org *(mock works without)* |
+| DocuSign | Developer sandbox at developers.docusign.com *(mock works without)* |
+| SAP SuccessFactors | SAP BTP trial *(mock works without)* |
+| Workday | Workday tenant *(mock works without)* |
+| Coupa | Coupa sandbox *(always mock by default)* |
+| Jira | Atlassian Cloud free tier *(mock works without)* |
 
 ---
 
 ## Setup
 
-### 1. Clone & Configure Credentials
+### 1. Clone & configure credentials
 
 ```bash
 git clone https://github.com/kaul-vineet/LOB-MCPAppsSample.git
 cd lob-mcp-apps
 ```
 
-Copy `.env.example` → `.env` for each app and fill in credentials:
+Copy `.env.example` → `.env` for each LOB and fill in credentials (leave blank for mock mode):
 
 ```bash
-cp sf-mcp-app/.env.example sf-mcp-app/.env
-cp snow-mcp-app/.env.example snow-mcp-app/.env
-cp sap-mcp-app/.env.example sap-mcp-app/.env
-cp hubspot-mcp-app/.env.example hubspot-mcp-app/.env
-cp flight-mcp-app/.env.example flight-mcp-app/.env
+cp sf-mcp-app/.env.example       sf-mcp-app/.env
+cp snow-mcp-app/.env.example     snow-mcp-app/.env
+cp sap-mcp-app/.env.example      sap-mcp-app/.env
+cp hubspot-mcp-app/.env.example  hubspot-mcp-app/.env
+cp flight-mcp-app/.env.example   flight-mcp-app/.env
 cp docusign-mcp-app/.env.example docusign-mcp-app/.env
+cp saphr-mcp-app/.env.example    saphr-mcp-app/.env
+cp workday-mcp-app/.env.example  workday-mcp-app/.env
+cp coupa-mcp-app/.env.example    coupa-mcp-app/.env
+cp jira-mcp-app/.env.example     jira-mcp-app/.env
 ```
 
-### 1. 🏛️ Salesforce
+### 2. Credential quick-reference
 
-| Key credential | How to get |
+#### 🏛️ Salesforce
+| Variable | How to get |
 |---|---|
-| `SF_INSTANCE_URL` | Your Salesforce org URL (e.g. `https://myorg.salesforce.com`) |
-| `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Setup → App Manager → New Connected App → OAuth2 client_credentials |
+| `SF_INSTANCE_URL` | Your org URL — e.g. `https://myorg.salesforce.com` |
+| `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Setup → App Manager → New Connected App → OAuth2 `client_credentials` |
 
-### 2. 🎫 ServiceNow
-
-| Key credential | How to get |
+#### 🎫 ServiceNow
+| Variable | How to get |
 |---|---|
-| `SERVICENOW_INSTANCE` | Your instance hostname (e.g. `dev12345.service-now.com`) |
-| `SERVICENOW_CLIENT_ID/SECRET` or `USERNAME/PASSWORD` | Developer instance from [developer.servicenow.com](https://developer.servicenow.com). Set `AUTH_MODE=oauth` or `AUTH_MODE=basic` |
+| `SERVICENOW_INSTANCE` | Instance hostname — e.g. `dev12345` |
+| `SERVICENOW_CLIENT_ID/SECRET` | Developer instance → OAuth 2.0 app (`AUTH_MODE=oauth`) |
+| `SERVICENOW_USERNAME/PASSWORD` | Basic auth fallback (`AUTH_MODE=basic`) |
 
-### 3. 📦 SAP S/4HANA
-
-| Key credential | How to get |
+#### 📦 SAP S/4HANA
+| Variable | How to get |
 |---|---|
-| `SAP_API_KEY` | Free from [api.sap.com](https://api.sap.com) → Log in → Copy API Key. Uses sandbox by default |
+| `SAP_API_KEY` | Free from [api.sap.com](https://api.sap.com) → Copy API Key. Default `SAP_MODE=sandbox` |
 
-### 4. 🧡 HubSpot
-
-| Key credential | How to get |
+#### 🧡 HubSpot
+| Variable | How to get |
 |---|---|
 | `HUBSPOT_ACCESS_TOKEN` | Settings → Integrations → Private Apps. Scopes: `crm.objects.contacts.read/write` |
 
-### 5. ✈️ Flight Tracker
-
-> **No credentials required** — set `MOCK_MODE=true` or leave credentials blank to use realistic mock data. See [Mock Mode](#mock-mode).
-
-| Key credential | How to get |
+#### ✈️ Flight Tracker *(mock-ready)*
+| Variable | How to get |
 |---|---|
-| `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET` | Free account at [opensky-network.org](https://opensky-network.org) |
+| `OPENSKY_CLIENT_ID/SECRET` | [opensky-network.org](https://opensky-network.org) free account — leave blank for mock |
 
-### 6. ✒️ DocuSign
-
-> **No credentials required** — set `MOCK_MODE=true` or leave credentials blank for mock envelopes. See [Mock Mode](#mock-mode).
-
-| Key credential | How to get |
+#### ✒️ DocuSign *(mock-ready)*
+| Variable | How to get |
 |---|---|
-| `DOCUSIGN_INTEGRATION_KEY` | DocuSign Developer → Apps → Add App → Authorization Code Grant |
-| `DOCUSIGN_USER_ID`, `DOCUSIGN_ACCOUNT_ID` | From your DocuSign developer account |
-| `DOCUSIGN_PRIVATE_KEY_PATH` | RSA private key file path for JWT Grant |
-| `DOCUSIGN_BASE_URL` | Demo URL: `https://demo.docusign.net/restapi` |
+| `DOCUSIGN_INTEGRATION_KEY` | DocuSign Developer → Apps → JWT Grant |
+| `DOCUSIGN_USER_ID`, `DOCUSIGN_ACCOUNT_ID` | DocuSign developer account |
+| `DOCUSIGN_RSA_PRIVATE_KEY` | `base64 -w0 rsa_key.pem` — base64-encoded PEM |
 
-### 7. 🚇 Dev Tunnel (one-time setup)
+#### 👤 SAP SuccessFactors HR *(mock-ready)*
+| Variable | How to get |
+|---|---|
+| `SAP_SF_ODATA_URL`, `SAP_SF_TOKEN_URL` | SAP BTP → SuccessFactors API |
+| `SAP_SF_COMPANY_ID`, `SAP_SF_CLIENT_ID` | SAP BTP service instance credentials |
+
+#### 💼 Workday *(mock-ready)*
+| Variable | How to get |
+|---|---|
+| `WORKDAY_BASE_URL`, `WORKDAY_TENANT` | Workday tenant URL |
+
+#### 🛒 Coupa *(always mock by default)*
+| Variable | How to get |
+|---|---|
+| `COUPA_INSTANCE_URL` | `https://your-org.coupahost.com` — set `COUPA_MOCK=false` for live |
+
+#### 📋 Jira *(mock-ready)*
+| Variable | How to get |
+|---|---|
+| `JIRA_BASE_URL` | `https://your-org.atlassian.net` |
+| `JIRA_PROJECT_KEY` | e.g. `GTC` |
+
+### 3. Dev Tunnel (one-time, local dev only)
 
 ```bash
 devtunnel user login -d
 devtunnel create gtc-tunnel --allow-anonymous
+devtunnel port create gtc-tunnel -p 8080    # Gateway (recommended — single port)
+# Or individual LOB ports if using docker-compose without gateway:
 devtunnel port create gtc-tunnel -p 3000    # Salesforce
 devtunnel port create gtc-tunnel -p 3001    # ServiceNow
-devtunnel port create gtc-tunnel -p 3002    # SAP
-devtunnel port create gtc-tunnel -p 3003    # HubSpot
-devtunnel port create gtc-tunnel -p 3004    # Flight Tracker
-devtunnel port create gtc-tunnel -p 3005    # DocuSign
+# ... repeat for 3002–3009
 ```
 
-Note the tunnel hostname and update `lob-agent/appPackage/ai-plugin.json` with the URLs.
+Update `lob-agent/appPackage/ai-plugin.json` runtime URLs with your tunnel hostname, or run `python regen_manifests.py` after setting `MCP_GATEWAY_URL`.
 
-> **⚠️ `--allow-anonymous` is required** on both `create` and `host` — without it, M365 Copilot's backend servers cannot reach your MCP endpoints through the tunnel.
+### 4. Agent provisioning
 
-### 8. ⚓ Agent Provisioning
-
-Requires VS Code + [M365 Agents Toolkit](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension) v6.6.1+.
-
-1. Open `lob-agent/` folder in VS Code
-2. ATK sidebar → **Accounts** → sign in to M365. Verify both **Custom App Upload Enabled ✓** and **Copilot Access Enabled ✓**
-3. ATK sidebar → **Lifecycle** → **Provision**
-
-Or via CLI:
 ```bash
 cd lob-agent
 teamsapp auth login m365
 teamsapp provision --env dev
 ```
 
+Or via ATK sidebar in VS Code: **Lifecycle → Provision**.
+
 ---
 
 ## Running
 
-### Option A: One-Command Startup (Recommended) ⚡
+### Option A: ASGI Gateway (Recommended) ⚡
 
-```powershell
-.\Set-Sail.ps1                          # Docker + tunnel (default)
-.\Set-Sail.ps1 -Native                  # Python venvs + tunnel
-.\Set-Sail.ps1 -SkipTunnel              # Docker only, no tunnel
-.\Set-Sail.ps1 -TunnelName my-tunnel    # Use a specific named tunnel
-.\Set-Sail.ps1 -Only sf,sap             # Start specific services only
-```
-
-### Option B: Docker Manual 🐳
+All 10 LOBs in one process on port 8080. This is the mode used with Azure Container Apps and the standard dev tunnel setup.
 
 ```bash
-docker compose up -d
+# Docker (build context = project root)
+docker compose --profile gateway up gateway
 
+# Or run locally
+pip install -e ./shared-mcp-lib -e ./gateway  # plus all 10 LOB packages
+python -m gateway
+
+# Tunnel
+devtunnel host gtc-tunnel --allow-anonymous
+```
+
+Routes: `/sf/mcp` `/sn/mcp` `/sap/mcp` `/hs/mcp` `/ft/mcp` `/ds/mcp` `/saphr/mcp` `/workday/mcp` `/coupa/mcp` `/jira/mcp`
+
+### Option B: Docker Compose 🐳
+
+Individual containers per LOB (ports 3000–3009):
+
+```bash
+docker compose up -d                          # all 10 LOBs
+docker compose up salesforce servicenow sap   # specific LOBs only
 devtunnel host gtc-tunnel --allow-anonymous
 
 docker compose ps
@@ -330,364 +403,363 @@ docker compose logs -f
 docker compose down
 ```
 
-### Option C: Python Venvs (for development)
+### Option C: Python Venvs (dev)
 
 ```bash
-cd sf-mcp-app   && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m sf_crm_mcp         # :3000
-cd snow-mcp-app && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m servicenow_mcp     # :3001
-cd sap-mcp-app  && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m sap_s4hana_mcp     # :3002
-cd hubspot-mcp-app && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m hubspot_mcp     # :3003
-cd flight-mcp-app  && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m flight_mcp      # :3004
-cd docusign-mcp-app && python -m venv .venv && .venv\Scripts\activate && pip install -e . && python -m docusign_mcp   # :3005
+# Install shared lib first
+pip install -e ./shared-mcp-lib
+
+# Then each LOB
+pip install -e ./sf-mcp-app    && python -m sf_crm_mcp         # :3000
+pip install -e ./snow-mcp-app  && python -m servicenow_mcp     # :3001
+pip install -e ./sap-mcp-app   && python -m sap_s4hana_mcp     # :3002
+pip install -e ./hubspot-mcp-app && python -m hubspot_mcp      # :3003
+pip install -e ./flight-mcp-app  && python -m flight_mcp       # :3004
+pip install -e ./docusign-mcp-app && python -m docusign_mcp    # :3005
+pip install -e ./saphr-mcp-app   && python -m saphr_mcp        # :3006
+pip install -e ./workday-mcp-app && python -m workday_mcp      # :3007
+pip install -e ./coupa-mcp-app   && python -m coupa_mcp        # :3008
+pip install -e ./jira-mcp-app    && python -m jira_mcp         # :3009
 ```
+
+---
+
+## Deploy to Azure
+
+Deploy the gateway to Azure Container Apps — no dev tunnel needed, stable Azure FQDN.
+
+### Prerequisites
+
+```bash
+az login
+az account set -s <subscription-id>
+az bicep install
+```
+
+### Deploy
+
+```bash
+cp deploy/parameters.example.bicepparam deploy/parameters.bicepparam
+# Edit parameters.bicepparam with real credentials (this file is .gitignored)
+
+export RESOURCE_GROUP=gtc-rg
+export LOCATION=eastus
+export ACR_NAME=gtcregistry   # must be globally unique
+
+bash deploy/deploy.sh
+```
+
+The script:
+1. Creates the resource group
+2. Deploys `deploy/main.bicep` — ACR, Log Analytics, Container Apps environment, managed identity, and the `gtc-gateway` container app (external ingress, port 8080)
+3. Builds all 11 images in ACR using `az acr build` (remote build — no Docker daemon needed locally)
+4. Updates the container app with the new images
+
+### After deploy — update the manifest URL
+
+```bash
+export MCP_GATEWAY_URL=https://<your-gateway-fqdn>
+python regen_manifests.py
+```
+
+Then re-provision the Teams agent with the new URLs.
+
+### Bicep resources created
+
+| Resource | SKU / Notes |
+|---|---|
+| Azure Container Registry | Basic |
+| Log Analytics Workspace | PerGB2018, 30-day retention |
+| Container Apps Environment | Consumption plan |
+| User-Assigned Managed Identity | AcrPull on the registry |
+| `gtc-gateway` Container App | 1–3 replicas, external ingress, 1 vCPU / 2 GiB |
 
 ---
 
 ## Mock Mode
 
-**Flight Tracker** and **DocuSign** ship with full mock support — no credentials required to demo them.
+All six original LOBs (Flight, DocuSign) plus all four new LOBs (SAP HR, Workday, Coupa, Jira) support mock mode — realistic demo data with no real credentials needed.
 
-Mock mode activates automatically when credentials are absent, or can be forced explicitly:
+| LOB | Mock triggers | Mock data |
+|-----|--------------|-----------|
+| Flight Tracker | `OPENSKY_CLIENT_ID` absent | 5 GTC-themed flights (Dubai→London, etc.) with live-style positions |
+| DocuSign | Credentials absent | 5 mock envelopes (NDA, MSA, Cargo contract…), 4 templates |
+| SAP SuccessFactors HR | `SAP_SF_ODATA_URL` absent | 5 mock employees, leave balances, org chart |
+| Workday | `WORKDAY_BASE_URL` absent | Mock workers, skills, learning completions |
+| Coupa | `COUPA_MOCK=true` (default) | Mock requisitions, POs, supplier list |
+| Jira | `JIRA_BASE_URL` absent | Mock issues, sprint board, project list |
 
-```bash
-# Force mock mode via environment variable
-MOCK_MODE=true
-
-# Or simply omit credentials — servers detect missing config and fall back to mock data
-```
-
-| Server | Mock triggers | What you get |
-|--------|--------------|--------------|
-| **Flight Tracker** | `MOCK_MODE=true` or missing `OPENSKY_CLIENT_ID` | 5 GTC-themed flights: Dubai→London, etc. Aircraft states with realistic positions |
-| **DocuSign** | `MOCK_MODE=true` or `_validate_env()` returns an error | 5 mock envelopes (NDA sent, GTC completed, MSA voided…), 4 templates |
-
-When mock mode is active, all tools work normally — the agent and widget see the same response shape as with real credentials. Mock data is GTC-themed with realistic field values.
+Mock mode activates automatically — the agent and widget see identical response shapes as with live credentials.
 
 ---
 
 ## Static Analysis — check_meta.py
 
-`check_meta.py` at the project root validates that your tool definitions stay in sync across the three files that must agree:
-
-- `lob-agent/appPackage/mcp-tools.json` — tool schemas with `_meta` widget URIs
-- `lob-agent/appPackage/ai-plugin.json` — tool registration for M365 Copilot
-- Each `server.py` — actual tools the server exposes at runtime
+Validates tool definitions stay in sync across all three sources of truth:
 
 ```bash
-python check_meta.py              # quick check — exits 1 if drift detected
-python check_meta.py --verbose    # full report with per-tool status
+python check_meta.py              # exits 1 if drift detected
+python check_meta.py --verbose    # full per-tool report
 ```
 
-**What it checks:**
+| Check | What it verifies |
+|-------|-----------------|
+| `_meta` presence | Every tool in `mcp-tools.json` has `_meta.ui.resourceUri` |
+| Plugin registration | Every manifest tool appears in `ai-plugin.json` |
+| Server drift | Tools in `server.py` match `mcp-tools.json` |
 
-| Check | Description |
-|-------|-------------|
-| `_meta` presence | Every tool in `mcp-tools.json` has `_meta.ui.resourceUri` (required for widget rendering) |
-| Plugin registration | Every tool in `mcp-tools.json` is registered in `ai-plugin.json` |
-| Server drift | Tools in `server.py` are declared in `mcp-tools.json` (catches stale manifest) |
+> The four new LOBs (saphr, workday, coupa, jira) use programmatic tool registration (`mcp.tool(...)()` loop pattern). Check 3 will warn "no `@mcp.tool` decorators found" for these — this is expected. Checks 1 and 2 still pass and verify all 190 tools are correctly manifested.
 
-Run this after adding tools or updating `server.py` to catch drift before it reaches Copilot.
+---
+
+## Manifest Generation — regen_manifests.py
+
+Regenerates `mcp-tools.json` and `ai-plugin.json` by importing all 10 server modules and reading their live tool registrations.
+
+```bash
+# Local dev (devtunnel URL)
+python regen_manifests.py
+
+# After Azure deployment — point at your Container Apps FQDN
+MCP_GATEWAY_URL=https://<your-gateway-fqdn> python regen_manifests.py
+```
+
+Run after adding or renaming tools, then re-provision the agent.
 
 ---
 
 ## Skills System
 
-`lob-agent/skills/` documents per-LOB scenario prompts — starter conversations for each line of business:
+`lob-agent/skills/` documents per-LOB scenario prompts used as conversation starters:
 
 | File | LOB | Example starter |
 |------|-----|----------------|
-| `crm-pipeline.md` | Salesforce | *"Show me the latest leads. I want to review and update qualified ones."* |
+| `crm-pipeline.md` | Salesforce | *"Show me the latest leads. I want to review qualified ones."* |
 | `incident-triage.md` | ServiceNow | *"Show me open incidents sorted by priority."* |
-| `procurement-check.md` | SAP | *"Show me recent purchase orders and check stock for order 4500000001."* |
+| `procurement-check.md` | SAP | *"Show me recent purchase orders."* |
 | `campaign-performance.md` | HubSpot | *"Which campaigns have the best open rates?"* |
-| `flight-tracker.md` | Flight Tracker | *"Show me departures from Heathrow today."* |
+| `flight-tracker.md` | Flight | *"Show me departures from Heathrow today."* |
 | `docusign-envelopes.md` | DocuSign | *"Show me envelopes awaiting signature."* |
-| `cross-lob-operations.md` | All | *"Give me an end-of-day operations check."* |
-
-These map directly to the 10 conversation starters in `declarativeAgent.json`.
-
----
-
-## Demo Screens & Prompts
-
-### Salesforce CRM (port 3000)
-
-| Screen | Prompt |
-|--------|--------|
-| Leads table | "Show me the latest leads" |
-| Opportunities table | "Show me the latest opportunities" |
-| Create lead | "Create a new lead for Sarah Chen at CloudBase Corp" |
-| Edit lead | Click ✏️ on any row in the widget |
-| Create opportunity | "Create an opportunity for Acme deal, Prospecting stage, closing June 30" |
-
-### ServiceNow ITSM (port 3001)
-
-| Screen | Prompt |
-|--------|--------|
-| Incidents table | "Show me open incidents" |
-| Requests table | "Show me service requests" |
-| Create incident | "Raise a VPN incident for Building A" |
-| Edit incident | Click ✏️ on any row |
-
-### SAP S/4HANA (port 3002)
-
-| Screen | Prompt |
-|--------|--------|
-| Purchase Orders | "Show me recent purchase orders" |
-| Business Partners | "Show me suppliers" |
-| Materials | "Show me materials inventory" |
-| Material detail | Click "View Detail" on any row |
-| Create PO | "Create a PO for Domestic US Supplier 1" |
-
-### HubSpot Marketing (port 3003)
-
-| Screen | Prompt |
-|--------|--------|
-| Emails + metric cards | "Show me marketing email performance" |
-| Contact Lists | Click "View Lists" in the widget |
-| Contacts in list | Click "View Contacts" on any list |
-| Add / remove contact | Click "+ Add Contact" in the contacts view |
-
-### Flight Tracker (port 3004)
-
-| Screen | Prompt |
-|--------|--------|
-| Airport departures | "Show me departures from Heathrow (EGLL) today" |
-| Airport arrivals | "Show me arrivals at JFK yesterday" |
-| Live aircraft state | "What is the live state of aircraft 4ca2bf?" |
-| Flight history | "Show me flight history for 4ca2bf over the last two days" |
-| Flight track | "Show me the track for aircraft 3c675a" |
-
-> Works out-of-the-box with mock data — no OpenSky credentials required.
-
-### DocuSign eSignature (port 3005)
-
-| Screen | Prompt |
-|--------|--------|
-| Envelope list | "Show me my DocuSign envelopes" |
-| Awaiting signature | "Show me envelopes awaiting signature" |
-| Envelope detail | "Show me the details of envelope env-0002-gtc" |
-| Templates | "List my signing templates" |
-| Send envelope | "Send the NDA template to james@gtc.internal for signature" |
-| Void envelope | "Void envelope env-0004-gtc — terms have changed" |
-
-> Works out-of-the-box with mock data — no DocuSign credentials required.
-
-### Cross-LOB Workflows
-
-| Workflow | Prompt |
-|----------|--------|
-| Multi-LOB customer check | "Check on Acme" → SF leads + SNOW incidents |
-| Operations summary | "Give me an end-of-day operations check" → leads + incidents + POs |
-| Create across LOBs | "Log a lead for John at TechCorp and raise a VPN incident" |
-| Prospect onboarding | "Create a lead for Sarah Chen at CloudBase, raise a VPN access ticket, and send the NDA for signature" |
-| Side-by-side mode | Click "⤢ Expand" in any widget header |
+| `cross-lob-operations.md` | All LOBs | *"Give me an end-of-day operations check."* |
 
 ---
 
 ## Tools Reference
 
-### 🏛️ Salesforce CRM (9 tools — port 3000)
+### 🏛️ Salesforce CRM — 25 tools (port 3000)
 
-| Tool | Description | Required params |
-|---|---|---|
-| `sf__get_leads` | Latest 5 leads | — |
-| `sf__create_lead` | Create a new lead | `last_name`, `company` |
-| `sf__update_lead` | Update a lead | `lead_id` |
-| `sf__get_opportunities` | Latest 5 opportunities | — |
-| `sf__create_opportunity` | Create an opportunity | `name`, `stage`, `close_date` |
-| `sf__update_opportunity` | Update an opportunity | `opportunity_id` |
-| `sf__get_lead_form` | Empty lead creation form | — |
-| `sf__get_opportunity_form` | Empty opportunity creation form | — |
-| `sf__submit_form` | Submit any form | `form_id`, `fields` |
+| Tool | Description |
+|---|---|
+| `sf__get_leads` | Latest 5 leads |
+| `sf__create_lead` | Create lead |
+| `sf__update_lead` | Update lead |
+| `sf__delete_lead` | Delete lead |
+| `sf__convert_lead` | Convert lead → Account + Contact + Opportunity |
+| `sf__get_opportunities` | Latest 5 opportunities |
+| `sf__create_opportunity` | Create opportunity |
+| `sf__update_opportunity` | Update opportunity |
+| `sf__get_accounts` | Latest 5 accounts |
+| `sf__create_account` | Create account |
+| `sf__update_account` | Update account |
+| `sf__get_contacts` | Latest 5 contacts |
+| `sf__create_contact` | Create contact |
+| `sf__update_contact` | Update contact |
+| `sf__get_cases` | Latest 5 cases |
+| `sf__create_case` | Create case |
+| `sf__update_case` | Update case status/resolution |
+| `sf__get_tasks` | Latest 5 tasks/activities |
+| `sf__create_task` | Create task |
+| `sf__get_pipeline_dashboard` | Opportunity pipeline by stage (count + amount) |
+| `sf__get_campaigns` | Latest 5 campaigns |
+| `sf__get_pending_approvals` | Pending ProcessInstance workitems |
+| `sf__create_lead_form` | Open lead creation form widget |
+| `sf__create_account_form` | Open account creation form widget |
+| `sf__create_contact_form` | Open contact creation form widget |
 
-### 🎫 ServiceNow ITSM (5 tools — port 3001)
+### 🎫 ServiceNow ITSM — 18 tools (port 3001)
 
-| Tool | Description | Required params |
-|---|---|---|
-| `sn__get_incidents` | Latest incidents | — |
-| `sn__get_requests` | Latest service requests | — |
-| `sn__create_incident` | Create an incident | `short_description` |
-| `sn__update_incident` | Update an incident | `sys_id` |
-| `sn__get_request_items` | Items for a request | `request_sys_id` |
+| Tool | Description |
+|---|---|
+| `sn__get_incidents` | Latest incidents |
+| `sn__create_incident` | Create incident |
+| `sn__update_incident` | Update incident |
+| `sn__resolve_incident` | Resolve/close incident |
+| `sn__get_requests` | Latest service requests |
+| `sn__create_request` | Create request |
+| `sn__update_request` | Update request |
+| `sn__get_request_items` | Items for a request |
+| `sn__update_request_item` | Update request item |
+| `sn__get_change_requests` | Latest change requests |
+| `sn__create_change_request` | Create change request |
+| `sn__get_problems` | Latest problem records |
+| `sn__get_pending_approvals` | Pending approvals queue |
+| `sn__get_service_catalog_items` | Active catalog items |
+| `sn__add_work_note` | Add work note to a record |
+| `sn__get_knowledge_articles` | Knowledge base search |
+| `sn__create_incident_form` | Open incident creation form widget |
+| `sn__create_request_form` | Open request creation form widget |
 
-### 📦 SAP S/4HANA (6 tools — port 3002)
+### 📦 SAP S/4HANA — 6 tools (port 3002)
 
-| Tool | Description | Required params |
-|---|---|---|
-| `sap__get_purchase_orders` | Latest purchase orders | — |
-| `sap__get_business_partners` | Business partners | — |
-| `sap__get_materials` | Materials master data | — |
-| `sap__create_purchase_order` | Create a PO | `supplier`, `purchasing_org` |
-| `sap__update_purchase_order` | Update a PO | `purchase_order_id` |
-| `sap__get_material_details` | Material detail by ID | `material_id` |
+| Tool | Description |
+|---|---|
+| `sap__get_purchase_orders` | Latest purchase orders |
+| `sap__get_business_partners` | Business partners / suppliers |
+| `sap__get_materials` | Materials master data |
+| `sap__create_purchase_order` | Create PO (mock ID in sandbox) |
+| `sap__update_purchase_order` | Update PO |
+| `sap__get_material_details` | Material detail by ID |
 
-> In sandbox mode, create/update return mock demo data.
+### 🧡 HubSpot Marketing — 14 tools (port 3003)
 
-### 🧡 HubSpot Marketing (7 tools — port 3003)
+| Tool | Description |
+|---|---|
+| `hs__get_emails` | Marketing emails with metrics |
+| `hs__get_lists` | Contact lists / segments |
+| `hs__get_list_contacts` | Contacts in a list |
+| `hs__add_to_list` | Add contact to list |
+| `hs__remove_from_list` | Remove contact from list |
+| `hs__update_email` | Edit email name/subject |
+| `hs__update_list` | Edit list name |
+| `hs__create_contact` | Create contact |
+| `hs__get_contacts` | Recent contacts |
+| `hs__update_contact` | Update contact |
+| `hs__get_deals` | Recent deals |
+| `hs__create_deal` | Create deal |
+| `hs__get_companies` | Recent companies |
+| `hs__create_company` | Create company |
 
-| Tool | Description | Called by |
-|---|---|---|
-| `hs__get_emails` | Marketing emails with stats | LLM (entry point) |
-| `hs__get_lists` | Contact lists/segments | Widget |
-| `hs__get_list_contacts` | Contacts in a list | Widget |
-| `hs__add_to_list` | Add contact to list | Widget |
-| `hs__remove_from_list` | Remove contact from list | Widget |
-| `hs__update_email` | Edit email name/subject | Widget |
-| `hs__update_list` | Edit list name | Widget |
+### ✈️ Flight Tracker — 5 tools (port 3004)
 
-> The LLM only calls `get_emails`. The widget handles Emails → Lists → Contacts → Add/Remove/Edit.
+| Tool | Description |
+|---|---|
+| `ft__get_airport_departures` | Departures from ICAO airport |
+| `ft__get_airport_arrivals` | Arrivals at ICAO airport |
+| `ft__get_aircraft_state` | Live position/speed/altitude |
+| `ft__get_flights_by_aircraft` | Flight history for aircraft |
+| `ft__get_aircraft_track` | Waypoints for a flight |
 
-### ✈️ Flight Tracker (5 tools — port 3004)
+### ✒️ DocuSign eSignature — 9 tools (port 3005)
 
-| Tool | Description | Required params |
-|---|---|---|
-| `ft__get_airport_departures` | Departures from an ICAO airport | `airport` (e.g. `EGLL`) |
-| `ft__get_airport_arrivals` | Arrivals at an ICAO airport | `airport`, `begin`, `end` |
-| `ft__get_aircraft_state` | Live position/speed/altitude | `icao24` |
-| `ft__get_flights_by_aircraft` | Flight history for an aircraft | `icao24`, `begin`, `end` |
-| `ft__get_aircraft_track` | Waypoints for a specific flight | `icao24` |
+| Tool | Description |
+|---|---|
+| `ds__get_envelopes` | List envelopes with status filters |
+| `ds__get_envelope_details` | Recipient and signing progress |
+| `ds__get_templates` | Available signing templates |
+| `ds__send_envelope` | Send envelope from template |
+| `ds__void_envelope` | Void / cancel an envelope |
+| `ds__resend_envelope` | Resend to pending signers |
+| `ds__get_signing_url` | Generate embedded signing URL |
+| `ds__download_document` | Download signed document |
+| `ds__send_envelope_form` | Open send-envelope form widget |
 
-### ✒️ DocuSign eSignature (9 tools — port 3005)
+### 👤 SAP SuccessFactors HR — 20 tools (port 3006)
 
-| Tool | Description | Required params |
-|---|---|---|
-| `get_envelopes` | List envelopes with status | — |
-| `get_envelope_details` | Recipient/signing progress detail | `envelope_id` |
-| `get_templates` | Available signing templates | — |
-| `send_envelope` | Send envelope from template | `template_id`, `recipient_email`, `recipient_name` |
-| `send_envelope_form` | Interactive send form | — |
-| `void_envelope` | Void an envelope | `envelope_id`, `void_reason` |
-| `resend_envelope` | Resend to pending recipients | `envelope_id` |
-| `get_signing_url` | Embedded signing URL | `envelope_id`, `recipient_email` |
-| `download_document` | Download signed document | `envelope_id` |
+Employee self-service: profile, leave balances, time-off requests, org chart, performance goals, learning, benefits, and more.
+
+### 💼 Workday HCM — 46 tools (port 3007)
+
+Worker context, skills, required learning, org chart, absence management, compensation, and more.
+
+### 🛒 Coupa Procurement — 21 tools (port 3008)
+
+Requisitions, purchase orders, suppliers, invoices, budgets, approval workflows, and more.
+
+### 📋 Jira Projects — 26 tools (port 3009)
+
+Issues (CRUD), sprints, boards, projects, epics, comments, attachments, transitions, and more.
 
 ---
 
 ## Widget Architecture
 
-React 19 + Fluent UI v9 widgets compiled into single-file HTML via Vite, using the official `@modelcontextprotocol/ext-apps` package. Each widget is styled to match its LOB's native design language:
+React 19 + Fluent UI v9 widgets compiled into single-file HTML via Vite + `vite-plugin-singlefile`. Six of the ten LOBs have live widgets; four (SAP HR, Workday, Coupa, Jira) are in progress.
 
 | Widget | Design System | Key Visual Elements |
 |--------|--------------|-------------------|
-| **Salesforce** | Lightning (SLDS) | Blue header, pill status badges, compact CRUD forms, flash-on-save |
-| **SAP** | Fiori | Shell bar, '72' font, semantic badges, Object Page layout |
+| **Salesforce** | Lightning SLDS | Blue header, pill status badges, compact CRUD forms |
+| **SAP** | Fiori | Shell bar, '72' font, Object Page layout |
 | **HubSpot** | Canvas | Metric cards, percentage bars, coral/teal palette, 3-level drill-down |
-| **ServiceNow** | Now Design | Teal shell, P1-P4 priority colors, expandable request rows |
+| **ServiceNow** | Now Design | Teal shell, P1–P4 priority colors |
 | **Flight Tracker** | Fluent v9 | Dark sky theme, live status badges, altitude/speed metrics |
-| **DocuSign** | DocuSign brand | Envelope status cards, signer progress, send/void actions |
+| **DocuSign** | DocuSign brand | Envelope status cards, signer progress |
 
 ### Platform features
 
 | Feature | Implementation |
 |---------|---------------|
-| **MCP Apps protocol** | `@modelcontextprotocol/ext-apps` — official handshake, tool-result delivery |
-| **Side-by-side mode** | `app.requestDisplayMode('fullscreen')` |
-| **Auto theming** | Light/dark via host context — FluentProvider + LOB brand overrides |
-| **Skeleton loading** | CSS shimmer animation while data loads |
-| **Error boundaries** | Widget crashes show recovery UI with "Try Again" button |
-| **CRUD operations** | Create, read, update across all 6 LOB systems |
-| **Toast notifications** | Success/error feedback after save operations |
-| **Multi-stage Docker** | Builder → runtime images — smaller final images, faster CI rebuilds |
+| MCP Apps protocol | `@modelcontextprotocol/ext-apps` — handshake + tool-result delivery |
+| Side-by-side mode | `app.requestDisplayMode('fullscreen')` |
+| Auto theming | Light/dark via host context |
+| Skeleton loading | CSS shimmer while data loads |
+| Error boundaries | Crash recovery UI with "Try Again" |
+| CRUD operations | Create/read/update across all 6 live LOBs |
+| Toast notifications | Success/error after save |
 
-### Dockerfiles — multi-stage pattern
+### Building widgets
 
-All six Dockerfiles use a two-stage build to keep images small:
-
-```dockerfile
-FROM python:3.11-slim AS builder
-WORKDIR /app
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-COPY pyproject.toml .
-COPY {pkg}/ {pkg}/
-RUN pip install --no-cache-dir .
-
-FROM python:3.11-slim AS runtime
-WORKDIR /app
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONUNBUFFERED=1
-EXPOSE {port}
-CMD ["python", "-m", "{module}"]
+```bash
+cd widgets
+npm install
+npm run build          # all 6 widgets
+npm run build:sf       # specific LOB
 ```
 
-The builder stage installs all dependencies into a venv; the runtime stage copies only the venv — no build tools in production.
+Output: `widgets/dist/{lob}.html` → copied to `{lob}-mcp-app/{pkg}/web/widget.html`.
 
 ---
 
 ## Logs & Monitoring
 
 ```bash
-docker compose logs -f                  # all servers
-docker compose logs -f salesforce       # port 3000
-docker compose logs -f servicenow       # port 3001
-docker compose logs -f sap              # port 3002
-docker compose logs -f hubspot          # port 3003
-docker compose logs -f flight           # port 3004
-docker compose logs -f docusign         # port 3005
-docker compose logs --tail 50 flight
-```
+# Gateway mode
+docker compose --profile gateway logs -f gateway
 
-| Log entry | Meaning |
-|-----------|---------|
-| `POST /mcp HTTP/1.1 200 OK` | MCP request succeeded |
-| `Processing request of type CallToolRequest` | A tool was called |
-| `Processing request of type ReadResourceRequest` | Widget HTML was fetched |
-| `[MOCK]` prefix in server log | Mock mode is active |
+# Individual LOBs
+docker compose logs -f salesforce   # :3000
+docker compose logs -f servicenow   # :3001
+docker compose logs -f sap          # :3002
+docker compose logs -f hubspot      # :3003
+docker compose logs -f flight       # :3004
+docker compose logs -f docusign     # :3005
+docker compose logs -f saphr        # :3006
+docker compose logs -f workday      # :3007
+docker compose logs -f coupa        # :3008
+docker compose logs -f jira         # :3009
+```
 
 ---
 
 ## Critical Troubleshooting
 
-1. **MCP Apps handshake** — The widget must send `ui/initialize` (with `appInfo` and `appCapabilities`) via `postMessage`, wait for the host response, then send `ui/notifications/initialized`. Only then will the host deliver `ui/notifications/tool-result`.
+1. **MCP Apps handshake** — Widget must send `ui/initialize` → wait for host response → send `ui/notifications/initialized`. Only then will the host deliver `ui/notifications/tool-result`.
 
-2. **`--allow-anonymous` on the tunnel** — Both `devtunnel create` and `devtunnel host` must include `--allow-anonymous`.
+2. **`--allow-anonymous` on the tunnel** — Required on both `devtunnel create` and `devtunnel host`. Without it, M365 Copilot's backend can't reach your MCP endpoints.
 
-3. **`_meta` placement** — `_meta.ui.resourceUri` must be on the tool definition in `mcp-tools.json`, not nested inside `inputSchema`.
+3. **`_meta` placement** — `_meta.ui.resourceUri` must be on the tool definition in `mcp-tools.json`, **not** inside `inputSchema`.
 
-4. **`mcp-tools.json` must match the server** — Run `python check_meta.py` to surface drift between manifest and server tools.
+4. **Manifest drift** — Run `python check_meta.py` after adding tools. Run `python regen_manifests.py` to regenerate manifests.
 
-5. **`callTool` method name** — Widget-to-host calls must use `method: 'tools/call'` with `arguments`.
+5. **`callTool` method** — Widget-to-host calls must use `method: 'tools/call'` with `arguments` (not `ui/callTool` with `args`).
 
-6. **Custom App Upload Enabled** — ATK sidebar → Accounts. Both "Custom App Upload Enabled" and "Copilot Access Enabled" must show ✓.
+6. **Custom App Upload Enabled** — ATK sidebar → Accounts. Both "Custom App Upload Enabled ✓" and "Copilot Access Enabled ✓" must show.
 
-7. **Tunnel URLs** — Ensure `ai-plugin.json` has the correct tunnel URLs for all 6 runtimes.
+7. **Gateway URL** — After Azure deployment, update `MCP_GATEWAY_URL` and re-run `regen_manifests.py`, then re-provision the agent.
 
-8. **Port mapping** — SF:3000, SN:3001, SAP:3002, HS:3003, FT:3004, DS:3005. Verify with `curl http://localhost:{port}/mcp`.
-
-9. **Flight/DocuSign not showing data** — Check if mock mode is active: `MOCK_MODE=true` or verify credentials in `.env`. Both LOBs work fully in mock mode.
+8. **New LOBs returning mock data** — Expected when credentials aren't configured. Set the relevant env vars and restart to use live APIs.
 
 ---
 
-## 🧰 Using This as a Scaffolding
+## Adding a New LOB
 
-Fork and copy any app folder as a template. Recommended starting points:
-
-- `sf-mcp-app/` — full CRUD with forms
-- `sap-mcp-app/` — read-heavy with mock writes
-- `flight-mcp-app/` — read-only with mock fallback pattern
-
-### Adding a new LOB
-
-1. Copy an app folder and rename the Python package
+1. Copy an app folder (e.g. `flight-mcp-app/`) and rename the Python package
 2. Replace the API client with your LOB's auth + REST calls
-3. Rewrite `server.py` tools — keep `@mcp.tool(meta={"ui": {"resourceUri": WIDGET_URI}})` and `structuredContent` returns
-4. Build your widget from an existing one as template
-5. Add to `ai-plugin.json` (new runtime block) and `mcp-tools.json` (tool schemas with `_meta`)
-6. Add a tunnel port: `devtunnel port create gtc-tunnel -p 300X`
-7. Run `python check_meta.py` to verify alignment
-
-### Key patterns to preserve
-
-| Pattern | Why it matters |
-|---|---|
-| `_meta.ui.resourceUri` on every tool | M365 Copilot loads the widget from this URI |
-| `structuredContent` in every response | The widget reads this JSON to render data |
-| `get_settings()` with `@lru_cache(maxsize=1)` | Settings constructed once; testable via `reset_settings_cache()` |
-| `_load_env()` discovery chain | `MCP_SERVERS_ENV_FILE` → `env/.env.{lob}` → `.env` |
-| `_is_mock()` guard | Graceful no-credential fallback for demo/dev environments |
-| Multi-stage Dockerfile | Small runtime images; build tools not shipped to prod |
+3. Keep `@mcp.tool(meta={"ui": {"resourceUri": WIDGET_URI}})` and `types.CallToolResult` with `structuredContent` returns
+4. Add the new app to `gateway/app.py` (Mount) and `gateway/Dockerfile` (COPY + pip install)
+5. Add a service to `docker-compose.yml`
+6. Add a Bicep `containerApp` resource (or update `deploy/main.bicep`)
+7. Run `python regen_manifests.py` → `python check_meta.py`
+8. Re-provision the agent
 
 ---
 
@@ -697,7 +769,10 @@ Fork and copy any app folder as a template. Recommended starting points:
 - [FastMCP SDK](https://github.com/jlowin/fastmcp)
 - [M365 Agents Toolkit](https://learn.microsoft.com/microsoftteams/platform/toolkit/teams-toolkit-fundamentals)
 - [Dev Tunnels Documentation](https://learn.microsoft.com/azure/developer/dev-tunnels/overview)
+- [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/)
 - [Salesforce REST API](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/)
 - [ServiceNow Table API](https://docs.servicenow.com/bundle/latest/page/integrate/inbound-rest/concept/c_TableAPI.html)
+- [SAP Business Hub API](https://api.sap.com)
 - [OpenSky Network API](https://openskynetwork.github.io/opensky-api/)
 - [DocuSign eSignature REST API](https://developers.docusign.com/docs/esign-rest-api/)
+- [Jira REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
