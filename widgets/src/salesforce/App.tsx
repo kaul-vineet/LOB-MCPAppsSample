@@ -282,6 +282,8 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [childContacts, setChildContacts] = useState<Record<string, any[]>>({});
+  const [childOpps, setChildOpps] = useState<Record<string, any[]>>({});
+  const [childCases, setChildCases] = useState<Record<string, any[]>>({});
   const [loadingChild, setLoadingChild] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', industry: '', phone: '', website: '', type: '', billing_city: '' });
 
@@ -290,7 +292,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const doSearch = async () => {
     setFiltering(true);
     try {
-      const res = await callTool('search_accounts', { name: filterName, industry: filterIndustry });
+      const res = await callTool('get_accounts', { name: filterName, industry: filterIndustry });
       setLocalItems(res?.items || []);
     } finally { setFiltering(false); }
   };
@@ -314,13 +316,18 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const toggleExpand = async (id: string) => {
     if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
-    if (childContacts[id]) return;
+    if (childContacts[id] && childOpps[id] && childCases[id]) return;
     setLoadingChild(id);
     try {
-      const res = await callTool('get_account_contacts', { account_id: id });
-      setChildContacts(p => ({ ...p, [id]: res?.items || [] }));
-    } catch { setChildContacts(p => ({ ...p, [id]: [] })); }
-    finally { setLoadingChild(null); }
+      const [rc, ro, rca] = await Promise.all([
+        childContacts[id] ? null : callTool('get_contacts', { account_id: id }).catch(() => null),
+        childOpps[id]     ? null : callTool('get_opportunities', { account_id: id }).catch(() => null),
+        childCases[id]    ? null : callTool('get_cases', { account_id: id }).catch(() => null),
+      ]);
+      if (rc)  setChildContacts(p => ({ ...p, [id]: rc?.items || [] }));
+      if (ro)  setChildOpps(p => ({ ...p, [id]: ro?.items || [] }));
+      if (rca) setChildCases(p => ({ ...p, [id]: rca?.items || [] }));
+    } finally { setLoadingChild(null); }
   };
 
   const fFields = (f: typeof form, set: (k: string, v: string) => void) => [
@@ -370,32 +377,40 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
               {expandedId === a.id && (
                 <TableRow>
                   <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
-                    <div style={{ padding: '8px 28px 12px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Contacts</div>
-                      {loadingChild === a.id ? (
-                        <Spinner size="tiny" label="Loading contacts…" />
-                      ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                          <thead>
-                            <tr style={{ background: t.headerBg }}>
-                              {['Name', 'Email', 'Phone', 'Title'].map(h => <th key={h} style={{ ...H_CELL, color: t.textWeak, textAlign: 'left' }}>{h}</th>)}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(childContacts[a.id] || []).length === 0 ? (
-                              <tr><td colSpan={4} style={{ padding: '10px', color: t.textWeak, textAlign: 'center' }}>No contacts found.</td></tr>
-                            ) : (childContacts[a.id] || []).map((c: any) => (
-                              <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                                <td style={D_CELL}>{c.first_name} {c.last_name}</td>
-                                <td style={D_CELL}>{c.email || '—'}</td>
-                                <td style={D_CELL}>{c.phone || '—'}</td>
-                                <td style={D_CELL}>{c.title || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+                    {loadingChild === a.id ? <div style={{ padding: '12px 28px' }}><Spinner size="tiny" label="Loading…" /></div> : (
+                      <div style={{ padding: '8px 28px 12px', display: 'flex', gap: '24px', flexWrap: 'wrap' as const }}>
+                        {/* Contacts */}
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Contacts</div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <tbody>
+                              {(childContacts[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
+                                : (childContacts[a.id] || []).map((c: any) => <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{c.first_name} {c.last_name}</td><td style={D_CELL}>{c.title || '—'}</td><td style={D_CELL}>{c.email || '—'}</td></tr>)}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Opportunities */}
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Opportunities</div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <tbody>
+                              {(childOpps[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
+                                : (childOpps[a.id] || []).map((o: any) => <tr key={o.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{o.name}</td><td style={D_CELL}>{o.stage || '—'}</td><td style={{ ...D_CELL, fontWeight: 500 }}>{fmt$(o.amount)}</td></tr>)}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Cases */}
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Cases</div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <tbody>
+                              {(childCases[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
+                                : (childCases[a.id] || []).map((c: any) => <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{c.subject}</td><td style={D_CELL}><StatusPill status={c.status} theme={theme} /></td><td style={D_CELL}><StatusPill status={c.priority} theme={theme} /></td></tr>)}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               )}
@@ -422,6 +437,7 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', company: '', email: '', phone: '', status: '', lead_source: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
@@ -429,7 +445,7 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
     setFiltering(true);
-    try { const res = await callTool('search_leads', { name: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_leads', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -477,15 +493,17 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={{ ...H_CELL, width: 28, color: t.textWeak }} />
             {['Name', 'Company', 'Status', 'Source', 'Email', ''].map(h => <TableHeaderCell key={h} style={{ ...H_CELL, color: t.textWeak }}>{h}</TableHeaderCell>)}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {creating && <InlineFormRow colSpan={6} title="➕ New Lead" fields={fFields(form, setF)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
-          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} className={styles.empty}><Text>No leads found.</Text></TableCell></TableRow>}
+          {creating && <InlineFormRow colSpan={7} title="➕ New Lead" fields={fFields(form, setF)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={7} className={styles.empty}><Text>No leads found.</Text></TableCell></TableRow>}
           {localItems.map((l: any) => (
             <React.Fragment key={l.id}>
               <TableRow style={{ borderBottom: `1px solid ${t.border}`, ...(lastSavedId === l.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}) }}>
+                <TableCell style={{ ...D_CELL, width: 28 }}><ExpandToggle expanded={expandedLeadId === l.id} onClick={() => setExpandedLeadId(p => p === l.id ? null : l.id)} theme={theme} /></TableCell>
                 <TableCell style={D_CELL}>{l.first_name} {l.last_name}</TableCell>
                 <TableCell style={D_CELL}>{l.company || '—'}</TableCell>
                 <TableCell style={D_CELL}><StatusPill status={l.status} theme={theme} /></TableCell>
@@ -501,7 +519,26 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
                   </div>
                 </TableCell>
               </TableRow>
-              {editingId === l.id && <InlineFormRow colSpan={6} title="✏️ Edit Lead" fields={fFields(form, setF)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {editingId === l.id && <InlineFormRow colSpan={7} title="✏️ Edit Lead" fields={fFields(form, setF)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {expandedLeadId === l.id && (
+                <TableRow>
+                  <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
+                    <div style={{ padding: '8px 28px 12px', fontSize: '12px', color: t.text }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '8px' }}>Conversion</div>
+                      {l.is_converted ? (
+                        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' as const }}>
+                          {l.converted_account_name && <div><span style={{ color: t.textWeak }}>Account: </span><span style={{ color: t.brand, fontWeight: 500 }}>{l.converted_account_name}</span></div>}
+                          {l.converted_contact_name && <div><span style={{ color: t.textWeak }}>Contact: </span><span style={{ fontWeight: 500 }}>{l.converted_contact_name}</span></div>}
+                          {l.converted_opportunity_name && <div><span style={{ color: t.textWeak }}>Opportunity: </span><span style={{ fontWeight: 500 }}>{l.converted_opportunity_name}</span></div>}
+                          {!l.converted_account_name && !l.converted_contact_name && <div style={{ color: t.textWeak }}>Converted — details unavailable.</div>}
+                        </div>
+                      ) : (
+                        <div style={{ color: t.textWeak }}>Not yet converted. Use ⇄ Convert to create Account, Contact &amp; Opportunity.</div>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -524,6 +561,9 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [childOpps, setChildOpps] = useState<Record<string, any[]>>({});
+  const [loadingChild, setLoadingChild] = useState<string | null>(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', title: '', account_name: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
@@ -531,7 +571,7 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
     setFiltering(true);
-    try { const res = await callTool('search_contacts', { name: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_contacts', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -551,6 +591,16 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
 
   useEffect(() => { if (lastSavedId) { const x = setTimeout(() => setLastSavedId(null), 1600); return () => clearTimeout(x); } }, [lastSavedId]);
 
+  const toggleExpand = async (c: any) => {
+    if (expandedId === c.id) { setExpandedId(null); return; }
+    setExpandedId(c.id);
+    if (childOpps[c.id] || !c.account_id) return;
+    setLoadingChild(c.id);
+    try { const res = await callTool('get_opportunities', { account_id: c.account_id }); setChildOpps(p => ({ ...p, [c.id]: res?.items || [] })); }
+    catch { setChildOpps(p => ({ ...p, [c.id]: [] })); }
+    finally { setLoadingChild(null); }
+  };
+
   const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
   const fFields = (f: typeof form) => [
     { label: 'First Name', key: 'first_name', value: f.first_name, onChange: (v: string) => setF('first_name', v) },
@@ -568,15 +618,17 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={{ ...H_CELL, width: 28, color: t.textWeak }} />
             {['Name', 'Account', 'Title', 'Email', 'Phone', ''].map(h => <TableHeaderCell key={h} style={{ ...H_CELL, color: t.textWeak }}>{h}</TableHeaderCell>)}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {creating && <InlineFormRow colSpan={6} title="➕ New Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
-          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} className={styles.empty}><Text>No contacts found.</Text></TableCell></TableRow>}
+          {creating && <InlineFormRow colSpan={7} title="➕ New Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={7} className={styles.empty}><Text>No contacts found.</Text></TableCell></TableRow>}
           {localItems.map((c: any) => (
             <React.Fragment key={c.id}>
               <TableRow style={{ borderBottom: `1px solid ${t.border}`, ...(lastSavedId === c.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}) }}>
+                <TableCell style={{ ...D_CELL, width: 28 }}><ExpandToggle expanded={expandedId === c.id} onClick={() => toggleExpand(c)} theme={theme} /></TableCell>
                 <TableCell style={D_CELL}>{c.first_name} {c.last_name}</TableCell>
                 <TableCell style={D_CELL}>{c.account_name || '—'}</TableCell>
                 <TableCell style={D_CELL}>{c.title || '—'}</TableCell>
@@ -584,7 +636,24 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
                 <TableCell style={D_CELL}>{c.phone || '—'}</TableCell>
                 <TableCell style={D_CELL}><button title="Edit" onClick={() => openEdit(c)} className="slds-edit-btn" style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer', color: t.textWeak, fontSize: '14px', padding: 0 }}>✏️</button></TableCell>
               </TableRow>
-              {editingId === c.id && <InlineFormRow colSpan={6} title="✏️ Edit Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {editingId === c.id && <InlineFormRow colSpan={7} title="✏️ Edit Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {expandedId === c.id && (
+                <TableRow>
+                  <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
+                    <div style={{ padding: '8px 28px 12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Opportunities</div>
+                      {loadingChild === c.id ? <Spinner size="tiny" label="Loading…" /> : !c.account_id ? <div style={{ fontSize: '12px', color: t.textWeak }}>No account linked.</div> : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <tbody>
+                            {(childOpps[c.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>No opportunities found.</td></tr>
+                              : (childOpps[c.id] || []).map((o: any) => <tr key={o.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{o.name}</td><td style={D_CELL}>{o.stage || '—'}</td><td style={{ ...D_CELL, fontWeight: 500 }}>{fmt$(o.amount)}</td><td style={D_CELL}>{fmtDate(o.close_date)}</td></tr>)}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -608,13 +677,16 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [childContacts, setChildContacts] = useState<Record<string, any[]>>({});
+  const [loadingChild, setLoadingChild] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', account_name: '', stage: '', amount: '', close_date: '', probability: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('search_opportunities', { name: filterName, stage: filterStage }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_opportunities', { name: filterName, stage: filterStage }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -645,6 +717,16 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
     { label: 'Probability (%)', key: 'probability', value: f.probability, onChange: (v: string) => setF('probability', v), inputType: 'number' },
   ];
 
+  const toggleExpand = async (o: any) => {
+    if (expandedId === o.id) { setExpandedId(null); return; }
+    setExpandedId(o.id);
+    if (childContacts[o.id] || !o.account_id) return;
+    setLoadingChild(o.id);
+    try { const res = await callTool('get_contacts', { account_id: o.account_id }); setChildContacts(p => ({ ...p, [o.id]: res?.items || [] })); }
+    catch { setChildContacts(p => ({ ...p, [o.id]: [] })); }
+    finally { setLoadingChild(null); }
+  };
+
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Opportunity" theme={theme} />
@@ -653,15 +735,17 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={{ ...H_CELL, width: 28, color: t.textWeak }} />
             {['Name', 'Account', 'Stage', 'Amount', 'Close Date', 'Prob %', ''].map(h => <TableHeaderCell key={h} style={{ ...H_CELL, color: t.textWeak }}>{h}</TableHeaderCell>)}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {creating && <InlineFormRow colSpan={7} title="➕ New Opportunity" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
-          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={7} className={styles.empty}><Text>No opportunities found.</Text></TableCell></TableRow>}
+          {creating && <InlineFormRow colSpan={8} title="➕ New Opportunity" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={8} className={styles.empty}><Text>No opportunities found.</Text></TableCell></TableRow>}
           {localItems.map((o: any) => (
             <React.Fragment key={o.id}>
               <TableRow style={{ borderBottom: `1px solid ${t.border}`, ...(lastSavedId === o.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}) }}>
+                <TableCell style={{ ...D_CELL, width: 28 }}><ExpandToggle expanded={expandedId === o.id} onClick={() => toggleExpand(o)} theme={theme} /></TableCell>
                 <TableCell style={D_CELL}>{o.name}</TableCell>
                 <TableCell style={D_CELL}>{o.account_name || '—'}</TableCell>
                 <TableCell style={D_CELL}><StatusPill status={o.stage} theme={theme} /></TableCell>
@@ -670,7 +754,24 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
                 <TableCell style={D_CELL}>{o.probability != null ? o.probability + '%' : '—'}</TableCell>
                 <TableCell style={D_CELL}><button title="Edit" onClick={() => openEdit(o)} className="slds-edit-btn" style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer', color: t.textWeak, fontSize: '14px', padding: 0 }}>✏️</button></TableCell>
               </TableRow>
-              {editingId === o.id && <InlineFormRow colSpan={7} title="✏️ Edit Opportunity" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {editingId === o.id && <InlineFormRow colSpan={8} title="✏️ Edit Opportunity" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
+              {expandedId === o.id && (
+                <TableRow>
+                  <TableCell colSpan={8} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
+                    <div style={{ padding: '8px 28px 12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Contacts</div>
+                      {loadingChild === o.id ? <Spinner size="tiny" label="Loading…" /> : !o.account_id ? <div style={{ fontSize: '12px', color: t.textWeak }}>No account linked.</div> : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <tbody>
+                            {(childContacts[o.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>No contacts found.</td></tr>
+                              : (childContacts[o.id] || []).map((c: any) => <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{c.first_name} {c.last_name}</td><td style={D_CELL}>{c.title || '—'}</td><td style={D_CELL}>{c.email || '—'}</td><td style={D_CELL}>{c.phone || '—'}</td></tr>)}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -703,7 +804,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('search_cases', { status: filterStatus, priority: filterPrio }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_cases', { status: filterStatus, priority: filterPrio }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -820,7 +921,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('search_tasks', { status: filterStatus }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_tasks', { status: filterStatus }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -901,7 +1002,7 @@ function CampaignsView({ items, callTool, theme }: { items: any[]; callTool: (n:
     setExpandedId(id);
     if (childLeads[id]) return;
     setLoadingChild(id);
-    try { const res = await callTool('get_campaign_leads', { campaign_id: id }); setChildLeads(p => ({ ...p, [id]: res?.items || [] })); }
+    try { const res = await callTool('get_leads', { campaign_id: id }); setChildLeads(p => ({ ...p, [id]: res?.items || [] })); }
     catch { setChildLeads(p => ({ ...p, [id]: [] })); }
     finally { setLoadingChild(null); }
   };

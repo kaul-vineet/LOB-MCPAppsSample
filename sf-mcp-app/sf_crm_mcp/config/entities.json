@@ -4,13 +4,18 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "FirstName",  "label": "First Name", "width": "150px" },
-      { "apiName": "LastName",   "label": "Last Name",  "width": "150px" },
-      { "apiName": "Company",    "label": "Company",    "width": "180px" },
-      { "apiName": "Email",      "label": "Email",      "width": "200px" },
-      { "apiName": "Phone",      "label": "Phone",      "width": "140px" },
-      { "apiName": "Status",     "label": "Status",     "width": "160px" },
-      { "apiName": "LeadSource", "label": "Source",     "width": "130px" }
+      { "apiName": "FirstName",  "key": "first_name",  "label": "First Name", "width": "150px" },
+      { "apiName": "LastName",   "key": "last_name",   "label": "Last Name",  "width": "150px" },
+      { "apiName": "Company",    "key": "company",     "label": "Company",    "width": "180px" },
+      { "apiName": "Email",      "key": "email",       "label": "Email",      "width": "200px" },
+      { "apiName": "Phone",      "key": "phone",       "label": "Phone",      "width": "140px" },
+      { "apiName": "Status",     "key": "status",      "label": "Status",     "width": "160px" },
+      { "apiName": "LeadSource", "key": "lead_source", "label": "Source",     "width": "130px" }
+    ],
+    "hiddenColumns": [
+      { "apiName": "IsConverted",               "key": "is_converted" },
+      { "apiName": "ConvertedAccount.Name",     "key": "converted_account_name" },
+      { "apiName": "ConvertedOpportunity.Name", "key": "converted_opportunity_name" }
     ],
     "form": [
       { "apiName": "FirstName",  "label": "First Name",  "required": false },
@@ -45,12 +50,15 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "Name",        "label": "Name",         "width": "200px" },
-      { "apiName": "Account.Name","label": "Account",      "width": "180px" },
-      { "apiName": "StageName",   "label": "Stage",        "width": "160px" },
-      { "apiName": "Amount",      "label": "Amount",       "width": "120px" },
-      { "apiName": "CloseDate",   "label": "Close Date",   "width": "120px" },
-      { "apiName": "Probability", "label": "Probability",  "width": "100px" }
+      { "apiName": "Name",        "key": "name",        "label": "Name",        "width": "200px" },
+      { "apiName": "Account.Name","key": "account_name","label": "Account",     "width": "180px" },
+      { "apiName": "StageName",   "key": "stage",       "label": "Stage",       "width": "160px" },
+      { "apiName": "Amount",      "key": "amount",      "label": "Amount",      "width": "120px" },
+      { "apiName": "CloseDate",   "key": "close_date",  "label": "Close Date",  "width": "120px" },
+      { "apiName": "Probability", "key": "probability", "label": "Probability", "width": "100px" }
+    ],
+    "hiddenColumns": [
+      { "apiName": "AccountId", "key": "account_id" }
     ],
     "form": [
       { "apiName": "Name",      "label": "Opportunity Name", "required": true  },
@@ -69,14 +77,15 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "Name",              "label": "Name",       "width": "200px" },
-      { "apiName": "Industry",          "label": "Industry",   "width": "150px" },
-      { "apiName": "Phone",             "label": "Phone",      "width": "140px" },
-      { "apiName": "Website",           "label": "Website",    "width": "180px" },
-      { "apiName": "BillingCity",       "label": "City",       "width": "130px" },
-      { "apiName": "Type",              "label": "Type",       "width": "120px" },
-      { "apiName": "NumberOfEmployees", "label": "Employees",  "width": "100px" }
+      { "apiName": "Name",              "key": "name",                "label": "Name",      "width": "200px" },
+      { "apiName": "Industry",          "key": "industry",            "label": "Industry",  "width": "150px" },
+      { "apiName": "Phone",             "key": "phone",               "label": "Phone",     "width": "140px" },
+      { "apiName": "Website",           "key": "website",             "label": "Website",   "width": "180px" },
+      { "apiName": "BillingCity",       "key": "billing_city",        "label": "City",      "width": "130px" },
+      { "apiName": "Type",              "key": "type",                "label": "Type",      "width": "120px" },
+      { "apiName": "NumberOfEmployees", "key": "number_of_employees", "label": "Employees", "width": "100px" }
     ],
+    "hiddenColumns": [],
     "form": [
       { "apiName": "Name",     "label": "Account Name", "required": true  },
       { "apiName": "Industry", "label": "Industry",     "required": false },
@@ -90,12 +99,15 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "FirstName",   "label": "First Name", "width": "140px" },
-      { "apiName": "LastName",    "label": "Last Name",  "width": "140px" },
-      { "apiName": "Email",       "label": "Email",      "width": "200px" },
-      { "apiName": "Phone",       "label": "Phone",      "width": "140px" },
-      { "apiName": "Title",       "label": "Title",      "width": "150px" },
-      { "apiName": "Account.Name","label": "Account",    "width": "170px" }
+      { "apiName": "FirstName",   "key": "first_name",   "label": "First Name", "width": "140px" },
+      { "apiName": "LastName",    "key": "last_name",    "label": "Last Name",  "width": "140px" },
+      { "apiName": "Email",       "key": "email",        "label": "Email",      "width": "200px" },
+      { "apiName": "Phone",       "key": "phone",        "label": "Phone",      "width": "140px" },
+      { "apiName": "Title",       "key": "title",        "label": "Title",      "width": "150px" },
+      { "apiName": "Account.Name","key": "account_name", "label": "Account",    "width": "170px" }
+    ],
+    "hiddenColumns": [
+      { "apiName": "AccountId", "key": "account_id" }
     ],
     "form": [
       { "apiName": "FirstName", "label": "First Name", "required": false },
@@ -111,11 +123,15 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "CaseNumber",   "label": "Case #",   "width": "110px" },
-      { "apiName": "Subject",      "label": "Subject",  "width": "220px" },
-      { "apiName": "Status",       "label": "Status",   "width": "130px" },
-      { "apiName": "Priority",     "label": "Priority", "width": "110px" },
-      { "apiName": "Account.Name", "label": "Account",  "width": "160px" }
+      { "apiName": "CaseNumber",   "key": "case_number",   "label": "Case #",   "width": "110px" },
+      { "apiName": "Subject",      "key": "subject",       "label": "Subject",  "width": "220px" },
+      { "apiName": "Status",       "key": "status",        "label": "Status",   "width": "130px" },
+      { "apiName": "Priority",     "key": "priority",      "label": "Priority", "width": "110px" },
+      { "apiName": "Account.Name", "key": "account_name",  "label": "Account",  "width": "160px" }
+    ],
+    "hiddenColumns": [
+      { "apiName": "CreatedDate", "key": "created_date" },
+      { "apiName": "AccountId",   "key": "account_id"   }
     ],
     "form": [
       { "apiName": "Subject",     "label": "Subject",     "required": true  },
@@ -134,13 +150,14 @@
     "orderBy": "CreatedDate DESC",
     "limit": 5,
     "columns": [
-      { "apiName": "Subject",      "label": "Subject",   "width": "220px" },
-      { "apiName": "Status",       "label": "Status",    "width": "130px" },
-      { "apiName": "Priority",     "label": "Priority",  "width": "110px" },
-      { "apiName": "ActivityDate", "label": "Due Date",  "width": "120px" },
-      { "apiName": "WhoId",        "label": "Who",       "width": "140px" },
-      { "apiName": "WhatId",       "label": "Related To","width": "140px" }
+      { "apiName": "Subject",      "key": "subject",       "label": "Subject",    "width": "220px" },
+      { "apiName": "Status",       "key": "status",        "label": "Status",     "width": "130px" },
+      { "apiName": "Priority",     "key": "priority",      "label": "Priority",   "width": "110px" },
+      { "apiName": "ActivityDate", "key": "activity_date", "label": "Due Date",   "width": "120px" },
+      { "apiName": "WhoId",        "key": "who_id",        "label": "Who",        "width": "140px" },
+      { "apiName": "WhatId",       "key": "what_id",       "label": "Related To", "width": "140px" }
     ],
+    "hiddenColumns": [],
     "form": [
       { "apiName": "Subject",      "label": "Subject",  "required": true  },
       { "apiName": "Priority",     "label": "Priority", "required": false },

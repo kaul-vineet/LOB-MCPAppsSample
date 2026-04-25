@@ -119,33 +119,38 @@ def _error_result(message: str) -> types.CallToolResult:
 
 
 def _flatten_record(r: dict, columns: list[dict]) -> dict:
-    """Map a raw Salesforce record to a response dict using column apiNames."""
+    """Map a raw Salesforce record to snake_case keys using col['key'] or col['apiName']."""
     result: dict[str, Any] = {"id": r.get("Id", "")}
     for col in columns:
         api = col["apiName"]
+        key = col.get("key", api)
         if api == "Id":
             continue
         if "." in api:
             parts = api.split(".", 1)
-            result[api] = ((r.get(parts[0]) or {}).get(parts[1])) or ""
+            val = ((r.get(parts[0]) or {}).get(parts[1])) or ""
         else:
             val = r.get(api)
-            result[api] = val if val is not None else ""
+            if val is None:
+                val = ""
+        result[key] = val
     return result
 
 
 async def _fetch_entity(entity_type: str) -> list[dict]:
-    """Fetch records for any entity using its current config."""
+    """Fetch records for any entity using its current config (columns + hiddenColumns)."""
     cfg = _get_schema(entity_type)
     columns = cfg.get("columns", [])
+    hidden = cfg.get("hiddenColumns", [])
+    all_cols = columns + hidden
     limit = cfg.get("limit", 5)
     order_by = cfg.get("orderBy", "CreatedDate DESC")
     soql_object = cfg.get("soqlObject", entity_type)
-    api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+    api_names = ["Id"] + [c["apiName"] for c in all_cols if c["apiName"] != "Id"]
     soql = f"SELECT {', '.join(api_names)} FROM {soql_object} ORDER BY {order_by} LIMIT {limit}"
     sf = get_client()
     records = await sf.query(soql)
-    return [_flatten_record(r, columns) for r in records]
+    return [_flatten_record(r, all_cols) for r in records]
 
 
 def _list_summary(entity_label: str, items: list[dict], entity_type: str) -> str:
@@ -154,7 +159,7 @@ def _list_summary(entity_label: str, items: list[dict], entity_type: str) -> str
     cols = _get_schema(entity_type).get("columns", [])
     lines = [f"Retrieved {len(items)} {entity_label}:"]
     for item in items:
-        parts = [str(item.get(c["apiName"], "")) for c in cols[:4] if c["apiName"] != "Id"]
+        parts = [str(item.get(c.get("key", c["apiName"]), "")) for c in cols[:4] if c["apiName"] != "Id"]
         lines.append(f"- {' | '.join(p for p in parts if p)}")
     return "\n".join(lines)
 
@@ -188,17 +193,26 @@ async def _fetch_contacts() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_leads(campaign_id: str = "") -> types.CallToolResult:
-    """Fetch latest 5 Leads from Salesforce, optionally filtered by campaign."""
-    log.info("sf__get_leads", campaign_id=campaign_id)
+async def sf__get_leads(campaign_id: str = "", name: str = "") -> types.CallToolResult:
+    """Fetch Leads, optionally filtered by campaign_id or name search."""
+    log.info("sf__get_leads", campaign_id=campaign_id, name=name)
     try:
+        cfg = _get_schema("Lead")
+        columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+        api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
         if campaign_id:
-            cfg = _get_schema("Lead")
-            columns = cfg.get("columns", [])
-            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Lead "
                 f"WHERE Id IN (SELECT LeadId FROM CampaignMember WHERE CampaignId = '{campaign_id}') "
+                f"ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        elif name:
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Lead "
+                f"WHERE FirstName LIKE '%{name}%' OR LastName LIKE '%{name}%' OR Company LIKE '%{name}%' "
                 f"ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
@@ -405,17 +419,28 @@ async def sf__get_lead(lead_id: str) -> types.CallToolResult:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_opportunities(account_id: str = "") -> types.CallToolResult:
-    """Fetch latest 5 Opportunities, optionally filtered by account."""
-    log.info("sf__get_opportunities", account_id=account_id)
+async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str = "") -> types.CallToolResult:
+    """Fetch Opportunities filtered by account_id (drill-down), name/stage (search), or latest 5."""
+    log.info("sf__get_opportunities", account_id=account_id, name=name, stage=stage)
     try:
+        cfg = _get_schema("Opportunity")
+        columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+        api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
         if account_id:
-            cfg = _get_schema("Opportunity")
-            columns = cfg.get("columns", [])
-            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Opportunity "
                 f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        elif name or stage:
+            clauses = []
+            if name:  clauses.append(f"Name LIKE '%{name}%'")
+            if stage: clauses.append(f"StageName = '{stage}'")
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Opportunity "
+                f"WHERE {' AND '.join(clauses)} ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
             records = await sf.query(soql)
@@ -557,9 +582,24 @@ async def sf__update_opportunity(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_accounts() -> types.CallToolResult:
+async def sf__get_accounts(name: str = "", industry: str = "") -> types.CallToolResult:
+    """Fetch accounts, optionally filtered by name and/or industry."""
+    log.info("sf__get_accounts", name=name, industry=industry)
     try:
-        items = await _fetch_accounts()
+        if name or industry:
+            cfg = _get_schema("Account")
+            columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            clauses = []
+            if name:     clauses.append(f"Name LIKE '%{name}%'")
+            if industry: clauses.append(f"Industry = '{industry}'")
+            where = " AND ".join(clauses)
+            soql = f"SELECT {', '.join(api_names)} FROM Account WHERE {where} ORDER BY CreatedDate DESC LIMIT 20"
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_accounts()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except Exception as exc:
@@ -695,15 +735,26 @@ async def sf__update_account(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_contacts(account_id: str = "") -> types.CallToolResult:
+async def sf__get_contacts(account_id: str = "", name: str = "") -> types.CallToolResult:
+    """Fetch Contacts filtered by account_id (drill-down) or name (search), or latest 5."""
+    log.info("sf__get_contacts", account_id=account_id, name=name)
     try:
+        cfg = _get_schema("Contact")
+        columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+        api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
         if account_id:
-            cfg = _get_schema("Contact")
-            columns = cfg.get("columns", [])
-            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Contact "
                 f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        elif name:
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Contact "
+                f"WHERE FirstName LIKE '%{name}%' OR LastName LIKE '%{name}%' "
+                f"ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
             records = await sf.query(soql)
@@ -849,16 +900,28 @@ async def _fetch_cases() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_cases(account_id: str = "") -> types.CallToolResult:
-    log.info("sf__get_cases", account_id=account_id)
+async def sf__get_cases(account_id: str = "", status: str = "", priority: str = "") -> types.CallToolResult:
+    """Fetch Cases filtered by account_id (drill-down), status/priority (search), or latest 5."""
+    log.info("sf__get_cases", account_id=account_id, status=status, priority=priority)
     try:
+        cfg = _get_schema("Case")
+        columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+        api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
         if account_id:
-            cfg = _get_schema("Case")
-            columns = cfg.get("columns", [])
-            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Case "
                 f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        elif status or priority:
+            clauses = []
+            if status:   clauses.append(f"Status = '{status}'")
+            if priority: clauses.append(f"Priority = '{priority}'")
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Case "
+                f"WHERE {' AND '.join(clauses)} ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
             records = await sf.query(soql)
@@ -1026,7 +1089,7 @@ async def sf__get_case_comments(case_id: str) -> types.CallToolResult:
         {
             "id": r.get("Id", ""),
             "body": r.get("CommentBody") or "",
-            "created_by": (r.get("CreatedBy") or {}).get("Name") or "",
+            "created_by_name": (r.get("CreatedBy") or {}).get("Name") or "",
             "created_date": (r.get("CreatedDate") or "")[:10],
         }
         for r in records
@@ -1053,10 +1116,23 @@ async def _fetch_tasks() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_tasks() -> types.CallToolResult:
-    log.info("sf__get_tasks")
+async def sf__get_tasks(status: str = "") -> types.CallToolResult:
+    """Fetch Tasks, optionally filtered by status."""
+    log.info("sf__get_tasks", status=status)
     try:
-        items = await _fetch_tasks()
+        if status:
+            cfg = _get_schema("Task")
+            columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Task "
+                f"WHERE Status = '{status}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_tasks()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
@@ -1080,15 +1156,16 @@ async def sf__get_tasks() -> types.CallToolResult:
 async def sf__create_task(
     subject: str,
     priority: str = "Normal",
-    due_date: str = "",
-    what_id: str = "",
+    status: str = "Not Started",
+    activity_date: str = "",
+    description: str = "",
 ) -> types.CallToolResult:
     log.info("sf__create_task", subject=subject)
     try:
         sf = get_client()
-        data: dict = {"Subject": subject, "Priority": priority, "Status": "Not Started"}
-        if due_date: data["ActivityDate"] = due_date
-        if what_id:  data["WhatId"] = what_id
+        data: dict = {"Subject": subject, "Priority": priority, "Status": status}
+        if activity_date: data["ActivityDate"] = activity_date
+        if description:   data["Description"] = description
         new_id = await sf.create("Task", data)
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
@@ -1105,6 +1182,48 @@ async def sf__create_task(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Task")},
+    )
+
+
+@mcp.tool(
+    description="Update a Salesforce Task. Pass task_id plus any fields to change.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__update_task(
+    task_id: str,
+    subject: str = "",
+    priority: str = "",
+    status: str = "",
+    activity_date: str = "",
+    description: str = "",
+) -> types.CallToolResult:
+    log.info("sf__update_task", task_id=task_id)
+    try:
+        sf = get_client()
+        data: dict = {}
+        if subject:       data["Subject"] = subject
+        if priority:      data["Priority"] = priority
+        if status:        data["Status"] = status
+        if activity_date: data["ActivityDate"] = activity_date
+        if description:   data["Description"] = description
+        if not data:
+            return _error_result("No fields provided to update.")
+        await sf.update("Task", task_id, data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to update task: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating task: {exc}")
+
+    try:
+        items = await _fetch_tasks()
+    except Exception:
+        items = []
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Task {task_id} updated. Refreshed list returned.")],
+        structuredContent={"type": "tasks", "total": len(items), "items": items, "_schema": _get_schema("Task")},
     )
 
 

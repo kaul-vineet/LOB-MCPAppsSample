@@ -136,7 +136,7 @@
     // ── callTool request from widget ──
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
       var tool = msg.params.name;
-      var args = msg.params.args;
+      var args = msg.params.arguments || {};
       log('\u2190 callTool: ' + tool + '(' + JSON.stringify(args) + ')');
 
       setTimeout(function() {

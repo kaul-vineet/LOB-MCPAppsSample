@@ -150,7 +150,7 @@ var MOCK_LEADS = {
     { id: "00Q000000001", first_name: "Sarah",  last_name: "Chen",      company: "TechFlow Inc",        email: "sarah.chen@techflow.com",      phone: "(415) 555-0101", status: "Open - Not Contacted",  lead_source: "Web" },
     { id: "00Q000000002", first_name: "Marcus", last_name: "Rivera",    company: "DataBridge Corp",     email: "m.rivera@databridge.io",       phone: "(212) 555-0202", status: "Working - Contacted",   lead_source: "Partner Referral" },
     { id: "00Q000000003", first_name: "Aisha",  last_name: "Patel",     company: "CloudNine Solutions", email: "aisha@cloudnine.dev",          phone: "(650) 555-0303", status: "Open - Not Contacted",  lead_source: "Phone Inquiry" },
-    { id: "00Q000000004", first_name: "James",  last_name: "O'Brien",   company: "Summit Analytics",    email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", status: "Closed - Converted",    lead_source: "Web" },
+    { id: "00Q000000004", first_name: "James",  last_name: "O'Brien",   company: "Summit Analytics",    email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", status: "Closed - Converted",    lead_source: "Web", is_converted: true, converted_account_name: "Summit Analytics", converted_contact_name: "Priya Sharma", converted_opportunity_name: "Summit Analytics Dashboard" },
     { id: "00Q000000005", first_name: "Lin",    last_name: "Wei",       company: "Quantum Dynamics",    email: "lin.wei@qdynamics.com",        phone: "(408) 555-0505", status: "Working - Contacted",   lead_source: "Purchased List" }
   ]
 };
@@ -158,22 +158,22 @@ var MOCK_LEADS = {
 var MOCK_CONTACTS = {
   type: "contacts", total: 5,
   items: [
-    { id: "003000000001", first_name: "Elena",  last_name: "Vasquez",   email: "e.vasquez@techflow.com",    phone: "(415) 555-1101", title: "VP Engineering",  account_name: "TechFlow Inc" },
-    { id: "003000000002", first_name: "David",  last_name: "Kim",       email: "d.kim@databridge.io",       phone: "(212) 555-1202", title: "CTO",             account_name: "DataBridge Corp" },
-    { id: "003000000003", first_name: "Priya",  last_name: "Sharma",    email: "p.sharma@summit-a.com",     phone: "(312) 555-1303", title: "CFO",             account_name: "Summit Analytics" },
-    { id: "003000000004", first_name: "Tom",    last_name: "Nguyen",    email: "t.nguyen@medicare-sol.com", phone: "(617) 555-1404", title: "Director IT",     account_name: "MediCare Solutions" },
-    { id: "003000000005", first_name: "Fatima", last_name: "Al-Rashid", email: "f.rashid@qdynamics.com",    phone: "(206) 555-1505", title: "Procurement Mgr", account_name: "Quantum Dynamics" }
+    { id: "003000000001", first_name: "Elena",  last_name: "Vasquez",   email: "e.vasquez@techflow.com",    phone: "(415) 555-1101", title: "VP Engineering",  account_name: "TechFlow Inc",       account_id: "001000000001" },
+    { id: "003000000002", first_name: "David",  last_name: "Kim",       email: "d.kim@databridge.io",       phone: "(212) 555-1202", title: "CTO",             account_name: "DataBridge Corp",    account_id: "001000000002" },
+    { id: "003000000003", first_name: "Priya",  last_name: "Sharma",    email: "p.sharma@summit-a.com",     phone: "(312) 555-1303", title: "CFO",             account_name: "Summit Analytics",   account_id: "001000000003" },
+    { id: "003000000004", first_name: "Tom",    last_name: "Nguyen",    email: "t.nguyen@medicare-sol.com", phone: "(617) 555-1404", title: "Director IT",     account_name: "MediCare Solutions", account_id: "001000000004" },
+    { id: "003000000005", first_name: "Fatima", last_name: "Al-Rashid", email: "f.rashid@qdynamics.com",    phone: "(206) 555-1505", title: "Procurement Mgr", account_name: "Quantum Dynamics",   account_id: "001000000005" }
   ]
 };
 
 var MOCK_OPPS = {
   type: "opportunities", total: 5,
   items: [
-    { id: "006000000001", name: "TechFlow Enterprise License",   account_name: "TechFlow Inc",     stage: "Proposal/Price Quote",  amount: 125000, close_date: "2026-05-15", probability: 60  },
-    { id: "006000000002", name: "DataBridge Platform Migration", account_name: "DataBridge Corp",  stage: "Negotiation/Review",    amount: 340000, close_date: "2026-04-30", probability: 75  },
-    { id: "006000000003", name: "CloudNine Starter Package",     account_name: "CloudNine",        stage: "Prospecting",           amount: 28000,  close_date: "2026-07-01", probability: 15  },
-    { id: "006000000004", name: "Summit Analytics Dashboard",    account_name: "Summit Analytics", stage: "Closed Won",            amount: 89000,  close_date: "2026-03-10", probability: 100 },
-    { id: "006000000005", name: "Quantum Research Grant Tool",   account_name: "Quantum Dynamics", stage: "Needs Analysis",        amount: 210000, close_date: "2026-06-20", probability: 30  }
+    { id: "006000000001", name: "TechFlow Enterprise License",   account_name: "TechFlow Inc",     account_id: "001000000001", stage: "Proposal/Price Quote",  amount: 125000, close_date: "2026-05-15", probability: 60  },
+    { id: "006000000002", name: "DataBridge Platform Migration", account_name: "DataBridge Corp",  account_id: "001000000002", stage: "Negotiation/Review",    amount: 340000, close_date: "2026-04-30", probability: 75  },
+    { id: "006000000003", name: "CloudNine Starter Package",     account_name: "CloudNine",        account_id: "",             stage: "Prospecting",           amount: 28000,  close_date: "2026-07-01", probability: 15  },
+    { id: "006000000004", name: "Summit Analytics Dashboard",    account_name: "Summit Analytics", account_id: "001000000003", stage: "Closed Won",            amount: 89000,  close_date: "2026-03-10", probability: 100 },
+    { id: "006000000005", name: "Quantum Research Grant Tool",   account_name: "Quantum Dynamics", account_id: "001000000005", stage: "Needs Analysis",        amount: 210000, close_date: "2026-06-20", probability: 30  }
   ]
 };
 
@@ -277,6 +277,41 @@ var ACCOUNT_CONTACTS = {
   ]},
   "001000000005": { items: [
     { id: "003000000005", first_name: "Fatima", last_name: "Al-Rashid", email: "f.rashid@qdynamics.com", phone: "(206) 555-1505", title: "Procurement Mgr" }
+  ]}
+};
+
+var ACCOUNT_OPPS = {
+  "001000000001": { items: [
+    { id: "006000000001", name: "TechFlow Enterprise License",   account_name: "TechFlow Inc",     account_id: "001000000001", stage: "Proposal/Price Quote", amount: 125000, close_date: "2026-05-15" },
+    { id: "006000000006", name: "TechFlow Expansion Q3",         account_name: "TechFlow Inc",     account_id: "001000000001", stage: "Prospecting",          amount: 60000,  close_date: "2026-08-01" }
+  ]},
+  "001000000002": { items: [
+    { id: "006000000002", name: "DataBridge Platform Migration", account_name: "DataBridge Corp",  account_id: "001000000002", stage: "Negotiation/Review",   amount: 340000, close_date: "2026-04-30" }
+  ]},
+  "001000000003": { items: [
+    { id: "006000000004", name: "Summit Analytics Dashboard",    account_name: "Summit Analytics", account_id: "001000000003", stage: "Closed Won",           amount: 89000,  close_date: "2026-03-10" }
+  ]},
+  "001000000004": { items: [] },
+  "001000000005": { items: [
+    { id: "006000000005", name: "Quantum Research Grant Tool",   account_name: "Quantum Dynamics", account_id: "001000000005", stage: "Needs Analysis",       amount: 210000, close_date: "2026-06-20" }
+  ]}
+};
+
+var ACCOUNT_CASES = {
+  "001000000001": { items: [
+    { id: "500000000001", case_number: "CS-10041", subject: "API integration failure on data sync", status: "Open",      priority: "High",     account_name: "TechFlow Inc", created_date: "2026-04-18" }
+  ]},
+  "001000000002": { items: [
+    { id: "500000000002", case_number: "CS-10042", subject: "License seat count discrepancy",       status: "Working",   priority: "Medium",   account_name: "DataBridge Corp", created_date: "2026-04-17" }
+  ]},
+  "001000000003": { items: [
+    { id: "500000000003", case_number: "CS-10043", subject: "SSO configuration not persisting",     status: "Escalated", priority: "Critical", account_name: "Summit Analytics", created_date: "2026-04-15" }
+  ]},
+  "001000000004": { items: [
+    { id: "500000000004", case_number: "CS-10044", subject: "Report export timeout for large data", status: "New",       priority: "Low",      account_name: "MediCare Solutions", created_date: "2026-04-20" }
+  ]},
+  "001000000005": { items: [
+    { id: "500000000005", case_number: "CS-10045", subject: "Mobile app crashes on iOS 17.4",       status: "Closed",    priority: "High",     account_name: "Quantum Dynamics", created_date: "2026-04-10" }
   ]}
 };
 
@@ -390,21 +425,17 @@ window.addEventListener('message', function(e) {
 
   if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
     var tool = msg.params.name;
-    var args = msg.params.args || {};
+    var args = msg.params.arguments || {};
     log('← callTool: ' + tool + '(' + JSON.stringify(args).slice(0, 80) + ')');
 
     setTimeout(function() {
       var result;
 
-      // Account expand + ops
-      if      (tool === 'get_account_contacts') {
-        result = ACCOUNT_CONTACTS[args.account_id] || { items: [] };
-        log('→ ' + (result.items||[]).length + ' contacts');
-      }
-      else if (tool === 'search_accounts') {
+      // get_accounts — search by name/industry
+      if (tool === 'get_accounts') {
         var n = (args.name||'').toLowerCase(), ind = (args.industry||'').toLowerCase();
         result = { type:'accounts', items: MOCK_ACCOUNTS.items.filter(function(a){ return (!n||(a.name||'').toLowerCase().includes(n))&&(!ind||(a.industry||'').toLowerCase().includes(ind)); }) };
-        log('→ search_accounts: ' + result.items.length);
+        log('→ get_accounts: ' + result.items.length);
       }
       else if (tool === 'create_account') {
         var na = { id:'001'+(nextId.account++), name:args.name||'', industry:args.industry||'', phone:args.phone||'', website:args.website||'', type:args.type||'', billing_city:args.billing_city||'' };
@@ -416,6 +447,18 @@ window.addEventListener('message', function(e) {
         MOCK_ACCOUNTS.items.forEach(function(a){ if(a.id===args.account_id){ ['name','industry','phone','website','type','billing_city'].forEach(function(k){ if(args[k]!==undefined) a[k]=args[k]; }); } });
         result = { type:'accounts', items:MOCK_ACCOUNTS.items };
         log('→ updated account');
+      }
+
+      // get_leads — campaign drill-down or name search
+      else if (tool === 'get_leads') {
+        if (args.campaign_id) {
+          result = CAMPAIGN_LEADS[args.campaign_id] || { items: [] };
+          log('→ campaign leads: ' + (result.items||[]).length);
+        } else {
+          var q0=(args.name||'').toLowerCase();
+          result = { type:'leads', items: currentLeads.items.filter(function(l){ return !q0||(l.first_name+' '+l.last_name+' '+l.company).toLowerCase().includes(q0); }) };
+          log('→ get_leads: ' + result.items.length);
+        }
       }
 
       // Lead ops
@@ -430,15 +473,22 @@ window.addEventListener('message', function(e) {
         result = JSON.parse(JSON.stringify(currentLeads));
         log('→ updated lead');
       }
-      else if (tool === 'search_leads') {
-        var q=(args.name||'').toLowerCase();
-        result = { type:'leads', items: currentLeads.items.filter(function(l){ return !q||(l.first_name+' '+l.last_name+' '+l.company).toLowerCase().includes(q); }) };
-        log('→ search_leads: ' + result.items.length);
-      }
       else if (tool === 'convert_lead') {
         currentLeads.items = currentLeads.items.filter(function(l){ return l.id!==args.lead_id; });
         result = { type:'lead_convert', leadId:args.lead_id, accountId:'001NEW001', contactId:'003NEW001', opportunityId:'006NEW001' };
         log('→ converted lead');
+      }
+
+      // get_contacts — account drill-down or name search
+      else if (tool === 'get_contacts') {
+        if (args.account_id) {
+          result = ACCOUNT_CONTACTS[args.account_id] || { items: [] };
+          log('→ account contacts: ' + (result.items||[]).length);
+        } else {
+          var q2=(args.name||'').toLowerCase();
+          result = { type:'contacts', items: currentContacts.items.filter(function(c){ return !q2||(c.first_name+' '+c.last_name+' '+(c.account_name||'')).toLowerCase().includes(q2); }) };
+          log('→ get_contacts: ' + result.items.length);
+        }
       }
 
       // Contact ops
@@ -453,10 +503,16 @@ window.addEventListener('message', function(e) {
         result = JSON.parse(JSON.stringify(currentContacts));
         log('→ updated contact');
       }
-      else if (tool === 'search_contacts') {
-        var q2=(args.name||'').toLowerCase();
-        result = { type:'contacts', items: currentContacts.items.filter(function(c){ return !q2||(c.first_name+' '+c.last_name+' '+(c.account_name||'')).toLowerCase().includes(q2); }) };
-        log('→ search_contacts: ' + result.items.length);
+      // get_opportunities — account drill-down or name/stage search
+      else if (tool === 'get_opportunities') {
+        if (args.account_id) {
+          result = ACCOUNT_OPPS[args.account_id] || { items: [] };
+          log('→ account opps: ' + (result.items||[]).length);
+        } else {
+          var sq=(args.name||'').toLowerCase(), ss=(args.stage||'').toLowerCase();
+          result = { type:'opportunities', items: currentOpps.items.filter(function(o){ return (!sq||o.name.toLowerCase().includes(sq))&&(!ss||(o.stage||'').toLowerCase().includes(ss)); }) };
+          log('→ get_opportunities: ' + result.items.length);
+        }
       }
 
       // Opportunity ops
@@ -471,10 +527,16 @@ window.addEventListener('message', function(e) {
         result = JSON.parse(JSON.stringify(currentOpps));
         log('→ updated opp');
       }
-      else if (tool === 'search_opportunities') {
-        var sq=(args.name||'').toLowerCase(), ss=(args.stage||'').toLowerCase();
-        result = { type:'opportunities', items: currentOpps.items.filter(function(o){ return (!sq||o.name.toLowerCase().includes(sq))&&(!ss||(o.stage||'').toLowerCase().includes(ss)); }) };
-        log('→ search_opps: ' + result.items.length);
+      // get_cases — account drill-down or status/priority search
+      else if (tool === 'get_cases') {
+        if (args.account_id) {
+          result = ACCOUNT_CASES[args.account_id] || { items: [] };
+          log('→ account cases: ' + (result.items||[]).length);
+        } else {
+          var fs=(args.status||'').toLowerCase(), fp=(args.priority||'').toLowerCase();
+          result = { type:'cases', items: currentCases.items.filter(function(c){ return (!fs||(c.status||'').toLowerCase().includes(fs))&&(!fp||(c.priority||'').toLowerCase().includes(fp)); }) };
+          log('→ get_cases: ' + result.items.length);
+        }
       }
 
       // Case ops
@@ -493,10 +555,11 @@ window.addEventListener('message', function(e) {
         result = CASE_COMMENTS[args.case_id] || { items: [] };
         log('→ ' + (result.items||[]).length + ' comments');
       }
-      else if (tool === 'search_cases') {
-        var fs=(args.status||'').toLowerCase(), fp=(args.priority||'').toLowerCase();
-        result = { type:'cases', items: currentCases.items.filter(function(c){ return (!fs||(c.status||'').toLowerCase().includes(fs))&&(!fp||(c.priority||'').toLowerCase().includes(fp)); }) };
-        log('→ search_cases: ' + result.items.length);
+      // get_tasks — status filter
+      else if (tool === 'get_tasks') {
+        var ts=(args.status||'').toLowerCase();
+        result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.status||'').toLowerCase().includes(ts); }) };
+        log('→ get_tasks: ' + result.items.length);
       }
 
       // Task ops
@@ -510,17 +573,6 @@ window.addEventListener('message', function(e) {
         currentTasks.items.forEach(function(t){ if(t.id===args.task_id){ ['subject','status','priority','activity_date','description'].forEach(function(k){ if(args[k]!==undefined) t[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentTasks));
         log('→ updated task');
-      }
-      else if (tool === 'search_tasks') {
-        var ts=(args.status||'').toLowerCase();
-        result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.status||'').toLowerCase().includes(ts); }) };
-        log('→ search_tasks: ' + result.items.length);
-      }
-
-      // Campaign expand
-      else if (tool === 'get_campaign_leads') {
-        result = CAMPAIGN_LEADS[args.campaign_id] || { items: [] };
-        log('→ ' + (result.items||[]).length + ' campaign leads');
       }
 
       // Generic delete
