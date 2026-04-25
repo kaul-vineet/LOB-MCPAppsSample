@@ -5,12 +5,14 @@ All tools return structuredContent for the widget, with _meta on the
 decorator to ensure M365 Copilot discovers the widget URI from tools/list.
 """
 
+import copy
+import json
 import os
 import sys
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import structlog
 import uvicorn
@@ -70,6 +72,32 @@ WIDGET_URI = "ui://widget/crm.html"
 RESOURCE_MIME_TYPE = "text/html;profile=mcp-app"
 WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding="utf-8")
 
+# ── Entity Config ─────────────────────────────────────────────────────────────
+
+_CONFIG_PATH = Path(__file__).parent.parent / "config" / "entities.json"
+_DEFAULT_PATH = Path(__file__).parent.parent / "config" / "entities.default.json"
+_config_store: dict = {}
+
+
+def _load_config() -> None:
+    global _config_store
+    try:
+        _config_store = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        log.warning("entity_config_not_found", falling_back="defaults")
+        _config_store = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        log.error("entity_config_load_error", error=str(exc))
+        _config_store = {}
+
+
+def _get_schema(entity_type: str) -> dict:
+    return _config_store.get(entity_type, {})
+
+
+_load_config()
+
+
 # ── MCP Server ─────────────────────────────────────────────────────────────────
 
 mcp = FastMCP("gtc-sf-trading-post")
@@ -84,97 +112,67 @@ async def crm_widget() -> str:
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _error_result(message: str) -> types.CallToolResult:
-    """Return a structured error result the widget can display."""
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=message)],
         structuredContent={"error": True, "message": message},
     )
 
 
-async def _fetch_leads() -> list[dict]:
-    """Fetch the 5 most recently created Leads."""
+def _flatten_record(r: dict, columns: list[dict]) -> dict:
+    """Map a raw Salesforce record to a response dict using column apiNames."""
+    result: dict[str, Any] = {"id": r.get("Id", "")}
+    for col in columns:
+        api = col["apiName"]
+        if api == "Id":
+            continue
+        if "." in api:
+            parts = api.split(".", 1)
+            result[api] = ((r.get(parts[0]) or {}).get(parts[1])) or ""
+        else:
+            val = r.get(api)
+            result[api] = val if val is not None else ""
+    return result
+
+
+async def _fetch_entity(entity_type: str) -> list[dict]:
+    """Fetch records for any entity using its current config."""
+    cfg = _get_schema(entity_type)
+    columns = cfg.get("columns", [])
+    limit = cfg.get("limit", 5)
+    order_by = cfg.get("orderBy", "CreatedDate DESC")
+    soql_object = cfg.get("soqlObject", entity_type)
+    api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+    soql = f"SELECT {', '.join(api_names)} FROM {soql_object} ORDER BY {order_by} LIMIT {limit}"
     sf = get_client()
-    records = await sf.query(
-        "SELECT Id, FirstName, LastName, Company, Email, Phone, Status, LeadSource "
-        "FROM Lead ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":          r.get("Id"),
-            "first_name":  r.get("FirstName") or "",
-            "last_name":   r.get("LastName") or "",
-            "company":     r.get("Company") or "",
-            "email":       r.get("Email") or "",
-            "phone":       r.get("Phone") or "",
-            "status":      r.get("Status") or "",
-            "lead_source": r.get("LeadSource") or "",
-        }
-        for r in records
-    ]
+    records = await sf.query(soql)
+    return [_flatten_record(r, columns) for r in records]
+
+
+def _list_summary(entity_label: str, items: list[dict], entity_type: str) -> str:
+    if not items:
+        return f"No {entity_label} found."
+    cols = _get_schema(entity_type).get("columns", [])
+    lines = [f"Retrieved {len(items)} {entity_label}:"]
+    for item in items:
+        parts = [str(item.get(c["apiName"], "")) for c in cols[:4] if c["apiName"] != "Id"]
+        lines.append(f"- {' | '.join(p for p in parts if p)}")
+    return "\n".join(lines)
+
+
+async def _fetch_leads() -> list[dict]:
+    return await _fetch_entity("Lead")
 
 
 async def _fetch_opportunities() -> list[dict]:
-    """Fetch the 5 most recently created Opportunities."""
-    sf = get_client()
-    records = await sf.query(
-        "SELECT Id, Name, Account.Name, StageName, Amount, CloseDate, Probability "
-        "FROM Opportunity ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":           r.get("Id"),
-            "name":         r.get("Name") or "",
-            "account_name": (r.get("Account") or {}).get("Name") or "",
-            "stage":        r.get("StageName") or "",
-            "amount":       r.get("Amount"),
-            "close_date":   r.get("CloseDate") or "",
-            "probability":  r.get("Probability"),
-        }
-        for r in records
-    ]
+    return await _fetch_entity("Opportunity")
 
 
 async def _fetch_accounts() -> list[dict]:
-    """Fetch the 5 most recently created Accounts."""
-    sf = get_client()
-    records = await sf.query(
-        "SELECT Id, Name, Industry, Phone, Website, BillingCity, Type, NumberOfEmployees "
-        "FROM Account ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":           r.get("Id"),
-            "name":         r.get("Name") or "",
-            "industry":     r.get("Industry") or "",
-            "phone":        r.get("Phone") or "",
-            "website":      r.get("Website") or "",
-            "billing_city": r.get("BillingCity") or "",
-            "type":         r.get("Type") or "",
-            "employees":    r.get("NumberOfEmployees"),
-        }
-        for r in records
-    ]
+    return await _fetch_entity("Account")
 
 
 async def _fetch_contacts() -> list[dict]:
-    """Fetch the 5 most recently created Contacts."""
-    sf = get_client()
-    records = await sf.query(
-        "SELECT Id, FirstName, LastName, Email, Phone, Title, Account.Name "
-        "FROM Contact ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":           r.get("Id"),
-            "first_name":   r.get("FirstName") or "",
-            "last_name":    r.get("LastName") or "",
-            "email":        r.get("Email") or "",
-            "phone":        r.get("Phone") or "",
-            "title":        r.get("Title") or "",
-            "account_name": (r.get("Account") or {}).get("Name") or "",
-        }
-        for r in records
-    ]
+    return await _fetch_entity("Contact")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -204,24 +202,10 @@ async def sf__get_leads() -> types.CallToolResult:
         log.error("unexpected_error", error=str(exc))
         return _error_result(f"Unexpected error fetching leads: {exc}")
 
-    structured = {
-        "type": "leads",
-        "total": len(items),
-        "items": items,
-    }
-
-    if not items:
-        summary = "No leads found."
-    else:
-        lines = [f"Retrieved {len(items)} lead(s):"]
-        for ld in items:
-            lines.append(f"- {ld['first_name']} {ld['last_name']} | {ld['company']} | {ld['status']} | {ld['lead_source']}")
-        summary = "\n".join(lines)
-
     log.info("sf__get_leads_done", count=len(items))
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("lead(s)", items, "Lead"))],
+        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
     )
 
 
@@ -275,16 +259,9 @@ async def sf__create_lead(
     except Exception:
         items = []
 
-    structured = {
-        "type": "leads",
-        "total": len(items),
-        "items": items,
-        "_createdId": new_id,
-    }
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "leads", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Lead")},
     )
 
 
@@ -345,15 +322,9 @@ async def sf__update_lead(
     except Exception:
         items = []
 
-    structured = {
-        "type": "leads",
-        "total": len(items),
-        "items": items,
-    }
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead {lead_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
     )
 
 
@@ -381,23 +352,9 @@ async def sf__get_opportunities() -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Unexpected error fetching opportunities: {exc}")
 
-    structured = {
-        "type": "opportunities",
-        "total": len(items),
-        "items": items,
-    }
-
-    if not items:
-        summary = "No opportunities found."
-    else:
-        lines = [f"Retrieved {len(items)} opportunity(ies):"]
-        for opp in items:
-            lines.append(f"- {opp['name']} | {opp['stage']} | ${opp.get('amount') or 0:,.0f} | Close: {opp['close_date']}")
-        summary = "\n".join(lines)
-
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("opportunity(ies)", items, "Opportunity"))],
+        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_schema": _get_schema("Opportunity")},
     )
 
 
@@ -448,16 +405,9 @@ async def sf__create_opportunity(
     except Exception:
         items = []
 
-    structured = {
-        "type": "opportunities",
-        "total": len(items),
-        "items": items,
-        "_createdId": new_id,
-    }
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Opportunity created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Opportunity")},
     )
 
 
@@ -512,15 +462,9 @@ async def sf__update_opportunity(
     except Exception:
         items = []
 
-    structured = {
-        "type": "opportunities",
-        "total": len(items),
-        "items": items,
-    }
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Opportunity {opportunity_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_schema": _get_schema("Opportunity")},
     )
 
 
@@ -544,15 +488,9 @@ async def sf__get_accounts() -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch accounts: {exc}")
 
-    structured = {"type": "accounts", "total": len(items), "items": items}
-
-    lines = [f"Found {len(items)} account(s):"]
-    for a in items:
-        lines.append(f"- {a['name']} | Industry: {a['industry']} | City: {a['billing_city']} | Employees: {a.get('employees', 'N/A')}")
-
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("account(s)", items, "Account"))],
+        structuredContent={"type": "accounts", "total": len(items), "items": items, "_schema": _get_schema("Account")},
     )
 
 
@@ -603,11 +541,9 @@ async def sf__create_account(
     except Exception:
         items = []
 
-    structured = {"type": "accounts", "total": len(items), "items": items, "_createdId": new_id}
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Account '{name}' created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "accounts", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Account")},
     )
 
 
@@ -664,11 +600,9 @@ async def sf__update_account(
     except Exception:
         items = []
 
-    structured = {"type": "accounts", "total": len(items), "items": items}
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Account {account_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "accounts", "total": len(items), "items": items, "_schema": _get_schema("Account")},
     )
 
 
@@ -692,15 +626,9 @@ async def sf__get_contacts() -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch contacts: {exc}")
 
-    structured = {"type": "contacts", "total": len(items), "items": items}
-
-    lines = [f"Found {len(items)} contact(s):"]
-    for c in items:
-        lines.append(f"- {c['first_name']} {c['last_name']} | {c['email']} | Title: {c['title']} | Account: {c['account_name']}")
-
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("contact(s)", items, "Contact"))],
+        structuredContent={"type": "contacts", "total": len(items), "items": items, "_schema": _get_schema("Contact")},
     )
 
 
@@ -751,11 +679,9 @@ async def sf__create_contact(
     except Exception:
         items = []
 
-    structured = {"type": "contacts", "total": len(items), "items": items, "_createdId": new_id}
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact '{first_name} {last_name}' created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "contacts", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Contact")},
     )
 
 
@@ -812,11 +738,9 @@ async def sf__update_contact(
     except Exception:
         items = []
 
-    structured = {"type": "contacts", "total": len(items), "items": items}
-
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "contacts", "total": len(items), "items": items, "_schema": _get_schema("Contact")},
     )
 
 
@@ -826,24 +750,7 @@ async def sf__update_contact(
 
 
 async def _fetch_cases() -> list[dict]:
-    """Fetch the 5 most recently created Cases."""
-    sf = get_client()
-    records = await sf.query(
-        "SELECT Id, CaseNumber, Subject, Status, Priority, Account.Name, CreatedDate "
-        "FROM Case ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":           r.get("Id"),
-            "case_number":  r.get("CaseNumber") or "",
-            "subject":      r.get("Subject") or "",
-            "status":       r.get("Status") or "",
-            "priority":     r.get("Priority") or "",
-            "account_name": (r.get("Account") or {}).get("Name") or "",
-            "created_date": r.get("CreatedDate") or "",
-        }
-        for r in records
-    ]
+    return await _fetch_entity("Case")
 
 
 @mcp.tool(
@@ -864,18 +771,9 @@ async def sf__get_cases() -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Unexpected error fetching cases: {exc}")
 
-    structured = {"type": "cases", "total": len(items), "items": items}
-    if not items:
-        summary = "No cases found."
-    else:
-        lines = [f"Retrieved {len(items)} case(s):"]
-        for c in items:
-            lines.append(f"- {c['case_number']} | {c['priority']} | {c['status']} | {c['subject']}")
-        summary = "\n".join(lines)
-
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("case(s)", items, "Case"))],
+        structuredContent={"type": "cases", "total": len(items), "items": items, "_schema": _get_schema("Case")},
     )
 
 
@@ -911,10 +809,9 @@ async def sf__create_case(
     except Exception:
         items = []
 
-    structured = {"type": "cases", "total": len(items), "items": items, "_createdId": new_id}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Case created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "cases", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Case")},
     )
 
 
@@ -951,10 +848,9 @@ async def sf__update_case(
     except Exception:
         items = []
 
-    structured = {"type": "cases", "total": len(items), "items": items}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Case {case_id} updated. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "cases", "total": len(items), "items": items, "_schema": _get_schema("Case")},
     )
 
 
@@ -964,24 +860,7 @@ async def sf__update_case(
 
 
 async def _fetch_tasks() -> list[dict]:
-    """Fetch the 5 most recently created Tasks."""
-    sf = get_client()
-    records = await sf.query(
-        "SELECT Id, Subject, Status, Priority, ActivityDate, WhoId, WhatId "
-        "FROM Task ORDER BY CreatedDate DESC LIMIT 5"
-    )
-    return [
-        {
-            "id":            r.get("Id"),
-            "subject":       r.get("Subject") or "",
-            "status":        r.get("Status") or "",
-            "priority":      r.get("Priority") or "",
-            "activity_date": r.get("ActivityDate") or "",
-            "who_id":        r.get("WhoId") or "",
-            "what_id":       r.get("WhatId") or "",
-        }
-        for r in records
-    ]
+    return await _fetch_entity("Task")
 
 
 @mcp.tool(
@@ -1002,18 +881,9 @@ async def sf__get_tasks() -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Unexpected error fetching tasks: {exc}")
 
-    structured = {"type": "tasks", "total": len(items), "items": items}
-    if not items:
-        summary = "No tasks found."
-    else:
-        lines = [f"Retrieved {len(items)} task(s):"]
-        for t in items:
-            lines.append(f"- {t['subject']} | {t['priority']} | {t['status']} | due: {t['activity_date'] or 'none'}")
-        summary = "\n".join(lines)
-
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text=_list_summary("task(s)", items, "Task"))],
+        structuredContent={"type": "tasks", "total": len(items), "items": items, "_schema": _get_schema("Task")},
     )
 
 
@@ -1049,10 +919,9 @@ async def sf__create_task(
     except Exception:
         items = []
 
-    structured = {"type": "tasks", "total": len(items), "items": items, "_createdId": new_id}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Task")},
     )
 
 
@@ -1082,10 +951,9 @@ async def sf__delete_lead(lead_id: str) -> types.CallToolResult:
     except Exception:
         items = []
 
-    structured = {"type": "leads", "total": len(items), "items": items}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead {lead_id} deleted. Refreshed list returned.")],
-        structuredContent=structured,
+        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
     )
 
 
@@ -1285,6 +1153,106 @@ async def sf__get_pending_approvals() -> types.CallToolResult:
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENTITY CONFIG TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@mcp.tool(
+    description=(
+        "Get the current display configuration for a Salesforce entity. "
+        "entity_type: Lead, Opportunity, Account, Contact, Case, or Task."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_entity_config(entity_type: str) -> types.CallToolResult:
+    schema = _get_schema(entity_type)
+    if not schema:
+        return _error_result(f"No configuration found for entity type '{entity_type}'.")
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Configuration for {entity_type} retrieved.")],
+        structuredContent={"type": "entity_config", "entity": entity_type, "config": schema},
+    )
+
+
+@mcp.tool(
+    description=(
+        "Update the display configuration for a Salesforce entity. "
+        "Pass entity_type (Lead, Opportunity, etc.) and a JSON patch string. "
+        "Example patch: '{\"limit\": 10}' or '{\"columns\": [{\"apiName\": \"Name\", \"label\": \"Full Name\", \"width\": \"200px\"}]}'. "
+        "Changes take effect immediately and are saved to disk."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__update_entity_config(entity_type: str, patch: str) -> types.CallToolResult:
+    """
+    Args:
+        entity_type: e.g. 'Lead', 'Opportunity', 'Account', 'Contact', 'Case', 'Task'
+        patch:       JSON string with top-level keys to update
+    """
+    global _config_store
+    if entity_type not in _config_store:
+        return _error_result(f"Unknown entity type '{entity_type}'. Valid types: {', '.join(_config_store.keys())}")
+    try:
+        patch_dict = json.loads(patch)
+    except json.JSONDecodeError as exc:
+        return _error_result(f"Invalid JSON patch: {exc}")
+
+    _config_store[entity_type].update(patch_dict)
+    try:
+        _CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception as exc:
+        log.error("entity_config_write_error", error=str(exc))
+        return _error_result(f"Config updated in memory but failed to write to disk: {exc}")
+
+    log.info("entity_config_updated", entity=entity_type)
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Configuration for {entity_type} updated and saved.")],
+        structuredContent={"type": "entity_config", "entity": entity_type, "config": _config_store[entity_type]},
+    )
+
+
+@mcp.tool(
+    description=(
+        "Reset a Salesforce entity configuration to factory defaults. "
+        "Pass entity_type='all' to reset every entity at once."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__reset_entity_config(entity_type: str) -> types.CallToolResult:
+    """
+    Args:
+        entity_type: e.g. 'Lead', 'Opportunity', or 'all'
+    """
+    global _config_store
+    try:
+        defaults = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return _error_result(f"Failed to read default config: {exc}")
+
+    if entity_type == "all":
+        _config_store = copy.deepcopy(defaults)
+        msg = "All entity configurations reset to factory defaults."
+    elif entity_type in defaults:
+        _config_store[entity_type] = copy.deepcopy(defaults[entity_type])
+        msg = f"{entity_type} configuration reset to factory defaults."
+    else:
+        return _error_result(f"Unknown entity type '{entity_type}'. Valid types: all, {', '.join(defaults.keys())}")
+
+    try:
+        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception as exc:
+        log.error("entity_config_write_error", error=str(exc))
+        return _error_result(f"Config reset in memory but failed to write to disk: {exc}")
+
+    log.info("entity_config_reset", entity=entity_type)
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
+        structuredContent={"type": "entity_config_reset", "entity": entity_type},
     )
 
 

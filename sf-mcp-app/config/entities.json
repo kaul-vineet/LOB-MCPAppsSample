@@ -1,0 +1,156 @@
+{
+  "Lead": {
+    "soqlObject": "Lead",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "FirstName",  "label": "First Name", "width": "150px" },
+      { "apiName": "LastName",   "label": "Last Name",  "width": "150px" },
+      { "apiName": "Company",    "label": "Company",    "width": "180px" },
+      { "apiName": "Email",      "label": "Email",      "width": "200px" },
+      { "apiName": "Phone",      "label": "Phone",      "width": "140px" },
+      { "apiName": "Status",     "label": "Status",     "width": "160px" },
+      { "apiName": "LeadSource", "label": "Source",     "width": "130px" }
+    ],
+    "form": [
+      { "apiName": "FirstName",  "label": "First Name",  "required": false },
+      { "apiName": "LastName",   "label": "Last Name",   "required": true  },
+      { "apiName": "Company",    "label": "Company",     "required": true  },
+      { "apiName": "Email",      "label": "Email",       "required": false },
+      { "apiName": "Phone",      "label": "Phone",       "required": false },
+      { "apiName": "Status",     "label": "Status",      "required": false },
+      { "apiName": "LeadSource", "label": "Lead Source", "required": false }
+    ],
+    "statusColors": {
+      "Open - Not Contacted": {
+        "light": { "bg": "#EEF4FF", "color": "#0176D3" },
+        "dark":  { "bg": "#0b3573", "color": "#8dc7ff" }
+      },
+      "Working - Contacted": {
+        "light": { "bg": "#FEF0CD", "color": "#A07000" },
+        "dark":  { "bg": "#5c3b0a", "color": "#ffd970" }
+      },
+      "Closed - Converted": {
+        "light": { "bg": "#EBF7E6", "color": "#2E844A" },
+        "dark":  { "bg": "#1a3a2a", "color": "#7cd992" }
+      },
+      "Closed - Not Converted": {
+        "light": { "bg": "#FEE5E5", "color": "#BA0517" },
+        "dark":  { "bg": "#3a1a1a", "color": "#ff9a9a" }
+      }
+    }
+  },
+  "Opportunity": {
+    "soqlObject": "Opportunity",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "Name",        "label": "Name",         "width": "200px" },
+      { "apiName": "Account.Name","label": "Account",      "width": "180px" },
+      { "apiName": "StageName",   "label": "Stage",        "width": "160px" },
+      { "apiName": "Amount",      "label": "Amount",       "width": "120px" },
+      { "apiName": "CloseDate",   "label": "Close Date",   "width": "120px" },
+      { "apiName": "Probability", "label": "Probability",  "width": "100px" }
+    ],
+    "form": [
+      { "apiName": "Name",      "label": "Opportunity Name", "required": true  },
+      { "apiName": "StageName", "label": "Stage",            "required": true  },
+      { "apiName": "Amount",    "label": "Amount",           "required": false },
+      { "apiName": "CloseDate", "label": "Close Date",       "required": false }
+    ],
+    "statusColors": {
+      "Closed Won":  { "light": { "bg": "#EBF7E6", "color": "#2E844A" }, "dark": { "bg": "#1a3a2a", "color": "#7cd992" } },
+      "Closed Lost": { "light": { "bg": "#FEE5E5", "color": "#BA0517" }, "dark": { "bg": "#3a1a1a", "color": "#ff9a9a" } },
+      "Prospecting": { "light": { "bg": "#EEF4FF", "color": "#0176D3" }, "dark": { "bg": "#0b3573", "color": "#8dc7ff" } }
+    }
+  },
+  "Account": {
+    "soqlObject": "Account",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "Name",              "label": "Name",       "width": "200px" },
+      { "apiName": "Industry",          "label": "Industry",   "width": "150px" },
+      { "apiName": "Phone",             "label": "Phone",      "width": "140px" },
+      { "apiName": "Website",           "label": "Website",    "width": "180px" },
+      { "apiName": "BillingCity",       "label": "City",       "width": "130px" },
+      { "apiName": "Type",              "label": "Type",       "width": "120px" },
+      { "apiName": "NumberOfEmployees", "label": "Employees",  "width": "100px" }
+    ],
+    "form": [
+      { "apiName": "Name",     "label": "Account Name", "required": true  },
+      { "apiName": "Industry", "label": "Industry",     "required": false },
+      { "apiName": "Phone",    "label": "Phone",        "required": false },
+      { "apiName": "Website",  "label": "Website",      "required": false }
+    ],
+    "statusColors": {}
+  },
+  "Contact": {
+    "soqlObject": "Contact",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "FirstName",   "label": "First Name", "width": "140px" },
+      { "apiName": "LastName",    "label": "Last Name",  "width": "140px" },
+      { "apiName": "Email",       "label": "Email",      "width": "200px" },
+      { "apiName": "Phone",       "label": "Phone",      "width": "140px" },
+      { "apiName": "Title",       "label": "Title",      "width": "150px" },
+      { "apiName": "Account.Name","label": "Account",    "width": "170px" }
+    ],
+    "form": [
+      { "apiName": "FirstName", "label": "First Name", "required": false },
+      { "apiName": "LastName",  "label": "Last Name",  "required": true  },
+      { "apiName": "Email",     "label": "Email",      "required": false },
+      { "apiName": "Phone",     "label": "Phone",      "required": false },
+      { "apiName": "Title",     "label": "Title",      "required": false }
+    ],
+    "statusColors": {}
+  },
+  "Case": {
+    "soqlObject": "Case",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "CaseNumber",   "label": "Case #",   "width": "110px" },
+      { "apiName": "Subject",      "label": "Subject",  "width": "220px" },
+      { "apiName": "Status",       "label": "Status",   "width": "130px" },
+      { "apiName": "Priority",     "label": "Priority", "width": "110px" },
+      { "apiName": "Account.Name", "label": "Account",  "width": "160px" }
+    ],
+    "form": [
+      { "apiName": "Subject",     "label": "Subject",     "required": true  },
+      { "apiName": "Priority",    "label": "Priority",    "required": false },
+      { "apiName": "Description", "label": "Description", "required": false }
+    ],
+    "statusColors": {
+      "New":      { "light": { "bg": "#EEF4FF", "color": "#0176D3" }, "dark": { "bg": "#0b3573", "color": "#8dc7ff" } },
+      "Open":     { "light": { "bg": "#FEF0CD", "color": "#A07000" }, "dark": { "bg": "#5c3b0a", "color": "#ffd970" } },
+      "Closed":   { "light": { "bg": "#EBF7E6", "color": "#2E844A" }, "dark": { "bg": "#1a3a2a", "color": "#7cd992" } },
+      "Escalated":{ "light": { "bg": "#FEE5E5", "color": "#BA0517" }, "dark": { "bg": "#3a1a1a", "color": "#ff9a9a" } }
+    }
+  },
+  "Task": {
+    "soqlObject": "Task",
+    "orderBy": "CreatedDate DESC",
+    "limit": 5,
+    "columns": [
+      { "apiName": "Subject",      "label": "Subject",   "width": "220px" },
+      { "apiName": "Status",       "label": "Status",    "width": "130px" },
+      { "apiName": "Priority",     "label": "Priority",  "width": "110px" },
+      { "apiName": "ActivityDate", "label": "Due Date",  "width": "120px" },
+      { "apiName": "WhoId",        "label": "Who",       "width": "140px" },
+      { "apiName": "WhatId",       "label": "Related To","width": "140px" }
+    ],
+    "form": [
+      { "apiName": "Subject",      "label": "Subject",  "required": true  },
+      { "apiName": "Priority",     "label": "Priority", "required": false },
+      { "apiName": "ActivityDate", "label": "Due Date", "required": false }
+    ],
+    "statusColors": {
+      "Not Started":  { "light": { "bg": "#EEF4FF", "color": "#0176D3" }, "dark": { "bg": "#0b3573", "color": "#8dc7ff" } },
+      "In Progress":  { "light": { "bg": "#FEF0CD", "color": "#A07000" }, "dark": { "bg": "#5c3b0a", "color": "#ffd970" } },
+      "Completed":    { "light": { "bg": "#EBF7E6", "color": "#2E844A" }, "dark": { "bg": "#1a3a2a", "color": "#7cd992" } },
+      "Deferred":     { "light": { "bg": "#F3F3F3", "color": "#706E6B" }, "dark": { "bg": "#2b2b2b", "color": "#c0bfbd" } }
+    }
+  }
+}
