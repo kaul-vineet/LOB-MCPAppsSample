@@ -4,61 +4,67 @@
 <meta charset="UTF-8"/>
 <title>⚓ GTC Dockyard — SAP S/4HANA Widget Test</title>
 <style>
-  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
-  h2      { margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
-  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
-  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #0070F2; color: white; cursor: pointer; font-size: 13px; }
+  body         { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; transition: background 0.2s, color 0.2s; }
+  h2           { margin-bottom: 4px; }
+  .subtitle    { font-size: 13px; color: #666; margin-bottom: 20px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 16px 0 6px; letter-spacing: 0.5px; }
+  .controls    { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button       { padding: 8px 14px; border: none; border-radius: 6px; background: #0070F2; color: white; cursor: pointer; font-size: 13px; font-family: inherit; }
   button:hover { background: #0054B4; }
-  button.green  { background: #107E3E; }
+  button.green        { background: #107E3E; }
   button.green:hover  { background: #0a5c2d; }
-  button.orange { background: #E78C07; }
-  button.orange:hover { background: #c47806; }
-  button.dark   { background: #32363a; }
+  button.orange       { background: #E9730C; }
+  button.orange:hover { background: #c05e09; }
+  button.dark         { background: #32363a; }
   button.dark:hover   { background: #1c2228; }
   button.secondary    { background: #6a6d70; }
   button.secondary:hover { background: #4a4d50; }
-  button.error  { background: #BB0000; }
+  button.error        { background: #BB0000; }
   button.error:hover  { background: #990000; }
-  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
-  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
-  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
-  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e6f0ff; color: #0070F2; margin-left: 8px; }
+  .hint        { font-size: 12px; color: #666; margin: 4px 0 10px; }
+  .log         { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 960px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe       { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge       { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e6f0ff; color: #0070F2; margin-left: 8px; }
 </style>
 </head>
 <body>
 
-<h2>⚓ <img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — SAP S/4HANA <span class="badge">Interactive</span></h2>
-<p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
+<h2>⚓ <img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — SAP S/4HANA <span class="badge">Read-Only</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility · Filter + Expand drill-down widget</p>
 
-<div class="section-label">📦 Purchase Orders — get_purchase_orders</div>
+<div class="section-label">📦 Purchase Orders</div>
 <div class="controls">
-  <button onclick="sendPOs()">Send Mock POs (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyPOs()">Send Empty POs</button>
+  <button onclick="sendPOs()">Send POs (5)</button>
+  <button class="secondary" onclick="sendEmptyPOs()">Send Empty</button>
 </div>
-<p class="hint">Click ✎ Edit on any row to open inline edit form. Click "+ New PO" to create.</p>
+<p class="hint">Includes filter bar (supplier, org, date range, show-deleted toggle) + ▶ expand for line items.</p>
 
-<div class="section-label">🤝 Business Partners — get_business_partners</div>
+<div class="section-label">🤝 Business Partners</div>
 <div class="controls">
-  <button class="green" onclick="sendBPs()">Send Mock Partners (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyBPs()">Send Empty Partners</button>
+  <button class="green" onclick="sendBPs()">Send BPs (5)</button>
+  <button class="secondary" onclick="sendEmptyBPs()">Send Empty</button>
 </div>
-<p class="hint">Read-only table of business partners.</p>
+<p class="hint">Includes filter bar (name, category) + ▶ expand for partner's purchase orders.</p>
 
-<div class="section-label">🏭 Materials — get_materials</div>
+<div class="section-label">🏭 Materials</div>
 <div class="controls">
-  <button class="orange" onclick="sendMaterials()">Send Mock Materials (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyMaterials()">Send Empty Materials</button>
+  <button class="orange" onclick="sendMaterials()">Send Materials (5)</button>
+  <button class="secondary" onclick="sendEmptyMaterials()">Send Empty</button>
 </div>
-<p class="hint">Click 🔍 on any row to view material details.</p>
+<p class="hint">Includes filter bar (material#, type, group) + ▶ expand for material detail panel.</p>
 
-<div class="section-label">⚠️ Error Simulation</div>
+<div class="section-label">📋 Material Detail</div>
 <div class="controls">
-  <button class="error" onclick="sendError()">Send Auth Error</button>
+  <button class="orange" onclick="sendMaterialDetail()">Send Material Detail</button>
 </div>
-<p class="hint">Simulates a SAP authentication failure to test error display in the widget.</p>
+<p class="hint">Top-level single-record detail card (data.type = "material_detail").</p>
+
+<div class="section-label">⚠️ Errors</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Auth Error</button>
+</div>
+<p class="hint">Simulates a SAP authentication failure — tests the error banner in the widget.</p>
 
 <div class="section-label">🎨 Theme</div>
 <div class="controls">
@@ -75,83 +81,70 @@
 
 <script>
   var isDark = false;
-  var nextPOId = 4510000006;
-  var nextMatDetailCounter = 1;
 
-  // ── Mock Data: Purchase Orders ──────────────────────────────────────────
+  /* ── Mock Data: Purchase Orders ────────────────────────────────────── */
   var MOCK_POS = {
     type: "purchase_orders",
     total: 5,
-    sandbox: true,
     items: [
-      { purchase_order: "4500000001", supplier: "SUPPLIER_01", purchasing_org: "1710", order_date: "2025-06-01", deletion_code: "" },
-      { purchase_order: "4500000002", supplier: "SUPPLIER_02", purchasing_org: "1710", order_date: "2025-05-28", deletion_code: "" },
-      { purchase_order: "4500000003", supplier: "SUPPLIER_03", purchasing_org: "1010", order_date: "2025-05-25", deletion_code: "" },
-      { purchase_order: "4500000004", supplier: "SUPPLIER_04", purchasing_org: "1710", order_date: "2025-05-20", deletion_code: "X" },
-      { purchase_order: "4500000005", supplier: "SUPPLIER_05", purchasing_org: "1010", order_date: "2025-05-15", deletion_code: "" }
+      { purchase_order: "4500000101", supplier: "Domestic US Supplier 1",  purchasing_org: "1010", order_date: "2026-03-15", deletion_code: false },
+      { purchase_order: "4500000102", supplier: "Berlin Manufacturing GmbH", purchasing_org: "1710", order_date: "2026-03-22", deletion_code: false },
+      { purchase_order: "4500000103", supplier: "Shanghai Parts Co.",        purchasing_org: "1010", order_date: "2026-04-01", deletion_code: true  },
+      { purchase_order: "4500000104", supplier: "Midwest Components LLC",   purchasing_org: "1010", order_date: "2026-04-08", deletion_code: false },
+      { purchase_order: "4500000105", supplier: "Pacific Logistics Ltd",    purchasing_org: "1710", order_date: "2026-04-12", deletion_code: false }
     ]
   };
+  var MOCK_EMPTY_POS = { type: "purchase_orders", total: 0, items: [] };
 
-  var MOCK_EMPTY_POS = { type: "purchase_orders", total: 0, items: [], sandbox: true };
-
-  // ── Mock Data: Business Partners ────────────────────────────────────────
+  /* ── Mock Data: Business Partners ──────────────────────────────────── */
   var MOCK_BPS = {
     type: "business_partners",
     total: 5,
-    sandbox: true,
     items: [
-      { id: "BP0001", name: "Acme Corporation",       category: "2", organization: "Acme Corp" },
-      { id: "BP0002", name: "Global Trade Partners",   category: "2", organization: "GTP GmbH" },
-      { id: "BP0003", name: "Johann Schmidt",          category: "1", organization: "" },
-      { id: "BP0004", name: "Pacific Logistics Ltd",   category: "2", organization: "PacLog" },
-      { id: "BP0005", name: "Maria García",            category: "1", organization: "" }
+      { id: "1000001", name: "Domestic US Supplier 1",  category: "1", organization: "Global Trade Inc."  },
+      { id: "1000002", name: "Berlin Manufacturing GmbH", category: "1", organization: "DACH Region"      },
+      { id: "1000003", name: "Acme Retail Corp",          category: "2", organization: "North America"    },
+      { id: "1000004", name: "Pacific Logistics Ltd",     category: "1", organization: "APAC Region"      },
+      { id: "1000005", name: "Universal Parts Co.",       category: "3", organization: "Global"           }
     ]
   };
+  var MOCK_EMPTY_BPS = { type: "business_partners", total: 0, items: [] };
 
-  var MOCK_EMPTY_BPS = { type: "business_partners", total: 0, items: [], sandbox: true };
-
-  // ── Mock Data: Materials ────────────────────────────────────────────────
+  /* ── Mock Data: Materials ──────────────────────────────────────────── */
   var MOCK_MATERIALS = {
     type: "materials",
     total: 5,
-    sandbox: true,
     items: [
-      { product: "MZ-FG-M500", product_type: "FERT", product_group: "A001", base_unit: "EA" },
-      { product: "MZ-FG-R200", product_type: "FERT", product_group: "A001", base_unit: "EA" },
-      { product: "MZ-RM-AL01", product_type: "ROH",  product_group: "B002", base_unit: "KG" },
-      { product: "MZ-TG-PK10", product_type: "VERP", product_group: "C003", base_unit: "PC" },
-      { product: "MZ-SV-WT50", product_type: "DIEN", product_group: "D004", base_unit: "HR" }
+      { product: "MAT-10001", product_type: "FERT", product_group: "A001", base_unit: "EA" },
+      { product: "MAT-10002", product_type: "HALB", product_group: "A001", base_unit: "EA" },
+      { product: "MAT-10003", product_type: "ROH",  product_group: "B002", base_unit: "KG" },
+      { product: "MAT-10004", product_type: "FERT", product_group: "A001", base_unit: "EA" },
+      { product: "MAT-10005", product_type: "ROH",  product_group: "C003", base_unit: "L"  }
     ]
   };
+  var MOCK_EMPTY_MATERIALS = { type: "materials", total: 0, items: [] };
 
-  var MOCK_EMPTY_MATERIALS = { type: "materials", total: 0, items: [], sandbox: true };
-
-  // ── Mock Data: Material Detail ──────────────────────────────────────────
+  /* ── Mock Data: Material Detail (top-level) ────────────────────────── */
   var MOCK_MATERIAL_DETAIL = {
     type: "material_detail",
-    sandbox: true,
-    item: {
-      product: "MZ-FG-M500",
-      product_type: "FERT",
-      product_group: "A001",
-      base_unit: "EA",
-      gross_weight: "2.500",
-      net_weight: "2.100",
-      weight_unit: "KG",
-      industry_sector: "M",
-      material_description: "Finished Goods — Motor Assembly M500"
-    }
+    product: "MAT-10001",
+    product_type: "FERT",
+    product_group: "A001",
+    base_unit: "EA",
+    gross_weight: 2.5,
+    net_weight: 2.1,
+    weight_unit: "KG",
+    division: "10",
+    product_description: "High-precision finished component for industrial assembly"
   };
 
-  // ── Mock Error ──────────────────────────────────────────────────────────
-  var MOCK_ERROR = { error: true, message: "SAP authentication failed: Missing SAP_API_KEY. Set it in your .env file for sandbox mode." };
+  /* ── Mock Error ────────────────────────────────────────────────────── */
+  var MOCK_ERROR = {
+    error: true,
+    message: "SAP authentication failed: Missing SAP_API_KEY. Set it in your .env file for sandbox mode."
+  };
 
-  // ── Current state ───────────────────────────────────────────────────────
-  var currentPOs   = JSON.parse(JSON.stringify(MOCK_POS));
-  var currentBPs   = JSON.parse(JSON.stringify(MOCK_BPS));
-  var currentMats  = JSON.parse(JSON.stringify(MOCK_MATERIALS));
-
-  // ── Helpers ─────────────────────────────────────────────────────────────
+  /* ── Helpers ───────────────────────────────────────────────────────── */
   function post(data) {
     document.getElementById('widget').contentWindow.postMessage(data, '*');
   }
@@ -162,30 +155,35 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  function sendPOs()            { currentPOs = JSON.parse(JSON.stringify(MOCK_POS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentPOs } }); log('→ Sent mock purchase orders (5 rows)'); }
-  function sendEmptyPOs()       { currentPOs = JSON.parse(JSON.stringify(MOCK_EMPTY_POS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentPOs } }); log('→ Sent empty purchase orders'); }
-  function sendBPs()            { currentBPs = JSON.parse(JSON.stringify(MOCK_BPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentBPs } }); log('→ Sent mock business partners (5 rows)'); }
-  function sendEmptyBPs()       { currentBPs = JSON.parse(JSON.stringify(MOCK_EMPTY_BPS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentBPs } }); log('→ Sent empty business partners'); }
-  function sendMaterials()      { currentMats = JSON.parse(JSON.stringify(MOCK_MATERIALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentMats } }); log('→ Sent mock materials (5 rows)'); }
-  function sendEmptyMaterials() { currentMats = JSON.parse(JSON.stringify(MOCK_EMPTY_MATERIALS)); post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: currentMats } }); log('→ Sent empty materials'); }
-  function sendError()          { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('→ Sent mock error'); }
+  function send(payload) {
+    post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: payload } });
+  }
+
+  function sendPOs()             { send(JSON.parse(JSON.stringify(MOCK_POS)));              log('→ Sent purchase orders (5)'); }
+  function sendEmptyPOs()        { send(JSON.parse(JSON.stringify(MOCK_EMPTY_POS)));         log('→ Sent empty purchase orders'); }
+  function sendBPs()             { send(JSON.parse(JSON.stringify(MOCK_BPS)));              log('→ Sent business partners (5)'); }
+  function sendEmptyBPs()        { send(JSON.parse(JSON.stringify(MOCK_EMPTY_BPS)));         log('→ Sent empty business partners'); }
+  function sendMaterials()       { send(JSON.parse(JSON.stringify(MOCK_MATERIALS)));         log('→ Sent materials (5)'); }
+  function sendEmptyMaterials()  { send(JSON.parse(JSON.stringify(MOCK_EMPTY_MATERIALS)));   log('→ Sent empty materials'); }
+  function sendMaterialDetail()  { send(JSON.parse(JSON.stringify(MOCK_MATERIAL_DETAIL)));   log('→ Sent material detail'); }
+  function sendError()           { send(JSON.parse(JSON.stringify(MOCK_ERROR)));             log('→ Sent auth error'); }
 
   function toggleTheme() {
     isDark = !isDark;
-    document.body.style.background = isDark ? '#1c2228' : '#f0f0f0';
-    document.body.style.color      = isDark ? '#ededed' : '#111';
-    document.getElementById('frame-wrapper').style.background = isDark ? '#253040' : 'white';
-    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3d4f5f' : '#ddd';
+    document.body.style.background = isDark ? '#13161B' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#F5F6F7' : '#111';
+    document.getElementById('frame-wrapper').style.background   = isDark ? '#1C2027' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor  = isDark ? '#354A5E' : '#ddd';
     post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
     log('→ Theme: ' + (isDark ? 'dark' : 'light'));
   }
 
-  // ── Handle messages FROM the widget ─────────────────────────────────────
+  /* ── Handle messages FROM the widget ──────────────────────────────── */
   window.addEventListener('message', function(e) {
     var msg = e.data;
     if (!msg) return;
 
-    // ── callTool request from widget ──
+    /* callTool request */
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
       var tool = msg.params.name;
       var args = msg.params.args;
@@ -194,52 +192,50 @@
       setTimeout(function() {
         var result;
 
-        // ── CREATE PURCHASE ORDER ──
-        if (tool === 'create_purchase_order') {
-          var newPO = {
-            purchase_order: "MOCK-PO-" + (nextPOId++),
-            supplier:       args.supplier       || '',
-            purchasing_org: args.purchasing_org  || '',
-            order_date:     new Date().toISOString().slice(0,10),
-            deletion_code:  ''
+        /* get_po_line_items */
+        if (tool === 'get_po_line_items') {
+          result = {
+            type: "po_line_items",
+            purchase_order: args.purchase_order,
+            items: [
+              { item_number: "00010", material: "MAT-10001", description: "Finished Trading Good A",   quantity: 100, unit: "EA", net_price: 45.00,  currency: "USD", delivery_date: "2026-05-15" },
+              { item_number: "00020", material: "MAT-10003", description: "Raw Material B",            quantity: 250, unit: "KG", net_price: 12.50,  currency: "USD", delivery_date: "2026-05-20" },
+              { item_number: "00030", material: "MAT-10005", description: "Chemical Compound C",       quantity:  50, unit: "L",  net_price: 89.00,  currency: "EUR", delivery_date: "2026-06-01" }
+            ]
           };
-          currentPOs.items.unshift(newPO);
-          if (currentPOs.items.length > 5) currentPOs.items.pop();
-          currentPOs.total = currentPOs.items.length;
-          result = JSON.parse(JSON.stringify(currentPOs));
-          result._createdId = newPO.purchase_order;
-          log('→ Created PO: ' + newPO.purchase_order + ' (supplier: ' + newPO.supplier + ')');
+          log('→ Returned 3 line items for PO ' + args.purchase_order);
         }
 
-        // ── UPDATE PURCHASE ORDER ──
-        else if (tool === 'update_purchase_order') {
-          for (var i = 0; i < currentPOs.items.length; i++) {
-            if (currentPOs.items[i].purchase_order === args.purchase_order_id) {
-              var po = currentPOs.items[i];
-              if (args.supplier)       po.supplier       = args.supplier;
-              if (args.purchasing_org) po.purchasing_org  = args.purchasing_org;
-              log('→ Updated PO: ' + po.purchase_order);
-              break;
-            }
-          }
-          result = JSON.parse(JSON.stringify(currentPOs));
+        /* get_bp_purchase_orders */
+        else if (tool === 'get_bp_purchase_orders') {
+          result = {
+            type: "bp_purchase_orders",
+            partner_id: args.partner_id,
+            items: [
+              { purchase_order: "4500000101", supplier: "Domestic US Supplier 1", purchasing_org: "1010", order_date: "2026-03-15", deletion_code: false },
+              { purchase_order: "4500000104", supplier: "Midwest Components LLC", purchasing_org: "1010", order_date: "2026-04-08", deletion_code: false }
+            ]
+          };
+          log('→ Returned 2 POs for partner ' + args.partner_id);
         }
 
-        // ── GET MATERIAL DETAILS ──
+        /* get_material_details */
         else if (tool === 'get_material_details') {
-          var detail = JSON.parse(JSON.stringify(MOCK_MATERIAL_DETAIL));
-          detail.item.product = args.material_id || detail.item.product;
-          result = detail;
-          log('→ Returned detail for material: ' + detail.item.product);
+          result = {
+            product:             args.material_id,
+            product_type:        "FERT",
+            product_group:       "A001",
+            base_unit:           "EA",
+            gross_weight:        2.5,
+            net_weight:          2.1,
+            weight_unit:         "KG",
+            division:            "10",
+            product_description: "High-precision finished component for industrial assembly"
+          };
+          log('→ Returned detail for material ' + args.material_id);
         }
 
-        // ── GET MATERIALS (back button) ──
-        else if (tool === 'get_materials') {
-          result = JSON.parse(JSON.stringify(currentMats));
-          log('→ Returned materials list (back from detail)');
-        }
-
-        // ── UNKNOWN TOOL ──
+        /* unknown */
         else {
           result = { error: true, message: 'Unknown tool: ' + tool };
           log('→ Unknown tool: ' + tool);
@@ -251,7 +247,7 @@
       return;
     }
 
-    // ── Height notification from widget ──
+    /* height notification */
     if (msg.method === 'ui/notifyIntrinsicHeight') {
       document.getElementById('widget').style.height = msg.params.height + 'px';
     }

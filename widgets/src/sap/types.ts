@@ -28,7 +28,35 @@ export interface MaterialDetail extends Material {
   product_description: string;
 }
 
-export type SapDataType = 'purchase_orders' | 'business_partners' | 'materials' | 'material_detail';
+/* ─── Child data returned by expand callTool ── */
+export interface PoLineItem {
+  item_number: string;
+  material: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  net_price: number;
+  currency: string;
+  delivery_date: string;
+}
+
+export interface PoLineItemsResult {
+  type: 'po_line_items';
+  purchase_order: string;
+  items: PoLineItem[];
+}
+
+export interface BpPurchaseOrdersResult {
+  type: 'bp_purchase_orders';
+  partner_id: string;
+  items: PurchaseOrder[];
+}
+
+export type SapDataType =
+  | 'purchase_orders'
+  | 'business_partners'
+  | 'materials'
+  | 'material_detail';
 
 export interface SapData {
   type: SapDataType;
