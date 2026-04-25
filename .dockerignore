@@ -1,0 +1,17 @@
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.egg-info/
+**/dist/
+**/build/
+.git/
+.github/
+.claude/
+deploy/parameters.bicepparam
+**/.env
+!**/.env.example
+widgets/node_modules/
+widgets/dist/
+*.md
+tests/

@@ -74,8 +74,8 @@ WIDGET_HTML = (Path(__file__).parent / "web" / "widget.html").read_text(encoding
 
 # ── Entity Config ─────────────────────────────────────────────────────────────
 
-_CONFIG_PATH = Path(__file__).parent.parent / "config" / "entities.json"
-_DEFAULT_PATH = Path(__file__).parent.parent / "config" / "entities.default.json"
+_CONFIG_PATH = Path(__file__).parent / "config" / "entities.json"
+_DEFAULT_PATH = Path(__file__).parent / "config" / "entities.default.json"
 _config_store: dict = {}
 
 
