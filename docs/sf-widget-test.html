@@ -7,8 +7,10 @@
   body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 20px; margin: 0; }
   h2      { margin-bottom: 4px; }
   .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 5px; letter-spacing: 0.5px; }
-  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 3px; }
+  .section-wrap { max-width: 980px; margin-bottom: 6px; }
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #555; margin: 14px 0 5px; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: #ddd; }
+  .controls { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
   button  { padding: 7px 13px; border: none; border-radius: 6px; background: #0176d3; color: white; cursor: pointer; font-size: 12px; }
   button:hover { background: #014486; }
   button.green  { background: #2e844a; } button.green:hover  { background: #1c6b35; }
@@ -18,102 +20,103 @@
   button.teal   { background: #009ba1; } button.teal:hover   { background: #007a7e; }
   button.grey   { background: #706e6b; } button.grey:hover   { background: #514f4d; }
   button.red    { background: #ea001e; } button.red:hover    { background: #ba0517; }
-  .hint   { font-size: 11px; color: #666; margin: 3px 0 10px; }
-  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 10px; max-height: 160px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .hint   { font-size: 11px; color: #777; margin: 3px 0 8px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 10px; max-height: 150px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
   .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 980px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   iframe  { width: 100%; border: none; min-height: 500px; display: block; }
   .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #eef4ff; color: #0176d3; margin-left: 8px; }
-  .grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 8px; max-width: 980px; }
+  .admin-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .admin-row label { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+  .admin-row input[type=color] { width: 32px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
+  .admin-row input[type=range] { width: 120px; }
+  .admin-row input[type=text]  { width: 90px; font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
 </style>
 </head>
 <body>
 
 <h2>⚓ <img src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="SF" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — Salesforce CRM <span class="badge">Interactive</span></h2>
-<p class="subtitle">The Great Trading Company — Dockyard Test Facility · All 8 entity views + dashboards + approvals</p>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility · 8 entity views · dashboards · forms</p>
 
-<div class="grid">
-  <div>
-    <div class="section-label">🏢 Accounts</div>
-    <div class="controls">
-      <button onclick="sendAccounts()">Send Accounts (5)</button>
-      <button class="grey" onclick="sendEmpty('accounts')">Empty</button>
-    </div>
-    <p class="hint">▶ expand row → loads Contacts child table</p>
+<!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📋 List — send existing records</div>
+  <div class="controls">
+    <button onclick="sendAccounts()">🏢 Accounts (5)</button>
+    <button onclick="sendLeads()">👤 Leads (5)</button>
+    <button class="teal" onclick="sendContacts()">👥 Contacts (5)</button>
+    <button class="green" onclick="sendOpportunities()">💰 Opportunities (5)</button>
+    <button class="grey" onclick="sendCases()">🎫 Cases (5)</button>
+    <button class="green" onclick="sendTasks()">✅ Tasks (5)</button>
+    <button class="purple" onclick="sendCampaigns()">📣 Campaigns (4)</button>
+    <button class="orange" onclick="sendApprovals()">⏳ Approvals (3)</button>
   </div>
-  <div>
-    <div class="section-label">👤 Leads</div>
-    <div class="controls">
-      <button onclick="sendLeads()">Send Leads (5)</button>
-      <button class="grey" onclick="sendEmpty('leads')">Empty</button>
-    </div>
-    <p class="hint">Edit inline · ⇄ Convert lead · Search bar</p>
-  </div>
-  <div>
-    <div class="section-label">👥 Contacts</div>
-    <div class="controls">
-      <button class="teal" onclick="sendContacts()">Send Contacts (5)</button>
-      <button class="grey" onclick="sendEmpty('contacts')">Empty</button>
-    </div>
-    <p class="hint">Edit inline · Search by name</p>
-  </div>
-  <div>
-    <div class="section-label">💰 Opportunities</div>
-    <div class="controls">
-      <button class="green" onclick="sendOpportunities()">Send Opps (5)</button>
-      <button class="grey" onclick="sendEmpty('opportunities')">Empty</button>
-    </div>
-    <p class="hint">Edit inline · Filter by stage</p>
-  </div>
-  <div>
-    <div class="section-label">🎫 Cases</div>
-    <div class="controls">
-      <button class="grey" onclick="sendCases()">Send Cases (5)</button>
-      <button class="grey" onclick="sendEmpty('cases')">Empty</button>
-    </div>
-    <p class="hint">▶ expand → Case Comments inline</p>
-  </div>
-  <div>
-    <div class="section-label">✅ Tasks</div>
-    <div class="controls">
-      <button class="green" onclick="sendTasks()">Send Tasks (5)</button>
-      <button class="grey" onclick="sendEmpty('tasks')">Empty</button>
-    </div>
-    <p class="hint">Edit inline · Filter by status</p>
-  </div>
-  <div>
-    <div class="section-label">📣 Campaigns</div>
-    <div class="controls">
-      <button class="purple" onclick="sendCampaigns()">Send Campaigns (4)</button>
-      <button class="grey" onclick="sendEmpty('campaigns')">Empty</button>
-    </div>
-    <p class="hint">▶ expand → Campaign Leads list</p>
-  </div>
-  <div>
-    <div class="section-label">⏳ Approvals</div>
-    <div class="controls">
-      <button class="orange" onclick="sendApprovals()">Send Approvals (3)</button>
-      <button class="grey" onclick="sendEmpty('approvals')">Empty</button>
-    </div>
-    <p class="hint">Read-only pending approvals list</p>
+  <p class="hint">▶ Accounts → contacts child table &nbsp;·&nbsp; ▶ Cases → inline comments &nbsp;·&nbsp; ▶ Campaigns → leads &nbsp;·&nbsp; ✏️ inline edit on Leads / Contacts / Opportunities / Cases / Tasks &nbsp;·&nbsp; ⇄ Convert on Leads &nbsp;·&nbsp; Search bar on each view</p>
+</div>
+
+<!-- ── 2. NEW ──────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">➕ New — empty state (click + New in widget header to create)</div>
+  <div class="controls">
+    <button class="grey" onclick="sendEmpty('accounts')">Accounts</button>
+    <button class="grey" onclick="sendEmpty('leads')">Leads</button>
+    <button class="grey" onclick="sendEmpty('contacts')">Contacts</button>
+    <button class="grey" onclick="sendEmpty('opportunities')">Opportunities</button>
+    <button class="grey" onclick="sendEmpty('cases')">Cases</button>
+    <button class="grey" onclick="sendEmpty('tasks')">Tasks</button>
+    <button class="grey" onclick="sendEmpty('campaigns')">Campaigns</button>
+    <button class="grey" onclick="sendEmpty('approvals')">Approvals</button>
   </div>
 </div>
 
-<div class="section-label">📊 Dashboards & Forms</div>
-<div class="controls">
-  <button class="teal" onclick="sendSalesDashboard()">Sales Dashboard</button>
-  <button class="grey" onclick="sendSupportDashboard()">Cases / Support Dashboard</button>
-  <button onclick="sendForm('lead')">Form: Lead</button>
-  <button class="teal" onclick="sendForm('account')">Form: Account</button>
-  <button class="green" onclick="sendForm('contact')">Form: Contact</button>
-  <button class="green" onclick="sendForm('opportunity')">Form: Opportunity</button>
-  <button class="grey" onclick="sendForm('case')">Form: Case</button>
-  <button class="green" onclick="sendForm('task')">Form: Task</button>
+<!-- ── 3. FORMS ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📝 Forms — standalone create form (show_create_form pattern · 3-column layout)</div>
+  <div class="controls">
+    <button onclick="sendForm('lead')">👤 Lead</button>
+    <button class="teal" onclick="sendForm('account')">🏢 Account</button>
+    <button class="teal" onclick="sendForm('contact')">👥 Contact</button>
+    <button class="green" onclick="sendForm('opportunity')">💰 Opportunity</button>
+    <button class="grey" onclick="sendForm('case')">🎫 Case</button>
+    <button class="green" onclick="sendForm('task')">✅ Task</button>
+  </div>
 </div>
 
-<div class="section-label">⚠️ Error &amp; Theme</div>
-<div class="controls">
-  <button class="red" onclick="sendError()">Auth Error</button>
-  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+<!-- ── 4. DASHBOARD ───────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📊 Dashboard — analytics views</div>
+  <div class="controls">
+    <button class="teal" onclick="sendSalesDashboard()">📈 Sales Dashboard</button>
+    <button class="grey" onclick="sendSupportDashboard()">🛡️ Cases / Support Dashboard</button>
+  </div>
+</div>
+
+<!-- ── 5. ADMIN ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">⚙️ Admin — widget configuration, theme, error simulation</div>
+
+  <div class="admin-row">
+    <label>Brand color
+      <input type="color" id="brandColor" value="#0176D3" oninput="applyBrandColor(this.value)" />
+      <input type="text"  id="brandHex"   value="#0176D3" oninput="applyBrandColorHex(this.value)" style="width:78px" />
+    </label>
+    <button onclick="resetBrand()" class="grey" style="padding:5px 10px;font-size:11px">↺ Reset SLDS</button>
+    <button onclick="applyBrandColor('#1B96FF')" class="teal" style="padding:5px 10px;font-size:11px">SLDS Dark Blue</button>
+    <button onclick="applyBrandColor('#2E844A')" class="green" style="padding:5px 10px;font-size:11px">Green</button>
+    <button onclick="applyBrandColor('#6B5B95')" class="purple" style="padding:5px 10px;font-size:11px">Purple</button>
+  </div>
+
+  <div class="admin-row">
+    <label>Widget height
+      <input type="range" id="heightSlider" min="300" max="1200" value="500" oninput="setHeight(this.value)" />
+      <span id="heightLabel" style="font-size:11px;color:#555;width:42px">500px</span>
+    </label>
+    <button onclick="autoHeight()" class="grey" style="padding:5px 10px;font-size:11px">Auto</button>
+  </div>
+
+  <div class="controls" style="margin-top:4px">
+    <button class="dark" onclick="toggleTheme()">🌙 Toggle Dark / Light</button>
+    <button class="red"  onclick="sendError()">⚠️ Auth Error</button>
+  </div>
 </div>
 
 <br/>
@@ -121,8 +124,8 @@
   <iframe id="widget" src="sf_crm_mcp/web/widget.html"></iframe>
 </div>
 
-<div class="section-label">📜 Event Log</div>
-<div class="log" id="log">— event log —</div>
+<div class="section-label" style="max-width:980px;margin-top:10px">📜 Event Log</div>
+<div class="log" id="log" style="max-width:980px">— event log —</div>
 
 <script>
 var isDark = false;
@@ -133,107 +136,107 @@ var nextId = { lead: 10, contact: 10, account: 10, opp: 10, case: 10, task: 10 }
 var MOCK_ACCOUNTS = {
   type: "accounts", total: 5,
   items: [
-    { id: "001000000001", name: "TechFlow Inc",        industry: "Technology",  billing_city: "San Francisco", phone: "(415) 555-0101", website: "techflow.com",    type: "Customer",   number_of_employees: 320 },
-    { id: "001000000002", name: "DataBridge Corp",     industry: "Technology",  billing_city: "New York",      phone: "(212) 555-0202", website: "databridge.io",   type: "Customer",   number_of_employees: 85 },
-    { id: "001000000003", name: "Summit Analytics",    industry: "Finance",     billing_city: "Chicago",       phone: "(312) 555-0303", website: "summit-analytics.com", type: "Partner", number_of_employees: 210 },
-    { id: "001000000004", name: "MediCare Solutions",  industry: "Healthcare",  billing_city: "Boston",        phone: "(617) 555-0404", website: "medicare-sol.com", type: "Prospect",  number_of_employees: 1500 },
-    { id: "001000000005", name: "Quantum Dynamics",    industry: "Manufacturing",billing_city: "Seattle",      phone: "(206) 555-0505", website: "qdynamics.com",   type: "Customer",   number_of_employees: 640 }
+    { id: "001000000001", name: "TechFlow Inc",        industry: "Technology",    billing_city: "San Francisco", phone: "(415) 555-0101", website: "techflow.com",         type: "Customer",  number_of_employees: 320  },
+    { id: "001000000002", name: "DataBridge Corp",     industry: "Technology",    billing_city: "New York",      phone: "(212) 555-0202", website: "databridge.io",        type: "Customer",  number_of_employees: 85   },
+    { id: "001000000003", name: "Summit Analytics",    industry: "Finance",       billing_city: "Chicago",       phone: "(312) 555-0303", website: "summit-analytics.com", type: "Partner",   number_of_employees: 210  },
+    { id: "001000000004", name: "MediCare Solutions",  industry: "Healthcare",    billing_city: "Boston",        phone: "(617) 555-0404", website: "medicare-sol.com",     type: "Prospect",  number_of_employees: 1500 },
+    { id: "001000000005", name: "Quantum Dynamics",    industry: "Manufacturing", billing_city: "Seattle",       phone: "(206) 555-0505", website: "qdynamics.com",        type: "Customer",  number_of_employees: 640  }
   ]
 };
 
 var MOCK_LEADS = {
   type: "leads", total: 5,
   items: [
-    { id: "00Q000000001", first_name: "Sarah",   last_name: "Chen",      company: "TechFlow Inc",        email: "sarah.chen@techflow.com",      phone: "(415) 555-0101", status: "Open - Not Contacted",   lead_source: "Web" },
-    { id: "00Q000000002", first_name: "Marcus",  last_name: "Rivera",    company: "DataBridge Corp",     email: "m.rivera@databridge.io",       phone: "(212) 555-0202", status: "Working - Contacted",    lead_source: "Partner Referral" },
-    { id: "00Q000000003", first_name: "Aisha",   last_name: "Patel",     company: "CloudNine Solutions", email: "aisha@cloudnine.dev",          phone: "(650) 555-0303", status: "Open - Not Contacted",   lead_source: "Phone Inquiry" },
-    { id: "00Q000000004", first_name: "James",   last_name: "O'Brien",   company: "Summit Analytics",    email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", status: "Closed - Converted",     lead_source: "Web" },
-    { id: "00Q000000005", first_name: "Lin",     last_name: "Wei",       company: "Quantum Dynamics",    email: "lin.wei@qdynamics.com",        phone: "(408) 555-0505", status: "Working - Contacted",    lead_source: "Purchased List" }
+    { id: "00Q000000001", first_name: "Sarah",  last_name: "Chen",      company: "TechFlow Inc",        email: "sarah.chen@techflow.com",      phone: "(415) 555-0101", status: "Open - Not Contacted",  lead_source: "Web" },
+    { id: "00Q000000002", first_name: "Marcus", last_name: "Rivera",    company: "DataBridge Corp",     email: "m.rivera@databridge.io",       phone: "(212) 555-0202", status: "Working - Contacted",   lead_source: "Partner Referral" },
+    { id: "00Q000000003", first_name: "Aisha",  last_name: "Patel",     company: "CloudNine Solutions", email: "aisha@cloudnine.dev",          phone: "(650) 555-0303", status: "Open - Not Contacted",  lead_source: "Phone Inquiry" },
+    { id: "00Q000000004", first_name: "James",  last_name: "O'Brien",   company: "Summit Analytics",    email: "jobrien@summit-analytics.com", phone: "(312) 555-0404", status: "Closed - Converted",    lead_source: "Web" },
+    { id: "00Q000000005", first_name: "Lin",    last_name: "Wei",       company: "Quantum Dynamics",    email: "lin.wei@qdynamics.com",        phone: "(408) 555-0505", status: "Working - Contacted",   lead_source: "Purchased List" }
   ]
 };
 
 var MOCK_CONTACTS = {
   type: "contacts", total: 5,
   items: [
-    { id: "003000000001", first_name: "Elena",   last_name: "Vasquez",  email: "e.vasquez@techflow.com",    phone: "(415) 555-1101", title: "VP Engineering",   account_name: "TechFlow Inc" },
-    { id: "003000000002", first_name: "David",   last_name: "Kim",      email: "d.kim@databridge.io",       phone: "(212) 555-1202", title: "CTO",              account_name: "DataBridge Corp" },
-    { id: "003000000003", first_name: "Priya",   last_name: "Sharma",   email: "p.sharma@summit-a.com",     phone: "(312) 555-1303", title: "CFO",              account_name: "Summit Analytics" },
-    { id: "003000000004", first_name: "Tom",     last_name: "Nguyen",   email: "t.nguyen@medicare-sol.com", phone: "(617) 555-1404", title: "Director IT",      account_name: "MediCare Solutions" },
-    { id: "003000000005", first_name: "Fatima",  last_name: "Al-Rashid",email: "f.rashid@qdynamics.com",    phone: "(206) 555-1505", title: "Procurement Mgr",  account_name: "Quantum Dynamics" }
+    { id: "003000000001", first_name: "Elena",  last_name: "Vasquez",   email: "e.vasquez@techflow.com",    phone: "(415) 555-1101", title: "VP Engineering",  account_name: "TechFlow Inc" },
+    { id: "003000000002", first_name: "David",  last_name: "Kim",       email: "d.kim@databridge.io",       phone: "(212) 555-1202", title: "CTO",             account_name: "DataBridge Corp" },
+    { id: "003000000003", first_name: "Priya",  last_name: "Sharma",    email: "p.sharma@summit-a.com",     phone: "(312) 555-1303", title: "CFO",             account_name: "Summit Analytics" },
+    { id: "003000000004", first_name: "Tom",    last_name: "Nguyen",    email: "t.nguyen@medicare-sol.com", phone: "(617) 555-1404", title: "Director IT",     account_name: "MediCare Solutions" },
+    { id: "003000000005", first_name: "Fatima", last_name: "Al-Rashid", email: "f.rashid@qdynamics.com",    phone: "(206) 555-1505", title: "Procurement Mgr", account_name: "Quantum Dynamics" }
   ]
 };
 
 var MOCK_OPPS = {
   type: "opportunities", total: 5,
   items: [
-    { id: "006000000001", name: "TechFlow Enterprise License",   account_name: "TechFlow Inc",     stage: "Proposal/Price Quote",  amount: 125000, close_date: "2026-05-15", probability: 60 },
-    { id: "006000000002", name: "DataBridge Platform Migration", account_name: "DataBridge Corp",  stage: "Negotiation/Review",    amount: 340000, close_date: "2026-04-30", probability: 75 },
-    { id: "006000000003", name: "CloudNine Starter Package",     account_name: "CloudNine",        stage: "Prospecting",           amount: 28000,  close_date: "2026-07-01", probability: 15 },
+    { id: "006000000001", name: "TechFlow Enterprise License",   account_name: "TechFlow Inc",     stage: "Proposal/Price Quote",  amount: 125000, close_date: "2026-05-15", probability: 60  },
+    { id: "006000000002", name: "DataBridge Platform Migration", account_name: "DataBridge Corp",  stage: "Negotiation/Review",    amount: 340000, close_date: "2026-04-30", probability: 75  },
+    { id: "006000000003", name: "CloudNine Starter Package",     account_name: "CloudNine",        stage: "Prospecting",           amount: 28000,  close_date: "2026-07-01", probability: 15  },
     { id: "006000000004", name: "Summit Analytics Dashboard",    account_name: "Summit Analytics", stage: "Closed Won",            amount: 89000,  close_date: "2026-03-10", probability: 100 },
-    { id: "006000000005", name: "Quantum Research Grant Tool",   account_name: "Quantum Dynamics", stage: "Needs Analysis",        amount: 210000, close_date: "2026-06-20", probability: 30 }
+    { id: "006000000005", name: "Quantum Research Grant Tool",   account_name: "Quantum Dynamics", stage: "Needs Analysis",        amount: 210000, close_date: "2026-06-20", probability: 30  }
   ]
 };
 
 var MOCK_CASES = {
   type: "cases", total: 5,
   items: [
-    { id: "500000000001", case_number: "CS-10041", subject: "API integration failure on data sync",   status: "Open",      priority: "High",     account_name: "TechFlow Inc",     created_date: "2026-04-18" },
-    { id: "500000000002", case_number: "CS-10042", subject: "License seat count discrepancy",         status: "Working",   priority: "Medium",   account_name: "DataBridge Corp",  created_date: "2026-04-17" },
-    { id: "500000000003", case_number: "CS-10043", subject: "SSO configuration not persisting",       status: "Escalated", priority: "Critical", account_name: "Summit Analytics", created_date: "2026-04-15" },
-    { id: "500000000004", case_number: "CS-10044", subject: "Report export timeout for large data",   status: "New",       priority: "Low",      account_name: "MediCare Solutions",created_date: "2026-04-20" },
-    { id: "500000000005", case_number: "CS-10045", subject: "Mobile app crashes on iOS 17.4",         status: "Closed",    priority: "High",     account_name: "Quantum Dynamics", created_date: "2026-04-10" }
+    { id: "500000000001", case_number: "CS-10041", subject: "API integration failure on data sync",  status: "Open",      priority: "High",     account_name: "TechFlow Inc",      created_date: "2026-04-18" },
+    { id: "500000000002", case_number: "CS-10042", subject: "License seat count discrepancy",        status: "Working",   priority: "Medium",   account_name: "DataBridge Corp",   created_date: "2026-04-17" },
+    { id: "500000000003", case_number: "CS-10043", subject: "SSO configuration not persisting",      status: "Escalated", priority: "Critical", account_name: "Summit Analytics",  created_date: "2026-04-15" },
+    { id: "500000000004", case_number: "CS-10044", subject: "Report export timeout for large data",  status: "New",       priority: "Low",      account_name: "MediCare Solutions", created_date: "2026-04-20" },
+    { id: "500000000005", case_number: "CS-10045", subject: "Mobile app crashes on iOS 17.4",        status: "Closed",    priority: "High",     account_name: "Quantum Dynamics",  created_date: "2026-04-10" }
   ]
 };
 
 var MOCK_TASKS = {
   type: "tasks", total: 5,
   items: [
-    { id: "00T000000001", subject: "Follow up with Sarah Chen re: TechFlow demo",    status: "Not Started",  priority: "High",   activity_date: "2026-04-28", what_name: "TechFlow Enterprise License" },
-    { id: "00T000000002", subject: "Prepare proposal for DataBridge migration",       status: "In Progress",  priority: "High",   activity_date: "2026-04-26", what_name: "DataBridge Platform Migration" },
-    { id: "00T000000003", subject: "Schedule onboarding call with Summit Analytics", status: "Not Started",  priority: "Normal", activity_date: "2026-05-02", what_name: "Summit Analytics Dashboard" },
-    { id: "00T000000004", subject: "Send pricing sheet to MediCare IT team",          status: "Completed",    priority: "Normal", activity_date: "2026-04-22", what_name: null },
-    { id: "00T000000005", subject: "Review Quantum Dynamics contract terms",          status: "Not Started",  priority: "High",   activity_date: "2026-04-30", what_name: "Quantum Research Grant Tool" }
+    { id: "00T000000001", subject: "Follow up with Sarah Chen re: TechFlow demo",    status: "Not Started", priority: "High",   activity_date: "2026-04-28", what_name: "TechFlow Enterprise License" },
+    { id: "00T000000002", subject: "Prepare proposal for DataBridge migration",      status: "In Progress", priority: "High",   activity_date: "2026-04-26", what_name: "DataBridge Platform Migration" },
+    { id: "00T000000003", subject: "Schedule onboarding call with Summit Analytics", status: "Not Started", priority: "Normal", activity_date: "2026-05-02", what_name: "Summit Analytics Dashboard" },
+    { id: "00T000000004", subject: "Send pricing sheet to MediCare IT team",         status: "Completed",   priority: "Normal", activity_date: "2026-04-22", what_name: null },
+    { id: "00T000000005", subject: "Review Quantum Dynamics contract terms",         status: "Not Started", priority: "High",   activity_date: "2026-04-30", what_name: "Quantum Research Grant Tool" }
   ]
 };
 
 var MOCK_CAMPAIGNS = {
   type: "campaigns", total: 4,
   items: [
-    { id: "701000000001", name: "Q2 Enterprise Outreach 2026",  status: "Active",    type: "Email",  start_date: "2026-04-01", end_date: "2026-06-30", number_of_leads: 142 },
-    { id: "701000000002", name: "Spring Partner Summit 2026",   status: "Active",    type: "Event",  start_date: "2026-05-15", end_date: "2026-05-16", number_of_leads: 38 },
-    { id: "701000000003", name: "Healthcare Vertical Campaign",  status: "Planning",  type: "Web",    start_date: "2026-05-01", end_date: "2026-07-31", number_of_leads: 0 },
-    { id: "701000000004", name: "2025 End-of-Year Winback",     status: "Completed", type: "Phone",  start_date: "2025-11-01", end_date: "2025-12-31", number_of_leads: 89 }
+    { id: "701000000001", name: "Q2 Enterprise Outreach 2026", status: "Active",    type: "Email", start_date: "2026-04-01", end_date: "2026-06-30", number_of_leads: 142 },
+    { id: "701000000002", name: "Spring Partner Summit 2026",  status: "Active",    type: "Event", start_date: "2026-05-15", end_date: "2026-05-16", number_of_leads: 38  },
+    { id: "701000000003", name: "Healthcare Vertical Campaign", status: "Planning", type: "Web",   start_date: "2026-05-01", end_date: "2026-07-31", number_of_leads: 0   },
+    { id: "701000000004", name: "2025 End-of-Year Winback",    status: "Completed", type: "Phone", start_date: "2025-11-01", end_date: "2025-12-31", number_of_leads: 89  }
   ]
 };
 
 var MOCK_APPROVALS = {
   type: "approvals", total: 3,
   items: [
-    { id: "APR000000001", target_name: "DataBridge Platform Migration ($340K)", target_type: "Opportunity", submitted_by: "Raj Patel",     status: "Pending", created_date: "2026-04-24" },
-    { id: "APR000000002", target_name: "Contract Discount — TechFlow Inc 15%", target_type: "Account",     submitted_by: "Sarah Chen",    status: "Pending", created_date: "2026-04-23" },
-    { id: "APR000000003", target_name: "Quantum Dynamics Credit Note $12,000", target_type: "Case",        submitted_by: "David Kim",     status: "Pending", created_date: "2026-04-22" }
+    { id: "APR000000001", target_name: "DataBridge Platform Migration ($340K)", target_type: "Opportunity", submitted_by: "Raj Patel",  status: "Pending", created_date: "2026-04-24" },
+    { id: "APR000000002", target_name: "Contract Discount — TechFlow Inc 15%", target_type: "Account",     submitted_by: "Sarah Chen", status: "Pending", created_date: "2026-04-23" },
+    { id: "APR000000003", target_name: "Quantum Dynamics Credit Note $12,000", target_type: "Case",        submitted_by: "David Kim",  status: "Pending", created_date: "2026-04-22" }
   ]
 };
 
 var MOCK_SALES_DASHBOARD = {
   type: "sales_dashboard",
-  closed_won_this_month: 414000,
+  closed_won_this_month:  414000,
   closed_lost_this_month: 95000,
   pipeline_by_stage: [
-    { stage: "Prospecting",         count: 8,  amount: 280000 },
-    { stage: "Qualification",       count: 5,  amount: 420000 },
-    { stage: "Needs Analysis",      count: 4,  amount: 750000 },
-    { stage: "Proposal/Price Quote",count: 3,  amount: 560000 },
-    { stage: "Negotiation/Review",  count: 2,  amount: 340000 },
-    { stage: "Closed Won",          count: 6,  amount: 1200000 },
-    { stage: "Closed Lost",         count: 3,  amount: 190000 }
+    { stage: "Prospecting",          count: 8, amount: 280000  },
+    { stage: "Qualification",        count: 5, amount: 420000  },
+    { stage: "Needs Analysis",       count: 4, amount: 750000  },
+    { stage: "Proposal/Price Quote", count: 3, amount: 560000  },
+    { stage: "Negotiation/Review",   count: 2, amount: 340000  },
+    { stage: "Closed Won",           count: 6, amount: 1200000 },
+    { stage: "Closed Lost",          count: 3, amount: 190000  }
   ],
   top_accounts: [
-    { id: "001000000006", name: "Acme Global Corp",       amount: 480000 },
-    { id: "001000000007", name: "NextGen Pharma Ltd",     amount: 340000 },
-    { id: "001000000002", name: "DataBridge Corp",        amount: 340000 },
-    { id: "001000000001", name: "TechFlow Inc",           amount: 214000 },
-    { id: "001000000005", name: "Quantum Dynamics",       amount: 210000 }
+    { id: "001000000006", name: "Acme Global Corp",   amount: 480000 },
+    { id: "001000000007", name: "NextGen Pharma Ltd",  amount: 340000 },
+    { id: "001000000002", name: "DataBridge Corp",     amount: 340000 },
+    { id: "001000000001", name: "TechFlow Inc",        amount: 214000 },
+    { id: "001000000005", name: "Quantum Dynamics",    amount: 210000 }
   ]
 };
 
@@ -244,19 +247,19 @@ var MOCK_SUPPORT_DASHBOARD = {
   by_status: [
     { status: "New",       count: 12 },
     { status: "Open",      count: 15 },
-    { status: "Working",   count: 9 },
-    { status: "Escalated", count: 6 },
+    { status: "Working",   count: 9  },
+    { status: "Escalated", count: 6  },
     { status: "Closed",    count: 85 }
   ],
   by_priority: [
-    { priority: "Critical", count: 3 },
+    { priority: "Critical", count: 3  },
     { priority: "High",     count: 11 },
     { priority: "Medium",   count: 18 },
     { priority: "Low",      count: 15 }
   ]
 };
 
-// Child data for expand ──────────────────────────────────────────────────────
+// ── Child / expand data ──────────────────────────────────────────────────────
 var ACCOUNT_CONTACTS = {
   "001000000001": { items: [
     { id: "003000000001", first_name: "Elena", last_name: "Vasquez", email: "e.vasquez@techflow.com", phone: "(415) 555-1101", title: "VP Engineering" },
@@ -266,8 +269,8 @@ var ACCOUNT_CONTACTS = {
     { id: "003000000002", first_name: "David", last_name: "Kim", email: "d.kim@databridge.io", phone: "(212) 555-1202", title: "CTO" }
   ]},
   "001000000003": { items: [
-    { id: "003000000003", first_name: "Priya", last_name: "Sharma", email: "p.sharma@summit-a.com", phone: "(312) 555-1303", title: "CFO" },
-    { id: "003000000012", first_name: "Alex",  last_name: "Johnson",email: "a.johnson@summit-a.com",phone: "(312) 555-1304", title: "IT Director" }
+    { id: "003000000003", first_name: "Priya", last_name: "Sharma",  email: "p.sharma@summit-a.com", phone: "(312) 555-1303", title: "CFO" },
+    { id: "003000000012", first_name: "Alex",  last_name: "Johnson", email: "a.johnson@summit-a.com",phone: "(312) 555-1304", title: "IT Director" }
   ]},
   "001000000004": { items: [
     { id: "003000000004", first_name: "Tom", last_name: "Nguyen", email: "t.nguyen@medicare-sol.com", phone: "(617) 555-1404", title: "Director IT" }
@@ -279,15 +282,15 @@ var ACCOUNT_CONTACTS = {
 
 var CASE_COMMENTS = {
   "500000000001": { items: [
-    { id: "cc001", body: "Investigated - issue is on the OAuth token refresh path. Escalating to Tier 2.", created_by_name: "Support Agent Raj", created_date: "2026-04-19" },
-    { id: "cc002", body: "Customer confirmed issue started after API version upgrade to v58.0.", created_by_name: "Support Agent Priya", created_date: "2026-04-20" }
+    { id: "cc001", body: "Investigated — issue is on the OAuth token refresh path. Escalating to Tier 2.", created_by_name: "Support Agent Raj",    created_date: "2026-04-19" },
+    { id: "cc002", body: "Customer confirmed issue started after API version upgrade to v58.0.",            created_by_name: "Support Agent Priya",  created_date: "2026-04-20" }
   ]},
   "500000000002": { items: [
-    { id: "cc003", body: "License counts appear correct on our side. Requested screenshot from customer.", created_by_name: "Support Agent Tom", created_date: "2026-04-18" }
+    { id: "cc003", body: "License counts appear correct on our side. Requested screenshot from customer.", created_by_name: "Support Agent Tom",    created_date: "2026-04-18" }
   ]},
   "500000000003": { items: [
-    { id: "cc004", body: "Reproduced locally. Root cause: SSO metadata not being persisted on app restart. Fix in next release (v4.2.1).", created_by_name: "Support Engineer Lin", created_date: "2026-04-16" },
-    { id: "cc005", body: "Hotfix deployed to production. Please verify with customer.", created_by_name: "Support Engineer Lin", created_date: "2026-04-21" }
+    { id: "cc004", body: "Reproduced locally. Root cause: SSO metadata not persisted on restart. Fix in v4.2.1.", created_by_name: "Support Engineer Lin", created_date: "2026-04-16" },
+    { id: "cc005", body: "Hotfix deployed to production. Please verify with customer.",                           created_by_name: "Support Engineer Lin", created_date: "2026-04-21" }
   ]},
   "500000000004": { items: [] },
   "500000000005": { items: [
@@ -297,21 +300,21 @@ var CASE_COMMENTS = {
 
 var CAMPAIGN_LEADS = {
   "701000000001": { items: [
-    { id: "00Q000000011", first_name: "Anna",    last_name: "Brooks",  company: "Horizon Tech",    email: "a.brooks@horizontech.com",  status: "Working - Contacted" },
-    { id: "00Q000000012", first_name: "Carlos",  last_name: "Mendez",  company: "BlueSky Systems", email: "c.mendez@bluesky.com",       status: "Open - Not Contacted" },
-    { id: "00Q000000013", first_name: "Yuki",    last_name: "Tanaka",  company: "NovaTrade Ltd",   email: "y.tanaka@novatrade.co.jp",   status: "Working - Contacted" }
+    { id: "00Q000000011", first_name: "Anna",   last_name: "Brooks",  company: "Horizon Tech",    email: "a.brooks@horizontech.com", status: "Working - Contacted"   },
+    { id: "00Q000000012", first_name: "Carlos", last_name: "Mendez",  company: "BlueSky Systems", email: "c.mendez@bluesky.com",      status: "Open - Not Contacted"  },
+    { id: "00Q000000013", first_name: "Yuki",   last_name: "Tanaka",  company: "NovaTrade Ltd",   email: "y.tanaka@novatrade.co.jp",  status: "Working - Contacted"   }
   ]},
   "701000000002": { items: [
-    { id: "00Q000000014", first_name: "Sophie",  last_name: "Martin",  company: "EuroCloud SA",    email: "s.martin@eurocloud.eu",     status: "Open - Not Contacted" }
+    { id: "00Q000000014", first_name: "Sophie", last_name: "Martin",  company: "EuroCloud SA",    email: "s.martin@eurocloud.eu",    status: "Open - Not Contacted"  }
   ]},
   "701000000003": { items: [] },
   "701000000004": { items: [
-    { id: "00Q000000015", first_name: "Robert",  last_name: "Hayes",   company: "CityHealth Inc",  email: "r.hayes@cityhealth.com",     status: "Closed - Converted" },
-    { id: "00Q000000016", first_name: "Amara",   last_name: "Osei",    company: "CarePlus Ltd",    email: "a.osei@careplus.com",        status: "Closed - Not Converted" }
+    { id: "00Q000000015", first_name: "Robert", last_name: "Hayes",   company: "CityHealth Inc",  email: "r.hayes@cityhealth.com",   status: "Closed - Converted"    },
+    { id: "00Q000000016", first_name: "Amara",  last_name: "Osei",    company: "CarePlus Ltd",    email: "a.osei@careplus.com",      status: "Closed - Not Converted" }
   ]}
 };
 
-// State ──────────────────────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────────────────────
 var currentLeads    = JSON.parse(JSON.stringify(MOCK_LEADS));
 var currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS));
 var currentOpps     = JSON.parse(JSON.stringify(MOCK_OPPS));
@@ -327,19 +330,48 @@ function log(msg)   {
   el.scrollTop = el.scrollHeight;
 }
 
-function sendAccounts()      { send(JSON.parse(JSON.stringify(MOCK_ACCOUNTS)));  log('→ Sent accounts (5)'); }
-function sendLeads()         { currentLeads = JSON.parse(JSON.stringify(MOCK_LEADS)); send(currentLeads); log('→ Sent leads (5)'); }
-function sendContacts()      { currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS)); send(currentContacts); log('→ Sent contacts (5)'); }
-function sendOpportunities() { currentOpps = JSON.parse(JSON.stringify(MOCK_OPPS)); send(currentOpps); log('→ Sent opportunities (5)'); }
-function sendCases()         { currentCases = JSON.parse(JSON.stringify(MOCK_CASES)); send(currentCases); log('→ Sent cases (5)'); }
-function sendTasks()         { currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS)); send(currentTasks); log('→ Sent tasks (5)'); }
-function sendCampaigns()     { send(JSON.parse(JSON.stringify(MOCK_CAMPAIGNS))); log('→ Sent campaigns (4)'); }
-function sendApprovals()     { send(JSON.parse(JSON.stringify(MOCK_APPROVALS))); log('→ Sent approvals (3)'); }
-function sendSalesDashboard(){ send(JSON.parse(JSON.stringify(MOCK_SALES_DASHBOARD))); log('→ Sent sales dashboard'); }
-function sendSupportDashboard(){ send(JSON.parse(JSON.stringify(MOCK_SUPPORT_DASHBOARD))); log('→ Sent support dashboard'); }
-function sendForm(entity)    { send({ type: 'form', entity: entity }); log('→ Sent form: ' + entity); }
-function sendEmpty(t)        { send({ type: t, total: 0, items: [] }); log('→ Sent empty: ' + t); }
-function sendError()         { send({ error: true, message: "Salesforce authentication failed: Missing SF_INSTANCE_URL, SF_CLIENT_ID, or SF_CLIENT_SECRET in .env file." }); log('→ Sent error'); }
+// ── Section 1: List ──────────────────────────────────────────────────────────
+function sendAccounts()       { send(JSON.parse(JSON.stringify(MOCK_ACCOUNTS))); log('→ accounts (5)'); }
+function sendLeads()          { currentLeads = JSON.parse(JSON.stringify(MOCK_LEADS)); send(currentLeads); log('→ leads (5)'); }
+function sendContacts()       { currentContacts = JSON.parse(JSON.stringify(MOCK_CONTACTS)); send(currentContacts); log('→ contacts (5)'); }
+function sendOpportunities()  { currentOpps = JSON.parse(JSON.stringify(MOCK_OPPS)); send(currentOpps); log('→ opportunities (5)'); }
+function sendCases()          { currentCases = JSON.parse(JSON.stringify(MOCK_CASES)); send(currentCases); log('→ cases (5)'); }
+function sendTasks()          { currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS)); send(currentTasks); log('→ tasks (5)'); }
+function sendCampaigns()      { send(JSON.parse(JSON.stringify(MOCK_CAMPAIGNS))); log('→ campaigns (4)'); }
+function sendApprovals()      { send(JSON.parse(JSON.stringify(MOCK_APPROVALS))); log('→ approvals (3)'); }
+
+// ── Section 2: New (empty) ────────────────────────────────────────────────────
+function sendEmpty(t) { send({ type: t, total: 0, items: [] }); log('→ empty: ' + t); }
+
+// ── Section 3: Forms ─────────────────────────────────────────────────────────
+function sendForm(entity) { send({ type: 'form', entity: entity }); log('→ form: ' + entity); }
+
+// ── Section 4: Dashboard ─────────────────────────────────────────────────────
+function sendSalesDashboard()   { send(JSON.parse(JSON.stringify(MOCK_SALES_DASHBOARD)));   log('→ sales dashboard'); }
+function sendSupportDashboard() { send(JSON.parse(JSON.stringify(MOCK_SUPPORT_DASHBOARD))); log('→ support/cases dashboard'); }
+
+// ── Section 5: Admin ─────────────────────────────────────────────────────────
+function applyBrandColor(hex) {
+  document.getElementById('brandColor').value = hex;
+  document.getElementById('brandHex').value   = hex;
+  post({ jsonrpc: '2.0', method: 'ui/notifications/config', params: { brandColor: hex } });
+  log('→ brand color: ' + hex);
+}
+function applyBrandColorHex(hex) {
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) applyBrandColor(hex);
+}
+function resetBrand() { applyBrandColor('#0176D3'); }
+
+function setHeight(val) {
+  document.getElementById('widget').style.minHeight = val + 'px';
+  document.getElementById('heightLabel').textContent = val + 'px';
+}
+function autoHeight() {
+  document.getElementById('widget').style.minHeight = '60px';
+  document.getElementById('heightLabel').textContent = 'auto';
+}
+
+function sendError() { send({ error: true, message: "Salesforce authentication failed: Missing SF_INSTANCE_URL, SF_CLIENT_ID, or SF_CLIENT_SECRET in .env file." }); log('→ auth error'); }
 
 function toggleTheme() {
   isDark = !isDark;
@@ -348,10 +380,10 @@ function toggleTheme() {
   document.getElementById('frame-wrapper').style.background  = isDark ? '#1a3a65' : 'white';
   document.getElementById('frame-wrapper').style.borderColor = isDark ? '#2b5797' : '#ddd';
   post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
-  log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  log('→ theme: ' + (isDark ? 'dark' : 'light'));
 }
 
-// ── Handle messages FROM the widget ─────────────────────────────────────────
+// ── Messages FROM the widget ─────────────────────────────────────────────────
 window.addEventListener('message', function(e) {
   var msg = e.data;
   if (!msg) return;
@@ -364,198 +396,139 @@ window.addEventListener('message', function(e) {
     setTimeout(function() {
       var result;
 
-      // ── Account expand ──
-      if (tool === 'get_account_contacts') {
+      // Account expand + ops
+      if      (tool === 'get_account_contacts') {
         result = ACCOUNT_CONTACTS[args.account_id] || { items: [] };
-        log('→ account contacts: ' + (result.items || []).length + ' rows');
+        log('→ ' + (result.items||[]).length + ' contacts');
       }
       else if (tool === 'search_accounts') {
-        var name = (args.name || '').toLowerCase();
-        var ind  = (args.industry || '').toLowerCase();
-        var filtered = MOCK_ACCOUNTS.items.filter(function(a) {
-          return (!name || a.name.toLowerCase().includes(name)) && (!ind || (a.industry||'').toLowerCase().includes(ind));
-        });
-        result = { type: 'accounts', items: filtered };
-        log('→ search_accounts: ' + filtered.length + ' results');
+        var n = (args.name||'').toLowerCase(), ind = (args.industry||'').toLowerCase();
+        result = { type:'accounts', items: MOCK_ACCOUNTS.items.filter(function(a){ return (!n||(a.name||'').toLowerCase().includes(n))&&(!ind||(a.industry||'').toLowerCase().includes(ind)); }) };
+        log('→ search_accounts: ' + result.items.length);
       }
-
-      // ── Lead ops ──
-      else if (tool === 'create_lead') {
-        var nl = { id: '00Q00000000' + (nextId.lead++), first_name: args.first_name||'', last_name: args.last_name||'', company: args.company||'', email: args.email||'', phone: args.phone||'', status: args.status||'Open - Not Contacted', lead_source: args.lead_source||'' };
-        currentLeads.items.unshift(nl);
-        result = JSON.parse(JSON.stringify(currentLeads));
-        result._createdId = nl.id;
-        log('→ created lead: ' + nl.first_name + ' ' + nl.last_name);
-      }
-      else if (tool === 'update_lead') {
-        for (var i = 0; i < currentLeads.items.length; i++) {
-          if (currentLeads.items[i].id === args.lead_id) {
-            var l = currentLeads.items[i];
-            if (args.first_name  !== undefined) l.first_name  = args.first_name;
-            if (args.last_name   !== undefined) l.last_name   = args.last_name;
-            if (args.company     !== undefined) l.company     = args.company;
-            if (args.email       !== undefined) l.email       = args.email;
-            if (args.phone       !== undefined) l.phone       = args.phone;
-            if (args.status      !== undefined) l.status      = args.status;
-            if (args.lead_source !== undefined) l.lead_source = args.lead_source;
-            log('→ updated lead: ' + l.last_name);
-            break;
-          }
-        }
-        result = JSON.parse(JSON.stringify(currentLeads));
-      }
-      else if (tool === 'search_leads') {
-        var q = (args.name || '').toLowerCase();
-        var fl = currentLeads.items.filter(function(l) {
-          return !q || (l.first_name + ' ' + l.last_name + ' ' + l.company).toLowerCase().includes(q);
-        });
-        result = { type: 'leads', items: fl };
-        log('→ search_leads: ' + fl.length + ' results');
-      }
-      else if (tool === 'convert_lead') {
-        currentLeads.items = currentLeads.items.filter(function(l) { return l.id !== args.lead_id; });
-        result = { type: 'lead_convert', leadId: args.lead_id, accountId: '001NEW000001', contactId: '003NEW000001', opportunityId: '006NEW000001' };
-        log('→ converted lead: ' + args.lead_id);
-      }
-
-      // ── Contact ops ──
-      else if (tool === 'create_contact') {
-        var nc = { id: '003' + (nextId.contact++), first_name: args.first_name||'', last_name: args.last_name||'', email: args.email||'', phone: args.phone||'', title: args.title||'', account_name: args.account_name||'' };
-        currentContacts.items.unshift(nc);
-        result = JSON.parse(JSON.stringify(currentContacts));
-        result._createdId = nc.id;
-        log('→ created contact: ' + nc.last_name);
-      }
-      else if (tool === 'update_contact') {
-        for (var ci = 0; ci < currentContacts.items.length; ci++) {
-          if (currentContacts.items[ci].id === args.contact_id) {
-            var c = currentContacts.items[ci];
-            ['first_name','last_name','email','phone','title','account_name'].forEach(function(k) { if (args[k] !== undefined) c[k] = args[k]; });
-            log('→ updated contact: ' + c.last_name); break;
-          }
-        }
-        result = JSON.parse(JSON.stringify(currentContacts));
-      }
-      else if (tool === 'search_contacts') {
-        var q2 = (args.name || '').toLowerCase();
-        result = { type: 'contacts', items: currentContacts.items.filter(function(c2) {
-          return !q2 || (c2.first_name + ' ' + c2.last_name + ' ' + (c2.account_name||'')).toLowerCase().includes(q2);
-        })};
-        log('→ search_contacts: ' + result.items.length + ' results');
-      }
-
-      // ── Account ops ──
       else if (tool === 'create_account') {
-        var na = { id: '001' + (nextId.account++), name: args.name||'', industry: args.industry||'', phone: args.phone||'', website: args.website||'', type: args.type||'', billing_city: args.billing_city||'' };
+        var na = { id:'001'+(nextId.account++), name:args.name||'', industry:args.industry||'', phone:args.phone||'', website:args.website||'', type:args.type||'', billing_city:args.billing_city||'' };
         MOCK_ACCOUNTS.items.unshift(na);
-        result = { type: 'accounts', items: MOCK_ACCOUNTS.items };
-        result._createdId = na.id;
+        result = { type:'accounts', items:MOCK_ACCOUNTS.items, _createdId:na.id };
         log('→ created account: ' + na.name);
       }
       else if (tool === 'update_account') {
-        for (var ai = 0; ai < MOCK_ACCOUNTS.items.length; ai++) {
-          if (MOCK_ACCOUNTS.items[ai].id === args.account_id) {
-            var a = MOCK_ACCOUNTS.items[ai];
-            ['name','industry','phone','website','type','billing_city'].forEach(function(k) { if (args[k] !== undefined) a[k] = args[k]; });
-            log('→ updated account: ' + a.name); break;
-          }
-        }
-        result = { type: 'accounts', items: MOCK_ACCOUNTS.items };
+        MOCK_ACCOUNTS.items.forEach(function(a){ if(a.id===args.account_id){ ['name','industry','phone','website','type','billing_city'].forEach(function(k){ if(args[k]!==undefined) a[k]=args[k]; }); } });
+        result = { type:'accounts', items:MOCK_ACCOUNTS.items };
+        log('→ updated account');
       }
 
-      // ── Opportunity ops ──
+      // Lead ops
+      else if (tool === 'create_lead') {
+        var nl = { id:'00Q'+(nextId.lead++), first_name:args.first_name||'', last_name:args.last_name||'', company:args.company||'', email:args.email||'', phone:args.phone||'', status:args.status||'Open - Not Contacted', lead_source:args.lead_source||'' };
+        currentLeads.items.unshift(nl);
+        result = JSON.parse(JSON.stringify(currentLeads)); result._createdId = nl.id;
+        log('→ created lead: ' + nl.last_name);
+      }
+      else if (tool === 'update_lead') {
+        currentLeads.items.forEach(function(l){ if(l.id===args.lead_id){ ['first_name','last_name','company','email','phone','status','lead_source'].forEach(function(k){ if(args[k]!==undefined) l[k]=args[k]; }); } });
+        result = JSON.parse(JSON.stringify(currentLeads));
+        log('→ updated lead');
+      }
+      else if (tool === 'search_leads') {
+        var q=(args.name||'').toLowerCase();
+        result = { type:'leads', items: currentLeads.items.filter(function(l){ return !q||(l.first_name+' '+l.last_name+' '+l.company).toLowerCase().includes(q); }) };
+        log('→ search_leads: ' + result.items.length);
+      }
+      else if (tool === 'convert_lead') {
+        currentLeads.items = currentLeads.items.filter(function(l){ return l.id!==args.lead_id; });
+        result = { type:'lead_convert', leadId:args.lead_id, accountId:'001NEW001', contactId:'003NEW001', opportunityId:'006NEW001' };
+        log('→ converted lead');
+      }
+
+      // Contact ops
+      else if (tool === 'create_contact') {
+        var nc = { id:'003'+(nextId.contact++), first_name:args.first_name||'', last_name:args.last_name||'', email:args.email||'', phone:args.phone||'', title:args.title||'', account_name:args.account_name||'' };
+        currentContacts.items.unshift(nc);
+        result = JSON.parse(JSON.stringify(currentContacts)); result._createdId = nc.id;
+        log('→ created contact: ' + nc.last_name);
+      }
+      else if (tool === 'update_contact') {
+        currentContacts.items.forEach(function(c){ if(c.id===args.contact_id){ ['first_name','last_name','email','phone','title','account_name'].forEach(function(k){ if(args[k]!==undefined) c[k]=args[k]; }); } });
+        result = JSON.parse(JSON.stringify(currentContacts));
+        log('→ updated contact');
+      }
+      else if (tool === 'search_contacts') {
+        var q2=(args.name||'').toLowerCase();
+        result = { type:'contacts', items: currentContacts.items.filter(function(c){ return !q2||(c.first_name+' '+c.last_name+' '+(c.account_name||'')).toLowerCase().includes(q2); }) };
+        log('→ search_contacts: ' + result.items.length);
+      }
+
+      // Opportunity ops
       else if (tool === 'create_opportunity') {
-        var no = { id: '006' + (nextId.opp++), name: args.name||'', account_name: args.account_name||'', stage: args.stage||'Prospecting', amount: args.amount||0, close_date: args.close_date||'', probability: args.probability||0 };
+        var no = { id:'006'+(nextId.opp++), name:args.name||'', account_name:args.account_name||'', stage:args.stage||'Prospecting', amount:args.amount||0, close_date:args.close_date||'', probability:args.probability||0 };
         currentOpps.items.unshift(no);
-        result = JSON.parse(JSON.stringify(currentOpps));
-        result._createdId = no.id;
-        log('→ created opportunity: ' + no.name);
+        result = JSON.parse(JSON.stringify(currentOpps)); result._createdId = no.id;
+        log('→ created opp: ' + no.name);
       }
       else if (tool === 'update_opportunity') {
-        for (var oi = 0; oi < currentOpps.items.length; oi++) {
-          if (currentOpps.items[oi].id === args.opportunity_id) {
-            var o = currentOpps.items[oi];
-            ['name','account_name','stage','amount','close_date','probability'].forEach(function(k) { if (args[k] !== undefined) o[k] = args[k]; });
-            log('→ updated opp: ' + o.name); break;
-          }
-        }
+        currentOpps.items.forEach(function(o){ if(o.id===args.opportunity_id){ ['name','account_name','stage','amount','close_date','probability'].forEach(function(k){ if(args[k]!==undefined) o[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentOpps));
+        log('→ updated opp');
       }
       else if (tool === 'search_opportunities') {
-        var sq = (args.name || '').toLowerCase(), ss = (args.stage || '').toLowerCase();
-        result = { type: 'opportunities', items: currentOpps.items.filter(function(o2) {
-          return (!sq || o2.name.toLowerCase().includes(sq)) && (!ss || (o2.stage||'').toLowerCase().includes(ss));
-        })};
-        log('→ search_opps: ' + result.items.length + ' results');
+        var sq=(args.name||'').toLowerCase(), ss=(args.stage||'').toLowerCase();
+        result = { type:'opportunities', items: currentOpps.items.filter(function(o){ return (!sq||o.name.toLowerCase().includes(sq))&&(!ss||(o.stage||'').toLowerCase().includes(ss)); }) };
+        log('→ search_opps: ' + result.items.length);
       }
 
-      // ── Case ops ──
+      // Case ops
       else if (tool === 'create_case') {
-        var ncas = { id: '500' + (nextId.case++), case_number: 'CS-' + (10050 + nextId.case), subject: args.subject||'', status: args.status||'New', priority: args.priority||'Medium', account_name: args.account_name||'', created_date: new Date().toISOString().slice(0,10) };
+        var ncas = { id:'500'+(nextId.case++), case_number:'CS-'+(10050+nextId.case), subject:args.subject||'', status:args.status||'New', priority:args.priority||'Medium', account_name:args.account_name||'', created_date:new Date().toISOString().slice(0,10) };
         currentCases.items.unshift(ncas);
         result = JSON.parse(JSON.stringify(currentCases));
         log('→ created case: ' + ncas.subject);
       }
       else if (tool === 'update_case') {
-        for (var casi = 0; casi < currentCases.items.length; casi++) {
-          if (currentCases.items[casi].id === args.case_id) {
-            var cas = currentCases.items[casi];
-            ['subject','status','priority','account_name','description'].forEach(function(k) { if (args[k] !== undefined) cas[k] = args[k]; });
-            log('→ updated case: ' + cas.subject); break;
-          }
-        }
+        currentCases.items.forEach(function(c){ if(c.id===args.case_id){ ['subject','status','priority','account_name','description'].forEach(function(k){ if(args[k]!==undefined) c[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentCases));
+        log('→ updated case');
       }
       else if (tool === 'get_case_comments') {
         result = CASE_COMMENTS[args.case_id] || { items: [] };
-        log('→ case comments: ' + (result.items||[]).length + ' comments');
+        log('→ ' + (result.items||[]).length + ' comments');
       }
       else if (tool === 'search_cases') {
-        var fs = (args.status || '').toLowerCase(), fp = (args.priority || '').toLowerCase();
-        result = { type: 'cases', items: currentCases.items.filter(function(cas2) {
-          return (!fs || (cas2.status||'').toLowerCase().includes(fs)) && (!fp || (cas2.priority||'').toLowerCase().includes(fp));
-        })};
-        log('→ search_cases: ' + result.items.length + ' results');
+        var fs=(args.status||'').toLowerCase(), fp=(args.priority||'').toLowerCase();
+        result = { type:'cases', items: currentCases.items.filter(function(c){ return (!fs||(c.status||'').toLowerCase().includes(fs))&&(!fp||(c.priority||'').toLowerCase().includes(fp)); }) };
+        log('→ search_cases: ' + result.items.length);
       }
 
-      // ── Task ops ──
+      // Task ops
       else if (tool === 'create_task') {
-        var nt = { id: '00T' + (nextId.task++), subject: args.subject||'', status: args.status||'Not Started', priority: args.priority||'Normal', activity_date: args.activity_date||'', what_name: '' };
+        var nt = { id:'00T'+(nextId.task++), subject:args.subject||'', status:args.status||'Not Started', priority:args.priority||'Normal', activity_date:args.activity_date||'', what_name:'' };
         currentTasks.items.unshift(nt);
         result = JSON.parse(JSON.stringify(currentTasks));
         log('→ created task: ' + nt.subject);
       }
       else if (tool === 'update_task') {
-        for (var ti = 0; ti < currentTasks.items.length; ti++) {
-          if (currentTasks.items[ti].id === args.task_id) {
-            var tk = currentTasks.items[ti];
-            ['subject','status','priority','activity_date','description'].forEach(function(k) { if (args[k] !== undefined) tk[k] = args[k]; });
-            log('→ updated task: ' + tk.subject); break;
-          }
-        }
+        currentTasks.items.forEach(function(t){ if(t.id===args.task_id){ ['subject','status','priority','activity_date','description'].forEach(function(k){ if(args[k]!==undefined) t[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentTasks));
+        log('→ updated task');
       }
       else if (tool === 'search_tasks') {
-        var ts = (args.status || '').toLowerCase();
-        result = { type: 'tasks', items: currentTasks.items.filter(function(tk2) {
-          return !ts || (tk2.status||'').toLowerCase().includes(ts);
-        })};
-        log('→ search_tasks: ' + result.items.length + ' results');
+        var ts=(args.status||'').toLowerCase();
+        result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.status||'').toLowerCase().includes(ts); }) };
+        log('→ search_tasks: ' + result.items.length);
       }
 
-      // ── Campaign expand ──
+      // Campaign expand
       else if (tool === 'get_campaign_leads') {
         result = CAMPAIGN_LEADS[args.campaign_id] || { items: [] };
-        log('→ campaign leads: ' + (result.items||[]).length + ' leads');
+        log('→ ' + (result.items||[]).length + ' campaign leads');
       }
 
-      // ── delete_record ──
+      // Generic delete
       else if (tool === 'delete_record') {
         result = { success: true, deleted_id: args.record_id };
         log('→ deleted: ' + args.entity_type + ' ' + args.record_id);
       }
 
-      // ── Unknown ──
       else {
         result = { error: true, message: 'Unknown tool: ' + tool };
         log('→ unknown tool: ' + tool);
@@ -567,7 +540,11 @@ window.addEventListener('message', function(e) {
   }
 
   if (msg.method === 'ui/notifyIntrinsicHeight') {
-    document.getElementById('widget').style.height = msg.params.height + 'px';
+    var h = msg.params.height;
+    var slider = document.getElementById('heightSlider');
+    if (parseInt(slider.value) <= 500) {
+      document.getElementById('widget').style.height = h + 'px';
+    }
   }
 });
 </script>
