@@ -69,7 +69,7 @@ const useStyles = makeStyles({
   headerLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
   formPanel:  { padding: '14px 16px', borderLeft: '3px solid #0176D3' },
   formTitle:  { fontSize: '14px', fontWeight: 600 as any, marginBottom: '10px' },
-  formGrid:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px 12px', marginBottom: '12px' },
+  formGrid:   { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px 16px', marginBottom: '16px' },
   formActions:{ display: 'flex', gap: '8px', justifyContent: 'flex-end' },
   amount:     { fontWeight: 500 as any, fontVariantNumeric: 'tabular-nums' },
   empty:      { padding: '16px', textAlign: 'center' as const, fontSize: '13px' },
@@ -1165,8 +1165,8 @@ function FormView({ entity, prefill, callTool, toast, theme }: { entity: string;
           </div>
         </div>
       ) : (
-        <div style={{ padding: '16px' }}>
-          <div className={styles.formGrid}>
+        <div style={{ padding: '16px 20px 20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px', marginBottom: '20px' }}>
             {fields.map(f =>
               f.type === 'select' ? (
                 <FormSelect key={f.key} label={f.label} value={values[f.key]} options={f.options || []} onChange={v => set(f.key, v)} theme={theme} />

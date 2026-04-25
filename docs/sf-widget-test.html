@@ -21,7 +21,7 @@
   .hint   { font-size: 11px; color: #666; margin: 3px 0 10px; }
   .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 10px; max-height: 160px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
   .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 980px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  iframe  { width: 100%; border: none; min-height: 500px; display: block; }
   .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #eef4ff; color: #0176d3; margin-left: 8px; }
   .grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 8px; max-width: 980px; }
 </style>
@@ -101,7 +101,7 @@
 <div class="section-label">📊 Dashboards & Forms</div>
 <div class="controls">
   <button class="teal" onclick="sendSalesDashboard()">Sales Dashboard</button>
-  <button class="grey" onclick="sendSupportDashboard()">Support Dashboard</button>
+  <button class="grey" onclick="sendSupportDashboard()">Cases / Support Dashboard</button>
   <button onclick="sendForm('lead')">Form: Lead</button>
   <button class="teal" onclick="sendForm('account')">Form: Account</button>
   <button class="green" onclick="sendForm('contact')">Form: Contact</button>
