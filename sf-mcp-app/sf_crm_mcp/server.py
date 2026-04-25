@@ -900,9 +900,9 @@ async def _fetch_cases() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_cases(account_id: str = "", status: str = "", priority: str = "") -> types.CallToolResult:
-    """Fetch Cases filtered by account_id (drill-down), status/priority (search), or latest 5."""
-    log.info("sf__get_cases", account_id=account_id, status=status, priority=priority)
+async def sf__get_cases(account_id: str = "", subject: str = "") -> types.CallToolResult:
+    """Fetch Cases filtered by account_id (drill-down), subject text search, or latest 5."""
+    log.info("sf__get_cases", account_id=account_id, subject=subject)
     try:
         cfg = _get_schema("Case")
         columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
@@ -915,13 +915,10 @@ async def sf__get_cases(account_id: str = "", status: str = "", priority: str = 
             sf = get_client()
             records = await sf.query(soql)
             items = [_flatten_record(r, columns) for r in records]
-        elif status or priority:
-            clauses = []
-            if status:   clauses.append(f"Status = '{status}'")
-            if priority: clauses.append(f"Priority = '{priority}'")
+        elif subject:
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Case "
-                f"WHERE {' AND '.join(clauses)} ORDER BY CreatedDate DESC LIMIT 20"
+                f"WHERE Subject LIKE '%{subject}%' ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
             records = await sf.query(soql)
@@ -1116,17 +1113,17 @@ async def _fetch_tasks() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_tasks(status: str = "") -> types.CallToolResult:
-    """Fetch Tasks, optionally filtered by status."""
-    log.info("sf__get_tasks", status=status)
+async def sf__get_tasks(subject: str = "") -> types.CallToolResult:
+    """Fetch Tasks, optionally filtered by subject text search."""
+    log.info("sf__get_tasks", subject=subject)
     try:
-        if status:
+        if subject:
             cfg = _get_schema("Task")
             columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
             api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (
                 f"SELECT {', '.join(api_names)} FROM Task "
-                f"WHERE Status = '{status}' ORDER BY CreatedDate DESC LIMIT 20"
+                f"WHERE Subject LIKE '%{subject}%' ORDER BY CreatedDate DESC LIMIT 20"
             )
             sf = get_client()
             records = await sf.query(soql)
@@ -1609,38 +1606,36 @@ async def sf__reset_entity_config(entity_type: str) -> types.CallToolResult:
 
 
 @mcp.tool(
-    description="Opens a form to create a new Salesforce Lead. The user fills in details and submits.",
+    description=(
+        "Opens a create form in the widget for the specified Salesforce entity.\n\n"
+        "Supported entities: lead, account, contact, opportunity, case, task.\n\n"
+        "FK PRE-RESOLUTION — required before calling this tool for certain entities:\n"
+        "  • contact, opportunity, case: these link to an Account (account_name is required).\n"
+        "    BEFORE calling this tool, ask the user which account ('Which account is this for?'),\n"
+        "    then call sf__get_accounts with the name provided. Pass the results as fk_options.\n"
+        "    Format: fk_options={'account_name': {'label': 'Account', 'options': [\n"
+        "      {'id': '001...', 'name': 'Acme Corp'}, ...]}}\n"
+        "  • lead, account, task: no FK pre-resolution needed — call this tool directly.\n\n"
+        "When fk_options is provided the widget renders a radio-button picker above the form\n"
+        "fields so the user selects the related record before submitting."
+    ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__create_lead_form() -> types.CallToolResult:
-    """Opens an interactive form widget for creating a new Salesforce Lead."""
+async def sf__show_create_form(
+    entity: str,
+    fk_options: dict = None,
+) -> types.CallToolResult:
+    """Opens an interactive create form in the widget for the given Salesforce entity."""
+    structured: dict = {"type": "form", "entity": entity}
+    if fk_options:
+        structured["fkSelections"] = fk_options
+    label = entity.replace("_", " ").title()
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Lead creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "lead"},
-    )
-
-
-@mcp.tool(
-    description="Opens a form to create a new Salesforce Account. The user fills in details and submits.",
-    meta={"ui": {"resourceUri": WIDGET_URI}},
-)
-async def sf__create_account_form() -> types.CallToolResult:
-    """Opens an interactive form widget for creating a new Salesforce Account."""
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Account creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "account"},
-    )
-
-
-@mcp.tool(
-    description="Opens a form to create a new Salesforce Contact. The user fills in details and submits.",
-    meta={"ui": {"resourceUri": WIDGET_URI}},
-)
-async def sf__create_contact_form() -> types.CallToolResult:
-    """Opens an interactive form widget for creating a new Salesforce Contact."""
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "contact"},
+        content=[types.TextContent(
+            type="text",
+            text=f"Opening {label} creation form. Fill in the details and click Submit.",
+        )],
+        structuredContent=structured,
     )
 
 

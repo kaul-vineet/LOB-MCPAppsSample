@@ -7,6 +7,8 @@ export interface Incident {
   priority: string;
   assigned_to: string;
   sys_created_on: string;
+  sla_due?: string;
+  made_sla?: boolean;
 }
 
 export interface ServiceRequest {
@@ -17,6 +19,8 @@ export interface ServiceRequest {
   priority: string;
   approval: string;
   sys_created_on: string;
+  sla_due?: string;
+  made_sla?: boolean;
 }
 
 export interface RequestItem {
@@ -79,6 +83,16 @@ export interface SnowApproval {
   created_on: string;
 }
 
+export interface ChangeTask {
+  sys_id: string;
+  number: string;
+  short_description: string;
+  state: string;
+  assigned_to?: string;
+  planned_start?: string;
+  planned_end?: string;
+}
+
 export interface SnowData {
   type:
     | 'incidents'
@@ -90,12 +104,14 @@ export interface SnowData {
     | 'knowledge_articles'
     | 'service_catalog'
     | 'approvals';
-  entity?: 'incident' | 'request';
+  entity?: 'incident' | 'request' | 'change_request';
   prefill?: Record<string, string>;
+  fkSelections?: Record<string, { label: string; options: { id: string; name: string }[] }>;
   total?: number;
   incidents?: Incident[];
   requests?: ServiceRequest[];
   items?: any[];
+  change_tasks?: ChangeTask[];
   error?: boolean;
   message?: string;
   _createdId?: string;

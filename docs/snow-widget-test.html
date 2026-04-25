@@ -49,7 +49,7 @@
     <button class="purple" onclick="sendCatalog()">🛒 Catalog (5)</button>
     <button class="grey" onclick="sendApprovals()">✅ Approvals (3)</button>
   </div>
-  <p class="hint">▶ Incidents → click row to add work note &nbsp;·&nbsp; ▶ Requests → request items child table &nbsp;·&nbsp; ✏️ inline edit on Incidents / Requests &nbsp;·&nbsp; + New on Incidents / Requests / Changes &nbsp;·&nbsp; Filter bar on each view</p>
+  <p class="hint">▶ Incidents → click row to add work note · SLA pill column &nbsp;·&nbsp; ▶ Requests → request items child table · SLA pill &nbsp;·&nbsp; ▶ Changes → click row to expand CTasks child table · ✏️ edit &nbsp;·&nbsp; ✓ Approve / ✗ Reject on Approvals &nbsp;·&nbsp; + New on Incidents / Requests / Changes</p>
 </div>
 
 <!-- ── 2. NEW ──────────────────────────────────────────────────────────────── -->
@@ -72,6 +72,7 @@
   <div class="controls">
     <button onclick="sendForm('incident')">🎫 New Incident</button>
     <button class="teal" onclick="sendForm('request')">📋 New Request</button>
+    <button class="teal" onclick="sendForm('change_request')">🔄 New Change Request</button>
   </div>
 </div>
 
@@ -128,21 +129,21 @@ var isDark = false;
 var MOCK_INCIDENTS = {
   type: "incidents", total: 5,
   incidents: [
-    { sys_id: "inc001", number: "INC0001234", short_description: "Email not working for marketing team",       state: "New",         priority: "2", assigned_to: "John Smith",   sys_created_on: "2026-04-22" },
-    { sys_id: "inc002", number: "INC0001235", short_description: "VPN connection dropping every 30 minutes",  state: "In Progress", priority: "1", assigned_to: "Sarah Jones",  sys_created_on: "2026-04-21" },
-    { sys_id: "inc003", number: "INC0001236", short_description: "Printer offline on 3rd floor",               state: "On Hold",     priority: "3", assigned_to: "Mike Chen",    sys_created_on: "2026-04-20" },
-    { sys_id: "inc004", number: "INC0001237", short_description: "Cannot access SharePoint after update",      state: "Resolved",    priority: "2", assigned_to: "Ana Rivera",   sys_created_on: "2026-04-19" },
-    { sys_id: "inc005", number: "INC0001238", short_description: "Teams audio muffled in meeting rooms",       state: "New",         priority: "4", assigned_to: "",             sys_created_on: "2026-04-18" }
+    { sys_id: "inc001", number: "INC0001234", short_description: "Email not working for marketing team",       state: "New",         priority: "2", assigned_to: "John Smith",   sys_created_on: "2026-04-22", sla_due: "2026-04-26", made_sla: null  },
+    { sys_id: "inc002", number: "INC0001235", short_description: "VPN connection dropping every 30 minutes",  state: "In Progress", priority: "1", assigned_to: "Sarah Jones",  sys_created_on: "2026-04-21", sla_due: "2026-04-23", made_sla: false },
+    { sys_id: "inc003", number: "INC0001236", short_description: "Printer offline on 3rd floor",               state: "On Hold",     priority: "3", assigned_to: "Mike Chen",    sys_created_on: "2026-04-20", sla_due: "2026-04-28", made_sla: null  },
+    { sys_id: "inc004", number: "INC0001237", short_description: "Cannot access SharePoint after update",      state: "Resolved",    priority: "2", assigned_to: "Ana Rivera",   sys_created_on: "2026-04-19", sla_due: "2026-04-22", made_sla: true  },
+    { sys_id: "inc005", number: "INC0001238", short_description: "Teams audio muffled in meeting rooms",       state: "New",         priority: "4", assigned_to: "",             sys_created_on: "2026-04-18", sla_due: null,         made_sla: null  }
   ]
 };
 
 var MOCK_REQUESTS = {
   type: "requests", total: 4,
   requests: [
-    { sys_id: "req001", number: "REQ0000567", short_description: "New laptop for onboarding — Tom Baker",    request_state: "In Progress", priority: "3", approval: "approved",      sys_created_on: "2026-04-20" },
-    { sys_id: "req002", number: "REQ0000568", short_description: "Adobe Creative Cloud license renewal",      request_state: "New",         priority: "3", approval: "requested",     sys_created_on: "2026-04-19" },
-    { sys_id: "req003", number: "REQ0000569", short_description: "Access to Salesforce sandbox environment",  request_state: "On Hold",     priority: "4", approval: "not requested", sys_created_on: "2026-04-18" },
-    { sys_id: "req004", number: "REQ0000570", short_description: "Standing desk for finance department",      request_state: "Closed",      priority: "4", approval: "approved",      sys_created_on: "2026-04-15" }
+    { sys_id: "req001", number: "REQ0000567", short_description: "New laptop for onboarding — Tom Baker",    request_state: "In Progress", priority: "3", approval: "approved",      sys_created_on: "2026-04-20", sla_due: "2026-04-27", made_sla: null  },
+    { sys_id: "req002", number: "REQ0000568", short_description: "Adobe Creative Cloud license renewal",      request_state: "New",         priority: "3", approval: "requested",     sys_created_on: "2026-04-19", sla_due: "2026-04-24", made_sla: false },
+    { sys_id: "req003", number: "REQ0000569", short_description: "Access to Salesforce sandbox environment",  request_state: "On Hold",     priority: "4", approval: "not requested", sys_created_on: "2026-04-18", sla_due: "2026-04-30", made_sla: null  },
+    { sys_id: "req004", number: "REQ0000570", short_description: "Standing desk for finance department",      request_state: "Closed",      priority: "4", approval: "approved",      sys_created_on: "2026-04-15", sla_due: "2026-04-22", made_sla: true  }
   ]
 };
 
@@ -200,6 +201,14 @@ var MOCK_REQUEST_ITEMS = {
     { sys_id: "ri001", short_description: "Dell XPS 15 Laptop",       quantity: 1, stage: "Ordered",     price: "$1,200", cat_item: "Laptop",   state: "open" },
     { sys_id: "ri002", short_description: "USB-C Docking Station",    quantity: 1, stage: "Fulfillment", price: "$120",   cat_item: "Hardware", state: "open" },
     { sys_id: "ri003", short_description: "27-inch External Monitor", quantity: 2, stage: "Delivery",    price: "$350",   cat_item: "Hardware", state: "open" }
+  ]
+};
+
+var MOCK_CHANGE_TASKS = {
+  items: [
+    { sys_id: "ctask001", number: "CTASK0001001", short_description: "Pre-change backup of production DB",       state: "In Progress", assigned_to: "DB Team",   planned_start: "2026-04-28 08:00", planned_end: "2026-04-28 10:00" },
+    { sys_id: "ctask002", number: "CTASK0001002", short_description: "Apply database upgrade scripts",            state: "New",         assigned_to: "DB Team",   planned_start: "2026-04-28 10:00", planned_end: "2026-04-28 12:00" },
+    { sys_id: "ctask003", number: "CTASK0001003", short_description: "Post-upgrade smoke tests and validation",  state: "New",         assigned_to: "QA Team",   planned_start: "2026-04-28 12:00", planned_end: "2026-04-28 14:00" }
   ]
 };
 
@@ -270,18 +279,49 @@ function sendChangeSummary() {
 window.addEventListener('message', function(e) {
   var d = e.data;
   if (!d) return;
+  if (d.jsonrpc === '2.0' && d.method === 'ui/initialize') {
+    document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', id: d.id, result: { protocolVersion: (d.params && d.params.protocolVersion) || '2026-01-26', hostInfo: { name: 'snow-test-host', version: '1.0.0' }, hostCapabilities: { serverTools: {} }, hostContext: { theme: isDark ? 'dark' : 'light' } } }, '*');
+    return;
+  }
   if (d.jsonrpc === '2.0' && d.method === 'ui/callTool') {
     var name = d.params.name; var args = d.params.arguments || {};
     logMsg('[<- widget] callTool: ' + name + ' ' + JSON.stringify(args).slice(0, 80));
     var result;
-    if (name === 'get_request_items') {
+    if (name === 'sn__get_request_items') {
       result = MOCK_REQUEST_ITEMS;
-    } else if (name === 'create_incident' || name === 'sn__create_incident') {
-      result = { type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_new', number: 'INC0001999', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '3', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] };
-    } else if (name === 'create_request' || name === 'sn__create_request') {
-      result = { type: 'requests', total: 1, requests: [{ sys_id: 'req_new', number: 'REQ0000999', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '3', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] };
+    } else if (name === 'sn__create_incident') {
+      var today = new Date().toISOString().slice(0,10);
+      result = { type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_new', number: 'INC0001999', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '3', assigned_to: '', sys_created_on: today, sla_due: null, made_sla: null }] };
+    } else if (name === 'sn__update_incident') {
+      result = { success: true, sys_id: args.sys_id };
+      logMsg('[sim] update_incident: ' + args.sys_id + ' priority=' + args.priority);
+    } else if (name === 'sn__create_request') {
+      var today = new Date().toISOString().slice(0,10);
+      result = { type: 'requests', total: 1, requests: [{ sys_id: 'req_new', number: 'REQ0000999', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '3', approval: 'not requested', sys_created_on: today, sla_due: null, made_sla: null }] };
+    } else if (name === 'sn__update_request') {
+      result = { success: true, sys_id: args.sys_id };
+      logMsg('[sim] update_request: ' + args.sys_id + ' approval=' + args.approval);
+    } else if (name === 'sn__update_request_item') {
+      result = { success: true, sys_id: args.sys_id };
+      logMsg('[sim] update_request_item: ' + args.sys_id + ' qty=' + args.quantity);
     } else if (name === 'sn__create_change_request') {
-      result = { type: 'change_requests', total: 1, items: [{ sys_id: 'chg_new', number: 'CHG0001999', short_description: args.short_description || 'New change', state: 'New', priority: args.priority || '3', risk: args.risk || 'medium', category: args.category || 'Normal', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] };
+      var today = new Date().toISOString().slice(0,10);
+      result = { type: 'change_requests', total: 1, items: [{ sys_id: 'chg_new', number: 'CHG0001999', short_description: args.short_description || 'New change', state: 'New', priority: args.priority || '3', risk: args.risk || 'medium', category: args.category || 'Normal', assigned_to: '', sys_created_on: today }] };
+    } else if (name === 'sn__update_change_request') {
+      result = { success: true, sys_id: args.sys_id };
+      logMsg('[sim] update_change_request: ' + args.sys_id);
+    } else if (name === 'sn__get_change_tasks') {
+      result = MOCK_CHANGE_TASKS;
+    } else if (name === 'sn__approve_record') {
+      result = { success: true };
+      logMsg('[sim] approved: ' + args.sys_id);
+    } else if (name === 'sn__reject_record') {
+      result = { success: true };
+      logMsg('[sim] rejected: ' + args.sys_id);
+    } else if (name === 'sn__show_create_form') {
+      var payload = { type: 'form', entity: args.entity || 'incident' };
+      if (args.fk_options) payload.fkSelections = args.fk_options;
+      result = payload;
     } else if (name === 'sn__add_work_note') {
       result = { success: true };
     } else {

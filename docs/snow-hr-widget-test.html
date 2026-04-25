@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>⚓ GTC Dockyard — ServiceNow HR Widget Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 20px; margin: 0; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-wrap { max-width: 980px; margin-bottom: 6px; }
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #555; margin: 14px 0 5px; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: #ddd; }
+  .controls { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 7px 13px; border: none; border-radius: 6px; background: #1B7A6E; color: white; cursor: pointer; font-size: 12px; }
+  button:hover { background: #155F55; }
+  button.green  { background: #2e844a; } button.green:hover  { background: #1c6b35; }
+  button.dark   { background: #16325c; } button.dark:hover   { background: #0b1f3a; }
+  button.purple { background: #6b5b95; } button.purple:hover { background: #4a3f6b; }
+  button.teal   { background: #009ba1; } button.teal:hover   { background: #007a7e; }
+  button.grey   { background: #706e6b; } button.grey:hover   { background: #514f4d; }
+  button.red    { background: #ea001e; } button.red:hover    { background: #ba0517; }
+  .hint   { font-size: 11px; color: #777; margin: 3px 0 8px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 10px; max-height: 150px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 980px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 500px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #EDF5F3; color: #1B7A6E; margin-left: 8px; }
+  .admin-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .admin-row label { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+  .admin-row input[type=color] { width: 32px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
+  .admin-row input[type=range] { width: 120px; }
+  .admin-row input[type=text]  { width: 90px; font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h2>⚓ GTC Dockyard — ServiceNow HR <span class="badge">HR Service Delivery</span></h2>
+<p class="subtitle">The Great Trading Company — HR Widget Test · HR Cases · HR Services · HR Approvals · PII-sensitive · separate from ITSM widget</p>
+
+<!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📋 List — send existing records</div>
+  <div class="controls">
+    <button onclick="sendHRCases()">🧑‍💼 HR Cases (4)</button>
+    <button class="teal" onclick="sendHRServices()">📋 HR Services (5)</button>
+    <button class="green" onclick="sendHRApprovals()">✅ HR Approvals (3)</button>
+  </div>
+  <p class="hint">▶ HR Cases → click row to add work note · ✏️ edit · + New &nbsp;·&nbsp; HR Services → read-only card grid &nbsp;·&nbsp; HR Approvals → ✓ Approve / ✗ Reject per row</p>
+</div>
+
+<!-- ── 2. EMPTY ────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">➕ Empty — empty state views</div>
+  <div class="controls">
+    <button class="grey" onclick="sendEmpty('hr_cases')">HR Cases (empty)</button>
+    <button class="grey" onclick="sendEmpty('hr_services')">HR Services (empty)</button>
+    <button class="grey" onclick="sendEmpty('hr_approvals')">HR Approvals (empty)</button>
+  </div>
+</div>
+
+<!-- ── 3. FORMS ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📝 Forms — standalone HR Case create form</div>
+  <div class="controls">
+    <button onclick="sendForm('hr_case')">🧑‍💼 New HR Case (blank)</button>
+    <button class="purple" onclick="sendFormWithFk()">🧑‍💼 New HR Case + Employee picker</button>
+  </div>
+  <p class="hint">FK picker: agent pre-resolves employee via sn__get_users, passes as fkSelections.opened_for</p>
+</div>
+
+<!-- ── 4. PREFILL ─────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">✏️ Prefill — agent extracts data from conversation</div>
+  <div class="controls">
+    <button class="teal" onclick="sendFormPrefill()">📝 Prefill HR Case (Maternity Leave)</button>
+  </div>
+</div>
+
+<!-- ── 5. ADMIN ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">⚙️ Admin — widget configuration, theme, error simulation</div>
+  <div class="admin-row">
+    <label>Brand color
+      <input type="color" id="brandColor" value="#1B7A6E" oninput="applyBrandColor(this.value)" />
+      <input type="text"  id="brandHex"   value="#1B7A6E" oninput="applyBrandColorHex(this.value)" style="width:78px" />
+    </label>
+    <button onclick="resetBrand()" class="grey" style="padding:5px 10px;font-size:11px">↺ Reset HR Green</button>
+  </div>
+  <div class="admin-row">
+    <label>Widget height
+      <input type="range" id="heightSlider" min="300" max="1200" value="500" oninput="setHeight(this.value)" />
+      <span id="heightLabel" style="font-size:11px;color:#555;width:42px">500px</span>
+    </label>
+    <button onclick="autoHeight()" class="grey" style="padding:5px 10px;font-size:11px">Auto</button>
+  </div>
+  <div class="controls" style="margin-top:4px">
+    <button class="dark" onclick="toggleTheme()">🌙 Toggle Dark / Light</button>
+    <button class="red"  onclick="sendError()">⚠️ Auth Error</button>
+  </div>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="../widgets/dist/servicenow-hr.html"></iframe>
+</div>
+
+<div class="section-label" style="max-width:980px;margin-top:10px">📜 Event Log</div>
+<div class="log" id="log" style="max-width:980px">— event log —</div>
+
+<script>
+var isDark = false;
+
+var MOCK_EMPLOYEES = [
+  { id: "emp001", name: "Alice Johnson" },
+  { id: "emp002", name: "Bob Martinez" },
+  { id: "emp003", name: "Carol Chen" },
+  { id: "emp004", name: "David Patel" },
+  { id: "emp005", name: "Emma Wilson" }
+];
+
+var MOCK_HR_CASES = {
+  type: "hr_cases", total: 4,
+  items: [
+    { sys_id: "hrc001", number: "HRC0001001", opened_for: "Alice Johnson", hr_service: "Leave Management", subject: "Maternity leave request — 3 months",           description: "Requesting parental leave starting June 1, 2026", state: "Open",        priority: "3", sys_created_on: "2026-04-20" },
+    { sys_id: "hrc002", number: "HRC0001002", opened_for: "Bob Martinez",  hr_service: "Payroll",           subject: "Missing overtime pay for March",                description: "Overtime hours not reflected in March payslip",     state: "In Progress", priority: "2", sys_created_on: "2026-04-18" },
+    { sys_id: "hrc003", number: "HRC0001003", opened_for: "Carol Chen",    hr_service: "Benefits",          subject: "Health insurance enrollment update",            description: "Adding spouse and child to health plan",           state: "Open",        priority: "3", sys_created_on: "2026-04-15" },
+    { sys_id: "hrc004", number: "HRC0001004", opened_for: "David Patel",   hr_service: "Offboarding",       subject: "Final paycheck and clearance documents",        description: "Last working day April 30. Need clearance kit.",   state: "Resolved",    priority: "2", sys_created_on: "2026-04-10" }
+  ]
+};
+
+var MOCK_HR_SERVICES = {
+  type: "hr_services", total: 5,
+  items: [
+    { sys_id: "hrs001", name: "Leave Management",       category: "Time Off",   short_description: "Request, track, and manage employee leave entitlements" },
+    { sys_id: "hrs002", name: "Payroll Enquiry",         category: "Payroll",    short_description: "Resolve payroll discrepancies and enquiries" },
+    { sys_id: "hrs003", name: "Benefits Enrollment",     category: "Benefits",   short_description: "Enroll or update employee health, dental, and vision plans" },
+    { sys_id: "hrs004", name: "Onboarding",              category: "Lifecycle",  short_description: "New employee onboarding tasks and checklist management" },
+    { sys_id: "hrs005", name: "Offboarding",             category: "Lifecycle",  short_description: "Employee exit process, clearance, and final documentation" }
+  ]
+};
+
+var MOCK_HR_APPROVALS = {
+  type: "hr_approvals", total: 3,
+  items: [
+    { sys_id: "hra001", approver: "Jennifer Lee",  document: "HRC0001001", state: "requested", due_date: "2026-04-30" },
+    { sys_id: "hra002", approver: "Mark Thompson", document: "HRC0001003", state: "requested", due_date: "2026-04-28" },
+    { sys_id: "hra003", approver: "Susan Clark",   document: "HRC0001002", state: "requested", due_date: "2026-04-27" }
+  ]
+};
+
+var EMPTY_TYPES = {
+  hr_cases:     { type: "hr_cases",     total: 0, items: [] },
+  hr_services:  { type: "hr_services",  total: 0, items: [] },
+  hr_approvals: { type: "hr_approvals", total: 0, items: [] }
+};
+
+function post(data) {
+  var frame = document.getElementById('widget');
+  if (!frame) return;
+  frame.contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: data } }, '*');
+  logMsg('[-> widget] ' + JSON.stringify(data).slice(0, 120));
+}
+
+function logMsg(msg) {
+  var el = document.getElementById('log');
+  var ts = new Date().toISOString().substr(11, 8);
+  el.textContent = '[' + ts + '] ' + msg + '\n' + el.textContent;
+}
+
+function sendHRCases()     { post(JSON.parse(JSON.stringify(MOCK_HR_CASES))); logMsg('→ hr_cases (4)'); }
+function sendHRServices()  { post(JSON.parse(JSON.stringify(MOCK_HR_SERVICES))); logMsg('→ hr_services (5)'); }
+function sendHRApprovals() { post(JSON.parse(JSON.stringify(MOCK_HR_APPROVALS))); logMsg('→ hr_approvals (3)'); }
+function sendEmpty(type)   { post(EMPTY_TYPES[type]); logMsg('→ empty: ' + type); }
+
+function sendForm(entity) {
+  post({ type: 'form', entity: entity });
+  logMsg('→ form: ' + entity);
+}
+
+function sendFormWithFk() {
+  var fkSelections = {
+    opened_for: { label: 'Employee (Opened For)', options: MOCK_EMPLOYEES }
+  };
+  post({ type: 'form', entity: 'hr_case', fkSelections: fkSelections });
+  logMsg('→ form: hr_case (with employee FK picker · ' + MOCK_EMPLOYEES.length + ' employees)');
+}
+
+function sendFormPrefill() {
+  var fkSelections = { opened_for: { label: 'Employee (Opened For)', options: MOCK_EMPLOYEES } };
+  post({ type: 'form', entity: 'hr_case', fkSelections: fkSelections, prefill: { subject: 'Maternity leave request', description: 'Requesting 3-month parental leave starting June 2026', priority: '3' } });
+  logMsg('→ form: hr_case prefill (maternity leave)');
+}
+
+window.addEventListener('message', function(e) {
+  var d = e.data;
+  if (!d) return;
+
+  if (d.jsonrpc === '2.0' && d.method === 'ui/initialize') {
+    document.querySelector('iframe').contentWindow.postMessage({
+      jsonrpc: '2.0', id: d.id, result: {
+        protocolVersion: (d.params && d.params.protocolVersion) || '2026-01-26',
+        hostInfo: { name: 'snow-hr-test-host', version: '1.0.0' },
+        hostCapabilities: { serverTools: {} },
+        hostContext: { theme: isDark ? 'dark' : 'light' }
+      }
+    }, '*');
+    logMsg('[init] ui/initialize → responded with host context');
+    return;
+  }
+
+  if (d.jsonrpc === '2.0' && d.method === 'ui/callTool') {
+    var name = d.params.name; var args = d.params.arguments || {};
+    logMsg('[<- widget] callTool: ' + name + ' ' + JSON.stringify(args).slice(0, 80));
+    var result;
+
+    if (name === 'sn__get_users') {
+      var q = (args.name || '').toLowerCase();
+      result = { items: MOCK_EMPLOYEES.filter(function(e) { return !q || e.name.toLowerCase().includes(q); }) };
+    } else if (name === 'sn__create_hr_case') {
+      var today = new Date().toISOString().slice(0,10);
+      result = { type: 'hr_cases', total: 1, items: [{ sys_id: 'hrc_new', number: 'HRC0001999', opened_for: args.opened_for || 'Unknown', hr_service: args.hr_service || '', subject: args.subject || 'New HR case', description: args.description || '', state: 'Open', priority: args.priority || '3', sys_created_on: today }] };
+    } else if (name === 'sn__update_hr_case') {
+      result = { success: true, sys_id: args.sys_id };
+      logMsg('[sim] update_hr_case: ' + args.sys_id);
+    } else if (name === 'sn__hr_approve_record') {
+      result = { success: true };
+      logMsg('[sim] hr_approve_record: ' + args.sys_id);
+    } else if (name === 'sn__hr_reject_record') {
+      result = { success: true };
+      logMsg('[sim] hr_reject_record: ' + args.sys_id);
+    } else if (name === 'sn__show_hr_create_form') {
+      var payload = { type: 'form', entity: args.entity || 'hr_case' };
+      if (args.fk_options) payload.fkSelections = args.fk_options;
+      result = payload;
+    } else if (name === 'sn__add_hr_work_note') {
+      result = { success: true };
+      logMsg('[sim] add_hr_work_note: ' + args.sys_id + ' — "' + (args.work_note || '').slice(0, 40) + '"');
+    } else {
+      logMsg('[sim] ' + name + ': ' + JSON.stringify(args).slice(0, 80));
+      result = { success: true };
+    }
+
+    var frame = document.getElementById('widget');
+    if (frame) frame.contentWindow.postMessage({ jsonrpc: '2.0', id: d.id, result: { structuredContent: result } }, '*');
+  }
+});
+
+function applyBrandColor(hex) {
+  document.getElementById('brandColor').value = hex;
+  document.getElementById('brandHex').value = hex;
+  document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/config', params: { brandColor: hex } }, '*');
+  logMsg('→ brand color: ' + hex);
+}
+function applyBrandColorHex(hex) { if (/^#[0-9A-Fa-f]{6}$/.test(hex)) applyBrandColor(hex); }
+function resetBrand() { applyBrandColor('#1B7A6E'); }
+
+function setHeight(val) {
+  document.getElementById('widget').style.minHeight = val + 'px';
+  document.getElementById('heightLabel').textContent = val + 'px';
+}
+function autoHeight() {
+  document.getElementById('widget').style.minHeight = '';
+  document.getElementById('heightLabel').textContent = 'auto';
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/hostContextChanged', params: { theme: isDark ? 'dark' : 'light' } }, '*');
+  document.body.style.background = isDark ? '#1a1a1a' : '#f0f0f0';
+  document.body.style.color = isDark ? '#e0e0e0' : '#000';
+  logMsg('→ theme: ' + (isDark ? 'dark' : 'light'));
+}
+
+function sendError() {
+  post({ error: true, message: 'ServiceNow HR authentication failed. Check SERVICENOW_USERNAME and SERVICENOW_PASSWORD environment variables.' });
+}
+</script>
+</body>
+</html>

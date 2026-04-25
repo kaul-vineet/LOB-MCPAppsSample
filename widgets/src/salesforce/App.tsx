@@ -241,7 +241,7 @@ function InlineFormRow({ colSpan, title, fields, onSave, onCancel, saving, theme
       <TableCell colSpan={colSpan} style={{ padding: 0 }}>
         <div style={{ padding: '14px 16px', borderLeft: `3px solid ${t.brand}`, background: formBg }}>
           <div style={{ fontSize: '14px', fontWeight: 600, color: t.brand, marginBottom: '10px' }}>{title}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px 12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px 12px', marginBottom: '12px' }}>
             {fields.map(f =>
               f.type === 'select' ? (
                 <FormSelect key={f.key} label={f.label} value={f.value} options={f.options || []} onChange={f.onChange} theme={theme} />
@@ -274,7 +274,6 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
   const [filterName, setFilterName] = useState('');
-  const [filterIndustry, setFilterIndustry] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -292,7 +291,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const doSearch = async () => {
     setFiltering(true);
     try {
-      const res = await callTool('get_accounts', { name: filterName, industry: filterIndustry });
+      const res = await callTool('get_accounts', { name: filterName });
       setLocalItems(res?.items || []);
     } finally { setFiltering(false); }
   };
@@ -343,8 +342,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Account" theme={theme} />
-      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme}
-        extra={<FormSelect label="" value={filterIndustry} options={ACCT_INDUSTRIES} onChange={setFilterIndustry} theme={theme} />} />
+      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -671,7 +669,6 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
   const [filterName, setFilterName] = useState('');
-  const [filterStage, setFilterStage] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -686,7 +683,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_opportunities', { name: filterName, stage: filterStage }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_opportunities', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -730,8 +727,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Opportunity" theme={theme} />
-      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme}
-        extra={<FormSelect label="" value={filterStage} options={OPP_STAGES} onChange={setFilterStage} theme={theme} />} />
+      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -788,8 +784,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterPrio, setFilterPrio] = useState('');
+  const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -804,7 +799,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_cases', { status: filterStatus, priority: filterPrio }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_cases', { subject: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -846,12 +841,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="+ New Case" theme={theme} />
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', flexWrap: 'wrap', borderBottom: `1px solid ${t.border}`, background: theme === 'dark' ? '#1a3a65' : '#FAFAF9' }}>
-        <FormSelect label="" value={filterStatus} options={CASE_STATUSES} onChange={setFilterStatus} theme={theme} />
-        <FormSelect label="" value={filterPrio} options={CASE_PRIOS} onChange={setFilterPrio} theme={theme} />
-        <Button size="small" appearance="primary" icon={filtering ? <Spinner size="tiny" /> : <SearchRegular />} onClick={doSearch} disabled={filtering}
-          style={{ background: t.brand, borderColor: t.brand, height: '30px', minWidth: '80px' }}>Search</Button>
-      </div>
+      <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -909,7 +899,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -921,7 +911,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_tasks', { status: filterStatus }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('get_tasks', { subject: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -953,11 +943,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="+ New Task" theme={theme} />
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', flexWrap: 'wrap', borderBottom: `1px solid ${t.border}`, background: theme === 'dark' ? '#1a3a65' : '#FAFAF9' }}>
-        <FormSelect label="" value={filterStatus} options={TASK_STATUSES} onChange={setFilterStatus} theme={theme} />
-        <Button size="small" appearance="primary" icon={filtering ? <Spinner size="tiny" /> : <SearchRegular />} onClick={doSearch} disabled={filtering}
-          style={{ background: t.brand, borderColor: t.brand, height: '30px', minWidth: '80px' }}>Search</Button>
-      </div>
+      <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -1219,10 +1205,21 @@ const FORM_DEFS: Record<string, { label: string; key: string; required?: boolean
   ],
 };
 
-const FORM_TOOL: Record<string, string> = { lead: 'create_lead', account: 'create_account', contact: 'create_contact', opportunity: 'create_opportunity', case: 'create_case', task: 'create_task' };
+const FORM_CREATE_TOOL: Record<string, string> = { lead: 'create_lead', account: 'create_account', contact: 'create_contact', opportunity: 'create_opportunity', case: 'create_case', task: 'create_task' };
+const FORM_UPDATE_TOOL: Record<string, string> = { lead: 'update_lead', account: 'update_account', contact: 'update_contact', opportunity: 'update_opportunity', case: 'update_case', task: 'update_task' };
+const FORM_ID_PARAM: Record<string, string>    = { lead: 'lead_id', account: 'account_id', contact: 'contact_id', opportunity: 'opportunity_id', case: 'case_id', task: 'task_id' };
 const FORM_ICONS: Record<string, string> = { lead: '👤', account: '🏢', contact: '👥', opportunity: '💰', case: '🎫', task: '✅' };
 
-function FormView({ entity, prefill, callTool, toast, theme }: { entity: string; prefill?: Record<string, string>; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, callTool, toast, theme }: {
+  entity: string;
+  prefill?: Record<string, string>;
+  fkSelections?: Record<string, { label: string; options: { id: string; name: string }[] }>;
+  mode?: 'create' | 'edit';
+  recordId?: string;
+  callTool: (n: string, a?: any) => Promise<any>;
+  toast: (m: string, t?: any) => void;
+  theme: 'light' | 'dark';
+}) {
   const styles = useStyles();
   const t = slds(theme);
   const fields = FORM_DEFS[entity] || [];
@@ -1231,19 +1228,31 @@ function FormView({ entity, prefill, callTool, toast, theme }: { entity: string;
     fields.forEach(f => { init[f.key] = prefill?.[f.key] || ''; });
     return init;
   });
+  const [fkChoices, setFkChoices] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const set = (k: string, v: string) => setValues(p => ({ ...p, [k]: v }));
+  const setFk = (k: string, v: string) => setFkChoices(p => ({ ...p, [k]: v }));
+
+  const entityLabel = entity.charAt(0).toUpperCase() + entity.slice(1);
+  const isEdit = mode === 'edit';
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const args: Record<string, string> = {};
+      const args: Record<string, any> = {};
       fields.forEach(f => { if (values[f.key]) args[f.key] = values[f.key]; });
-      await callTool(FORM_TOOL[entity] || `create_${entity}`, args);
-      toast(`${entity.charAt(0).toUpperCase() + entity.slice(1)} created!`, 'success');
+      Object.entries(fkChoices).forEach(([k, v]) => { if (v) args[k] = v; });
+      if (isEdit) {
+        const idParam = FORM_ID_PARAM[entity] || `${entity}_id`;
+        await callTool(FORM_UPDATE_TOOL[entity] || `update_${entity}`, { [idParam]: recordId, ...args });
+        toast(`${entityLabel} updated!`, 'success');
+      } else {
+        await callTool(FORM_CREATE_TOOL[entity] || `create_${entity}`, args);
+        toast(`${entityLabel} created!`, 'success');
+      }
       setDone(true);
-    } catch (e: any) { toast(e?.message || 'Failed to create.', 'error'); }
+    } catch (e: any) { toast(e?.message || `Failed to ${isEdit ? 'update' : 'create'}.`, 'error'); }
     finally { setSubmitting(false); }
   };
 
@@ -1251,25 +1260,52 @@ function FormView({ entity, prefill, callTool, toast, theme }: { entity: string;
     const init: Record<string, string> = {};
     fields.forEach(f => { init[f.key] = ''; });
     setValues(init);
+    setFkChoices({});
     setDone(false);
   };
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: `linear-gradient(135deg, ${t.brand}, ${t.brandHover})` }}>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{FORM_ICONS[entity] || '✨'} New {entity.charAt(0).toUpperCase() + entity.slice(1)}</span>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{FORM_ICONS[entity] || '✨'} {isEdit ? 'Edit' : 'New'} {entityLabel}</span>
         <ExpandButton />
       </div>
       {done ? (
         <div style={{ padding: '32px 16px', textAlign: 'center' }}>
           <div style={{ fontSize: '36px', marginBottom: '12px' }}>✅</div>
-          <Text weight="semibold" size={400} style={{ color: t.text }}>{entity.charAt(0).toUpperCase() + entity.slice(1)} created successfully!</Text>
+          <Text weight="semibold" size={400} style={{ color: t.text }}>{entityLabel} {isEdit ? 'updated' : 'created'} successfully!</Text>
           <div style={{ marginTop: '16px' }}>
-            <Button appearance="primary" onClick={handleReset} style={{ background: t.brand, borderColor: t.brand, color: '#fff' }}>Create Another</Button>
+            {!isEdit && <Button appearance="primary" onClick={handleReset} style={{ background: t.brand, borderColor: t.brand, color: '#fff' }}>Create Another</Button>}
           </div>
         </div>
       ) : (
         <div style={{ padding: '16px 20px 20px' }}>
+          {fkSelections && Object.keys(fkSelections).length > 0 && (
+            <div style={{ marginBottom: '18px', padding: '12px 14px', background: t.surfaceAlt || t.surface, border: `1px solid ${t.border}`, borderRadius: '6px' }}>
+              {Object.entries(fkSelections).map(([fkKey, fkDef]) => (
+                <div key={fkKey} style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>
+                    {fkDef.label}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {fkDef.options.map(opt => (
+                      <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: t.text }}>
+                        <input
+                          type="radio"
+                          name={fkKey}
+                          value={opt.name}
+                          checked={fkChoices[fkKey] === opt.name}
+                          onChange={() => setFk(fkKey, opt.name)}
+                          style={{ accentColor: t.brand }}
+                        />
+                        {opt.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px', marginBottom: '20px' }}>
             {fields.map(f =>
               f.type === 'select' ? (
@@ -1388,7 +1424,7 @@ export function SalesforceApp() {
   // ── Form (standalone create form from tool) ──
   if ((data as any).type === 'form') {
     const fd = data as any;
-    return <div className={styles.shell} style={shellStyle}><FormView entity={fd.entity} prefill={fd.prefill} callTool={callTool} toast={toast} theme={theme} /></div>;
+    return <div className={styles.shell} style={shellStyle}><FormView entity={fd.entity} prefill={fd.prefill} fkSelections={fd.fkSelections} callTool={callTool} toast={toast} theme={theme} /></div>;
   }
 
   // ── Detail views ──

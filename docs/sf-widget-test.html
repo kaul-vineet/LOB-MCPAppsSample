@@ -37,6 +37,38 @@
 <h2>⚓ <img src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="SF" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — Salesforce CRM <span class="badge">Interactive</span></h2>
 <p class="subtitle">The Great Trading Company — Dockyard Test Facility · 8 entity views · dashboards · forms</p>
 
+<!-- ── Widget Architecture Map ──────────────────────────────────────────────── -->
+<details style="max-width:980px;margin-bottom:14px">
+  <summary style="font-size:11px;font-weight:700;text-transform:uppercase;color:#555;letter-spacing:0.6px;cursor:pointer;user-select:none">🗺️ Widget Architecture Map</summary>
+  <div style="overflow-x:auto;margin-top:8px">
+  <table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead>
+      <tr style="background:#f4f4f4">
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">View</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Type</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Entity</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Child / Inline</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd">User Action — Parent</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd">User Action — Child</th>
+        <th style="padding:6px 10px;text-align:center;border:1px solid #ddd;white-space:nowrap">Standalone<br>Create Form</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">accounts</td><td style="padding:5px 10px;border:1px solid #ddd">Account</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Contacts · ▶ Opps · ▶ Cases</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/account</code></td></tr>
+      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">leads</td><td style="padding:5px 10px;border:1px solid #ddd">Lead</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new · ⇄ Convert</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/lead</code></td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">contacts</td><td style="padding:5px 10px;border:1px solid #ddd">Contact</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/contact</code></td></tr>
+      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">opportunities</td><td style="padding:5px 10px;border:1px solid #ddd">Opportunity</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/opportunity</code></td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">cases</td><td style="padding:5px 10px;border:1px solid #ddd">Case</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Comments</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">➕ add comment</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/case</code></td></tr>
+      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">tasks</td><td style="padding:5px 10px;border:1px solid #ddd">Task</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/task</code></td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">campaigns</td><td style="padding:5px 10px;border:1px solid #ddd">Campaign</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Leads</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
+      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">approvals</td><td style="padding:5px 10px;border:1px solid #ddd">Approval</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">Approve · Reject</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
+      <tr><td style="padding:5px 10px;border:1px solid #ddd">Dashboard</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">sales_dashboard</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
+      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">Dashboard</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">support_dashboard</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+
 <!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
 <div class="section-wrap">
   <div class="section-label">📋 List — send existing records</div>
@@ -50,7 +82,7 @@
     <button class="purple" onclick="sendCampaigns()">📣 Campaigns (4)</button>
     <button class="orange" onclick="sendApprovals()">⏳ Approvals (3)</button>
   </div>
-  <p class="hint">▶ Accounts → contacts child table &nbsp;·&nbsp; ▶ Cases → inline comments &nbsp;·&nbsp; ▶ Campaigns → leads &nbsp;·&nbsp; ✏️ inline edit on Leads / Contacts / Opportunities / Cases / Tasks &nbsp;·&nbsp; ⇄ Convert on Leads &nbsp;·&nbsp; Search bar on each view</p>
+  <p class="hint">▶ Accounts → contacts / opps / cases child tables &nbsp;·&nbsp; ▶ Cases → inline comments &nbsp;·&nbsp; ▶ Campaigns → leads &nbsp;·&nbsp; ✏️ edit → 3-col form on all 6 entities &nbsp;·&nbsp; ⇄ Convert on Leads &nbsp;·&nbsp; Text search bar on each view (no dropdowns)</p>
 </div>
 
 <!-- ── 2. NEW ──────────────────────────────────────────────────────────────── -->
@@ -78,6 +110,12 @@
     <button class="green" onclick="sendForm('opportunity')">💰 Opportunity</button>
     <button class="grey" onclick="sendForm('case')">🎫 Case</button>
     <button class="green" onclick="sendForm('task')">✅ Task</button>
+  </div>
+  <div class="controls" style="margin-top:4px">
+    <span style="font-size:11px;color:#888;margin-right:6px">with FK picker (agent pre-resolves account):</span>
+    <button class="purple" onclick="sendFormWithFk('contact')">👥 Contact + Account</button>
+    <button class="purple" onclick="sendFormWithFk('opportunity')">💰 Opportunity + Account</button>
+    <button class="purple" onclick="sendFormWithFk('case')">🎫 Case + Account</button>
   </div>
 </div>
 
@@ -381,6 +419,17 @@ function sendEmpty(t) { send({ type: t, total: 0, items: [] }); log('→ empty: 
 // ── Section 3: Forms ─────────────────────────────────────────────────────────
 function sendForm(entity) { send({ type: 'form', entity: entity }); log('→ form: ' + entity); }
 
+function sendFormWithFk(entity) {
+  var fkSelections = {
+    account_name: {
+      label: 'Account',
+      options: MOCK_ACCOUNTS.items.map(function(a) { return { id: a.id, name: a.name }; })
+    }
+  };
+  send({ type: 'form', entity: entity, fkSelections: fkSelections });
+  log('→ form: ' + entity + ' (with account FK picker · ' + MOCK_ACCOUNTS.items.length + ' options)');
+}
+
 // ── Section 4: Dashboard ─────────────────────────────────────────────────────
 function sendSalesDashboard()   { send(JSON.parse(JSON.stringify(MOCK_SALES_DASHBOARD)));   log('→ sales dashboard'); }
 function sendSupportDashboard() { send(JSON.parse(JSON.stringify(MOCK_SUPPORT_DASHBOARD))); log('→ support/cases dashboard'); }
@@ -422,6 +471,12 @@ function toggleTheme() {
 window.addEventListener('message', function(e) {
   var msg = e.data;
   if (!msg) return;
+
+  // SDK handshake — keep the transport alive so callTool works
+  if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
+    post({ jsonrpc: '2.0', id: msg.id, result: { protocolVersion: msg.params?.protocolVersion || '2026-01-26', hostInfo: { name: 'sf-test-host', version: '1.0.0' }, hostCapabilities: { serverTools: {} }, hostContext: { theme: isDark ? 'dark' : 'light' } } });
+    return;
+  }
 
   if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
     var tool = msg.params.name;
@@ -527,14 +582,14 @@ window.addEventListener('message', function(e) {
         result = JSON.parse(JSON.stringify(currentOpps));
         log('→ updated opp');
       }
-      // get_cases — account drill-down or status/priority search
+      // get_cases — account drill-down or subject text search
       else if (tool === 'get_cases') {
         if (args.account_id) {
           result = ACCOUNT_CASES[args.account_id] || { items: [] };
           log('→ account cases: ' + (result.items||[]).length);
         } else {
-          var fs=(args.status||'').toLowerCase(), fp=(args.priority||'').toLowerCase();
-          result = { type:'cases', items: currentCases.items.filter(function(c){ return (!fs||(c.status||'').toLowerCase().includes(fs))&&(!fp||(c.priority||'').toLowerCase().includes(fp)); }) };
+          var fs=(args.subject||'').toLowerCase();
+          result = { type:'cases', items: currentCases.items.filter(function(c){ return !fs||(c.subject||'').toLowerCase().includes(fs); }) };
           log('→ get_cases: ' + result.items.length);
         }
       }
@@ -555,10 +610,10 @@ window.addEventListener('message', function(e) {
         result = CASE_COMMENTS[args.case_id] || { items: [] };
         log('→ ' + (result.items||[]).length + ' comments');
       }
-      // get_tasks — status filter
+      // get_tasks — subject text search
       else if (tool === 'get_tasks') {
-        var ts=(args.status||'').toLowerCase();
-        result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.status||'').toLowerCase().includes(ts); }) };
+        var ts=(args.subject||'').toLowerCase();
+        result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.subject||'').toLowerCase().includes(ts); }) };
         log('→ get_tasks: ' + result.items.length);
       }
 
