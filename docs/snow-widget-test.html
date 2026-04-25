@@ -2,216 +2,323 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>⚓ GTC Dockyard — ServiceNow Widget Test</title>
+<title>⚓ GTC Dockyard — ServiceNow ITSM Widget Test</title>
 <style>
-  body    { font-family: system-ui, sans-serif; background: #e8ecf0; padding: 24px; }
-  h2      { margin-bottom: 8px; color: #293e40; }
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; margin: 12px 0 6px; letter-spacing: 0.5px; }
-  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
-  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #293e40; color: white; cursor: pointer; font-size: 13px; }
-  button:hover { background: #1c2c2e; }
-  button.green  { background: #2e8540; }
-  button.green:hover { background: #236934; }
-  button.dark   { background: #1e252e; }
-  button.dark:hover { background: #111; }
-  button.secondary { background: #6b7280; }
-  button.secondary:hover { background: #4b5563; }
-  .hint   { font-size: 12px; color: #6b7280; margin: 4px 0 16px; }
-  .log    { font-size: 11px; color: #4b5563; background: #fff; border: 1px solid #d6dbe0; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; }
-  .frame-wrapper { background: white; border: 1px solid #d6dbe0; border-radius: 10px; padding: 16px; max-width: 900px; box-shadow: 0 2px 8px rgba(41,62,64,0.1); }
-  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 20px; margin: 0; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-wrap { max-width: 980px; margin-bottom: 6px; }
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #555; margin: 14px 0 5px; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: #ddd; }
+  .controls { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 7px 13px; border: none; border-radius: 6px; background: #293E40; color: white; cursor: pointer; font-size: 12px; }
+  button:hover { background: #1b282a; }
+  button.green  { background: #2e844a; } button.green:hover  { background: #1c6b35; }
+  button.dark   { background: #16325c; } button.dark:hover   { background: #0b1f3a; }
+  button.purple { background: #6b5b95; } button.purple:hover { background: #4a3f6b; }
+  button.orange { background: #dd7a01; } button.orange:hover { background: #b56200; }
+  button.teal   { background: #009ba1; } button.teal:hover   { background: #007a7e; }
+  button.grey   { background: #706e6b; } button.grey:hover   { background: #514f4d; }
+  button.red    { background: #ea001e; } button.red:hover    { background: #ba0517; }
+  .hint   { font-size: 11px; color: #777; margin: 3px 0 8px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 10px; max-height: 150px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 980px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 500px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #eef6f1; color: #293E40; margin-left: 8px; }
+  .admin-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .admin-row label { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+  .admin-row input[type=color] { width: 32px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
+  .admin-row input[type=range] { width: 120px; }
+  .admin-row input[type=text]  { width: 90px; font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
 </style>
 </head>
 <body>
 
-<h2>⚓ <img src="https://cdn.simpleicons.org/servicenow/81B5A1" alt="ServiceNow" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — ServiceNow ITSM</h2>
+<h2>⚓ GTC Dockyard — ServiceNow ITSM <span class="badge">Interactive</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility · 7 entity views · incidents · changes · problems · knowledge · catalog · approvals</p>
 
-<div class="section-label">Incidents — get_incidents</div>
-<div class="controls">
-  <button onclick="sendIncidents()">Send Mock Incidents (5 rows)</button>
-  <button class="secondary" onclick="sendEmptyIncidents()">Send Empty Result</button>
+<!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📋 List — send existing records</div>
+  <div class="controls">
+    <button onclick="sendIncidents()">🎫 Incidents (5)</button>
+    <button onclick="sendRequests()">📋 Requests (4)</button>
+    <button class="teal" onclick="sendChanges()">🔄 Changes (4)</button>
+    <button class="orange" onclick="sendProblems()">⚠️ Problems (3)</button>
+    <button class="green" onclick="sendKnowledge()">📚 Knowledge (4)</button>
+    <button class="purple" onclick="sendCatalog()">🛒 Catalog (5)</button>
+    <button class="grey" onclick="sendApprovals()">✅ Approvals (3)</button>
+  </div>
+  <p class="hint">▶ Incidents → click row to add work note &nbsp;·&nbsp; ▶ Requests → request items child table &nbsp;·&nbsp; ✏️ inline edit on Incidents / Requests &nbsp;·&nbsp; + New on Incidents / Requests / Changes &nbsp;·&nbsp; Filter bar on each view</p>
 </div>
-<p class="hint">Click a row to expand → edit Description &amp; Priority inline → Save. Footer has "Add Incident" form.</p>
 
-<div class="section-label">Requests — get_requests (expandable → edit Approval + request items with editable Qty)</div>
-<div class="controls">
-  <button class="green" onclick="sendRequests()">Send Mock Requests (5 rows)</button>
+<!-- ── 2. NEW ──────────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">➕ New — empty state (click + New in widget header to create)</div>
+  <div class="controls">
+    <button class="grey" onclick="sendEmpty('incidents')">Incidents</button>
+    <button class="grey" onclick="sendEmpty('requests')">Requests</button>
+    <button class="grey" onclick="sendEmpty('change_requests')">Changes</button>
+    <button class="grey" onclick="sendEmpty('problems')">Problems</button>
+    <button class="grey" onclick="sendEmpty('knowledge_articles')">Knowledge</button>
+    <button class="grey" onclick="sendEmpty('service_catalog')">Catalog</button>
+    <button class="grey" onclick="sendEmpty('approvals')">Approvals</button>
+  </div>
 </div>
-<p class="hint">Click a row → edit Approval + see Request Items with editable Quantity per item. Row turns green ✓ after items load.</p>
 
-<div class="section-label">Theme</div>
-<div class="controls">
-  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+<!-- ── 3. FORMS ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📝 Forms — standalone create form (3-column layout)</div>
+  <div class="controls">
+    <button onclick="sendForm('incident')">🎫 New Incident</button>
+    <button class="teal" onclick="sendForm('request')">📋 New Request</button>
+  </div>
+</div>
+
+<!-- ── 4. DASHBOARD ───────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">📊 Dashboard — mixed-state samples</div>
+  <div class="controls">
+    <button class="teal" onclick="sendIncidentSummary()">📈 Incident Mix (P1–P4)</button>
+    <button class="orange" onclick="sendChangeSummary()">🔄 Changes Mix</button>
+  </div>
+  <p class="hint">Sends realistic mixed-state data to showcase all priority / risk / state pill colors</p>
+</div>
+
+<!-- ── 5. ADMIN ───────────────────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-label">⚙️ Admin — widget configuration, theme, error simulation</div>
+
+  <div class="admin-row">
+    <label>Brand color
+      <input type="color" id="brandColor" value="#81B5A1" oninput="applyBrandColor(this.value)" />
+      <input type="text"  id="brandHex"   value="#81B5A1" oninput="applyBrandColorHex(this.value)" style="width:78px" />
+    </label>
+    <button onclick="resetBrand()" class="grey" style="padding:5px 10px;font-size:11px">↺ Reset NOW</button>
+    <button onclick="applyBrandColor('#293E40')" style="padding:5px 10px;font-size:11px">Shell Dark</button>
+    <button onclick="applyBrandColor('#2E844A')" class="green" style="padding:5px 10px;font-size:11px">Green</button>
+    <button onclick="applyBrandColor('#6b5b95')" class="purple" style="padding:5px 10px;font-size:11px">Purple</button>
+  </div>
+
+  <div class="admin-row">
+    <label>Widget height
+      <input type="range" id="heightSlider" min="300" max="1200" value="500" oninput="setHeight(this.value)" />
+      <span id="heightLabel" style="font-size:11px;color:#555;width:42px">500px</span>
+    </label>
+    <button onclick="autoHeight()" class="grey" style="padding:5px 10px;font-size:11px">Auto</button>
+  </div>
+
+  <div class="controls" style="margin-top:4px">
+    <button class="dark" onclick="toggleTheme()">🌙 Toggle Dark / Light</button>
+    <button class="red"  onclick="sendError()">⚠️ Auth Error</button>
+  </div>
 </div>
 
 <br/>
-<div class="frame-wrapper">
+<div class="frame-wrapper" id="frame-wrapper">
   <iframe id="widget" src="servicenow_mcp/web/widget.html"></iframe>
 </div>
 
-<div class="log" id="log">— event log —</div>
+<div class="section-label" style="max-width:980px;margin-top:10px">📜 Event Log</div>
+<div class="log" id="log" style="max-width:980px">— event log —</div>
 
 <script>
-  var isDark = false;
+var isDark = false;
 
-  // ── Mock: Incidents ────────────────────────────────────────────────────────
-  var MOCK_INCIDENTS = {
-    type: "incidents",
-    total: 5,
+var MOCK_INCIDENTS = {
+  type: "incidents", total: 5,
+  incidents: [
+    { sys_id: "inc001", number: "INC0001234", short_description: "Email not working for marketing team",       state: "New",         priority: "2", assigned_to: "John Smith",   sys_created_on: "2026-04-22" },
+    { sys_id: "inc002", number: "INC0001235", short_description: "VPN connection dropping every 30 minutes",  state: "In Progress", priority: "1", assigned_to: "Sarah Jones",  sys_created_on: "2026-04-21" },
+    { sys_id: "inc003", number: "INC0001236", short_description: "Printer offline on 3rd floor",               state: "On Hold",     priority: "3", assigned_to: "Mike Chen",    sys_created_on: "2026-04-20" },
+    { sys_id: "inc004", number: "INC0001237", short_description: "Cannot access SharePoint after update",      state: "Resolved",    priority: "2", assigned_to: "Ana Rivera",   sys_created_on: "2026-04-19" },
+    { sys_id: "inc005", number: "INC0001238", short_description: "Teams audio muffled in meeting rooms",       state: "New",         priority: "4", assigned_to: "",             sys_created_on: "2026-04-18" }
+  ]
+};
+
+var MOCK_REQUESTS = {
+  type: "requests", total: 4,
+  requests: [
+    { sys_id: "req001", number: "REQ0000567", short_description: "New laptop for onboarding — Tom Baker",    request_state: "In Progress", priority: "3", approval: "approved",      sys_created_on: "2026-04-20" },
+    { sys_id: "req002", number: "REQ0000568", short_description: "Adobe Creative Cloud license renewal",      request_state: "New",         priority: "3", approval: "requested",     sys_created_on: "2026-04-19" },
+    { sys_id: "req003", number: "REQ0000569", short_description: "Access to Salesforce sandbox environment",  request_state: "On Hold",     priority: "4", approval: "not requested", sys_created_on: "2026-04-18" },
+    { sys_id: "req004", number: "REQ0000570", short_description: "Standing desk for finance department",      request_state: "Closed",      priority: "4", approval: "approved",      sys_created_on: "2026-04-15" }
+  ]
+};
+
+var MOCK_CHANGES = {
+  type: "change_requests", total: 4,
+  items: [
+    { sys_id: "chg001", number: "CHG0001234", short_description: "Upgrade production database to PostgreSQL 15", state: "New",         priority: "3", risk: "medium", category: "Normal",    assigned_to: "Sarah Jones",  sys_created_on: "2026-04-20" },
+    { sys_id: "chg002", number: "CHG0001235", short_description: "Emergency patch: CVE-2026-1234 on web servers",state: "In Progress", priority: "1", risk: "high",   category: "Emergency", assigned_to: "DevOps Team",  sys_created_on: "2026-04-21" },
+    { sys_id: "chg003", number: "CHG0001236", short_description: "Migrate file share to OneDrive for Business",  state: "On Hold",     priority: "3", risk: "low",    category: "Standard",  assigned_to: "Mike Chen",    sys_created_on: "2026-04-18" },
+    { sys_id: "chg004", number: "CHG0001237", short_description: "Deploy new MFA policy for all admin accounts", state: "Closed",      priority: "2", risk: "medium", category: "Normal",    assigned_to: "Ana Rivera",   sys_created_on: "2026-04-15" }
+  ]
+};
+
+var MOCK_PROBLEMS = {
+  type: "problems", total: 3,
+  items: [
+    { sys_id: "prb001", number: "PRB0000456", short_description: "Intermittent database connection timeouts affecting CRM",  state: "In Progress", priority: "2", assigned_to: "Sarah Jones",  sys_created_on: "2026-04-15" },
+    { sys_id: "prb002", number: "PRB0000457", short_description: "Memory leak in web application causing daily restarts",    state: "New",         priority: "1", assigned_to: "Dev Team",     sys_created_on: "2026-04-10" },
+    { sys_id: "prb003", number: "PRB0000458", short_description: "Slow search performance on knowledge base portal",         state: "On Hold",     priority: "3", assigned_to: "Mike Chen",    sys_created_on: "2026-04-05" }
+  ]
+};
+
+var MOCK_KNOWLEDGE = {
+  type: "knowledge_articles", total: 4,
+  items: [
+    { sys_id: "kb001", number: "KB0000001", short_description: "How to reset VPN credentials and reconnect",       category: "Network",   author: "IT Operations",   updated_on: "2026-03-15", state: "published" },
+    { sys_id: "kb002", number: "KB0000002", short_description: "Setting up MFA on Microsoft 365 accounts",         category: "Security",  author: "Security Team",   updated_on: "2026-03-20", state: "published" },
+    { sys_id: "kb003", number: "KB0000003", short_description: "Printer troubleshooting guide — Windows 10 / 11",  category: "Hardware",  author: "Desktop Support", updated_on: "2026-02-28", state: "published" },
+    { sys_id: "kb004", number: "KB0000004", short_description: "SharePoint permissions — requesting and granting", category: "Software",  author: "IT Operations",   updated_on: "2026-04-01", state: "published" }
+  ]
+};
+
+var MOCK_CATALOG = {
+  type: "service_catalog", total: 5,
+  items: [
+    { sys_id: "cat001", name: "New Laptop Request",        short_description: "Request a new or replacement laptop",   category: "Hardware",   price: "$1,200" },
+    { sys_id: "cat002", name: "Software License Request",  short_description: "Request a software license or renewal", category: "Software",   price: "$0"     },
+    { sys_id: "cat003", name: "VPN Access Request",        short_description: "Get VPN access for remote work",        category: "Network",    price: "$0"     },
+    { sys_id: "cat004", name: "Mobile Device Management",  short_description: "Enroll a mobile device in MDM",         category: "Security",   price: "$0"     },
+    { sys_id: "cat005", name: "Standing Desk Setup",       short_description: "Request ergonomic desk equipment",      category: "Facilities", price: "$450"   }
+  ]
+};
+
+var MOCK_APPROVALS = {
+  type: "approvals", total: 3,
+  items: [
+    { sys_id: "apr001", approver: "Jane Smith",  document: "CHG0001234", state: "requested",     due_date: "2026-04-30", created_on: "2026-04-22" },
+    { sys_id: "apr002", approver: "Bob Johnson", document: "REQ0000568", state: "requested",     due_date: "2026-04-28", created_on: "2026-04-21" },
+    { sys_id: "apr003", approver: "Alice Wang",  document: "CHG0001235", state: "not requested", due_date: "",           created_on: "2026-04-21" }
+  ]
+};
+
+var MOCK_REQUEST_ITEMS = {
+  items: [
+    { sys_id: "ri001", short_description: "Dell XPS 15 Laptop",       quantity: 1, stage: "Ordered",     price: "$1,200", cat_item: "Laptop",   state: "open" },
+    { sys_id: "ri002", short_description: "USB-C Docking Station",    quantity: 1, stage: "Fulfillment", price: "$120",   cat_item: "Hardware", state: "open" },
+    { sys_id: "ri003", short_description: "27-inch External Monitor", quantity: 2, stage: "Delivery",    price: "$350",   cat_item: "Hardware", state: "open" }
+  ]
+};
+
+function post(data) {
+  var frame = document.getElementById('widget');
+  if (!frame) return;
+  frame.contentWindow.postMessage({ type: 'mcp_tool_result', data: data }, '*');
+  logMsg('[-> widget] ' + JSON.stringify(data).slice(0, 120));
+}
+
+function logMsg(msg) {
+  var el = document.getElementById('log');
+  var ts = new Date().toISOString().substr(11, 8);
+  el.textContent = '[' + ts + '] ' + msg + '\n' + el.textContent;
+}
+
+function sendIncidents() { post(MOCK_INCIDENTS); }
+function sendRequests()  { post(MOCK_REQUESTS); }
+function sendChanges()   { post(MOCK_CHANGES); }
+function sendProblems()  { post(MOCK_PROBLEMS); }
+function sendKnowledge() { post(MOCK_KNOWLEDGE); }
+function sendCatalog()   { post(MOCK_CATALOG); }
+function sendApprovals() { post(MOCK_APPROVALS); }
+
+var EMPTY_TYPES = {
+  incidents:          { type: "incidents",          total: 0, incidents: [] },
+  requests:           { type: "requests",           total: 0, requests: [] },
+  change_requests:    { type: "change_requests",    total: 0, items: [] },
+  problems:           { type: "problems",           total: 0, items: [] },
+  knowledge_articles: { type: "knowledge_articles", total: 0, items: [] },
+  service_catalog:    { type: "service_catalog",    total: 0, items: [] },
+  approvals:          { type: "approvals",          total: 0, items: [] }
+};
+function sendEmpty(type) { post(EMPTY_TYPES[type]); }
+
+function sendForm(entity) { post({ type: 'form', entity: entity }); }
+
+function sendIncidentSummary() {
+  post({
+    type: "incidents", total: 8,
     incidents: [
-      { sys_id: "inc001", number: "INC0010045", short_description: "Email not syncing on mobile devices", description: "Users report Outlook mobile app not syncing after the latest iOS update. Affects ~40 users in Sales.", state: "New", priority: "1", assigned_to: "Beth Anglin", sys_created_on: "2026-03-31 14:22:05" },
-      { sys_id: "inc002", number: "INC0010044", short_description: "VPN connection timeout after Windows update", description: "GlobalProtect VPN disconnects every 15 minutes since KB5034441 patch. Engineering team affected.", state: "In Progress", priority: "2", assigned_to: "Abel Tuter", sys_created_on: "2026-03-31 11:05:33" },
-      { sys_id: "inc003", number: "INC0010043", short_description: "Printer on 3rd floor not responding", description: "HP LaserJet on 3rd floor east wing shows offline. Paper and toner are fine.", state: "On Hold", priority: "3", assigned_to: "Charlie Root", sys_created_on: "2026-03-30 16:48:12" },
-      { sys_id: "inc004", number: "INC0010042", short_description: "SAP GUI crashes when generating reports", description: "SAP GUI 7.70 crashes with access violation when running FI-CO reports. Started after server migration.", state: "New", priority: "2", assigned_to: null, sys_created_on: "2026-03-30 09:15:00" },
-      { sys_id: "inc005", number: "INC0010041", short_description: "Password reset for contractor accounts", description: "Batch of 12 contractor accounts need password reset. Contractor onboarding for Project Phoenix.", state: "Resolved", priority: "4", assigned_to: "Beth Anglin", sys_created_on: "2026-03-29 13:30:45" }
+      { sys_id: "d001", number: "INC0002001", short_description: "Critical: prod DB unreachable",           state: "New",         priority: "1", assigned_to: "On-Call",   sys_created_on: "2026-04-25" },
+      { sys_id: "d002", number: "INC0002002", short_description: "High: ERP slow for APAC region",          state: "In Progress", priority: "2", assigned_to: "APAC IT",   sys_created_on: "2026-04-24" },
+      { sys_id: "d003", number: "INC0002003", short_description: "Critical: login failures after patch",    state: "In Progress", priority: "1", assigned_to: "Security",  sys_created_on: "2026-04-24" },
+      { sys_id: "d004", number: "INC0002004", short_description: "Moderate: Teams calendar not syncing",    state: "On Hold",     priority: "3", assigned_to: "M365 Team", sys_created_on: "2026-04-23" },
+      { sys_id: "d005", number: "INC0002005", short_description: "Low: display driver warning on 1 PC",    state: "Resolved",    priority: "4", assigned_to: "Desktop",   sys_created_on: "2026-04-22" },
+      { sys_id: "d006", number: "INC0002006", short_description: "High: batch job failed — payroll run",    state: "New",         priority: "2", assigned_to: "",          sys_created_on: "2026-04-25" },
+      { sys_id: "d007", number: "INC0002007", short_description: "Moderate: wifi drops in Building B",     state: "In Progress", priority: "3", assigned_to: "Network",   sys_created_on: "2026-04-23" },
+      { sys_id: "d008", number: "INC0002008", short_description: "Low: screensaver policy not applying",   state: "Closed",      priority: "4", assigned_to: "Desktop",   sys_created_on: "2026-04-20" }
     ]
-  };
-
-  var MOCK_INCIDENTS_EMPTY = { type: "incidents", total: 0, incidents: [] };
-
-  // ── Mock: Requests ─────────────────────────────────────────────────────────
-  var MOCK_REQUESTS = {
-    type: "requests",
-    total: 5,
-    requests: [
-      { sys_id: "req001", number: "REQ0040021", short_description: "New laptop for onboarding — Engineering", request_state: "Approved", priority: "3", approval: "Approved", sys_created_on: "2026-03-31 10:00:00" },
-      { sys_id: "req002", number: "REQ0040020", short_description: "Software license — Adobe Creative Suite", request_state: "Open", priority: "4", approval: "Requested", sys_created_on: "2026-03-30 15:22:00" },
-      { sys_id: "req003", number: "REQ0040019", short_description: "Office relocation — Building B, Floor 2", request_state: "In Progress", priority: "2", approval: "Approved", sys_created_on: "2026-03-30 08:45:00" },
-      { sys_id: "req004", number: "REQ0040018", short_description: "VPN access for remote contractor team", request_state: "Approved", priority: "3", approval: "Not Yet Requested", sys_created_on: "2026-03-29 14:10:00" },
-      { sys_id: "req005", number: "REQ0040017", short_description: "Conference room AV equipment upgrade", request_state: "Closed", priority: "4", approval: "Approved", sys_created_on: "2026-03-28 11:30:00" }
-    ]
-  };
-
-  // ── Mock: Request Items (for inline drill-down) ────────────────────────────
-  var MOCK_ITEMS_BY_REQUEST = {
-    req001: {
-      type: "request_items",
-      request_sys_id: "req001",
-      total: 3,
-      items: [
-        { sys_id: "ri001", number: "RITM0050001", short_description: "MacBook Pro 16-inch M4", state: "Open", stage: "Fulfillment", quantity: "1", price: "$2,499.00" },
-        { sys_id: "ri002", number: "RITM0050002", short_description: "USB-C Docking Station", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$249.00" },
-        { sys_id: "ri003", number: "RITM0050003", short_description: "27\" 4K Monitor", state: "Open", stage: "Request Approved", quantity: "2", price: "$599.00" }
-      ]
-    },
-    req002: {
-      type: "request_items",
-      request_sys_id: "req002",
-      total: 2,
-      items: [
-        { sys_id: "ri004", number: "RITM0050004", short_description: "Adobe Creative Cloud — All Apps", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$659.88/yr" },
-        { sys_id: "ri005", number: "RITM0050005", short_description: "Adobe Stock — 40 assets/mo", state: "Open", stage: "Waiting for Approval", quantity: "1", price: "$79.99/mo" }
-      ]
-    },
-    req003: {
-      type: "request_items",
-      request_sys_id: "req003",
-      total: 1,
-      items: [
-        { sys_id: "ri006", number: "RITM0050006", short_description: "Office move — 12 workstations, Building B Floor 2", state: "Work in Progress", stage: "Fulfillment", quantity: "12", price: "$0.00" }
-      ]
-    },
-    req004: {
-      type: "request_items",
-      request_sys_id: "req004",
-      total: 2,
-      items: [
-        { sys_id: "ri007", number: "RITM0050007", short_description: "VPN client license — GlobalProtect", state: "Closed Complete", stage: "Delivery", quantity: "5", price: "$0.00" },
-        { sys_id: "ri008", number: "RITM0050008", short_description: "MFA token setup for contractors", state: "Open", stage: "Fulfillment", quantity: "5", price: "$50.00" }
-      ]
-    },
-    req005: {
-      type: "request_items",
-      request_sys_id: "req005",
-      total: 0,
-      items: []
-    }
-  };
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  function post(data) {
-    document.getElementById('widget').contentWindow.postMessage(data, '*');
-  }
-
-  function log(msg) {
-    var el = document.getElementById('log');
-    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
-    el.scrollTop = el.scrollHeight;
-  }
-
-  function sendIncidents()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_INCIDENTS } });       log('→ Sent 5 mock incidents'); }
-  function sendEmptyIncidents() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_INCIDENTS_EMPTY } }); log('→ Sent empty incidents'); }
-  function sendRequests()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_REQUESTS } });        log('→ Sent 5 mock requests'); }
-
-  function toggleTheme() {
-    isDark = !isDark;
-    document.body.style.background = isDark ? '#1a1a1a' : '#f0f0f0';
-    document.body.style.color      = isDark ? '#f0f0f0' : '#111';
-    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
-    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
-  }
-
-  // ── Handle messages FROM the widget ───────────────────────────────────────
-  window.addEventListener('message', function(e) {
-    var msg = e.data;
-    if (!msg) return;
-
-    // callTool request from widget
-    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
-      var tool = msg.params.name;
-      var args = msg.params.args;
-      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
-
-      setTimeout(function() {
-        var result;
-
-        if (tool === 'get_request_items') {
-          result = MOCK_ITEMS_BY_REQUEST[args.request_sys_id] || { type: "request_items", total: 0, items: [] };
-          log('→ Returned ' + (result.items ? result.items.length : 0) + ' request items for ' + args.request_sys_id);
-
-        } else if (tool === 'get_incidents') {
-          result = MOCK_INCIDENTS;
-          log('→ Returned refreshed incidents');
-
-        } else if (tool === 'get_requests') {
-          result = MOCK_REQUESTS;
-          log('→ Returned refreshed requests');
-
-        } else if (tool === 'create_incident') {
-          result = { type: "created", record_type: "incident", sys_id: "inc_new_" + Date.now(), number: "INC00100" + (46 + Math.floor(Math.random() * 10)), message: "Incident created successfully" };
-          log('→ Created mock incident: ' + result.number);
-
-        } else if (tool === 'create_request') {
-          result = { type: "created", record_type: "request", sys_id: "req_new_" + Date.now(), number: "REQ00400" + (22 + Math.floor(Math.random() * 10)), message: "Request created successfully" };
-          log('→ Created mock request: ' + result.number);
-
-        } else if (tool === 'update_incident') {
-          result = { type: "updated", record_type: "incident", sys_id: args.sys_id, message: "Incident updated" };
-          log('→ Updated incident ' + args.sys_id + ' → priority=' + args.priority + ', desc=' + (args.description || '').substring(0, 40) + '...');
-
-        } else if (tool === 'update_request') {
-          result = { type: "updated", record_type: "request", sys_id: args.sys_id, message: "Request updated" };
-          log('→ Updated request ' + args.sys_id + ' → approval=' + args.approval);
-
-        } else if (tool === 'update_request_item') {
-          result = { type: "updated", record_type: "request_item", sys_id: args.sys_id, message: "Request item updated" };
-          log('→ Updated request item ' + args.sys_id + ' → quantity=' + args.quantity);
-
-        } else {
-          result = { error: 'Unknown tool: ' + tool };
-          log('→ Unknown tool: ' + tool);
-        }
-
-        post({ jsonrpc: '2.0', id: msg.id, result: result });
-      }, 500);
-      return;
-    }
-
-    // Height notification from widget
-    if (msg.method === 'ui/notifyIntrinsicHeight') {
-      document.getElementById('widget').style.height = msg.params.height + 'px';
-    }
   });
+}
+
+function sendChangeSummary() {
+  post({
+    type: "change_requests", total: 6,
+    items: [
+      { sys_id: "dc001", number: "CHG0002001", short_description: "OS patching — all Windows servers",         state: "New",         priority: "3", risk: "low",    category: "Standard",  assigned_to: "Ops",     sys_created_on: "2026-04-25" },
+      { sys_id: "dc002", number: "CHG0002002", short_description: "Emergency: zero-day firewall patch",         state: "In Progress", priority: "1", risk: "high",   category: "Emergency", assigned_to: "SecOps",  sys_created_on: "2026-04-25" },
+      { sys_id: "dc003", number: "CHG0002003", short_description: "Network switch replacement — Bldg A",        state: "On Hold",     priority: "2", risk: "medium", category: "Normal",    assigned_to: "Network", sys_created_on: "2026-04-22" },
+      { sys_id: "dc004", number: "CHG0002004", short_description: "Deploy HR self-service portal v2.1",         state: "New",         priority: "3", risk: "low",    category: "Normal",    assigned_to: "Dev",     sys_created_on: "2026-04-21" },
+      { sys_id: "dc005", number: "CHG0002005", short_description: "SSL certificate renewal — 12 services",     state: "Closed",      priority: "2", risk: "medium", category: "Standard",  assigned_to: "SecOps",  sys_created_on: "2026-04-18" },
+      { sys_id: "dc006", number: "CHG0002006", short_description: "Migrate legacy FTP server to SFTP",         state: "In Progress", priority: "3", risk: "medium", category: "Normal",    assigned_to: "Ops",     sys_created_on: "2026-04-20" }
+    ]
+  });
+}
+
+window.addEventListener('message', function(e) {
+  var d = e.data;
+  if (!d) return;
+  if (d.type === 'mcp_call_tool') {
+    var name = d.name; var args = d.args || {};
+    logMsg('[<- widget] callTool: ' + name + ' ' + JSON.stringify(args).slice(0, 80));
+    if (name === 'get_request_items') {
+      post(MOCK_REQUEST_ITEMS);
+    } else if (name === 'create_incident') {
+      post({ type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_new', number: 'INC0001999', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '3', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
+    } else if (name === 'create_request') {
+      post({ type: 'requests', total: 1, requests: [{ sys_id: 'req_new', number: 'REQ0000999', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '3', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] });
+    } else if (name === 'sn__create_change_request') {
+      post({ type: 'change_requests', total: 1, items: [{ sys_id: 'chg_new', number: 'CHG0001999', short_description: args.short_description || 'New change', state: 'New', priority: args.priority || '3', risk: args.risk || 'medium', category: args.category || 'Normal', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
+    } else if (name === 'sn__create_incident') {
+      post({ type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_form', number: 'INC0001998', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '2', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
+    } else if (name === 'sn__create_request') {
+      post({ type: 'requests', total: 1, requests: [{ sys_id: 'req_form', number: 'REQ0000998', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '2', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] });
+    } else {
+      logMsg('[sim] ' + name + ': ' + JSON.stringify(args).slice(0, 80));
+    }
+  }
+  if (d.type === 'mcp_height_notify') logMsg('[height] ' + d.height + 'px');
+});
+
+function applyBrandColor(hex) {
+  document.getElementById('brandColor').value = hex;
+  document.getElementById('brandHex').value = hex;
+  post({ jsonrpc: '2.0', method: 'ui/notifications/config', params: { brandColor: hex } });
+}
+function applyBrandColorHex(hex) { if (/^#[0-9A-Fa-f]{6}$/.test(hex)) applyBrandColor(hex); }
+function resetBrand() { applyBrandColor('#81B5A1'); }
+
+function setHeight(val) {
+  document.getElementById('widget').style.minHeight = val + 'px';
+  document.getElementById('heightLabel').textContent = val + 'px';
+}
+function autoHeight() {
+  document.getElementById('widget').style.minHeight = '';
+  document.getElementById('heightLabel').textContent = 'auto';
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  post({ jsonrpc: '2.0', method: 'ui/notifications/hostContextChanged', params: { theme: isDark ? 'dark' : 'light' } });
+  document.body.style.background = isDark ? '#1a1a1a' : '#f0f0f0';
+  document.body.style.color = isDark ? '#e0e0e0' : '#000';
+}
+
+function sendError() {
+  post({ error: true, message: 'ServiceNow authentication failed. Check SERVICENOW_USERNAME and SERVICENOW_PASSWORD environment variables.' });
+}
 </script>
 </body>
 </html>

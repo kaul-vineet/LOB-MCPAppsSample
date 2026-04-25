@@ -257,6 +257,9 @@ function EmailsSkeleton() {
   const cols = 5;
   return (
     <>
+      <div style={{ textAlign: 'center', padding: '8px 0 12px', fontSize: '13px', color: '#888' }}>
+        ⏳ Loading data…
+      </div>
       <div
         className={styles.header}
         style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.border }}

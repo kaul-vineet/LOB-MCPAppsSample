@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Badge,
   Button,
@@ -18,7 +18,10 @@ import {
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { ExpandButton } from '../shared/ExpandButton';
 import { useToast } from '../shared/Toast';
-import type { SnowData, Incident, ServiceRequest, RequestItem } from './types';
+import type {
+  SnowData, Incident, ServiceRequest, RequestItem,
+  ChangeRequest, Problem, KnowledgeArticle, CatalogItem, SnowApproval,
+} from './types';
 
 // ── Now Design System Color Tokens ──────────────────────────────────────────
 const NOW_LIGHT = {
@@ -67,6 +70,8 @@ const PRIORITY_LABELS: Record<string, string> = {
 const INCIDENT_STATES = ['New', 'In Progress', 'On Hold', 'Resolved', 'Closed'];
 const CATEGORIES = ['inquiry', 'software', 'hardware', 'network', 'database'];
 const APPROVAL_OPTIONS = ['not requested', 'requested', 'approved', 'rejected'];
+const CHANGE_CATEGORIES = ['Normal', 'Standard', 'Emergency'];
+const RISK_OPTIONS = ['low', 'medium', 'high'];
 
 // ── Priority pill styles ────────────────────────────────────────────────────
 type PillStyle = { background: string; color: string };
@@ -79,21 +84,27 @@ const PRIORITY_STYLES: Record<string, PillStyleMap> = {
   '4': { light: { background: '#E3F2E8', color: '#2E844A' }, dark: { background: '#1A3320', color: '#6EE7B7' } },
 };
 
-// ── State pill styles ───────────────────────────────────────────────────────
 const STATE_STYLES: Record<string, PillStyleMap> = {
   'new':         { light: { background: '#EEF4FF', color: '#0066CC' }, dark: { background: '#0B3573', color: '#8DC7FF' } },
   'in progress': { light: { background: '#FFF1E0', color: '#8A4B00' }, dark: { background: '#3D2E11', color: '#FBBF24' } },
   'on hold':     { light: { background: '#EAEAEA', color: '#555555' }, dark: { background: '#333333', color: '#AAAAAA' } },
   'resolved':    { light: { background: '#E3F2E8', color: '#2E844A' }, dark: { background: '#1A3320', color: '#6EE7B7' } },
   'closed':      { light: { background: '#2E3D49', color: '#FFFFFF' }, dark: { background: '#1A2030', color: '#8B949E' } },
+  'published':   { light: { background: '#E3F2E8', color: '#2E844A' }, dark: { background: '#1A3320', color: '#6EE7B7' } },
+  'requested':   { light: { background: '#FFF1E0', color: '#8A4B00' }, dark: { background: '#3D2E11', color: '#FBBF24' } },
 };
 
-// ── Approval pill styles ────────────────────────────────────────────────────
 const APPROVAL_STYLES: Record<string, PillStyleMap> = {
   'approved':      { light: { background: '#E3F2E8', color: '#2E844A' }, dark: { background: '#1A3320', color: '#6EE7B7' } },
   'requested':     { light: { background: '#FFF1E0', color: '#8A4B00' }, dark: { background: '#3D2E11', color: '#FBBF24' } },
   'not requested': { light: { background: '#EAEAEA', color: '#555555' }, dark: { background: '#333333', color: '#AAAAAA' } },
   'rejected':      { light: { background: '#FDE7E7', color: '#A80000' }, dark: { background: '#3D1111', color: '#F87171' } },
+};
+
+const RISK_STYLES: Record<string, PillStyleMap> = {
+  'low':    { light: { background: '#E3F2E8', color: '#2E844A' }, dark: { background: '#1A3320', color: '#6EE7B7' } },
+  'medium': { light: { background: '#FFF1E0', color: '#8A4B00' }, dark: { background: '#3D2E11', color: '#FBBF24' } },
+  'high':   { light: { background: '#FDE7E7', color: '#A80000' }, dark: { background: '#3D1111', color: '#F87171' } },
 };
 
 function PriorityPill({ priority, theme }: { priority: string; theme: 'light' | 'dark' }) {
@@ -112,7 +123,7 @@ function PriorityPill({ priority, theme }: { priority: string; theme: 'light' | 
 
 function StatePill({ state, theme }: { state: string; theme: 'light' | 'dark' }) {
   const key = (state || '').toLowerCase();
-  const style = STATE_STYLES[key]?.[theme] || STATE_STYLES['new'][theme];
+  const style = STATE_STYLES[key]?.[theme] || { background: '#EAEAEA', color: '#555' };
   return (
     <span style={{
       display: 'inline-block', padding: '2px 10px', borderRadius: '15px',
@@ -134,6 +145,20 @@ function ApprovalPill({ approval, theme }: { approval: string; theme: 'light' | 
       background: style.background, color: style.color,
     }}>
       {approval || '—'}
+    </span>
+  );
+}
+
+function RiskPill({ risk, theme }: { risk: string; theme: 'light' | 'dark' }) {
+  const key = (risk || '').toLowerCase();
+  const style = RISK_STYLES[key]?.[theme] || RISK_STYLES['medium'][theme];
+  return (
+    <span style={{
+      display: 'inline-block', padding: '2px 10px', borderRadius: '15px',
+      fontSize: '11px', fontWeight: 500,
+      background: style.background, color: style.color,
+    }}>
+      {risk || '—'}
     </span>
   );
 }
@@ -200,6 +225,13 @@ const useStyles = makeStyles({
     gap: '8px',
     justifyContent: 'flex-end',
   },
+  filterBar: {
+    display: 'flex',
+    gap: '6px',
+    alignItems: 'center',
+    padding: '8px 12px',
+    borderBottom: '1px solid transparent',
+  },
   empty: {
     padding: '16px',
     textAlign: 'center' as const,
@@ -245,6 +277,42 @@ function FormSelect({ label, value, options, labels, onChange, theme }: {
   );
 }
 
+// ── Filter Bar ─────────────────────────────────────────────────────────────
+function FilterBar({ value, onChange, onSearch, placeholder, theme }: {
+  value: string;
+  onChange: (v: string) => void;
+  onSearch?: () => void;
+  placeholder?: string;
+  theme: 'light' | 'dark';
+}) {
+  const t = now(theme);
+  const styles = useStyles();
+  return (
+    <div className={styles.filterBar} style={{ borderBottomColor: t.border, background: t.headerBg }}>
+      <Input
+        size="small"
+        value={value}
+        onChange={(_, d) => onChange(d.value)}
+        onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
+        placeholder={placeholder || 'Filter…'}
+        style={{ flex: 1, maxWidth: '260px' }}
+      />
+      {onSearch && (
+        <button
+          onClick={onSearch}
+          style={{
+            padding: '4px 12px', borderRadius: '4px',
+            border: `1px solid ${t.border}`, background: '#293E40',
+            color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Search
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Now Footer ──────────────────────────────────────────────────────────────
 function NowFooter({ theme }: { theme: 'light' | 'dark' }) {
   const styles = useStyles();
@@ -277,10 +345,6 @@ function RequestItemsTable({ items, callTool, toast, theme }: {
   const t = now(theme);
   const [editingQty, setEditingQty] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
-
-  const handleQtyChange = (sysId: string, val: string) => {
-    setEditingQty(prev => ({ ...prev, [sysId]: val }));
-  };
 
   const saveQty = async (item: RequestItem) => {
     const qty = editingQty[item.sys_id] ?? String(item.quantity);
@@ -335,7 +399,7 @@ function RequestItemsTable({ items, callTool, toast, theme }: {
                   type="number"
                   min="1"
                   value={editingQty[item.sys_id] ?? String(item.quantity || 1)}
-                  onChange={(e) => handleQtyChange(item.sys_id, e.target.value)}
+                  onChange={(e) => setEditingQty(prev => ({ ...prev, [item.sys_id]: e.target.value }))}
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     width: '56px', padding: '3px 6px', borderRadius: '4px',
@@ -375,19 +439,31 @@ function IncidentsView({ items, callTool, toast, theme }: {
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-}){
+}) {
   const styles = useStyles();
   const t = now(theme);
+  const [filter, setFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState<Record<string, string>>({});
+  const [addingNote, setAddingNote] = useState<string | null>(null);
   const [form, setForm] = useState({
     short_description: '', description: '', priority: '3', state: 'New', category: 'inquiry',
   });
 
+  const filteredItems = items.filter(inc =>
+    !filter ||
+    inc.number?.toLowerCase().includes(filter.toLowerCase()) ||
+    inc.short_description?.toLowerCase().includes(filter.toLowerCase()) ||
+    inc.assigned_to?.toLowerCase().includes(filter.toLowerCase())
+  );
+
   const openEdit = (inc: Incident) => {
     setCreating(false);
+    setExpandedId(null);
     setEditingId(inc.sys_id);
     setForm({
       short_description: inc.short_description || '',
@@ -400,11 +476,17 @@ function IncidentsView({ items, callTool, toast, theme }: {
 
   const openCreate = () => {
     setEditingId(null);
+    setExpandedId(null);
     setCreating(true);
     setForm({ short_description: '', description: '', priority: '3', state: 'New', category: 'inquiry' });
   };
 
   const cancel = () => { setEditingId(null); setCreating(false); };
+
+  const toggleWorkNotes = (id: string) => {
+    if (editingId) return;
+    setExpandedId(prev => prev === id ? null : id);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -434,22 +516,39 @@ function IncidentsView({ items, callTool, toast, theme }: {
     }
   };
 
-  React.useEffect(() => {
+  const submitNote = async (sys_id: string) => {
+    const text = (noteText[sys_id] || '').trim();
+    if (!text) { toast('Enter a work note first', 'error'); return; }
+    setAddingNote(sys_id);
+    try {
+      await callTool('sn__add_work_note', { sys_id, work_note: text });
+      toast('✓ Work note added');
+      setNoteText(p => ({ ...p, [sys_id]: '' }));
+      setExpandedId(null);
+    } catch (e: any) {
+      toast(e.message || 'Failed to add work note', 'error');
+    } finally {
+      setAddingNote(null);
+    }
+  };
+
+  useEffect(() => {
     if (lastSavedId) {
-      const timer = setTimeout(() => setLastSavedId(null), 1600);
-      return () => clearTimeout(timer);
+      const t2 = setTimeout(() => setLastSavedId(null), 1600);
+      return () => clearTimeout(t2);
     }
   }, [lastSavedId]);
 
   const formBg = theme === 'dark' ? '#1A2E25' : '#F4F5F7';
-  const colSpan = 5;
+  const colSpan = 6;
 
   const cellStyle: React.CSSProperties = {
-    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
   };
-
   const headerCellStyle: React.CSSProperties = {
-    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
   };
 
   const renderForm = (title: string) => (
@@ -491,7 +590,7 @@ function IncidentsView({ items, callTool, toast, theme }: {
       <div className={styles.headerBar} style={{ background: '#293E40' }}>
         <div className={styles.headerLeft}>
           <span style={{ fontSize: '18px' }}>🎫</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>ServiceNow ITSM — Service Manifest</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Incidents</span>
           <Badge appearance="filled" size="small"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
             {items.length} record{items.length !== 1 ? 's' : ''}
@@ -510,10 +609,13 @@ function IncidentsView({ items, callTool, toast, theme }: {
         </div>
       </div>
 
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number, description, assignee…" theme={theme} />
+
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Short Description</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Priority</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Assigned To</TableHeaderCell>
@@ -522,30 +624,36 @@ function IncidentsView({ items, callTool, toast, theme }: {
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New Incident')}
-          {items.length === 0 && !creating && (
+          {filteredItems.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={colSpan} className={styles.empty}>
-                <Text>No incidents found.</Text>
+                <Text>{filter ? 'No matching incidents.' : 'No incidents found.'}</Text>
               </TableCell>
             </TableRow>
           )}
-          {items.map((inc, idx) => (
+          {filteredItems.map((inc, idx) => (
             <React.Fragment key={inc.sys_id}>
               <TableRow
                 className="snow-row"
+                onClick={() => toggleWorkNotes(inc.sys_id)}
                 style={{
-                  borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}`,
+                  cursor: 'pointer',
+                  borderBottom: idx === filteredItems.length - 1 && expandedId !== inc.sys_id ? 'none' : `1px solid ${t.border}`,
+                  background: expandedId === inc.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
                   ...(lastSavedId === inc.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}
               >
                 <TableCell style={cellStyle}>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{inc.number}</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>
+                    {expandedId === inc.sys_id ? '▼' : '▶'} {inc.number}
+                  </span>
                 </TableCell>
+                <TableCell style={{ ...cellStyle, maxWidth: '220px' }}>{inc.short_description || '—'}</TableCell>
                 <TableCell style={cellStyle}><PriorityPill priority={inc.priority} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}><StatePill state={inc.state} theme={theme} /></TableCell>
                 <TableCell style={cellStyle}>{inc.assigned_to || '—'}</TableCell>
                 <TableCell style={cellStyle}>
-                  <button title="Edit" onClick={() => openEdit(inc)} className="snow-edit-btn"
+                  <button title="Edit" onClick={(e) => { e.stopPropagation(); openEdit(inc); }} className="snow-edit-btn"
                     style={{
                       width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer',
@@ -554,6 +662,49 @@ function IncidentsView({ items, callTool, toast, theme }: {
                 </TableCell>
               </TableRow>
               {editingId === inc.sys_id && renderForm('✏️ Edit Incident ' + inc.number)}
+              {expandedId === inc.sys_id && (
+                <TableRow>
+                  <TableCell colSpan={colSpan} style={{ padding: 0 }}>
+                    <div className={styles.subTableWrap} style={{
+                      background: theme === 'dark' ? '#1A2E25' : '#EEF6F1',
+                      borderBottom: `1px solid ${t.border}`,
+                    }}>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: t.text, marginBottom: '8px' }}>
+                        📝 Add Work Note — {inc.number}
+                      </div>
+                      <textarea
+                        value={noteText[inc.sys_id] || ''}
+                        onChange={(e) => setNoteText(p => ({ ...p, [inc.sys_id]: e.target.value }))}
+                        placeholder="Enter work note (internal — visible to IT staff only)…"
+                        rows={3}
+                        style={{
+                          width: '100%', padding: '8px', borderRadius: '4px',
+                          border: `1px solid ${t.border}`, background: t.surface,
+                          color: t.text, fontSize: '12px', fontFamily: 'inherit',
+                          resize: 'vertical', boxSizing: 'border-box',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setExpandedId(null)} style={{
+                          padding: '4px 12px', borderRadius: '4px', border: `1px solid ${t.border}`,
+                          background: 'transparent', color: t.textWeak, fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
+                        }}>▲ Collapse</button>
+                        <button
+                          onClick={() => submitNote(inc.sys_id)}
+                          disabled={addingNote === inc.sys_id}
+                          style={{
+                            padding: '4px 14px', borderRadius: '4px', border: 'none',
+                            background: '#293E40', color: '#fff', fontSize: '12px',
+                            cursor: addingNote === inc.sys_id ? 'not-allowed' : 'pointer',
+                            fontFamily: 'inherit', opacity: addingNote === inc.sys_id ? 0.6 : 1,
+                          }}>
+                          {addingNote === inc.sys_id ? '…' : '+ Add Note'}
+                        </button>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -570,9 +721,10 @@ function RequestsView({ items, callTool, toast, theme }: {
   callTool: (name: string, args?: Record<string, any>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   theme: 'light' | 'dark';
-}){
+}) {
   const styles = useStyles();
   const t = now(theme);
+  const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reqItems, setReqItems] = useState<Record<string, RequestItem[]>>({});
   const [loadingItems, setLoadingItems] = useState<string | null>(null);
@@ -584,11 +736,14 @@ function RequestsView({ items, callTool, toast, theme }: {
     short_description: '', description: '', priority: '3', approval: 'not requested',
   });
 
+  const filteredItems = items.filter(req =>
+    !filter ||
+    req.number?.toLowerCase().includes(filter.toLowerCase()) ||
+    req.short_description?.toLowerCase().includes(filter.toLowerCase())
+  );
+
   const toggleExpand = async (req: ServiceRequest) => {
-    if (expandedId === req.sys_id) {
-      setExpandedId(null);
-      return;
-    }
+    if (expandedId === req.sys_id) { setExpandedId(null); return; }
     setExpandedId(req.sys_id);
     if (!reqItems[req.sys_id]) {
       setLoadingItems(req.sys_id);
@@ -633,10 +788,7 @@ function RequestsView({ items, callTool, toast, theme }: {
         });
         toast('✓ Request created');
       } else {
-        await callTool('update_request', {
-          sys_id: editingId,
-          approval: form.approval,
-        });
+        await callTool('update_request', { sys_id: editingId, approval: form.approval });
         toast('✓ Request updated');
         setLastSavedId(editingId);
       }
@@ -648,10 +800,10 @@ function RequestsView({ items, callTool, toast, theme }: {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (lastSavedId) {
-      const timer = setTimeout(() => setLastSavedId(null), 1600);
-      return () => clearTimeout(timer);
+      const t2 = setTimeout(() => setLastSavedId(null), 1600);
+      return () => clearTimeout(t2);
     }
   }, [lastSavedId]);
 
@@ -659,11 +811,12 @@ function RequestsView({ items, callTool, toast, theme }: {
   const colSpan = 5;
 
   const cellStyle: React.CSSProperties = {
-    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
   };
-
   const headerCellStyle: React.CSSProperties = {
-    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
   };
 
   const renderForm = (title: string) => (
@@ -707,7 +860,7 @@ function RequestsView({ items, callTool, toast, theme }: {
       <div className={styles.headerBar} style={{ background: '#293E40' }}>
         <div className={styles.headerLeft}>
           <span style={{ fontSize: '18px' }}>📋</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>ServiceNow ITSM — Service Manifest</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Service Requests</span>
           <Badge appearance="filled" size="small"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
             {items.length} record{items.length !== 1 ? 's' : ''}
@@ -726,6 +879,8 @@ function RequestsView({ items, callTool, toast, theme }: {
         </div>
       </div>
 
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
+
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -738,21 +893,21 @@ function RequestsView({ items, callTool, toast, theme }: {
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New Request')}
-          {items.length === 0 && !creating && (
+          {filteredItems.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={colSpan} className={styles.empty}>
-                <Text>No requests found.</Text>
+                <Text>{filter ? 'No matching requests.' : 'No requests found.'}</Text>
               </TableCell>
             </TableRow>
           )}
-          {items.map((req, idx) => (
+          {filteredItems.map((req, idx) => (
             <React.Fragment key={req.sys_id}>
               <TableRow
                 className="snow-row"
                 onClick={() => toggleExpand(req)}
                 style={{
                   cursor: 'pointer',
-                  borderBottom: idx === items.length - 1 && expandedId !== req.sys_id ? 'none' : `1px solid ${t.border}`,
+                  borderBottom: idx === filteredItems.length - 1 && expandedId !== req.sys_id ? 'none' : `1px solid ${t.border}`,
                   background: expandedId === req.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
                   ...(lastSavedId === req.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}
@@ -787,27 +942,416 @@ function RequestsView({ items, callTool, toast, theme }: {
                           Fetching request items…
                         </div>
                       ) : (
-                        <RequestItemsTable
-                          items={reqItems[req.sys_id] || []}
-                          callTool={callTool}
-                          toast={toast}
-                          theme={theme}
-                        />
+                        <RequestItemsTable items={reqItems[req.sys_id] || []} callTool={callTool} toast={toast} theme={theme} />
                       )}
-                      <button
-                        onClick={() => setExpandedId(null)}
-                        style={{
-                          marginTop: '8px', padding: '4px 12px', borderRadius: '4px',
-                          border: `1px solid ${t.border}`, background: 'transparent',
-                          color: t.textWeak, fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
-                        }}>
-                        ▲ Collapse
-                      </button>
+                      <button onClick={() => setExpandedId(null)} style={{
+                        marginTop: '8px', padding: '4px 12px', borderRadius: '4px',
+                        border: `1px solid ${t.border}`, background: 'transparent',
+                        color: t.textWeak, fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
+                      }}>▲ Collapse</button>
                     </div>
                   </TableCell>
                 </TableRow>
               )}
             </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
+// ── Changes View ────────────────────────────────────────────────────────────
+function ChangesView({ items, callTool, toast, theme }: {
+  items: ChangeRequest[];
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  theme: 'light' | 'dark';
+}) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [filter, setFilter] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ short_description: '', category: 'Normal', risk: 'medium', priority: '3' });
+
+  const filteredItems = items.filter(c =>
+    !filter ||
+    c.number?.toLowerCase().includes(filter.toLowerCase()) ||
+    c.short_description?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const openCreate = () => { setCreating(true); setForm({ short_description: '', category: 'Normal', risk: 'medium', priority: '3' }); };
+  const cancel = () => setCreating(false);
+
+  const handleSave = async () => {
+    if (!form.short_description.trim()) { toast('Short Description is required', 'error'); return; }
+    setSaving(true);
+    try {
+      await callTool('sn__create_change_request', {
+        short_description: form.short_description,
+        category: form.category,
+        risk: form.risk,
+        priority: form.priority,
+      });
+      toast('✓ Change Request created');
+      cancel();
+    } catch (e: any) {
+      toast(e.message || 'Failed to create change request', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: '#293E40' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>🔄</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Change Requests</span>
+          <Badge appearance="filled" size="small"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
+            {items.length} record{items.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <button onClick={openCreate}
+            style={{
+              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff', borderRadius: '4px', height: '32px', padding: '0 16px',
+              cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit', fontWeight: 500,
+            }}>
+            + New Change
+          </button>
+          <ExpandButton />
+        </div>
+      </div>
+
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
+
+      {creating && (
+        <div style={{ padding: '14px 16px', borderLeft: '3px solid #81B5A1', background: theme === 'dark' ? '#1A2E25' : '#F4F5F7', borderBottom: `1px solid ${t.border}` }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', color: '#293E40' }}>➕ New Change Request</div>
+          <div className={styles.formGrid}>
+            <Field label="Short Description" size="small" style={{ gridColumn: '1 / -1' }}>
+              <Input size="small" value={form.short_description} onChange={(_, d) => setForm(f => ({ ...f, short_description: d.value }))} />
+            </Field>
+            <FormSelect label="Category" value={form.category} options={CHANGE_CATEGORIES} onChange={v => setForm(f => ({ ...f, category: v }))} theme={theme} />
+            <FormSelect label="Risk" value={form.risk} options={RISK_OPTIONS} onChange={v => setForm(f => ({ ...f, risk: v }))} theme={theme} />
+            <FormSelect label="Priority" value={form.priority} options={PRIORITIES} labels={PRIORITY_LABELS} onChange={v => setForm(f => ({ ...f, priority: v }))} theme={theme} />
+          </div>
+          <div className={styles.formActions}>
+            <Button appearance="secondary" size="small" onClick={cancel} disabled={saving}
+              style={{ borderRadius: '4px', height: '32px', padding: '0 16px', border: `1px solid ${t.border}` }}>Cancel</Button>
+            <Button appearance="primary" size="small" onClick={handleSave} disabled={saving}
+              style={{ background: '#293E40', borderColor: '#293E40', borderRadius: '4px', height: '32px', padding: '0 16px' }}>
+              {saving ? 'Saving…' : '✓ Create'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Short Description</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Priority</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Risk</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Category</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredItems.length === 0 && (
+            <TableRow><TableCell colSpan={6} className={styles.empty}><Text>{filter ? 'No matching change requests.' : 'No change requests found.'}</Text></TableCell></TableRow>
+          )}
+          {filteredItems.map((cr, idx) => (
+            <TableRow key={cr.sys_id} className="snow-row"
+              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{cr.number}</span></TableCell>
+              <TableCell style={{ ...cellStyle, maxWidth: '220px' }}>{cr.short_description || '—'}</TableCell>
+              <TableCell style={cellStyle}><StatePill state={cr.state} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}><PriorityPill priority={cr.priority} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}><RiskPill risk={cr.risk} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}>{cr.category || '—'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
+// ── Problems View ───────────────────────────────────────────────────────────
+function ProblemsView({ items, theme }: { items: Problem[]; theme: 'light' | 'dark' }) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [filter, setFilter] = useState('');
+
+  const filteredItems = items.filter(p =>
+    !filter ||
+    p.number?.toLowerCase().includes(filter.toLowerCase()) ||
+    p.short_description?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '200px', verticalAlign: 'middle',
+  };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: '#293E40' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>⚠️</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Problems</span>
+          <Badge appearance="filled" size="small"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
+            {items.length} record{items.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        <ExpandButton />
+      </div>
+
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
+
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Short Description</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Priority</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Assigned To</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredItems.length === 0 && (
+            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching problems.' : 'No problems found.'}</Text></TableCell></TableRow>
+          )}
+          {filteredItems.map((p, idx) => (
+            <TableRow key={p.sys_id} className="snow-row"
+              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{p.number}</span></TableCell>
+              <TableCell style={{ ...cellStyle, maxWidth: '240px' }}>{p.short_description || '—'}</TableCell>
+              <TableCell style={cellStyle}><PriorityPill priority={p.priority} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}><StatePill state={p.state} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}>{p.assigned_to || '—'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
+// ── Knowledge View ──────────────────────────────────────────────────────────
+function KnowledgeView({ items, theme }: { items: KnowledgeArticle[]; theme: 'light' | 'dark' }) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [filter, setFilter] = useState('');
+
+  const filteredItems = items.filter(a =>
+    !filter ||
+    a.number?.toLowerCase().includes(filter.toLowerCase()) ||
+    a.short_description?.toLowerCase().includes(filter.toLowerCase()) ||
+    a.category?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '200px', verticalAlign: 'middle',
+  };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: '#293E40' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>📚</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Knowledge Articles</span>
+          <Badge appearance="filled" size="small"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
+            {items.length} article{items.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        <ExpandButton />
+      </div>
+
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number, title, or category…" theme={theme} />
+
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={headerCellStyle}>Number</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Title</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Category</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Author</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredItems.length === 0 && (
+            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching articles.' : 'No knowledge articles found.'}</Text></TableCell></TableRow>
+          )}
+          {filteredItems.map((a, idx) => (
+            <TableRow key={a.sys_id} className="snow-row"
+              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{a.number}</span></TableCell>
+              <TableCell style={{ ...cellStyle, maxWidth: '260px' }}>{a.short_description || '—'}</TableCell>
+              <TableCell style={cellStyle}>{a.category || '—'}</TableCell>
+              <TableCell style={cellStyle}>{a.author || '—'}</TableCell>
+              <TableCell style={cellStyle}><StatePill state={a.state} theme={theme} /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
+// ── Catalog View ────────────────────────────────────────────────────────────
+function CatalogView({ items, theme }: { items: CatalogItem[]; theme: 'light' | 'dark' }) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [filter, setFilter] = useState('');
+
+  const filteredItems = items.filter(item =>
+    !filter ||
+    item.name?.toLowerCase().includes(filter.toLowerCase()) ||
+    item.category?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: '#293E40' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>🛒</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Service Catalog</span>
+          <Badge appearance="filled" size="small"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
+            {items.length} item{items.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        <ExpandButton />
+      </div>
+
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by name or category…" theme={theme} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', padding: '12px' }}>
+        {filteredItems.length === 0 && (
+          <div className={styles.empty} style={{ gridColumn: '1 / -1', color: t.textWeak }}>
+            {filter ? 'No matching catalog items.' : 'No catalog items found.'}
+          </div>
+        )}
+        {filteredItems.map(item => (
+          <div key={item.sys_id} style={{
+            border: `1px solid ${t.border}`, borderRadius: '6px', padding: '12px',
+            background: t.surface, boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: t.text, marginBottom: '4px' }}>{item.name}</div>
+            <div style={{ fontSize: '11px', color: t.textWeak, marginBottom: '6px', lineHeight: 1.4 }}>{item.short_description || '—'}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '11px', color: t.textWeak }}>{item.category || '—'}</span>
+              <span style={{
+                fontSize: '12px', fontWeight: 600,
+                color: item.price ? '#2E844A' : t.textWeak,
+              }}>{item.price || 'Free'}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
+// ── Approvals View ──────────────────────────────────────────────────────────
+function ApprovalsView({ items, theme }: { items: SnowApproval[]; theme: 'light' | 'dark' }) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [filter, setFilter] = useState('');
+
+  const filteredItems = items.filter(a =>
+    !filter ||
+    a.approver?.toLowerCase().includes(filter.toLowerCase()) ||
+    a.document?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const cellStyle: React.CSSProperties = {
+    padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    textOverflow: 'ellipsis', maxWidth: '180px', verticalAlign: 'middle',
+  };
+  const headerCellStyle: React.CSSProperties = {
+    fontWeight: 700, fontSize: '10px', textTransform: 'uppercase',
+    letterSpacing: '0.5px', padding: '6px 10px', color: t.textWeak,
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: '#293E40' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>✅</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Pending Approvals</span>
+          <Badge appearance="filled" size="small"
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
+            {items.length} record{items.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+        <ExpandButton />
+      </div>
+
+      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by approver or document…" theme={theme} />
+
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={headerCellStyle}>Approver</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Document</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>State</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Due Date</TableHeaderCell>
+            <TableHeaderCell style={headerCellStyle}>Created On</TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredItems.length === 0 && (
+            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching approvals.' : 'No pending approvals.'}</Text></TableCell></TableRow>
+          )}
+          {filteredItems.map((a, idx) => (
+            <TableRow key={a.sys_id} className="snow-row"
+              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              <TableCell style={cellStyle}>{a.approver || '—'}</TableCell>
+              <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', color: '#293E40' }}>{a.document || '—'}</span></TableCell>
+              <TableCell style={cellStyle}><ApprovalPill approval={a.state} theme={theme} /></TableCell>
+              <TableCell style={cellStyle}>{a.due_date || '—'}</TableCell>
+              <TableCell style={cellStyle}>{a.created_on || '—'}</TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
@@ -928,16 +1472,12 @@ function FormView({ entity, prefill, callTool, toast, theme }: {
     setSubmitted(false);
   };
 
-  const labelStyle: React.CSSProperties = { color: t.text, fontSize: '12px', fontWeight: 600 };
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '6px 10px', borderRadius: '4px',
-    border: `1px solid ${t.border}`, background: t.surface,
-    color: t.text, fontSize: '13px', fontFamily: 'inherit',
+  const formGrid3: React.CSSProperties = {
+    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px', marginBottom: '20px',
   };
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
-      {/* Header */}
       <div className={styles.headerBar} style={{
         background: 'linear-gradient(135deg, #293E40 0%, #3A5A5C 100%)',
         borderBottom: '2px solid #81B5A1',
@@ -962,34 +1502,19 @@ function FormView({ entity, prefill, callTool, toast, theme }: {
         </div>
       ) : (
         <div style={{ padding: '16px' }}>
-          {/* Short Description (required) */}
           <div style={{ marginBottom: '12px' }}>
-            <label style={labelStyle}>Short Description *</label>
-            <Input
-              size="small"
-              value={shortDesc}
-              onChange={(_, d) => setShortDesc(d.value)}
+            <label style={{ color: t.text, fontSize: '12px', fontWeight: 600 }}>Short Description *</label>
+            <Input size="small" value={shortDesc} onChange={(_, d) => setShortDesc(d.value)}
               placeholder={`Brief summary of the ${entity}`}
-              style={{ width: '100%', marginTop: '4px' }}
-            />
+              style={{ width: '100%', marginTop: '4px' }} />
           </div>
-
-          {/* Description */}
           <div style={{ marginBottom: '12px' }}>
-            <label style={labelStyle}>Description</label>
-            <Textarea
-              size="small"
-              value={description}
-              onChange={(_, d) => setDescription(d.value)}
-              placeholder="Detailed description (optional)"
-              rows={3}
-              resize="vertical"
-              style={{ width: '100%', marginTop: '4px' }}
-            />
+            <label style={{ color: t.text, fontSize: '12px', fontWeight: 600 }}>Description</label>
+            <Textarea size="small" value={description} onChange={(_, d) => setDescription(d.value)}
+              placeholder="Detailed description (optional)" rows={3} resize="vertical"
+              style={{ width: '100%', marginTop: '4px' }} />
           </div>
-
-          {/* Dropdowns */}
-          <div className={styles.formGrid}>
+          <div style={formGrid3}>
             <FormSelect label="Urgency" value={urgency} options={FORM_URGENCIES}
               labels={FORM_URGENCY_LABELS} onChange={setUrgency} theme={theme} />
             {isIncident && (
@@ -1001,8 +1526,6 @@ function FormView({ entity, prefill, callTool, toast, theme }: {
                 labels={FORM_CATEGORY_LABELS} onChange={setCategory} theme={theme} />
             )}
           </div>
-
-          {/* Actions */}
           <div className={styles.formActions}>
             <Button size="small" appearance="primary" onClick={handleSubmit}
               disabled={submitting || !shortDesc.trim()}
@@ -1026,12 +1549,13 @@ function FormView({ entity, prefill, callTool, toast, theme }: {
 function SkeletonTable() {
   return (
     <div style={{ padding: '16px' }}>
-      {/* Header skeleton */}
+      <div style={{ textAlign: 'center', padding: '8px 0 16px', fontSize: '13px', color: '#888' }}>
+        ⏳ Loading data…
+      </div>
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
         <div className="skel" style={{ width: '220px', height: '24px' }} />
         <div className="skel" style={{ width: '80px', height: '24px' }} />
       </div>
-      {/* Row skeletons with varying widths */}
       {[1, 2, 3, 4, 5].map(i => (
         <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
           <div className="skel" style={{ width: `${80 + (i * 10)}px` }} />
@@ -1088,20 +1612,25 @@ export function ServiceNowApp() {
   return (
     <div className={styles.shell} style={shellStyle}>
       {data.type === 'incidents' && (
-        <IncidentsView
-          items={(data.incidents || []) as Incident[]}
-          callTool={callTool}
-          toast={toast}
-          theme={theme}
-        />
+        <IncidentsView items={(data.incidents || []) as Incident[]} callTool={callTool} toast={toast} theme={theme} />
       )}
       {data.type === 'requests' && (
-        <RequestsView
-          items={(data.requests || []) as ServiceRequest[]}
-          callTool={callTool}
-          toast={toast}
-          theme={theme}
-        />
+        <RequestsView items={(data.requests || []) as ServiceRequest[]} callTool={callTool} toast={toast} theme={theme} />
+      )}
+      {data.type === 'change_requests' && (
+        <ChangesView items={(data.items || []) as ChangeRequest[]} callTool={callTool} toast={toast} theme={theme} />
+      )}
+      {data.type === 'problems' && (
+        <ProblemsView items={(data.items || []) as Problem[]} theme={theme} />
+      )}
+      {data.type === 'knowledge_articles' && (
+        <KnowledgeView items={(data.items || []) as KnowledgeArticle[]} theme={theme} />
+      )}
+      {data.type === 'service_catalog' && (
+        <CatalogView items={(data.items || []) as CatalogItem[]} theme={theme} />
+      )}
+      {data.type === 'approvals' && (
+        <ApprovalsView items={(data.items || []) as SnowApproval[]} theme={theme} />
       )}
       {data.type === 'form' && (
         <FormView
@@ -1115,4 +1644,3 @@ export function ServiceNowApp() {
     </div>
   );
 }
-
