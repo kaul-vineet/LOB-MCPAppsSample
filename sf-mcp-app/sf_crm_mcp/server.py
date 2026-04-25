@@ -183,15 +183,29 @@ async def _fetch_contacts() -> list[dict]:
 @mcp.tool(
     description=(
         "Get the 5 most recent Leads from Salesforce. "
+        "Pass campaign_id to get leads for a specific campaign. "
         "Returns lead name, company, email, phone, status, and lead source."
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_leads() -> types.CallToolResult:
-    """Fetch latest 5 Leads from Salesforce."""
-    log.info("sf__get_leads")
+async def sf__get_leads(campaign_id: str = "") -> types.CallToolResult:
+    """Fetch latest 5 Leads from Salesforce, optionally filtered by campaign."""
+    log.info("sf__get_leads", campaign_id=campaign_id)
     try:
-        items = await _fetch_leads()
+        if campaign_id:
+            cfg = _get_schema("Lead")
+            columns = cfg.get("columns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Lead "
+                f"WHERE Id IN (SELECT LeadId FROM CampaignMember WHERE CampaignId = '{campaign_id}') "
+                f"ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_leads()
     except SalesforceAuthError as exc:
         log.error("auth_failed", error=str(exc))
         return _error_result(f"Salesforce authentication failed: {exc}")
@@ -328,6 +342,57 @@ async def sf__update_lead(
     )
 
 
+@mcp.tool(
+    description=(
+        "Get full details for a single Salesforce Lead by Id. "
+        "Returns all fields including description, title, website, revenue, and created date."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_lead(lead_id: str) -> types.CallToolResult:
+    log.info("sf__get_lead", lead_id=lead_id)
+    try:
+        sf = get_client()
+        soql = (
+            f"SELECT Id, FirstName, LastName, Company, Email, Phone, Status, LeadSource, "
+            f"Title, Website, Description, AnnualRevenue, NumberOfEmployees, CreatedDate "
+            f"FROM Lead WHERE Id = '{lead_id}' LIMIT 1"
+        )
+        records = await sf.query(soql)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching lead: {exc}")
+
+    if not records:
+        return _error_result(f"Lead {lead_id} not found.")
+
+    r = records[0]
+    record = {
+        "id": r.get("Id", ""),
+        "first_name": r.get("FirstName") or "",
+        "last_name": r.get("LastName") or "",
+        "company": r.get("Company") or "",
+        "email": r.get("Email") or "",
+        "phone": r.get("Phone") or "",
+        "status": r.get("Status") or "",
+        "lead_source": r.get("LeadSource") or "",
+        "title": r.get("Title") or "",
+        "website": r.get("Website") or "",
+        "description": r.get("Description") or "",
+        "annual_revenue": r.get("AnnualRevenue"),
+        "number_of_employees": r.get("NumberOfEmployees"),
+        "created_date": (r.get("CreatedDate") or "")[:10],
+    }
+    name = f"{record['first_name']} {record['last_name']}".strip()
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Lead: {name} at {record['company']}. Status: {record['status']}.")],
+        structuredContent={"type": "lead_detail", "record": record},
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # OPPORTUNITY TOOLS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -340,11 +405,23 @@ async def sf__update_lead(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_opportunities() -> types.CallToolResult:
-    """Fetch latest 5 Opportunities from Salesforce."""
-    log.info("sf__get_opportunities")
+async def sf__get_opportunities(account_id: str = "") -> types.CallToolResult:
+    """Fetch latest 5 Opportunities, optionally filtered by account."""
+    log.info("sf__get_opportunities", account_id=account_id)
     try:
-        items = await _fetch_opportunities()
+        if account_id:
+            cfg = _get_schema("Opportunity")
+            columns = cfg.get("columns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Opportunity "
+                f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_opportunities()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
@@ -618,9 +695,21 @@ async def sf__update_account(
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_contacts() -> types.CallToolResult:
+async def sf__get_contacts(account_id: str = "") -> types.CallToolResult:
     try:
-        items = await _fetch_contacts()
+        if account_id:
+            cfg = _get_schema("Contact")
+            columns = cfg.get("columns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Contact "
+                f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_contacts()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except Exception as exc:
@@ -760,10 +849,22 @@ async def _fetch_cases() -> list[dict]:
     ),
     meta={"ui": {"resourceUri": WIDGET_URI}},
 )
-async def sf__get_cases() -> types.CallToolResult:
-    log.info("sf__get_cases")
+async def sf__get_cases(account_id: str = "") -> types.CallToolResult:
+    log.info("sf__get_cases", account_id=account_id)
     try:
-        items = await _fetch_cases()
+        if account_id:
+            cfg = _get_schema("Case")
+            columns = cfg.get("columns", [])
+            api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
+            soql = (
+                f"SELECT {', '.join(api_names)} FROM Case "
+                f"WHERE AccountId = '{account_id}' ORDER BY CreatedDate DESC LIMIT 20"
+            )
+            sf = get_client()
+            records = await sf.query(soql)
+            items = [_flatten_record(r, columns) for r in records]
+        else:
+            items = await _fetch_cases()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
@@ -854,6 +955,88 @@ async def sf__update_case(
     )
 
 
+@mcp.tool(
+    description=(
+        "Get full details for a single Salesforce Case by Id. "
+        "Returns all fields including description, comments, origin, type, account, and dates."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_case(case_id: str) -> types.CallToolResult:
+    log.info("sf__get_case", case_id=case_id)
+    try:
+        sf = get_client()
+        soql = (
+            f"SELECT Id, CaseNumber, Subject, Status, Priority, Origin, Type, "
+            f"Account.Name, Description, Comments, CreatedDate, ClosedDate "
+            f"FROM Case WHERE Id = '{case_id}' LIMIT 1"
+        )
+        records = await sf.query(soql)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching case: {exc}")
+
+    if not records:
+        return _error_result(f"Case {case_id} not found.")
+
+    r = records[0]
+    account = r.get("Account") or {}
+    record = {
+        "id": r.get("Id", ""),
+        "case_number": r.get("CaseNumber") or "",
+        "subject": r.get("Subject") or "",
+        "status": r.get("Status") or "",
+        "priority": r.get("Priority") or "",
+        "origin": r.get("Origin") or "",
+        "type": r.get("Type") or "",
+        "account_name": account.get("Name") or "",
+        "description": r.get("Description") or "",
+        "comments": r.get("Comments") or "",
+        "created_date": (r.get("CreatedDate") or "")[:10],
+        "closed_date": (r.get("ClosedDate") or "")[:10],
+    }
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Case {record['case_number']}: {record['subject']}. Status: {record['status']}.")],
+        structuredContent={"type": "case_detail", "record": record},
+    )
+
+
+@mcp.tool(
+    description="Get notes/comments for a Salesforce Case by case Id.",
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_case_comments(case_id: str) -> types.CallToolResult:
+    log.info("sf__get_case_comments", case_id=case_id)
+    try:
+        sf = get_client()
+        soql = (
+            f"SELECT Id, CommentBody, CreatedDate, CreatedBy.Name "
+            f"FROM CaseComment WHERE ParentId = '{case_id}' ORDER BY CreatedDate ASC LIMIT 50"
+        )
+        records = await sf.query(soql)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except Exception as exc:
+        return _error_result(f"Failed to fetch case comments: {exc}")
+
+    items = [
+        {
+            "id": r.get("Id", ""),
+            "body": r.get("CommentBody") or "",
+            "created_by": (r.get("CreatedBy") or {}).get("Name") or "",
+            "created_date": (r.get("CreatedDate") or "")[:10],
+        }
+        for r in records
+    ]
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"{len(items)} comment(s) for case {case_id}.")],
+        structuredContent={"type": "case_comments", "case_id": case_id, "items": items},
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TASK TOOLS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -922,6 +1105,51 @@ async def sf__create_task(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Task")},
+    )
+
+
+@mcp.tool(
+    description=(
+        "Get full details for a single Salesforce Task by Id. "
+        "Returns subject, status, priority, due date, description, and related record."
+    ),
+    meta={"ui": {"resourceUri": WIDGET_URI}},
+)
+async def sf__get_task(task_id: str) -> types.CallToolResult:
+    log.info("sf__get_task", task_id=task_id)
+    try:
+        sf = get_client()
+        soql = (
+            f"SELECT Id, Subject, Status, Priority, ActivityDate, "
+            f"Description, WhoId, WhatId, CreatedDate "
+            f"FROM Task WHERE Id = '{task_id}' LIMIT 1"
+        )
+        records = await sf.query(soql)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Salesforce API error: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error fetching task: {exc}")
+
+    if not records:
+        return _error_result(f"Task {task_id} not found.")
+
+    r = records[0]
+    record = {
+        "id": r.get("Id", ""),
+        "subject": r.get("Subject") or "",
+        "status": r.get("Status") or "",
+        "priority": r.get("Priority") or "",
+        "activity_date": r.get("ActivityDate") or "",
+        "description": r.get("Description") or "",
+        "who_id": r.get("WhoId") or "",
+        "what_id": r.get("WhatId") or "",
+        "created_date": (r.get("CreatedDate") or "")[:10],
+    }
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Task: {record['subject']}. Status: {record['status']}. Due: {record['activity_date'] or 'not set'}.")],
+        structuredContent={"type": "task_detail", "record": record},
     )
 
 
