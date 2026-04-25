@@ -32,14 +32,52 @@ export interface Contact {
   lifecyclestage: string;
 }
 
-export type HubSpotViewType = 'emails' | 'lists' | 'list_contacts' | 'form';
+export interface CrmContact {
+  id: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone: string;
+  company: string;
+  jobtitle: string;
+  lifecyclestage: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  domain: string;
+  phone: string;
+  city: string;
+  industry: string;
+}
+
+export interface Deal {
+  id: string;
+  dealname: string;
+  amount?: number;
+  dealstage: string;
+  closedate?: string;
+  pipeline: string;
+}
+
+export interface Ticket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  category?: string;
+  description?: string;
+}
+
+export type HubSpotViewType = 'emails' | 'lists' | 'list_contacts' | 'form' | 'contacts' | 'companies' | 'deals' | 'tickets';
 
 export interface HubSpotData {
   type: HubSpotViewType;
   total?: number;
-  items?: (Email | ContactList | Contact)[];
+  items?: (Email | ContactList | Contact | CrmContact | Company | Deal | Ticket)[];
   list_id?: string;
   list_name?: string;
-  entity?: 'contact' | 'deal';
+  entity?: 'contact' | 'deal' | 'company' | 'ticket';
   prefill?: Record<string, string>;
 }

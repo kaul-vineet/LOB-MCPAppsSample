@@ -26,15 +26,92 @@
   .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   iframe  { width: 100%; border: none; min-height: 60px; display: block; }
   .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #fff0ec; color: #FF7A59; margin-left: 8px; }
+  /* Capability table */
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 920px; }
+  .cap-table th { background: #33475b; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #00BDA5; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
+  .cap-table .grp { background: #fff0ec; font-weight: 600; color: #33475b; }
 </style>
 </head>
 <body>
 
-<h2>⚓ <img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — HubSpot Marketing <span class="badge">Single-Ask Flow</span></h2>
+<h2>⚓ <img src="https://cdn.simpleicons.org/hubspot/FF7A59" alt="HubSpot" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — HubSpot Marketing &amp; CRM <span class="badge">Single-Ask Flow</span></h2>
 <p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
-<p class="subtitle">Test harness for the HubSpot Marketing MCP widget. Entry point: agent sends <strong>emails</strong> structuredContent — widget drives drill-down via <code>hs__get_lists</code> / <code>hs__get_list_contacts</code>.</p>
+<p class="subtitle">Test harness for the HubSpot Marketing + CRM MCP widget.</p>
 
-<div class="section-label">📧 Entry Point — Send Mock Emails</div>
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Entity</th>
+      <th>List</th>
+      <th>Form</th>
+      <th>Child / Drill Down</th>
+      <th>Parent CRUD</th>
+      <th>Child CRUD</th>
+      <th>Widget</th>
+      <th>FK Case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="grp" colspan="8">Marketing</td></tr>
+    <tr>
+      <td>Marketing Emails</td>
+      <td class="y">Y</td><td class="n">— (edit inline)</td>
+      <td>→ Contact Lists → List Contacts</td>
+      <td>Edit name / subject</td><td>—</td>
+      <td>HubSpot Marketing</td><td class="n">—</td>
+    </tr>
+    <tr>
+      <td>Contact Lists</td>
+      <td class="y">Y</td><td class="n">— (edit inline)</td>
+      <td>→ List Contacts</td>
+      <td>Edit name</td><td>Add / Remove contact</td>
+      <td>HubSpot Marketing</td><td class="n">—</td>
+    </tr>
+    <tr>
+      <td>List Contacts</td>
+      <td class="y">Y</td><td class="n">—</td>
+      <td>—</td>
+      <td>—</td><td>Add / Remove</td>
+      <td>HubSpot Marketing</td><td class="n">—</td>
+    </tr>
+    <tr><td class="grp" colspan="8">CRM</td></tr>
+    <tr>
+      <td>CRM Contacts</td>
+      <td class="y">Y</td><td class="y">Y (3-col)</td>
+      <td>—</td>
+      <td>Create · Edit inline</td><td>—</td>
+      <td>HubSpot CRM</td><td class="n">—</td>
+    </tr>
+    <tr>
+      <td>Companies</td>
+      <td class="y">Y</td><td class="y">Y (3-col)</td>
+      <td>—</td>
+      <td>Create · Edit inline</td><td>—</td>
+      <td>HubSpot CRM</td><td class="n">—</td>
+    </tr>
+    <tr>
+      <td>Deals</td>
+      <td class="y">Y</td><td class="y">Y (3-col)</td>
+      <td>—</td>
+      <td>Create · Edit inline</td><td>—</td>
+      <td>HubSpot CRM</td><td class="n">—</td>
+    </tr>
+    <tr>
+      <td>Tickets</td>
+      <td class="y">Y</td><td class="n">— (edit inline)</td>
+      <td>Description (expand)</td>
+      <td>Edit inline</td><td>—</td>
+      <td>HubSpot CRM</td><td class="n">—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-label">📧 Marketing — Send Mock Emails</div>
 <div class="controls">
   <button onclick="sendEmails()">Send Mock Emails (5 rows)</button>
   <button class="secondary" onclick="sendEmptyEmails()">Send Empty Emails</button>
@@ -47,7 +124,35 @@
   <button class="green" onclick="sendForm('deal')">New Deal Form</button>
   <button class="blue" onclick="sendFormPrefill()">Prefill Contact Form</button>
 </div>
-<p class="hint">Standalone create forms — agent sends <code>{ type: 'form', entity: '...' }</code>. Prefill test pre-fills firstname + company (P7).</p>
+<p class="hint">Standalone create forms — agent sends <code>{ type: 'form', entity: '...' }</code>. Prefill test pre-fills firstname + company.</p>
+
+<div class="section-label">👤 CRM — Contacts</div>
+<div class="controls">
+  <button class="green" onclick="sendCrmContacts()">Send CRM Contacts (5)</button>
+  <button class="secondary" onclick="sendEmpty('contacts')">Send Empty</button>
+</div>
+<p class="hint">CRM Contacts list with inline edit + create form. Calls <code>hs__get_contacts</code>, <code>hs__update_contact</code>, <code>hs__create_contact</code>.</p>
+
+<div class="section-label">🏢 CRM — Companies</div>
+<div class="controls">
+  <button class="blue" onclick="sendCompanies()">Send Companies (5)</button>
+  <button class="secondary" onclick="sendEmpty('companies')">Send Empty</button>
+</div>
+<p class="hint">Companies list with inline edit + create form. Calls <code>hs__get_companies</code>, <code>hs__update_company</code>, <code>hs__create_company</code>.</p>
+
+<div class="section-label">💰 CRM — Deals</div>
+<div class="controls">
+  <button onclick="sendDeals()">Send Deals (5)</button>
+  <button class="secondary" onclick="sendEmpty('deals')">Send Empty</button>
+</div>
+<p class="hint">Deals list with pipeline stage, amount, inline edit + create form. Calls <code>hs__get_deals</code>, <code>hs__update_deal</code>, <code>hs__create_deal</code>.</p>
+
+<div class="section-label">🎫 CRM — Tickets</div>
+<div class="controls">
+  <button class="dark" onclick="sendTickets()">Send Tickets (5)</button>
+  <button class="secondary" onclick="sendEmpty('tickets')">Send Empty</button>
+</div>
+<p class="hint">Tickets list with priority badge + expand for description. Calls <code>hs__get_tickets</code>, <code>hs__update_ticket</code>, <code>hs__create_ticket</code>.</p>
 
 <div class="section-label">⚠️ Error Simulation</div>
 <div class="controls">
@@ -76,11 +181,11 @@
     type: "emails",
     total: 5,
     items: [
-      { id: "12345", name: "Spring Sale 2025",        subject: "\uD83C\uDF38 Don't miss our Spring Sale!",      status: "PUBLISHED", stats: { sent: 15420, delivered: 15100, opened: 6340, clicked: 892, bounced: 320, unsubscribed: 45 } },
+      { id: "12345", name: "Spring Sale 2025",        subject: "🌸 Don't miss our Spring Sale!",      status: "PUBLISHED", stats: { sent: 15420, delivered: 15100, opened: 6340, clicked: 892, bounced: 320, unsubscribed: 45 } },
       { id: "12346", name: "Monthly Newsletter Mar",   subject: "March Newsletter — What's New",                 status: "PUBLISHED", stats: { sent: 22800, delivered: 22350, opened: 8940, clicked: 1560, bounced: 450, unsubscribed: 72 } },
-      { id: "12347", name: "Product Launch Webinar",    subject: "\uD83D\uDE80 Join our Product Launch Event!",   status: "PUBLISHED", stats: { sent: 8500,  delivered: 8320,  opened: 4160, clicked: 1248, bounced: 180, unsubscribed: 18 } },
+      { id: "12347", name: "Product Launch Webinar",    subject: "🚀 Join our Product Launch Event!",   status: "PUBLISHED", stats: { sent: 8500,  delivered: 8320,  opened: 4160, clicked: 1248, bounced: 180, unsubscribed: 18 } },
       { id: "12348", name: "Customer Survey Q1",        subject: "We'd love your feedback!",                     status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } },
-      { id: "12349", name: "Summer Preview Campaign",   subject: "\u2600\uFE0F Summer is coming — sneak peek!",  status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } }
+      { id: "12349", name: "Summer Preview Campaign",   subject: "☀️ Summer is coming — sneak peek!",  status: "DRAFT",     stats: { sent: 0,     delivered: 0,     opened: 0,    clicked: 0,    bounced: 0,   unsubscribed: 0 } }
     ]
   };
 
@@ -105,11 +210,59 @@
     ]
   };
 
+  // ── Mock Data: CRM Contacts ────────────────────────────────────────────
+  var MOCK_CRM_CONTACTS = {
+    type: "contacts", total: 5, items: [
+      { id: "601", firstname: "Alice", lastname: "Fontaine", email: "alice.fontaine@acme.com", phone: "+1-555-1001", company: "Acme Corp", jobtitle: "VP Sales", lifecyclestage: "customer" },
+      { id: "602", firstname: "Bruno", lastname: "Marchetti", email: "b.marchetti@techstart.io", phone: "+1-555-1002", company: "TechStart", jobtitle: "CTO", lifecyclestage: "lead" },
+      { id: "603", firstname: "Claire", lastname: "Dupont", email: "c.dupont@globaltrade.eu", phone: "+33-1-2345-6789", company: "GlobalTrade", jobtitle: "Procurement Manager", lifecyclestage: "opportunity" },
+      { id: "604", firstname: "David", lastname: "Okafor", email: "d.okafor@bluewave.ng", phone: "+234-802-000-1234", company: "BlueWave Ltd", jobtitle: "CEO", lifecyclestage: "marketing qualified lead" },
+      { id: "605", firstname: "Elena", lastname: "Sorokina", email: "e.sorokina@nordicparts.fi", phone: "+358-40-123-4567", company: "Nordic Parts OY", jobtitle: "Supply Chain Analyst", lifecyclestage: "subscriber" }
+    ]
+  };
+
+  // ── Mock Data: Companies ───────────────────────────────────────────────
+  var MOCK_COMPANIES = {
+    type: "companies", total: 5, items: [
+      { id: "801", name: "Acme Corp", domain: "acme.com", phone: "+1-555-2001", city: "New York", industry: "Manufacturing" },
+      { id: "802", name: "TechStart", domain: "techstart.io", phone: "+1-555-2002", city: "San Francisco", industry: "Technology" },
+      { id: "803", name: "GlobalTrade", domain: "globaltrade.eu", phone: "+49-89-1234-5678", city: "Berlin", industry: "Retail" },
+      { id: "804", name: "BlueWave Ltd", domain: "bluewave.ng", phone: "+234-1-234-5678", city: "Lagos", industry: "Finance" },
+      { id: "805", name: "Nordic Parts OY", domain: "nordicparts.fi", phone: "+358-9-123-4567", city: "Helsinki", industry: "Manufacturing" }
+    ]
+  };
+
+  // ── Mock Data: Deals ───────────────────────────────────────────────────
+  var MOCK_DEALS = {
+    type: "deals", total: 5, items: [
+      { id: "901", dealname: "Acme Corp — Enterprise License", amount: 84000, dealstage: "presentationscheduled", closedate: "2026-06-30", pipeline: "Default Pipeline" },
+      { id: "902", dealname: "TechStart — Starter Pack", amount: 12000, dealstage: "qualifiedtobuy", closedate: "2026-05-15", pipeline: "Default Pipeline" },
+      { id: "903", dealname: "GlobalTrade — Annual Contract", amount: 156000, dealstage: "closedwon", closedate: "2026-03-31", pipeline: "Default Pipeline" },
+      { id: "904", dealname: "BlueWave — Pilot Program", amount: 5000, dealstage: "appointmentscheduled", closedate: "2026-07-01", pipeline: "Default Pipeline" },
+      { id: "905", dealname: "Nordic Parts — Renewal", amount: 42000, dealstage: "closedlost", closedate: "2026-04-01", pipeline: "Default Pipeline" }
+    ]
+  };
+
+  // ── Mock Data: Tickets ─────────────────────────────────────────────────
+  var MOCK_TICKETS = {
+    type: "tickets", total: 5, items: [
+      { id: "1001", subject: "Login issue after SSO migration", status: "new", priority: "HIGH", category: "Technical", description: "Users are unable to log in after the SSO migration completed on April 20. Affects ~30 accounts in the EU region." },
+      { id: "1002", subject: "Invoice discrepancy — March billing", status: "waiting on contact", priority: "MEDIUM", category: "Billing", description: "Customer reports a $240 overcharge on their March invoice. Awaiting documentation from their finance team." },
+      { id: "1003", subject: "Feature request: bulk export", status: "waiting on us", priority: "LOW", category: "Feature Request", description: "Customer would like to bulk export contact data as CSV. Currently requires API access." },
+      { id: "1004", subject: "Widget not loading in Safari", status: "new", priority: "HIGH", category: "Technical", description: "Safari 17+ users see a blank widget. Reproducible on macOS Sequoia. Chrome and Firefox unaffected." },
+      { id: "1005", subject: "Onboarding call scheduling", status: "closed", priority: "LOW", category: "General", description: "New customer onboarding completed. Follow-up scheduled for Q3." }
+    ]
+  };
+
   // ── Mock Error ──────────────────────────────────────────────────────────
   var MOCK_ERROR = { error: true, message: "HubSpot authentication failed: Missing HubSpot credentials. Set HUBSPOT_ACCESS_TOKEN in your .env file." };
 
-  // ── Current state (mutated by mock CRUD operations) ─────────────────────
+  // ── Mutable state (mutated by mock CRUD) ────────────────────────────────
   var currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
+  var currentCrmContacts  = JSON.parse(JSON.stringify(MOCK_CRM_CONTACTS));
+  var currentCompanies    = JSON.parse(JSON.stringify(MOCK_COMPANIES));
+  var currentDeals        = JSON.parse(JSON.stringify(MOCK_DEALS));
+  var currentTickets      = JSON.parse(JSON.stringify(MOCK_TICKETS));
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   function post(data) {
@@ -122,11 +275,20 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  function sendEmails()      { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(MOCK_EMAILS)) } }); log('\u2192 Sent mock emails (5 rows)'); }
-  function sendEmptyEmails() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_EMPTY_EMAILS } }); log('\u2192 Sent empty emails'); }
-  function sendError()       { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('\u2192 Sent mock error'); }
-  function sendForm(entity)  { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: { type: 'form', entity: entity } } }); log('\u2192 Sent ' + entity + ' create form'); }
-  function sendFormPrefill() { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: { type: 'form', entity: 'contact', prefill: { firstname: 'Jane', company: 'Acme Corp' } } } }); log('\u2192 Sent prefilled contact form (P7)'); }
+  function send(payload) {
+    post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(payload)) } });
+  }
+
+  function sendEmails()        { send(MOCK_EMAILS);              log('→ Sent mock emails (5 rows)'); }
+  function sendEmptyEmails()   { send(MOCK_EMPTY_EMAILS);        log('→ Sent empty emails'); }
+  function sendCrmContacts()   { currentCrmContacts = JSON.parse(JSON.stringify(MOCK_CRM_CONTACTS)); send(currentCrmContacts); log('→ Sent CRM contacts (5)'); }
+  function sendCompanies()     { currentCompanies   = JSON.parse(JSON.stringify(MOCK_COMPANIES));    send(currentCompanies);   log('→ Sent companies (5)'); }
+  function sendDeals()         { currentDeals       = JSON.parse(JSON.stringify(MOCK_DEALS));        send(currentDeals);       log('→ Sent deals (5)'); }
+  function sendTickets()       { currentTickets     = JSON.parse(JSON.stringify(MOCK_TICKETS));      send(currentTickets);     log('→ Sent tickets (5)'); }
+  function sendEmpty(type)     { send({ type: type, total: 0, items: [] }); log('→ Sent empty ' + type); }
+  function sendError()         { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: MOCK_ERROR } }); log('→ Sent mock error'); }
+  function sendForm(entity)    { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: { type: 'form', entity: entity } } }); log('→ Sent ' + entity + ' create form'); }
+  function sendFormPrefill()   { post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: { type: 'form', entity: 'contact', prefill: { firstname: 'Jane', company: 'Acme Corp' } } } }); log('→ Sent prefilled contact form'); }
 
   function toggleTheme() {
     isDark = !isDark;
@@ -135,7 +297,7 @@
     document.getElementById('frame-wrapper').style.background = isDark ? '#16213e' : 'white';
     document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3a3a5c' : '#ddd';
     post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
-    log('\u2192 Theme: ' + (isDark ? 'dark' : 'light'));
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
   }
 
   // ── Handle messages FROM the widget ─────────────────────────────────────
@@ -143,7 +305,6 @@
     var msg = e.data;
     if (!msg) return;
 
-    // ── callTool request from widget ──
     // SDK handshake
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
       document.getElementById('widget').contentWindow.postMessage({ jsonrpc: '2.0', id: msg.id, result: { protocolVersion: (msg.params && msg.params.protocolVersion) || '2026-01-26', hostInfo: { name: 'hs-test-host', version: '1.0.0' }, hostCapabilities: { serverTools: {} }, hostContext: { theme: isDark ? 'dark' : 'light' } } }, '*');
@@ -153,117 +314,190 @@
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
       var tool = msg.params.name;
       var args = msg.params.arguments || {};
-      log('\u2190 callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
 
       setTimeout(function() {
         var result;
 
-        // ── GET EMAILS ──
+        // ── MARKETING ──────────────────────────────────────────────────────
         if (tool === 'hs__get_emails') {
           result = JSON.parse(JSON.stringify(MOCK_EMAILS));
-          log('\u2192 Returned mock emails');
+          log('→ Returned mock emails');
         }
-
-        // ── GET LISTS ──
         else if (tool === 'hs__get_lists') {
           result = JSON.parse(JSON.stringify(MOCK_LISTS));
-          log('\u2192 Returned mock lists');
+          log('→ Returned mock lists');
         }
-
-        // ── GET LIST CONTACTS ──
         else if (tool === 'hs__get_list_contacts') {
           var listId = args.list_id;
           var listName = 'Unknown List';
           for (var li = 0; li < MOCK_LISTS.items.length; li++) {
-            if (MOCK_LISTS.items[li].id === listId) {
-              listName = MOCK_LISTS.items[li].name;
-              break;
-            }
+            if (MOCK_LISTS.items[li].id === listId) { listName = MOCK_LISTS.items[li].name; break; }
           }
           currentListContacts = JSON.parse(JSON.stringify(MOCK_LIST_CONTACTS));
           currentListContacts.list_id = listId;
           currentListContacts.list_name = listName;
           result = JSON.parse(JSON.stringify(currentListContacts));
-          log('\u2192 Returned list contacts for list ' + listId + ' (' + listName + ')');
+          log('→ Returned list contacts for list ' + listId + ' (' + listName + ')');
         }
-
-        // ── ADD TO LIST ──
         else if (tool === 'hs__add_to_list') {
-          var newContact = {
-            id: String(600 + currentListContacts.items.length),
-            firstname: args.contact_email.split('@')[0],
-            lastname: '(added)',
-            email: args.contact_email,
-            phone: '',
-            company: '',
-            lifecyclestage: 'lead'
-          };
+          var newContact = { id: String(600 + currentListContacts.items.length), firstname: args.contact_email.split('@')[0], lastname: '(added)', email: args.contact_email, phone: '', company: '', lifecyclestage: 'lead' };
           currentListContacts.items.push(newContact);
           currentListContacts.total = currentListContacts.items.length;
           currentListContacts._addedEmail = args.contact_email;
           result = JSON.parse(JSON.stringify(currentListContacts));
-          log('\u2192 Added ' + args.contact_email + ' to list ' + args.list_id);
+          log('→ Added ' + args.contact_email + ' to list ' + args.list_id);
         }
-
-        // ── REMOVE FROM LIST ──
         else if (tool === 'hs__remove_from_list') {
-          var removeId = args.contact_id;
-          currentListContacts.items = currentListContacts.items.filter(function(c) { return c.id !== removeId; });
+          currentListContacts.items = currentListContacts.items.filter(function(c) { return c.id !== args.contact_id; });
           currentListContacts.total = currentListContacts.items.length;
           result = JSON.parse(JSON.stringify(currentListContacts));
-          log('\u2192 Removed contact ' + removeId + ' from list ' + args.list_id);
+          log('→ Removed contact ' + args.contact_id + ' from list ' + args.list_id);
         }
-
-        // ── UPDATE EMAIL ──
         else if (tool === 'hs__update_email') {
           for (var i = 0; i < MOCK_EMAILS.items.length; i++) {
             if (MOCK_EMAILS.items[i].id === args.email_id) {
-              if (args.name) MOCK_EMAILS.items[i].name = args.name;
+              if (args.name)    MOCK_EMAILS.items[i].name    = args.name;
               if (args.subject) MOCK_EMAILS.items[i].subject = args.subject;
-              log('\u2192 Updated email ' + args.email_id + ': name="' + (args.name || '') + '", subject="' + (args.subject || '') + '"');
+              log('→ Updated email ' + args.email_id);
               break;
             }
           }
           result = JSON.parse(JSON.stringify(MOCK_EMAILS));
         }
-
-        // ── UPDATE LIST ──
         else if (tool === 'hs__update_list') {
           for (var j = 0; j < MOCK_LISTS.items.length; j++) {
-            if (MOCK_LISTS.items[j].id === args.list_id) {
-              MOCK_LISTS.items[j].name = args.name;
-              log('\u2192 Renamed list ' + args.list_id + ' to "' + args.name + '"');
-              break;
-            }
+            if (MOCK_LISTS.items[j].id === args.list_id) { MOCK_LISTS.items[j].name = args.name; log('→ Renamed list ' + args.list_id + ' to "' + args.name + '"'); break; }
           }
           result = JSON.parse(JSON.stringify(MOCK_LISTS));
         }
 
-        // ── CREATE CONTACT ──
+        // ── CRM CONTACTS ───────────────────────────────────────────────────
+        else if (tool === 'hs__get_contacts') {
+          result = JSON.parse(JSON.stringify(currentCrmContacts));
+          log('→ Returned CRM contacts');
+        }
         else if (tool === 'hs__create_contact') {
-          result = { success: true, id: String(700 + Date.now() % 1000), email: args.email };
-          log('→ Created contact: ' + (args.email || '') + ' (' + (args.firstname || '') + ' ' + (args.lastname || '') + ')');
+          var newCrm = { id: String(700 + Date.now() % 1000), firstname: args.firstname || '', lastname: args.lastname || '', email: args.email || '', phone: args.phone || '', company: args.company || '', jobtitle: args.jobtitle || '', lifecyclestage: args.lifecyclestage || 'lead' };
+          currentCrmContacts.items.push(newCrm);
+          currentCrmContacts.total = currentCrmContacts.items.length;
+          result = JSON.parse(JSON.stringify(currentCrmContacts));
+          log('→ Created CRM contact: ' + (args.email || ''));
+        }
+        else if (tool === 'hs__update_contact') {
+          for (var k = 0; k < currentCrmContacts.items.length; k++) {
+            if (currentCrmContacts.items[k].id === args.contact_id) {
+              var c = currentCrmContacts.items[k];
+              if (args.firstname)      c.firstname      = args.firstname;
+              if (args.lastname)       c.lastname        = args.lastname;
+              if (args.email)          c.email           = args.email;
+              if (args.phone)          c.phone           = args.phone;
+              if (args.company)        c.company         = args.company;
+              if (args.jobtitle)       c.jobtitle        = args.jobtitle;
+              if (args.lifecyclestage) c.lifecyclestage  = args.lifecyclestage;
+              log('→ Updated CRM contact ' + args.contact_id);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentCrmContacts));
         }
 
-        // ── CREATE DEAL ──
+        // ── COMPANIES ──────────────────────────────────────────────────────
+        else if (tool === 'hs__get_companies') {
+          result = JSON.parse(JSON.stringify(currentCompanies));
+          log('→ Returned companies');
+        }
+        else if (tool === 'hs__create_company') {
+          var newCo = { id: String(900 + Date.now() % 1000), name: args.name || '', domain: args.domain || '', phone: args.phone || '', city: args.city || '', industry: args.industry || '' };
+          currentCompanies.items.push(newCo);
+          currentCompanies.total = currentCompanies.items.length;
+          result = JSON.parse(JSON.stringify(currentCompanies));
+          log('→ Created company: ' + (args.name || ''));
+        }
+        else if (tool === 'hs__update_company') {
+          for (var m = 0; m < currentCompanies.items.length; m++) {
+            if (currentCompanies.items[m].id === args.company_id) {
+              var co = currentCompanies.items[m];
+              if (args.name)     co.name     = args.name;
+              if (args.domain)   co.domain   = args.domain;
+              if (args.phone)    co.phone    = args.phone;
+              if (args.city)     co.city     = args.city;
+              if (args.industry) co.industry = args.industry;
+              log('→ Updated company ' + args.company_id);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentCompanies));
+        }
+
+        // ── DEALS ──────────────────────────────────────────────────────────
+        else if (tool === 'hs__get_deals') {
+          result = JSON.parse(JSON.stringify(currentDeals));
+          log('→ Returned deals');
+        }
         else if (tool === 'hs__create_deal') {
-          result = { success: true, id: String(800 + Date.now() % 1000), deal_name: args.deal_name };
-          log('→ Created deal: ' + (args.deal_name || '') + ' — ' + (args.deal_stage || '') + ' — $' + (args.amount || '0'));
+          var newDeal = { id: String(1100 + Date.now() % 1000), dealname: args.deal_name || '', amount: args.amount ? Number(args.amount) : undefined, dealstage: args.deal_stage || 'appointmentscheduled', closedate: args.close_date || '', pipeline: 'Default Pipeline' };
+          currentDeals.items.push(newDeal);
+          currentDeals.total = currentDeals.items.length;
+          result = JSON.parse(JSON.stringify(currentDeals));
+          log('→ Created deal: ' + (args.deal_name || ''));
+        }
+        else if (tool === 'hs__update_deal') {
+          for (var n = 0; n < currentDeals.items.length; n++) {
+            if (currentDeals.items[n].id === args.deal_id) {
+              var dl = currentDeals.items[n];
+              if (args.deal_name)  dl.dealname  = args.deal_name;
+              if (args.amount !== undefined) dl.amount = Number(args.amount);
+              if (args.deal_stage) dl.dealstage = args.deal_stage;
+              if (args.close_date) dl.closedate = args.close_date;
+              log('→ Updated deal ' + args.deal_id);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentDeals));
         }
 
-        // ── UNKNOWN TOOL ──
+        // ── TICKETS ────────────────────────────────────────────────────────
+        else if (tool === 'hs__get_tickets') {
+          result = JSON.parse(JSON.stringify(currentTickets));
+          log('→ Returned tickets');
+        }
+        else if (tool === 'hs__create_ticket') {
+          var newTkt = { id: String(1200 + Date.now() % 1000), subject: args.subject || '', status: args.status || 'new', priority: args.priority || 'MEDIUM', category: args.category || '', description: args.description || '' };
+          currentTickets.items.push(newTkt);
+          currentTickets.total = currentTickets.items.length;
+          result = JSON.parse(JSON.stringify(currentTickets));
+          log('→ Created ticket: ' + (args.subject || ''));
+        }
+        else if (tool === 'hs__update_ticket') {
+          for (var p = 0; p < currentTickets.items.length; p++) {
+            if (currentTickets.items[p].id === args.ticket_id) {
+              var tk = currentTickets.items[p];
+              if (args.subject)     tk.subject     = args.subject;
+              if (args.status)      tk.status      = args.status;
+              if (args.priority)    tk.priority    = args.priority;
+              if (args.category)    tk.category    = args.category;
+              if (args.description) tk.description = args.description;
+              log('→ Updated ticket ' + args.ticket_id);
+              break;
+            }
+          }
+          result = JSON.parse(JSON.stringify(currentTickets));
+        }
+
+        // ── UNKNOWN ────────────────────────────────────────────────────────
         else {
           result = { error: true, message: 'Unknown tool: ' + tool };
-          log('\u2192 Unknown tool: ' + tool);
+          log('→ Unknown tool: ' + tool);
         }
 
         post({ jsonrpc: '2.0', id: msg.id, result: result });
-      }, 600); // simulate network latency
+      }, 600);
 
       return;
     }
 
-    // ── Height notification from widget ──
+    // Height notification from widget
     if (msg.method === 'ui/notifyIntrinsicHeight') {
       document.getElementById('widget').style.height = msg.params.height + 'px';
     }

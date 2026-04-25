@@ -30,6 +30,12 @@
   .admin-row input[type=color] { width: 32px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
   .admin-row input[type=range] { width: 120px; }
   .admin-row input[type=text]  { width: 90px; font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 980px; }
+  .cap-table th { background: #16325c; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #2e844a; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
 </style>
 </head>
 <body>
@@ -37,37 +43,27 @@
 <h2>⚓ <img src="https://cdn.simpleicons.org/salesforce/00A1E0" alt="SF" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — Salesforce CRM <span class="badge">Interactive</span></h2>
 <p class="subtitle">The Great Trading Company — Dockyard Test Facility · 8 entity views · dashboards · forms</p>
 
-<!-- ── Widget Architecture Map ──────────────────────────────────────────────── -->
-<details style="max-width:980px;margin-bottom:14px">
-  <summary style="font-size:11px;font-weight:700;text-transform:uppercase;color:#555;letter-spacing:0.6px;cursor:pointer;user-select:none">🗺️ Widget Architecture Map</summary>
-  <div style="overflow-x:auto;margin-top:8px">
-  <table style="width:100%;border-collapse:collapse;font-size:11px">
-    <thead>
-      <tr style="background:#f4f4f4">
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">View</th>
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Type</th>
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Entity</th>
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd;white-space:nowrap">Child / Inline</th>
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd">User Action — Parent</th>
-        <th style="padding:6px 10px;text-align:left;border:1px solid #ddd">User Action — Child</th>
-        <th style="padding:6px 10px;text-align:center;border:1px solid #ddd;white-space:nowrap">Standalone<br>Create Form</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">accounts</td><td style="padding:5px 10px;border:1px solid #ddd">Account</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Contacts · ▶ Opps · ▶ Cases</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/account</code></td></tr>
-      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">leads</td><td style="padding:5px 10px;border:1px solid #ddd">Lead</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new · ⇄ Convert</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/lead</code></td></tr>
-      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">contacts</td><td style="padding:5px 10px;border:1px solid #ddd">Contact</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/contact</code></td></tr>
-      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">opportunities</td><td style="padding:5px 10px;border:1px solid #ddd">Opportunity</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/opportunity</code></td></tr>
-      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">cases</td><td style="padding:5px 10px;border:1px solid #ddd">Case</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Comments</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">➕ add comment</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/case</code></td></tr>
-      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">tasks</td><td style="padding:5px 10px;border:1px solid #ddd">Task</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">✏️ edit → 3-col form · ➕ new</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center">✅ <code>form/task</code></td></tr>
-      <tr><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">campaigns</td><td style="padding:5px 10px;border:1px solid #ddd">Campaign</td><td style="padding:5px 10px;border:1px solid #ddd">▶ Leads</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
-      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">List</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">approvals</td><td style="padding:5px 10px;border:1px solid #ddd">Approval</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">Approve · Reject</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
-      <tr><td style="padding:5px 10px;border:1px solid #ddd">Dashboard</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">sales_dashboard</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
-      <tr style="background:#fafafa"><td style="padding:5px 10px;border:1px solid #ddd">Dashboard</td><td style="padding:5px 10px;border:1px solid #ddd;font-family:monospace">support_dashboard</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd">read-only</td><td style="padding:5px 10px;border:1px solid #ddd">—</td><td style="padding:5px 10px;border:1px solid #ddd;text-align:center;color:#999">—</td></tr>
-    </tbody>
-  </table>
-  </div>
-</details>
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Entity</th><th>List</th><th>Form</th><th>Child / Drill Down</th>
+      <th>Parent CRUD</th><th>Child CRUD</th><th>Widget</th><th>FK Case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Account</td><td class="y">Y</td><td class="y">Y (3-col)</td><td>▶ Contacts · ▶ Opps · ▶ Cases</td><td>Create · Edit</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Lead</td><td class="y">Y</td><td class="y">Y (3-col)</td><td class="n">—</td><td>Create · Edit · Convert</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Contact</td><td class="y">Y</td><td class="y">Y (3-col)</td><td class="n">—</td><td>Create · Edit</td><td class="n">—</td><td>Salesforce CRM</td><td>account_name</td></tr>
+    <tr><td>Opportunity</td><td class="y">Y</td><td class="y">Y (3-col)</td><td class="n">—</td><td>Create · Edit</td><td class="n">—</td><td>Salesforce CRM</td><td>account_name</td></tr>
+    <tr><td>Case</td><td class="y">Y</td><td class="y">Y (3-col)</td><td>▶ Comments (on-demand)</td><td>Create · Edit</td><td>Add Comment</td><td>Salesforce CRM</td><td>account_name</td></tr>
+    <tr><td>Task</td><td class="y">Y</td><td class="y">Y (3-col)</td><td class="n">—</td><td>Create · Edit</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Campaign</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ Leads</td><td class="n">—</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Approval</td><td class="y">Y</td><td class="n">N</td><td class="n">—</td><td>Approve · Reject</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Sales Dashboard</td><td class="n">N</td><td class="n">N</td><td class="n">—</td><td class="n">read-only</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+    <tr><td>Support Dashboard</td><td class="n">N</td><td class="n">N</td><td class="n">—</td><td class="n">read-only</td><td class="n">—</td><td>Salesforce CRM</td><td class="n">—</td></tr>
+  </tbody>
+</table>
 
 <!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
 <div class="section-wrap">

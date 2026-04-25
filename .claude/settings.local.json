@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/vineetkaul/.claude/projects/C--demoprojects-lob-mcp-apps/memory//**)",
+      "Read(//c/Users/vineetkaul/.claude/projects/C--demoprojects-lob-mcp-apps/memory/**)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(sed 's/.*\"name\": \"//')",
+      "Bash(sed 's/\".*//')",
+      "Bash(awk -F_ '{print $1}')",
+      "Bash(python check_meta.py --verbose)",
+      "Bash(python *)",
+      "Bash(grep -v \"^--$\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl *)",
+      "Bash(curl -s https://raw.githubusercontent.com/scadam/ess-mcp/main/mcp_servers/src/mcp_servers/salesforce/tools.py)",
+      "Read(//tmp/**)",
+      "Bash(python3 -m json.tool)",
+      "Bash(pip index *)",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "WebFetch(domain:github.com)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(data[0]['text'][:8000]\\)\")",
+      "Bash(python3)",
+      "Bash(awk '/^async def/ {func=$3; sub\\(/\\\\\\(.*/, \"\", func\\); getline; if \\(/\"\"\"/\\) {getline; doc=$0; gsub\\(/\"\"\"/, \"\", doc\\); gsub\\(/^[[:space:]]*/, \"\", doc\\); print func \": \" doc}}')",
+      "Bash(perl -ne 'if \\(/^async def \\(\\\\w+\\)\\\\\\(/\\) { $func=$1; } if \\(/^\\\\s+\"\"\"\\(.+?\\)\"\"\"/\\) { print \"$func: $1\\\\n\"; } elsif \\(/^\\\\s+\"\"\"/\\) { while\\(<>\\) { if \\(/\"\"\"/\\) { $_ =~ /^\\\\s*\\([^\"]*?\\)\\\\s*\"\"\"?/; print \"$func: $1\\\\n\"; last; } $docstring .= $_; } }')",
+      "Bash(python3 /tmp/extract_docstrings.py)",
+      "WebSearch"
+    ]
+  }
+}

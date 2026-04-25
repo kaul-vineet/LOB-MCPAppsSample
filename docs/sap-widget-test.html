@@ -26,12 +26,34 @@
   .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 960px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   iframe       { width: 100%; border: none; min-height: 60px; display: block; }
   .badge       { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e6f0ff; color: #0070F2; margin-left: 8px; }
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 960px; }
+  .cap-table th { background: #32363a; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #107E3E; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
 </style>
 </head>
 <body>
 
 <h2>⚓ <img src="https://cdn.simpleicons.org/sap/0FAAFF" alt="SAP" style="height:22px;vertical-align:middle;margin:0 6px">GTC Dockyard — SAP S/4HANA <span class="badge">Read-Only</span></h2>
 <p class="subtitle">The Great Trading Company — Dockyard Test Facility · Filter + Expand drill-down widget</p>
+
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Entity</th><th>List</th><th>Form</th><th>Child / Drill Down</th>
+      <th>Parent CRUD</th><th>Child CRUD</th><th>Widget</th><th>FK Case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Purchase Order</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ Line Items (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
+    <tr><td>Business Partner</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ POs (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
+    <tr><td>Material</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ Material Detail (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
+    <tr><td>Material Detail</td><td class="n">N (top-level card)</td><td class="n">N</td><td class="n">—</td><td class="n">read-only</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
+  </tbody>
+</table>
 
 <div class="section-label">📦 Purchase Orders</div>
 <div class="controls">

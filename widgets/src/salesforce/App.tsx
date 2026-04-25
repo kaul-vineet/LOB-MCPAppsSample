@@ -116,7 +116,7 @@ function FormSelect({ label, value, options, onChange, theme }: { label: string;
   return (
     <Field label={label} size="small">
       <select value={value} onChange={e => onChange(e.target.value)}
-        style={{ width: '100%', padding: '5px 8px', borderRadius: '4px', border: `1px solid ${t.border}`, background: t.surface, color: t.text, fontSize: '13px', fontFamily: 'inherit', height: '32px' }}>
+        style={{ width: '100%', padding: '5px 8px', borderRadius: '4px', border: `1px solid ${t.border}`, background: t.surface, color: t.text, fontSize: '13px', fontFamily: 'inherit', height: '28px' }}>
         <option value="">— Select —</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -155,7 +155,7 @@ function ExpandToggle({ expanded, onClick, theme }: { expanded: boolean; onClick
   const t = slds(theme);
   return (
     <button onClick={onClick} title={expanded ? 'Collapse' : 'Expand'}
-      style={{ width: '22px', height: '22px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '12px', color: t.brand, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      style={{ width: '22px', height: '22px', border: `1px solid ${t.border}`, background: theme === 'dark' ? 'rgba(27,150,255,0.12)' : 'rgba(1,118,211,0.08)', cursor: 'pointer', fontSize: '12px', color: t.brand, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px' }}>
       {expanded ? '▼' : '▶'}
     </button>
   );
@@ -341,8 +341,8 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Account" theme={theme} />
-      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Account" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -486,8 +486,8 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Lead" theme={theme} />
-      <FilterBar placeholder="Search by name or company…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Lead" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by name or company…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -611,8 +611,8 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="👥" title="Contacts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Contact" theme={theme} />
-      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="👥" title="Contacts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Contact" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -726,8 +726,8 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="+ New Opportunity" theme={theme} />
-      <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Opportunity" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -819,9 +819,8 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   useEffect(() => { if (lastSavedId) { const x = setTimeout(() => setLastSavedId(null), 1600); return () => clearTimeout(x); } }, [lastSavedId]);
 
-  const toggleExpand = async (id: string) => {
-    if (expandedId === id) { setExpandedId(null); return; }
-    setExpandedId(id);
+  const toggleExpand = (id: string) => { setExpandedId(p => p === id ? null : id); };
+  const loadComments = async (id: string) => {
     if (childComments[id]) return;
     setLoadingChild(id);
     try { const res = await callTool('get_case_comments', { case_id: id }); setChildComments(p => ({ ...p, [id]: res?.items || [] })); }
@@ -840,8 +839,8 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="+ New Case" theme={theme} />
-      <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="New Case" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -869,10 +868,15 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
                 <TableRow>
                   <TableCell colSpan={8} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
                     <div style={{ padding: '8px 28px 12px' }}>
+                      {c.description && <div style={{ fontSize: '12px', color: t.text, marginBottom: '10px', fontStyle: 'italic' }}>{c.description}</div>}
                       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Case Comments</div>
-                      {loadingChild === c.id ? <Spinner size="tiny" label="Loading comments…" /> : (
-                        (childComments[c.id] || []).length === 0 ? <div style={{ color: t.textWeak, fontSize: '12px', padding: '8px 0' }}>No comments.</div> :
-                          (childComments[c.id] || []).map((cm: any, i: number) => (
+                      {!childComments[c.id] && loadingChild !== c.id && (
+                        <button onClick={() => loadComments(c.id)} style={{ padding: '4px 12px', borderRadius: '4px', border: `1px solid ${t.border}`, background: 'transparent', cursor: 'pointer', color: t.brand, fontSize: '12px', fontFamily: 'inherit' }}>💬 Load Comments</button>
+                      )}
+                      {loadingChild === c.id && <Spinner size="tiny" label="Loading comments…" />}
+                      {childComments[c.id] && (
+                        childComments[c.id].length === 0 ? <div style={{ color: t.textWeak, fontSize: '12px', padding: '8px 0' }}>No comments.</div> :
+                          childComments[c.id].map((cm: any, i: number) => (
                             <div key={cm.id || i} style={{ padding: '8px', marginBottom: '6px', borderRadius: '4px', background: theme === 'dark' ? '#1a3a65' : '#fff', border: `1px solid ${t.border}` }}>
                               <div style={{ fontSize: '11px', color: t.textWeak, marginBottom: '4px' }}>{cm.created_by_name || 'System'} · {fmtDate(cm.created_date)}</div>
                               <div style={{ fontSize: '12px', color: t.text }}>{cm.body}</div>
@@ -942,8 +946,8 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="+ New Task" theme={theme} />
-      <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />
+      <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="New Task" theme={theme} />
+      {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>

@@ -1269,6 +1269,481 @@ function FormView({
   );
 }
 
+// ── CRM constants ────────────────────────────────────────────────────
+const HS_LIFECYCLE_STAGES = ['subscriber', 'lead', 'marketing qualified lead', 'sales qualified lead', 'opportunity', 'customer', 'evangelist'];
+const HS_INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Manufacturing', 'Retail', 'Education', 'Other'];
+const HS_TICKET_STATUS = ['new', 'waiting on contact', 'waiting on us', 'closed'];
+const HS_TICKET_PRIORITY = ['LOW', 'MEDIUM', 'HIGH'];
+const HS_PIPELINES = ['Default Pipeline', 'Support Pipeline'];
+
+// ── Shared CRM inline form row ────────────────────────────────────────
+function HsFormRow({ colSpan, title, fields, onSave, onCancel, saving }: {
+  colSpan: number; title: string;
+  fields: { label: string; key: string; value: string; onChange: (v: string) => void; type?: 'select'; options?: string[]; optionLabels?: Record<string, string> }[];
+  onSave: () => void; onCancel: () => void; saving: boolean;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} style={{ padding: 0 }}>
+        <div style={{ padding: '14px 16px', backgroundColor: c.editPanelBg, borderTop: `2px solid ${c.editPanelBorder}` }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: c.text, marginBottom: '10px' }}>{title}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px 12px', marginBottom: '14px' }}>
+            {fields.map(f => (
+              <Field key={f.key} label={<span style={{ fontSize: '11px', color: c.textSec, fontWeight: 600, textTransform: 'uppercase' }}>{f.label}</span>} size="small">
+                {f.type === 'select' ? (
+                  <select value={f.value} onChange={e => f.onChange(e.target.value)}
+                    style={{ width: '100%', padding: '4px 8px', borderRadius: '3px', border: `1px solid ${c.border}`, backgroundColor: c.bg, color: c.text, fontSize: '13px', height: '28px' }}>
+                    <option value="">— Select —</option>
+                    {(f.options || []).map(o => <option key={o} value={o}>{f.optionLabels?.[o] || o}</option>)}
+                  </select>
+                ) : (
+                  <Input size="small" value={f.value} onChange={(_, d) => f.onChange(d.value)}
+                    style={{ border: `1px solid ${c.border}`, borderRadius: '3px' }} />
+                )}
+              </Field>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button onClick={onCancel} disabled={saving}
+              style={{ backgroundColor: 'transparent', border: `1px solid ${c.coral}`, color: c.coral, borderRadius: '3px', padding: '6px 20px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>
+              Cancel
+            </button>
+            <button onClick={onSave} disabled={saving}
+              style={{ backgroundColor: c.coral, border: 'none', color: '#fff', borderRadius: '3px', padding: '6px 20px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>
+              {saving ? 'Saving…' : title.includes('Edit') ? 'Save' : 'Create'}
+            </button>
+          </div>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ── Shared CRM view header ────────────────────────────────────────────
+function HsViewHeader({ icon, title, count, onNew, newLabel }: {
+  icon: React.ReactNode; title: string; count: number; onNew?: () => void; newLabel?: string;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  return (
+    <div className={styles.header} style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.coral }}>
+      <div>
+        <div className={styles.titleRow}>
+          {icon}
+          <Text style={{ color: c.text, fontSize: '18px', fontWeight: 600 }}>{title}</Text>
+        </div>
+        <Text style={{ color: c.textSec, fontSize: '13px', marginLeft: '32px' }}>{count} record{count !== 1 ? 's' : ''}</Text>
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {onNew && (
+          <button onClick={onNew}
+            style={{ backgroundColor: c.coral, border: 'none', color: '#fff', borderRadius: '3px', padding: '7px 18px', fontWeight: 600, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AddRegular style={{ fontSize: 13 }} /> {newLabel || 'New'}
+          </button>
+        )}
+        <ExpandButton />
+      </div>
+    </div>
+  );
+}
+
+// ── Shared CRM filter bar ─────────────────────────────────────────────
+function HsFilterBar({ value, onChange, onSearch, placeholder, loading, hidden }: {
+  value: string; onChange: (v: string) => void; onSearch: () => void;
+  placeholder: string; loading: boolean; hidden?: boolean;
+}) {
+  const c = useHsColors();
+  if (hidden) return null;
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderBottom: `1px solid ${c.border}`, backgroundColor: c.bg, flexWrap: 'wrap' }}>
+      <Input size="small" value={value} onChange={(_, d) => onChange(d.value)} onKeyDown={e => e.key === 'Enter' && onSearch()}
+        placeholder={placeholder} style={{ flex: 1, maxWidth: 280, border: `1px solid ${c.border}`, borderRadius: '3px' }} />
+      <button onClick={onSearch} disabled={loading}
+        style={{ padding: '5px 14px', borderRadius: '3px', border: 'none', backgroundColor: c.coral, color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+        {loading ? '…' : 'Search'}
+      </button>
+      {value && <button onClick={() => { onChange(''); onSearch(); }}
+        style={{ padding: '5px 8px', borderRadius: '3px', border: `1px solid ${c.border}`, backgroundColor: 'transparent', color: c.textSec, fontSize: '12px', cursor: 'pointer' }}>✕ Clear</button>}
+    </div>
+  );
+}
+
+// ── CRM Contacts View ─────────────────────────────────────────────────
+function CrmContactsView({ items: initItems, total, callTool, toast }: {
+  items: any[]; total?: number;
+  callTool: (n: string, a?: any) => Promise<any>;
+  toast: (m: string, t?: any) => void;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const [localItems, setLocalItems] = useState(initItems);
+  const [filterName, setFilterName] = useState('');
+  const [filtering, setFiltering] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ firstname: '', lastname: '', email: '', phone: '', company: '', jobtitle: '', lifecyclestage: '' });
+
+  useEffect(() => setLocalItems(initItems), [initItems]);
+
+  const doSearch = async () => {
+    if (!filterName.trim()) { setLocalItems(initItems); return; }
+    setFiltering(true);
+    try { const r = await callTool('hs__get_contacts', { name: filterName }); setLocalItems(r?.items || []); }
+    finally { setFiltering(false); }
+  };
+
+  const openEdit = (ct: any) => { setCreating(false); setEditingId(ct.id); setForm({ firstname: ct.firstname || '', lastname: ct.lastname || '', email: ct.email || '', phone: ct.phone || '', company: ct.company || '', jobtitle: ct.jobtitle || '', lifecyclestage: ct.lifecyclestage || '' }); };
+  const openCreate = () => { setEditingId(null); setCreating(true); setForm({ firstname: '', lastname: '', email: '', phone: '', company: '', jobtitle: '', lifecyclestage: '' }); };
+  const cancel = () => { setEditingId(null); setCreating(false); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (creating) { await callTool('hs__create_contact', form); toast('✓ Contact created'); }
+      else { await callTool('hs__update_contact', { contact_id: editingId, ...form }); toast('✓ Contact updated'); }
+      cancel();
+    } catch (e: any) { toast(e.message || 'Failed', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const fFields = (f: typeof form) => [
+    { label: 'First Name', key: 'firstname', value: f.firstname, onChange: (v: string) => setF('firstname', v) },
+    { label: 'Last Name *', key: 'lastname', value: f.lastname, onChange: (v: string) => setF('lastname', v) },
+    { label: 'Email *', key: 'email', value: f.email, onChange: (v: string) => setF('email', v) },
+    { label: 'Phone', key: 'phone', value: f.phone, onChange: (v: string) => setF('phone', v) },
+    { label: 'Company', key: 'company', value: f.company, onChange: (v: string) => setF('company', v) },
+    { label: 'Job Title', key: 'jobtitle', value: f.jobtitle, onChange: (v: string) => setF('jobtitle', v) },
+    { label: 'Lifecycle Stage', key: 'lifecyclestage', value: f.lifecyclestage, onChange: (v: string) => setF('lifecyclestage', v), type: 'select' as const, options: HS_LIFECYCLE_STAGES },
+  ];
+
+  const H_STYLE: React.CSSProperties = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 12px' };
+
+  return (
+    <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+      <HsViewHeader icon={<PeopleRegular style={{ color: c.coral, fontSize: 22 }} />} title="Contacts" count={total ?? localItems.length} onNew={openCreate} newLabel="New Contact" />
+      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by name or email…" loading={filtering} hidden={creating} />
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ backgroundColor: c.surface }}>
+            {['Name', 'Email', 'Company', 'Job Title', 'Stage', ''].map(h => (
+              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {creating && <HsFormRow colSpan={6} title="➕ New Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} style={{ textAlign: 'center', padding: 32, color: c.textSec }}>No contacts found.</TableCell></TableRow>}
+          {localItems.map((ct: any) => (
+            <React.Fragment key={ct.id}>
+              <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{ct.firstname} {ct.lastname}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{ct.email || '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.text }}>{ct.company || '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{ct.jobtitle || '—'}</TableCell>
+                <TableCell className={styles.cell}>
+                  {ct.lifecyclestage ? <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, backgroundColor: c.surface, color: c.coral, border: `1px solid ${c.border}` }}>{ct.lifecyclestage}</span> : '—'}
+                </TableCell>
+                <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(ct)} /></TableCell>
+              </TableRow>
+              {editingId === ct.id && <HsFormRow colSpan={6} title="✏️ Edit Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ── Companies View ────────────────────────────────────────────────────
+function CompaniesView({ items: initItems, total, callTool, toast }: {
+  items: any[]; total?: number;
+  callTool: (n: string, a?: any) => Promise<any>;
+  toast: (m: string, t?: any) => void;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const [localItems, setLocalItems] = useState(initItems);
+  const [filterName, setFilterName] = useState('');
+  const [filtering, setFiltering] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: '', domain: '', phone: '', city: '', industry: '' });
+
+  useEffect(() => setLocalItems(initItems), [initItems]);
+
+  const doSearch = async () => {
+    if (!filterName.trim()) { setLocalItems(initItems); return; }
+    setFiltering(true);
+    try { const r = await callTool('hs__get_companies', { name: filterName }); setLocalItems(r?.items || []); }
+    finally { setFiltering(false); }
+  };
+
+  const openEdit = (co: any) => { setCreating(false); setEditingId(co.id); setForm({ name: co.name || '', domain: co.domain || '', phone: co.phone || '', city: co.city || '', industry: co.industry || '' }); };
+  const openCreate = () => { setEditingId(null); setCreating(true); setForm({ name: '', domain: '', phone: '', city: '', industry: '' }); };
+  const cancel = () => { setEditingId(null); setCreating(false); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (creating) { await callTool('hs__create_company', form); toast('✓ Company created'); }
+      else { await callTool('hs__update_company', { company_id: editingId, ...form }); toast('✓ Company updated'); }
+      cancel();
+    } catch (e: any) { toast(e.message || 'Failed', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const fFields = (f: typeof form) => [
+    { label: 'Company Name *', key: 'name', value: f.name, onChange: (v: string) => setF('name', v) },
+    { label: 'Domain', key: 'domain', value: f.domain, onChange: (v: string) => setF('domain', v) },
+    { label: 'Phone', key: 'phone', value: f.phone, onChange: (v: string) => setF('phone', v) },
+    { label: 'City', key: 'city', value: f.city, onChange: (v: string) => setF('city', v) },
+    { label: 'Industry', key: 'industry', value: f.industry, onChange: (v: string) => setF('industry', v), type: 'select' as const, options: HS_INDUSTRIES },
+  ];
+
+  const H_STYLE: React.CSSProperties = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 12px' };
+
+  return (
+    <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+      <HsViewHeader icon={<span style={{ fontSize: 20, color: c.coral }}>🏢</span>} title="Companies" count={total ?? localItems.length} onNew={openCreate} newLabel="New Company" />
+      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by name…" loading={filtering} hidden={creating} />
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ backgroundColor: c.surface }}>
+            {['Name', 'Domain', 'City', 'Industry', 'Phone', ''].map(h => (
+              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {creating && <HsFormRow colSpan={6} title="➕ New Company" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} style={{ textAlign: 'center', padding: 32, color: c.textSec }}>No companies found.</TableCell></TableRow>}
+          {localItems.map((co: any) => (
+            <React.Fragment key={co.id}>
+              <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{co.name}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.domain || '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.text }}>{co.city || '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.industry || '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.phone || '—'}</TableCell>
+                <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(co)} /></TableCell>
+              </TableRow>
+              {editingId === co.id && <HsFormRow colSpan={6} title="✏️ Edit Company" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ── Deals View ────────────────────────────────────────────────────────
+function DealsView({ items: initItems, total, callTool, toast }: {
+  items: any[]; total?: number;
+  callTool: (n: string, a?: any) => Promise<any>;
+  toast: (m: string, t?: any) => void;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const [localItems, setLocalItems] = useState(initItems);
+  const [filterName, setFilterName] = useState('');
+  const [filtering, setFiltering] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ dealname: '', amount: '', dealstage: '', closedate: '', pipeline: '' });
+
+  useEffect(() => setLocalItems(initItems), [initItems]);
+
+  const stageLabels: Record<string, string> = Object.fromEntries(DEAL_STAGES.filter(s => s.value).map(s => [s.value, s.label]));
+
+  const doSearch = async () => {
+    if (!filterName.trim()) { setLocalItems(initItems); return; }
+    setFiltering(true);
+    try { const r = await callTool('hs__get_deals', { name: filterName }); setLocalItems(r?.items || []); }
+    finally { setFiltering(false); }
+  };
+
+  const openEdit = (d: any) => { setCreating(false); setEditingId(d.id); setForm({ dealname: d.dealname || '', amount: d.amount != null ? String(d.amount) : '', dealstage: d.dealstage || '', closedate: d.closedate || '', pipeline: d.pipeline || '' }); };
+  const openCreate = () => { setEditingId(null); setCreating(true); setForm({ dealname: '', amount: '', dealstage: '', closedate: '', pipeline: '' }); };
+  const cancel = () => { setEditingId(null); setCreating(false); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const args = { ...form, amount: form.amount ? parseFloat(form.amount) : undefined };
+      if (creating) { await callTool('hs__create_deal', args); toast('✓ Deal created'); }
+      else { await callTool('hs__update_deal', { deal_id: editingId, ...args }); toast('✓ Deal updated'); }
+      cancel();
+    } catch (e: any) { toast(e.message || 'Failed', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const fFields = (f: typeof form) => [
+    { label: 'Deal Name *', key: 'dealname', value: f.dealname, onChange: (v: string) => setF('dealname', v) },
+    { label: 'Amount ($)', key: 'amount', value: f.amount, onChange: (v: string) => setF('amount', v) },
+    { label: 'Stage', key: 'dealstage', value: f.dealstage, onChange: (v: string) => setF('dealstage', v), type: 'select' as const, options: DEAL_STAGES.filter(s => s.value).map(s => s.value), optionLabels: stageLabels },
+    { label: 'Close Date', key: 'closedate', value: f.closedate, onChange: (v: string) => setF('closedate', v) },
+    { label: 'Pipeline', key: 'pipeline', value: f.pipeline, onChange: (v: string) => setF('pipeline', v), type: 'select' as const, options: HS_PIPELINES },
+  ];
+
+  const H_STYLE: React.CSSProperties = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 12px' };
+
+  return (
+    <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+      <HsViewHeader icon={<span style={{ fontSize: 20, color: c.teal }}>💰</span>} title="Deals" count={total ?? localItems.length} onNew={openCreate} newLabel="New Deal" />
+      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by deal name…" loading={filtering} hidden={creating} />
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ backgroundColor: c.surface }}>
+            {['Deal Name', 'Amount', 'Stage', 'Close Date', 'Pipeline', ''].map(h => (
+              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {creating && <HsFormRow colSpan={6} title="➕ New Deal" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} style={{ textAlign: 'center', padding: 32, color: c.textSec }}>No deals found.</TableCell></TableRow>}
+          {localItems.map((d: any) => (
+            <React.Fragment key={d.id}>
+              <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{d.dealname}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.teal, fontWeight: 500 }}>{d.amount != null ? '$' + Number(d.amount).toLocaleString() : '—'}</TableCell>
+                <TableCell className={styles.cell}>
+                  {d.dealstage ? <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, backgroundColor: c.surface, color: c.teal, border: `1px solid ${c.border}` }}>{stageLabels[d.dealstage] || d.dealstage}</span> : '—'}
+                </TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{d.closedate ? d.closedate.slice(0, 10) : '—'}</TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{d.pipeline || '—'}</TableCell>
+                <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(d)} /></TableCell>
+              </TableRow>
+              {editingId === d.id && <HsFormRow colSpan={6} title="✏️ Edit Deal" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ── Tickets View ──────────────────────────────────────────────────────
+function TicketsView({ items: initItems, total, callTool, toast }: {
+  items: any[]; total?: number;
+  callTool: (n: string, a?: any) => Promise<any>;
+  toast: (m: string, t?: any) => void;
+}) {
+  const styles = useStyles();
+  const c = useHsColors();
+  const [localItems, setLocalItems] = useState(initItems);
+  const [filterSubject, setFilterSubject] = useState('');
+  const [filtering, setFiltering] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [form, setForm] = useState({ subject: '', status: '', priority: '', category: '', description: '' });
+
+  useEffect(() => setLocalItems(initItems), [initItems]);
+
+  const doSearch = async () => {
+    if (!filterSubject.trim()) { setLocalItems(initItems); return; }
+    setFiltering(true);
+    try { const r = await callTool('hs__get_tickets', { subject: filterSubject }); setLocalItems(r?.items || []); }
+    finally { setFiltering(false); }
+  };
+
+  const openEdit = (tk: any) => { setCreating(false); setExpandedId(null); setEditingId(tk.id); setForm({ subject: tk.subject || '', status: tk.status || '', priority: tk.priority || '', category: tk.category || '', description: tk.description || '' }); };
+  const openCreate = () => { setEditingId(null); setCreating(true); setForm({ subject: '', status: 'new', priority: 'MEDIUM', category: '', description: '' }); };
+  const cancel = () => { setEditingId(null); setCreating(false); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (creating) { await callTool('hs__create_ticket', form); toast('✓ Ticket created'); }
+      else { await callTool('hs__update_ticket', { ticket_id: editingId, ...form }); toast('✓ Ticket updated'); }
+      cancel();
+    } catch (e: any) { toast(e.message || 'Failed', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const setF = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const fFields = (f: typeof form) => [
+    { label: 'Subject *', key: 'subject', value: f.subject, onChange: (v: string) => setF('subject', v) },
+    { label: 'Status', key: 'status', value: f.status, onChange: (v: string) => setF('status', v), type: 'select' as const, options: HS_TICKET_STATUS },
+    { label: 'Priority', key: 'priority', value: f.priority, onChange: (v: string) => setF('priority', v), type: 'select' as const, options: HS_TICKET_PRIORITY },
+    { label: 'Category', key: 'category', value: f.category, onChange: (v: string) => setF('category', v) },
+    { label: 'Description', key: 'description', value: f.description, onChange: (v: string) => setF('description', v) },
+  ];
+
+  const priorityColor = (p: string) => p === 'HIGH' ? c.error : p === 'MEDIUM' ? '#DD7A01' : c.textSec;
+  const H_STYLE: React.CSSProperties = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 12px' };
+
+  return (
+    <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
+      <HsViewHeader icon={<span style={{ fontSize: 20, color: c.coral }}>🎫</span>} title="Tickets" count={total ?? localItems.length} onNew={openCreate} newLabel="New Ticket" />
+      <HsFilterBar value={filterSubject} onChange={setFilterSubject} onSearch={doSearch} placeholder="Search by subject…" loading={filtering} hidden={creating} />
+      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+        <TableHeader>
+          <TableRow style={{ backgroundColor: c.surface }}>
+            {['', 'Subject', 'Status', 'Priority', 'Category', ''].map((h, i) => (
+              <TableHeaderCell key={i} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE, ...(i === 0 ? { width: 28 } : {}) }}>{h}</TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {creating && <HsFormRow colSpan={6} title="➕ New Ticket" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+          {localItems.length === 0 && !creating && <TableRow><TableCell colSpan={6} style={{ textAlign: 'center', padding: 32, color: c.textSec }}>No tickets found.</TableCell></TableRow>}
+          {localItems.map((tk: any) => (
+            <React.Fragment key={tk.id}>
+              <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ width: 28, padding: '6px 8px' }}>
+                  <button onClick={() => setExpandedId(p => p === tk.id ? null : tk.id)}
+                    style={{ width: 22, height: 22, border: `1px solid ${c.border}`, borderRadius: '3px', background: expandedId === tk.id ? c.surface : 'transparent', cursor: 'pointer', fontSize: '11px', color: c.coral, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {expandedId === tk.id ? '▼' : '▶'}
+                  </button>
+                </TableCell>
+                <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{tk.subject}</TableCell>
+                <TableCell className={styles.cell}>
+                  {tk.status ? <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, backgroundColor: c.surface, color: c.coral, border: `1px solid ${c.border}` }}>{tk.status}</span> : '—'}
+                </TableCell>
+                <TableCell className={styles.cell}>
+                  {tk.priority ? <span style={{ fontWeight: 700, fontSize: '12px', color: priorityColor(tk.priority) }}>{tk.priority}</span> : '—'}
+                </TableCell>
+                <TableCell className={styles.cell} style={{ color: c.textSec }}>{tk.category || '—'}</TableCell>
+                <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(tk)} /></TableCell>
+              </TableRow>
+              {editingId === tk.id && <HsFormRow colSpan={6} title="✏️ Edit Ticket" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+              {expandedId === tk.id && (
+                <TableRow>
+                  <TableCell colSpan={6} style={{ padding: 0, backgroundColor: c.editPanelBg }}>
+                    <div style={{ padding: '10px 20px 12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: c.textSec, marginBottom: '6px' }}>Description</div>
+                      <div style={{ fontSize: '13px', color: c.text, fontStyle: tk.description ? 'normal' : 'italic' }}>{tk.description || 'No description provided.'}</div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 // ── Main App ─────────────────────────────────────────────────────────
 type ViewState =
   | { view: 'emails' }
@@ -1439,6 +1914,42 @@ export function HubSpotApp() {
           toast={toast}
         />
         <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
+      </div>
+    );
+  }
+
+  if (data.type === 'contacts') {
+    return (
+      <div className={styles.shell}>
+        <CrmContactsView items={(data.items || []) as CrmContact[]} total={data.total} callTool={callTool} toast={toast} />
+        <McpFooter label="HubSpot CRM" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
+      </div>
+    );
+  }
+
+  if (data.type === 'companies') {
+    return (
+      <div className={styles.shell}>
+        <CompaniesView items={(data.items || []) as Company[]} total={data.total} callTool={callTool} toast={toast} />
+        <McpFooter label="HubSpot CRM" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
+      </div>
+    );
+  }
+
+  if (data.type === 'deals') {
+    return (
+      <div className={styles.shell}>
+        <DealsView items={(data.items || []) as Deal[]} total={data.total} callTool={callTool} toast={toast} />
+        <McpFooter label="HubSpot CRM" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
+      </div>
+    );
+  }
+
+  if (data.type === 'tickets') {
+    return (
+      <div className={styles.shell}>
+        <TicketsView items={(data.items || []) as Ticket[]} total={data.total} callTool={callTool} toast={toast} />
+        <McpFooter label="HubSpot CRM" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
       </div>
     );
   }
