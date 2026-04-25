@@ -206,7 +206,7 @@ var MOCK_REQUEST_ITEMS = {
 function post(data) {
   var frame = document.getElementById('widget');
   if (!frame) return;
-  frame.contentWindow.postMessage({ type: 'mcp_tool_result', data: data }, '*');
+  frame.contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: data } }, '*');
   logMsg('[-> widget] ' + JSON.stringify(data).slice(0, 120));
 }
 
@@ -270,24 +270,26 @@ function sendChangeSummary() {
 window.addEventListener('message', function(e) {
   var d = e.data;
   if (!d) return;
-  if (d.type === 'mcp_call_tool') {
-    var name = d.name; var args = d.args || {};
+  if (d.jsonrpc === '2.0' && d.method === 'ui/callTool') {
+    var name = d.params.name; var args = d.params.arguments || {};
     logMsg('[<- widget] callTool: ' + name + ' ' + JSON.stringify(args).slice(0, 80));
+    var result;
     if (name === 'get_request_items') {
-      post(MOCK_REQUEST_ITEMS);
-    } else if (name === 'create_incident') {
-      post({ type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_new', number: 'INC0001999', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '3', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
-    } else if (name === 'create_request') {
-      post({ type: 'requests', total: 1, requests: [{ sys_id: 'req_new', number: 'REQ0000999', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '3', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] });
+      result = MOCK_REQUEST_ITEMS;
+    } else if (name === 'create_incident' || name === 'sn__create_incident') {
+      result = { type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_new', number: 'INC0001999', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '3', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] };
+    } else if (name === 'create_request' || name === 'sn__create_request') {
+      result = { type: 'requests', total: 1, requests: [{ sys_id: 'req_new', number: 'REQ0000999', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '3', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] };
     } else if (name === 'sn__create_change_request') {
-      post({ type: 'change_requests', total: 1, items: [{ sys_id: 'chg_new', number: 'CHG0001999', short_description: args.short_description || 'New change', state: 'New', priority: args.priority || '3', risk: args.risk || 'medium', category: args.category || 'Normal', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
-    } else if (name === 'sn__create_incident') {
-      post({ type: 'incidents', total: 1, incidents: [{ sys_id: 'inc_form', number: 'INC0001998', short_description: args.short_description || 'New incident', state: 'New', priority: args.priority || '2', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] });
-    } else if (name === 'sn__create_request') {
-      post({ type: 'requests', total: 1, requests: [{ sys_id: 'req_form', number: 'REQ0000998', short_description: args.short_description || 'New request', request_state: 'New', priority: args.priority || '2', approval: 'not requested', sys_created_on: new Date().toISOString().slice(0,10) }] });
+      result = { type: 'change_requests', total: 1, items: [{ sys_id: 'chg_new', number: 'CHG0001999', short_description: args.short_description || 'New change', state: 'New', priority: args.priority || '3', risk: args.risk || 'medium', category: args.category || 'Normal', assigned_to: '', sys_created_on: new Date().toISOString().slice(0,10) }] };
+    } else if (name === 'sn__add_work_note') {
+      result = { success: true };
     } else {
       logMsg('[sim] ' + name + ': ' + JSON.stringify(args).slice(0, 80));
+      result = { success: true };
     }
+    var frame = document.getElementById('widget');
+    if (frame) frame.contentWindow.postMessage({ jsonrpc: '2.0', id: d.id, result: { structuredContent: result } }, '*');
   }
   if (d.type === 'mcp_height_notify') logMsg('[height] ' + d.height + 'px');
 });

@@ -126,7 +126,25 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
       }
       return result.structuredContent || result;
     }
-    throw new Error('Not connected to MCP host');
+    // Test-mode fallback: send ui/callTool to parent, await JSON-RPC response
+    return new Promise((resolve, reject) => {
+      const id = Math.random().toString(36).slice(2);
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', handler);
+        reject(new Error('Tool call timeout'));
+      }, 10000);
+      function handler(e: MessageEvent) {
+        const d = e.data;
+        if (d?.jsonrpc === '2.0' && d?.id === id) {
+          window.removeEventListener('message', handler);
+          clearTimeout(timer);
+          if (d.error) reject(new Error(d.error.message || 'Tool call failed'));
+          else resolve(d.result?.structuredContent ?? d.result);
+        }
+      }
+      window.addEventListener('message', handler);
+      window.parent.postMessage({ jsonrpc: '2.0', method: 'ui/callTool', id, params: { name, arguments: args || {} } }, '*');
+    });
   }, [app, isConnected]);
 
   const callTool = useCallback(async (name: string, args?: Record<string, any>) => {
