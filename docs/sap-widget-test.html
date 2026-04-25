@@ -183,6 +183,12 @@
     var msg = e.data;
     if (!msg) return;
 
+    /* SDK handshake */
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
+      document.getElementById('widget').contentWindow.postMessage({ jsonrpc: '2.0', id: msg.id, result: { protocolVersion: msg.params?.protocolVersion || '2026-01-26', hostInfo: { name: 'sap-test-host', version: '1.0.0' }, hostCapabilities: { serverTools: {} }, hostContext: { theme: isDark ? 'dark' : 'light' } } }, '*');
+      return;
+    }
+
     /* callTool request */
     if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
       var tool = msg.params.name;
@@ -192,8 +198,8 @@
       setTimeout(function() {
         var result;
 
-        /* get_po_line_items */
-        if (tool === 'get_po_line_items') {
+        /* sap__get_po_line_items */
+        if (tool === 'sap__get_po_line_items') {
           result = {
             type: "po_line_items",
             purchase_order: args.purchase_order,
@@ -206,8 +212,8 @@
           log('→ Returned 3 line items for PO ' + args.purchase_order);
         }
 
-        /* get_bp_purchase_orders */
-        else if (tool === 'get_bp_purchase_orders') {
+        /* sap__get_bp_purchase_orders */
+        else if (tool === 'sap__get_bp_purchase_orders') {
           result = {
             type: "bp_purchase_orders",
             partner_id: args.partner_id,
@@ -219,8 +225,8 @@
           log('→ Returned 2 POs for partner ' + args.partner_id);
         }
 
-        /* get_material_details */
-        else if (tool === 'get_material_details') {
+        /* sap__get_material_details */
+        else if (tool === 'sap__get_material_details') {
           result = {
             product:             args.material_id,
             product_type:        "FERT",

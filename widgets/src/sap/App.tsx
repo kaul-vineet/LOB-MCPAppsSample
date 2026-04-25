@@ -477,7 +477,7 @@ function PurchaseOrdersView({
     if (!isOpen && !lineItems[key]) {
       setLoading(prev => ({ ...prev, [key]: true }));
       try {
-        const result: PoLineItemsResult = await callTool('get_po_line_items', { purchase_order: key });
+        const result: PoLineItemsResult = await callTool('sap__get_po_line_items', { purchase_order: key });
         setLineItems(prev => ({ ...prev, [key]: result?.items || [] }));
       } catch (e: any) {
         toast(e.message || 'Failed to load line items', 'error');
@@ -623,7 +623,7 @@ function BusinessPartnersView({
     if (!isOpen && !bpPos[key]) {
       setLoading(prev => ({ ...prev, [key]: true }));
       try {
-        const result: BpPurchaseOrdersResult = await callTool('get_bp_purchase_orders', { partner_id: key });
+        const result: BpPurchaseOrdersResult = await callTool('sap__get_bp_purchase_orders', { partner_id: key });
         setBpPos(prev => ({ ...prev, [key]: result?.items || [] }));
       } catch (e: any) {
         toast(e.message || 'Failed to load purchase orders', 'error');
@@ -760,7 +760,7 @@ function MaterialsView({
     if (!isOpen && !details[key]) {
       setLoading(prev => ({ ...prev, [key]: true }));
       try {
-        const result: MaterialDetail = await callTool('get_material_details', { material_id: key });
+        const result: MaterialDetail = await callTool('sap__get_material_details', { material_id: key });
         setDetails(prev => ({ ...prev, [key]: result }));
       } catch (e: any) {
         toast(e.message || 'Failed to load material detail', 'error');

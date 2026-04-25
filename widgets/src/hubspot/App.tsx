@@ -114,7 +114,7 @@ const useStyles = makeStyles({
   },
   formGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '12px',
     marginBottom: '16px',
   },
@@ -459,7 +459,7 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await callTool('update_email', { email_id: editingId, name: formData.name, subject: formData.subject });
+      await callTool('hs__update_email', { email_id: editingId, name: formData.name, subject: formData.subject });
       toast('Email updated');
       cancel();
     } catch (e: any) {
@@ -698,7 +698,7 @@ function ListsView({ items, total, onBack, onViewContacts, callTool, toast }: {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await callTool('update_list', { list_id: editingId, name: formName });
+      await callTool('hs__update_list', { list_id: editingId, name: formName });
       toast('List renamed');
       cancel();
     } catch (e: any) {
@@ -880,7 +880,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
 
   const handleRemove = async (contactId: string) => {
     try {
-      await callTool('remove_from_list', { list_id: listId, contact_id: contactId });
+      await callTool('hs__remove_from_list', { list_id: listId, contact_id: contactId });
       toast('Contact removed');
     } catch (e: any) {
       toast(e.message || 'Failed to remove contact', 'error');
@@ -891,7 +891,7 @@ function ContactsView({ items, total, listName, listId, onBack, callTool, toast 
     if (!newEmail.trim()) return;
     setSaving(true);
     try {
-      await callTool('add_to_list', { list_id: listId, contact_email: newEmail.trim() });
+      await callTool('hs__add_to_list', { list_id: listId, contact_email: newEmail.trim() });
       toast('Contact added');
       setAddingContact(false);
       setNewEmail('');
@@ -1284,23 +1284,29 @@ export function HubSpotApp() {
 
   const [nav, setNav] = useState<ViewState>({ view: 'emails' });
   const [loadingView, setLoadingView] = useState<'emails' | 'lists' | 'contacts' | null>(null);
+  const [listsCache, setListsCache] = useState<HubSpotData | null>(null);
 
   const navigateToLists = useCallback(async () => {
+    if (listsCache) {
+      setNav({ view: 'lists', data: listsCache });
+      return;
+    }
     setLoadingView('lists');
     try {
-      const result = await callTool('get_lists', {});
+      const result = await callTool('hs__get_lists', {});
+      setListsCache(result);
       setNav({ view: 'lists', data: result });
     } catch (e: any) {
       toast(e.message || 'Failed to load lists', 'error');
     } finally {
       setLoadingView(null);
     }
-  }, [callTool, toast]);
+  }, [callTool, toast, listsCache]);
 
   const navigateToContacts = useCallback(async (listId: string, listName?: string) => {
     setLoadingView('contacts');
     try {
-      const result = await callTool('get_list_contacts', { list_id: listId });
+      const result = await callTool('hs__get_list_contacts', { list_id: listId });
       setNav({
         view: 'contacts',
         data: result,
@@ -1314,29 +1320,17 @@ export function HubSpotApp() {
     }
   }, [callTool, toast]);
 
-  const backToEmails = useCallback(async () => {
-    setLoadingView('emails');
-    try {
-      await callTool('get_emails', {});
-      setNav({ view: 'emails' });
-    } catch (e: any) {
-      toast(e.message || 'Failed to load emails', 'error');
-    } finally {
-      setLoadingView(null);
-    }
-  }, [callTool, toast]);
+  const backToEmails = useCallback(() => {
+    setNav({ view: 'emails' });
+  }, []);
 
-  const backToLists = useCallback(async () => {
-    setLoadingView('lists');
-    try {
-      const result = await callTool('get_lists', {});
-      setNav({ view: 'lists', data: result });
-    } catch (e: any) {
-      toast(e.message || 'Failed to load lists', 'error');
-    } finally {
-      setLoadingView(null);
+  const backToLists = useCallback(() => {
+    if (listsCache) {
+      setNav({ view: 'lists', data: listsCache });
+    } else {
+      setNav({ view: 'emails' });
     }
-  }, [callTool, toast]);
+  }, [listsCache]);
 
   // Initial loading skeleton
   if (!initialData && nav.view === 'emails') {

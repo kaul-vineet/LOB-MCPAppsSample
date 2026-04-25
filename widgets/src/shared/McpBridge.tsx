@@ -61,6 +61,7 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     }
   }, []);
 
+
   // Notify height — deduplicated to avoid flicker
   // Kept as fallback alongside ext-apps autoResize (which handles standard hosts)
   const notifyHeight = useCallback(() => {
