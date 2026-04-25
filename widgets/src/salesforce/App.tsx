@@ -376,9 +376,9 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
                 <TableRow>
                   <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
                     {loadingChildren.has(a.id) ? <div style={{ padding: '12px 28px' }}><Spinner size="tiny" label="Loading…" /></div> : (
-                      <div style={{ padding: '8px 28px 12px', display: 'flex', gap: '24px', flexWrap: 'wrap' as const }}>
+                      <div style={{ padding: '8px 28px 12px', display: 'flex', gap: '24px', overflowX: 'auto' }}>
                         {/* Contacts */}
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ flex: '0 0 220px', minWidth: '220px' }}>
                           <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Contacts</div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <tbody>
@@ -388,7 +388,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
                           </table>
                         </div>
                         {/* Opportunities */}
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ flex: '0 0 260px', minWidth: '260px' }}>
                           <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Opportunities</div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <tbody>
@@ -398,7 +398,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
                           </table>
                         </div>
                         {/* Cases */}
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ flex: '0 0 260px', minWidth: '260px' }}>
                           <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Cases</div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <tbody>
