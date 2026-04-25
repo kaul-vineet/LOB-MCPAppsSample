@@ -29,12 +29,33 @@
   .admin-row input[type=color] { width: 32px; height: 28px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; }
   .admin-row input[type=range] { width: 120px; }
   .admin-row input[type=text]  { width: 90px; font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; }
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 980px; }
+  .cap-table th { background: #1B7A6E; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #2e844a; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
 </style>
 </head>
 <body>
 
 <h2>⚓ GTC Dockyard — ServiceNow HR <span class="badge">HR Service Delivery</span></h2>
 <p class="subtitle">The Great Trading Company — HR Widget Test · HR Cases · HR Services · HR Approvals · PII-sensitive · separate from ITSM widget</p>
+
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Entity</th><th>List</th><th>Form</th><th>Child / Drill Down</th>
+      <th>Parent CRUD</th><th>Child CRUD</th><th>Widget</th><th>FK Case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>HR Case</td><td class="y">Y</td><td class="y">Y (3-col)</td><td>▶ Work Notes (on-demand)</td><td>Create · Edit</td><td>Add Work Note</td><td>ServiceNow HR</td><td>opened_for (employee)</td></tr>
+    <tr><td>HR Service</td><td class="y">Y</td><td class="n">N (card grid)</td><td class="n">—</td><td class="n">read-only</td><td class="n">—</td><td>ServiceNow HR</td><td class="n">—</td></tr>
+    <tr><td>HR Approval</td><td class="y">Y</td><td class="n">N</td><td class="n">—</td><td>Approve · Reject</td><td class="n">—</td><td>ServiceNow HR</td><td class="n">—</td></tr>
+  </tbody>
+</table>
 
 <!-- ── 1. LIST ────────────────────────────────────────────────────────────── -->
 <div class="section-wrap">

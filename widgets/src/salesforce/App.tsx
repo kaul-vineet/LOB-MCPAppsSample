@@ -279,11 +279,11 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [childContacts, setChildContacts] = useState<Record<string, any[]>>({});
   const [childOpps, setChildOpps] = useState<Record<string, any[]>>({});
   const [childCases, setChildCases] = useState<Record<string, any[]>>({});
-  const [loadingChild, setLoadingChild] = useState<string | null>(null);
+  const [loadingChildren, setLoadingChildren] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ name: '', industry: '', phone: '', website: '', type: '', billing_city: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
@@ -313,20 +313,20 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   useEffect(() => { if (lastSavedId) { const x = setTimeout(() => setLastSavedId(null), 1600); return () => clearTimeout(x); } }, [lastSavedId]);
 
   const toggleExpand = async (id: string) => {
-    if (expandedId === id) { setExpandedId(null); return; }
-    setExpandedId(id);
-    if (childContacts[id] && childOpps[id] && childCases[id]) return;
-    setLoadingChild(id);
+    if (expandedIds.has(id)) { setExpandedIds(p => { const n = new Set(p); n.delete(id); return n; }); return; }
+    setExpandedIds(p => new Set([...p, id]));
+    if (childContacts[id] !== undefined && childOpps[id] !== undefined && childCases[id] !== undefined) return;
+    setLoadingChildren(p => new Set([...p, id]));
     try {
       const [rc, ro, rca] = await Promise.all([
-        childContacts[id] ? null : callTool('get_contacts', { account_id: id }).catch(() => null),
-        childOpps[id]     ? null : callTool('get_opportunities', { account_id: id }).catch(() => null),
-        childCases[id]    ? null : callTool('get_cases', { account_id: id }).catch(() => null),
+        childContacts[id] !== undefined ? null : callTool('get_contacts', { account_id: id }).catch(() => null),
+        childOpps[id]     !== undefined ? null : callTool('get_opportunities', { account_id: id }).catch(() => null),
+        childCases[id]    !== undefined ? null : callTool('get_cases', { account_id: id }).catch(() => null),
       ]);
-      if (rc)  setChildContacts(p => ({ ...p, [id]: rc?.items || [] }));
-      if (ro)  setChildOpps(p => ({ ...p, [id]: ro?.items || [] }));
-      if (rca) setChildCases(p => ({ ...p, [id]: rca?.items || [] }));
-    } finally { setLoadingChild(null); }
+      setChildContacts(p => ({ ...p, [id]: rc?.items  ?? p[id] ?? [] }));
+      setChildOpps(p =>     ({ ...p, [id]: ro?.items  ?? p[id] ?? [] }));
+      setChildCases(p =>    ({ ...p, [id]: rca?.items ?? p[id] ?? [] }));
+    } finally { setLoadingChildren(p => { const n = new Set(p); n.delete(id); return n; }); }
   };
 
   const fFields = (f: typeof form, set: (k: string, v: string) => void) => [
@@ -362,7 +362,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
             <React.Fragment key={a.id}>
               <TableRow style={{ borderBottom: `1px solid ${t.border}`, ...(lastSavedId === a.id ? { animation: 'sfRowFlash 1.5s ease-out' } : {}) }}>
                 <TableCell style={{ ...D_CELL, width: 28 }}>
-                  <ExpandToggle expanded={expandedId === a.id} onClick={() => toggleExpand(a.id)} theme={theme} />
+                  <ExpandToggle expanded={expandedIds.has(a.id)} onClick={() => toggleExpand(a.id)} theme={theme} />
                 </TableCell>
                 <TableCell style={D_CELL}><span style={{ fontWeight: 500, color: t.brand }}>{a.name}</span></TableCell>
                 <TableCell style={D_CELL}>{a.industry || '—'}</TableCell>
@@ -372,10 +372,10 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
                 <TableCell style={D_CELL}><button title="Edit" onClick={() => openEdit(a)} className="slds-edit-btn" style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer', color: t.textWeak, fontSize: '14px', padding: 0 }}>✏️</button></TableCell>
               </TableRow>
               {editingId === a.id && <InlineFormRow colSpan={7} title="✏️ Edit Account" fields={fFields(form, setF)} onSave={handleSave} onCancel={cancel} saving={saving} theme={theme} />}
-              {expandedId === a.id && (
+              {expandedIds.has(a.id) && (
                 <TableRow>
                   <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
-                    {loadingChild === a.id ? <div style={{ padding: '12px 28px' }}><Spinner size="tiny" label="Loading…" /></div> : (
+                    {loadingChildren.has(a.id) ? <div style={{ padding: '12px 28px' }}><Spinner size="tiny" label="Loading…" /></div> : (
                       <div style={{ padding: '8px 28px 12px', display: 'flex', gap: '24px', flexWrap: 'wrap' as const }}>
                         {/* Contacts */}
                         <div style={{ flex: 1, minWidth: '200px' }}>
