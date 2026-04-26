@@ -1,11 +1,11 @@
-"""SAP SuccessFactors HR MCP server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""SAP SuccessFactors HR MCP server — bootstrap only. Tools in tools.py, client in client.py."""
 import structlog
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
 from .settings import get_settings
-from .tools import SAP_SF_TOOL_SPECS
+from .tools import TOOL_SPECS
 
 log = structlog.get_logger("saphr")
 settings = get_settings()
@@ -27,7 +27,7 @@ def get_widget() -> str:
     return "<html><body>SAP SuccessFactors HR widget</body></html>"
 
 
-for _spec in SAP_SF_TOOL_SPECS:
+for _spec in TOOL_SPECS:
     mcp.tool(
         name=f"saphr__{_spec['name']}",
         description=_spec["summary"],

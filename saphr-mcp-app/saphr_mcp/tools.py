@@ -1,4 +1,4 @@
-"""SAP SuccessFactors HR MCP tool handlers. HTTP client and mock data in client.py."""
+﻿"""SAP SuccessFactors HR MCP tool handlers. HTTP client and mock data in client.py."""
 from __future__ import annotations
 
 import copy
@@ -632,7 +632,7 @@ async def tool_generate_employment_reference(
 
 # ── TOOL_SPECS Registry ─────────────────────────────────────────────
 
-SAP_SF_TOOL_SPECS: list[dict] = [
+TOOL_SPECS: list[dict] = [
     {
         "name": "get_employee_profile",
         "summary": (
