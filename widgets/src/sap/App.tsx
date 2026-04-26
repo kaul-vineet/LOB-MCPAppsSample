@@ -6,7 +6,10 @@ import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
 import type {
   SapData, PurchaseOrder, BusinessPartner, Material, MaterialDetail,
-  PoLineItem, PoLineItemsResult, BpPurchaseOrdersResult,
+  PoLineItem, PoLineItemsResult, GoodsReceipt, GoodsReceiptsResult,
+  BpPurchaseOrdersResult, MaterialPlantData, MaterialPlantDataResult,
+  StockLevel, StockLevelsResult,
+  SalesOrder, SalesOrderItem, SalesOrderItemsResult, Delivery, DeliveriesResult,
 } from './types';
 
 /* ─── SAP Fiori / Horizon Design Tokens ───────────────────────────────── */
@@ -452,10 +455,15 @@ function PurchaseOrdersView({
   const [dateTo, setDateTo]       = useState('');
   const [showDeleted, setShowDeleted] = useState(true);
 
-  /* Expand state */
+  /* Expand state — level 1 (PO → line items) */
   const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
   const [loading, setLoading]     = useState<Record<string, boolean>>({});
   const [lineItems, setLineItems] = useState<Record<string, PoLineItem[]>>({});
+
+  /* Expand state — level 2 (line item → goods receipts) */
+  const [expandedLI, setExpandedLI]       = useState<Record<string, boolean>>({});
+  const [loadingLI, setLoadingLI]         = useState<Record<string, boolean>>({});
+  const [goodsReceipts, setGoodsReceipts] = useState<Record<string, GoodsReceipt[]>>({});
 
   /* Unique orgs for dropdown */
   const orgs = Array.from(new Set(items.map(p => p.purchasing_org).filter(Boolean)));
@@ -488,6 +496,24 @@ function PurchaseOrdersView({
     }
   }, [expanded, lineItems, callTool, toast]);
 
+  const toggleLI = useCallback(async (poKey: string, li: PoLineItem) => {
+    const key = `${poKey}/${li.item_number}`;
+    const isOpen = expandedLI[key];
+    setExpandedLI(prev => ({ ...prev, [key]: !isOpen }));
+    if (!isOpen && !goodsReceipts[key]) {
+      setLoadingLI(prev => ({ ...prev, [key]: true }));
+      try {
+        const result: GoodsReceiptsResult = await callTool('sap__get_goods_receipts', { purchase_order: poKey, item_number: li.item_number });
+        setGoodsReceipts(prev => ({ ...prev, [key]: result?.items || [] }));
+      } catch (e: any) {
+        toast(e.message || 'Failed to load goods receipts', 'error');
+        setExpandedLI(prev => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingLI(prev => ({ ...prev, [key]: false }));
+      }
+    }
+  }, [expandedLI, goodsReceipts, callTool, toast]);
+
   const cols = [
     { label: '', width: 32 },
     { label: 'PO Number', width: 130 },
@@ -498,6 +524,7 @@ function PurchaseOrdersView({
   ];
 
   const lineItemCols = [
+    { label: '', width: 32 },
     { label: 'Item#', width: 60 },
     { label: 'Material', width: 100 },
     { label: 'Description' },
@@ -506,6 +533,14 @@ function PurchaseOrdersView({
     { label: 'Net Price', width: 80 },
     { label: 'Currency', width: 70 },
     { label: 'Delivery Date', width: 110 },
+  ];
+
+  const grCols = [
+    { label: 'GR Document', width: 130 },
+    { label: 'Posting Date', width: 110 },
+    { label: 'Qty', width: 70 },
+    { label: 'Unit', width: 50 },
+    { label: 'Delivery Note' },
   ];
 
   return (
@@ -553,20 +588,59 @@ function PurchaseOrdersView({
                               PO Line Items — {po.purchase_order}
                             </div>
                             <Table columns={lineItemCols}>
-                              {(lineItems[po.purchase_order] || []).map(li => (
-                                <TableRow key={li.item_number}>
-                                  <TD><Mono>{li.item_number}</Mono></TD>
-                                  <TD><Mono>{li.material}</Mono></TD>
-                                  <TD>{li.description}</TD>
-                                  <TD style={{ textAlign: 'right' }}>{li.quantity}</TD>
-                                  <TD style={{ color: t.textWeak }}>{li.unit}</TD>
-                                  <TD style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                                    {typeof li.net_price === 'number' ? li.net_price.toFixed(2) : li.net_price}
-                                  </TD>
-                                  <TD style={{ color: t.textWeak }}>{li.currency}</TD>
-                                  <TD style={{ color: t.textWeak }}>{li.delivery_date}</TD>
-                                </TableRow>
-                              ))}
+                              {(lineItems[po.purchase_order] || []).map(li => {
+                                const liKey = `${po.purchase_order}/${li.item_number}`;
+                                return (
+                                  <React.Fragment key={li.item_number}>
+                                    <TableRow expandable>
+                                      <TD>
+                                        <ExpandToggle
+                                          expanded={!!expandedLI[liKey]}
+                                          loading={!!loadingLI[liKey]}
+                                          onClick={() => toggleLI(po.purchase_order, li)}
+                                        />
+                                      </TD>
+                                      <TD><Mono>{li.item_number}</Mono></TD>
+                                      <TD><Mono>{li.material}</Mono></TD>
+                                      <TD>{li.description}</TD>
+                                      <TD style={{ textAlign: 'right' }}>{li.quantity}</TD>
+                                      <TD style={{ color: t.textWeak }}>{li.unit}</TD>
+                                      <TD style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                                        {typeof li.net_price === 'number' ? li.net_price.toFixed(2) : li.net_price}
+                                      </TD>
+                                      <TD style={{ color: t.textWeak }}>{li.currency}</TD>
+                                      <TD style={{ color: t.textWeak }}>{li.delivery_date}</TD>
+                                    </TableRow>
+                                    {expandedLI[liKey] && (
+                                      <SubRow colSpan={lineItemCols.length}>
+                                        {loadingLI[liKey]
+                                          ? <SubSkeleton />
+                                          : goodsReceipts[liKey]?.length === 0
+                                            ? <EmptyState label="No goods receipts." />
+                                            : (
+                                              <>
+                                                <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                                  Goods Receipts — Item {li.item_number}
+                                                </div>
+                                                <Table columns={grCols}>
+                                                  {(goodsReceipts[liKey] || []).map(gr => (
+                                                    <TableRow key={gr.gr_document}>
+                                                      <TD><Mono>{gr.gr_document}</Mono></TD>
+                                                      <TD style={{ color: t.textWeak }}>{gr.posting_date}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{gr.quantity}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{gr.unit}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{gr.delivery_note}</TD>
+                                                    </TableRow>
+                                                  ))}
+                                                </Table>
+                                              </>
+                                            )
+                                        }
+                                      </SubRow>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
                             </Table>
                           </>
                         )
@@ -598,10 +672,15 @@ function BusinessPartnersView({
   const [name, setName]     = useState('');
   const [category, setCategory] = useState('');
 
-  /* Expand state */
+  /* Expand state — level 1 (BP → POs) */
   const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
   const [loading, setLoading]     = useState<Record<string, boolean>>({});
   const [bpPos, setBpPos]         = useState<Record<string, PurchaseOrder[]>>({});
+
+  /* Expand state — level 2 (PO → line items) */
+  const [expandedPO, setExpandedPO]     = useState<Record<string, boolean>>({});
+  const [loadingPO, setLoadingPO]       = useState<Record<string, boolean>>({});
+  const [poLineItems, setPoLineItems]   = useState<Record<string, PoLineItem[]>>({});
 
   const catOptions = [
     { value: '', label: '— All Categories —' },
@@ -634,6 +713,24 @@ function BusinessPartnersView({
     }
   }, [expanded, bpPos, callTool, toast]);
 
+  const togglePO = useCallback(async (bpKey: string, po: PurchaseOrder) => {
+    const key = `${bpKey}/${po.purchase_order}`;
+    const isOpen = expandedPO[key];
+    setExpandedPO(prev => ({ ...prev, [key]: !isOpen }));
+    if (!isOpen && !poLineItems[key]) {
+      setLoadingPO(prev => ({ ...prev, [key]: true }));
+      try {
+        const result: PoLineItemsResult = await callTool('sap__get_po_line_items', { purchase_order: po.purchase_order });
+        setPoLineItems(prev => ({ ...prev, [key]: result?.items || [] }));
+      } catch (e: any) {
+        toast(e.message || 'Failed to load line items', 'error');
+        setExpandedPO(prev => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingPO(prev => ({ ...prev, [key]: false }));
+      }
+    }
+  }, [expandedPO, poLineItems, callTool, toast]);
+
   const cols = [
     { label: '', width: 32 },
     { label: 'BP ID', width: 100 },
@@ -643,11 +740,23 @@ function BusinessPartnersView({
   ];
 
   const poCols = [
+    { label: '', width: 32 },
     { label: 'PO Number', width: 130 },
     { label: 'Supplier' },
     { label: 'Purch. Org', width: 100 },
     { label: 'Order Date', width: 110 },
     { label: 'Status', width: 90 },
+  ];
+
+  const bpLineItemCols = [
+    { label: 'Item#', width: 60 },
+    { label: 'Material', width: 100 },
+    { label: 'Description' },
+    { label: 'Qty', width: 60 },
+    { label: 'Unit', width: 50 },
+    { label: 'Net Price', width: 80 },
+    { label: 'Currency', width: 70 },
+    { label: 'Delivery Date', width: 110 },
   ];
 
   return (
@@ -691,15 +800,59 @@ function BusinessPartnersView({
                               Purchase Orders — {bp.name}
                             </div>
                             <Table columns={poCols}>
-                              {(bpPos[bp.id] || []).map(po => (
-                                <TableRow key={po.purchase_order}>
-                                  <TD><Mono>{po.purchase_order}</Mono></TD>
-                                  <TD>{po.supplier}</TD>
-                                  <TD style={{ color: t.textWeak }}>{po.purchasing_org}</TD>
-                                  <TD style={{ color: t.textWeak }}>{po.order_date}</TD>
-                                  <TD>{statusBadge(po.deletion_code)}</TD>
-                                </TableRow>
-                              ))}
+                              {(bpPos[bp.id] || []).map(po => {
+                                const poKey = `${bp.id}/${po.purchase_order}`;
+                                return (
+                                  <React.Fragment key={po.purchase_order}>
+                                    <TableRow expandable>
+                                      <TD>
+                                        <ExpandToggle
+                                          expanded={!!expandedPO[poKey]}
+                                          loading={!!loadingPO[poKey]}
+                                          onClick={() => togglePO(bp.id, po)}
+                                        />
+                                      </TD>
+                                      <TD><Mono>{po.purchase_order}</Mono></TD>
+                                      <TD>{po.supplier}</TD>
+                                      <TD style={{ color: t.textWeak }}>{po.purchasing_org}</TD>
+                                      <TD style={{ color: t.textWeak }}>{po.order_date}</TD>
+                                      <TD>{statusBadge(po.deletion_code)}</TD>
+                                    </TableRow>
+                                    {expandedPO[poKey] && (
+                                      <SubRow colSpan={poCols.length}>
+                                        {loadingPO[poKey]
+                                          ? <SubSkeleton />
+                                          : poLineItems[poKey]?.length === 0
+                                            ? <EmptyState label="No line items." />
+                                            : (
+                                              <>
+                                                <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                                  Line Items — PO {po.purchase_order}
+                                                </div>
+                                                <Table columns={bpLineItemCols}>
+                                                  {(poLineItems[poKey] || []).map(li => (
+                                                    <TableRow key={li.item_number}>
+                                                      <TD><Mono>{li.item_number}</Mono></TD>
+                                                      <TD><Mono>{li.material}</Mono></TD>
+                                                      <TD>{li.description}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{li.quantity}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{li.unit}</TD>
+                                                      <TD style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                                                        {typeof li.net_price === 'number' ? li.net_price.toFixed(2) : li.net_price}
+                                                      </TD>
+                                                      <TD style={{ color: t.textWeak }}>{li.currency}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{li.delivery_date}</TD>
+                                                    </TableRow>
+                                                  ))}
+                                                </Table>
+                                              </>
+                                            )
+                                        }
+                                      </SubRow>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
                             </Table>
                           </>
                         )
@@ -732,10 +885,15 @@ function MaterialsView({
   const [pType, setPType]         = useState('');
   const [pGroup, setPGroup]       = useState('');
 
-  /* Expand state */
-  const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
-  const [loading, setLoading]     = useState<Record<string, boolean>>({});
-  const [details, setDetails]     = useState<Record<string, MaterialDetail>>({});
+  /* Expand state — level 1 (material → plant data) */
+  const [expanded, setExpanded]     = useState<Record<string, boolean>>({});
+  const [loading, setLoading]       = useState<Record<string, boolean>>({});
+  const [plantData, setPlantData]   = useState<Record<string, MaterialPlantData[]>>({});
+
+  /* Expand state — level 2 (plant → stock levels) */
+  const [expandedPlant, setExpandedPlant]   = useState<Record<string, boolean>>({});
+  const [loadingPlant, setLoadingPlant]     = useState<Record<string, boolean>>({});
+  const [stockLevels, setStockLevels]       = useState<Record<string, StockLevel[]>>({});
 
   const typeOptions = [
     { value: '', label: '— All Types —' },
@@ -757,19 +915,37 @@ function MaterialsView({
     const key = m.product;
     const isOpen = expanded[key];
     setExpanded(prev => ({ ...prev, [key]: !isOpen }));
-    if (!isOpen && !details[key]) {
+    if (!isOpen && !plantData[key]) {
       setLoading(prev => ({ ...prev, [key]: true }));
       try {
-        const result: MaterialDetail = await callTool('sap__get_material_details', { material_id: key });
-        setDetails(prev => ({ ...prev, [key]: result }));
+        const result: MaterialPlantDataResult = await callTool('sap__get_material_plant_data', { material_id: key });
+        setPlantData(prev => ({ ...prev, [key]: result?.items || [] }));
       } catch (e: any) {
-        toast(e.message || 'Failed to load material detail', 'error');
+        toast(e.message || 'Failed to load plant data', 'error');
         setExpanded(prev => ({ ...prev, [key]: false }));
       } finally {
         setLoading(prev => ({ ...prev, [key]: false }));
       }
     }
-  }, [expanded, details, callTool, toast]);
+  }, [expanded, plantData, callTool, toast]);
+
+  const togglePlant = useCallback(async (materialKey: string, pd: MaterialPlantData) => {
+    const key = `${materialKey}/${pd.plant}`;
+    const isOpen = expandedPlant[key];
+    setExpandedPlant(prev => ({ ...prev, [key]: !isOpen }));
+    if (!isOpen && !stockLevels[key]) {
+      setLoadingPlant(prev => ({ ...prev, [key]: true }));
+      try {
+        const result: StockLevelsResult = await callTool('sap__get_stock_levels', { material_id: materialKey, plant: pd.plant });
+        setStockLevels(prev => ({ ...prev, [key]: result?.items || [] }));
+      } catch (e: any) {
+        toast(e.message || 'Failed to load stock levels', 'error');
+        setExpandedPlant(prev => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingPlant(prev => ({ ...prev, [key]: false }));
+      }
+    }
+  }, [expandedPlant, stockLevels, callTool, toast]);
 
   const cols = [
     { label: '', width: 32 },
@@ -778,6 +954,24 @@ function MaterialsView({
     { label: 'Type', width: 80 },
     { label: 'Group', width: 80 },
     { label: 'Base Unit', width: 80 },
+  ];
+
+  const plantCols = [
+    { label: '', width: 32 },
+    { label: 'Plant', width: 80 },
+    { label: 'MRP Type', width: 80 },
+    { label: 'Lot Size', width: 80 },
+    { label: 'Safety Stock', width: 110 },
+    { label: 'Lead Time', width: 90 },
+  ];
+
+  const stockCols = [
+    { label: 'Storage Loc.', width: 110 },
+    { label: 'Unrestricted', width: 100 },
+    { label: 'QI', width: 70 },
+    { label: 'Blocked', width: 70 },
+    { label: 'In Transit', width: 90 },
+    { label: 'Unit', width: 50 },
   ];
 
   return (
@@ -805,9 +999,7 @@ function MaterialsView({
                     />
                   </TD>
                   <TD><Mono>{m.product}</Mono></TD>
-                  <TD style={{ color: t.textWeak }}>
-                    {details[m.product]?.product_description || '—'}
-                  </TD>
+                  <TD style={{ color: t.textWeak }}>—</TD>
                   <TD>{typeBadge(m.product_type)}</TD>
                   <TD style={{ color: t.textWeak }}>{m.product_group}</TD>
                   <TD style={{ color: t.textWeak }}>{m.base_unit}</TD>
@@ -817,9 +1009,66 @@ function MaterialsView({
                   <SubRow colSpan={cols.length}>
                     {loading[m.product]
                       ? <SubSkeleton />
-                      : details[m.product]
-                        ? <MaterialDetailPanel detail={details[m.product]} />
-                        : <EmptyState label="Detail not available." />
+                      : (plantData[m.product] || []).length === 0
+                        ? <EmptyState label="No plant data available." />
+                        : (
+                          <>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                              Plant Data — {m.product}
+                            </div>
+                            <Table columns={plantCols}>
+                              {(plantData[m.product] || []).map(pd => {
+                                const plantKey = `${m.product}/${pd.plant}`;
+                                return (
+                                  <React.Fragment key={pd.plant}>
+                                    <TableRow expandable>
+                                      <TD>
+                                        <ExpandToggle
+                                          expanded={!!expandedPlant[plantKey]}
+                                          loading={!!loadingPlant[plantKey]}
+                                          onClick={() => togglePlant(m.product, pd)}
+                                        />
+                                      </TD>
+                                      <TD><Mono>{pd.plant}</Mono></TD>
+                                      <TD style={{ color: t.textWeak }}>{pd.mrp_type}</TD>
+                                      <TD style={{ color: t.textWeak }}>{pd.lot_size}</TD>
+                                      <TD style={{ textAlign: 'right' }}>{pd.safety_stock}</TD>
+                                      <TD style={{ textAlign: 'right' }}>{pd.lead_time}d</TD>
+                                    </TableRow>
+                                    {expandedPlant[plantKey] && (
+                                      <SubRow colSpan={plantCols.length}>
+                                        {loadingPlant[plantKey]
+                                          ? <SubSkeleton />
+                                          : (stockLevels[plantKey] || []).length === 0
+                                            ? <EmptyState label="No stock data." />
+                                            : (
+                                              <>
+                                                <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                                  Stock Levels — Plant {pd.plant}
+                                                </div>
+                                                <Table columns={stockCols}>
+                                                  {(stockLevels[plantKey] || []).map(sl => (
+                                                    <TableRow key={sl.storage_location}>
+                                                      <TD><Mono>{sl.storage_location}</Mono></TD>
+                                                      <TD style={{ textAlign: 'right' }}>{sl.unrestricted}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{sl.quality_inspection}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{sl.blocked}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{sl.in_transit}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{sl.unit}</TD>
+                                                    </TableRow>
+                                                  ))}
+                                                </Table>
+                                              </>
+                                            )
+                                        }
+                                      </SubRow>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
+                            </Table>
+                          </>
+                        )
                     }
                   </SubRow>
                 )}
@@ -928,6 +1177,240 @@ function MaterialDetailView({ data }: { data: SapData }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   SALES ORDERS VIEW
+   ══════════════════════════════════════════════════════════════════════ */
+function SalesOrdersView({
+  items, callTool, toast,
+}: {
+  items: SalesOrder[];
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+}) {
+  const t = useFioriTokens();
+
+  const [soldTo, setSoldTo]       = useState('');
+  const [currency, setCurrency]   = useState('');
+  const [status, setStatus]       = useState('');
+  const [dateFrom, setDateFrom]   = useState('');
+  const [dateTo, setDateTo]       = useState('');
+
+  /* Expand state — level 1 (SO → items) */
+  const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
+  const [loading, setLoading]     = useState<Record<string, boolean>>({});
+  const [soItems, setSoItems]     = useState<Record<string, SalesOrderItem[]>>({});
+
+  /* Expand state — level 2 (item → deliveries) */
+  const [expandedItem, setExpandedItem] = useState<Record<string, boolean>>({});
+  const [loadingItem, setLoadingItem]   = useState<Record<string, boolean>>({});
+  const [deliveries, setDeliveries]     = useState<Record<string, Delivery[]>>({});
+
+  const currencies = Array.from(new Set(items.map(s => s.currency).filter(Boolean)));
+  const currencyOptions = [{ value: '', label: '— All —' }, ...currencies.map(c => ({ value: c, label: c }))];
+  const statuses = Array.from(new Set(items.map(s => s.status).filter(Boolean)));
+  const statusOptions = [{ value: '', label: '— All Statuses —' }, ...statuses.map(s => ({ value: s, label: s }))];
+
+  const filtered = items.filter(so => {
+    if (soldTo && !so.sold_to_party.toLowerCase().includes(soldTo.toLowerCase())) return false;
+    if (currency && so.currency !== currency) return false;
+    if (status && so.status !== status) return false;
+    if (dateFrom && so.order_date < dateFrom) return false;
+    if (dateTo && so.order_date > dateTo) return false;
+    return true;
+  });
+
+  const toggleSO = useCallback(async (so: SalesOrder) => {
+    const key = so.sales_order;
+    const isOpen = expanded[key];
+    setExpanded(prev => ({ ...prev, [key]: !isOpen }));
+    if (!isOpen && !soItems[key]) {
+      setLoading(prev => ({ ...prev, [key]: true }));
+      try {
+        const result: SalesOrderItemsResult = await callTool('sap__get_so_items', { sales_order: key });
+        setSoItems(prev => ({ ...prev, [key]: result?.items || [] }));
+      } catch (e: any) {
+        toast(e.message || 'Failed to load SO items', 'error');
+        setExpanded(prev => ({ ...prev, [key]: false }));
+      } finally {
+        setLoading(prev => ({ ...prev, [key]: false }));
+      }
+    }
+  }, [expanded, soItems, callTool, toast]);
+
+  const toggleItem = useCallback(async (soKey: string, item: SalesOrderItem) => {
+    const key = `${soKey}/${item.item_number}`;
+    const isOpen = expandedItem[key];
+    setExpandedItem(prev => ({ ...prev, [key]: !isOpen }));
+    if (!isOpen && !deliveries[key]) {
+      setLoadingItem(prev => ({ ...prev, [key]: true }));
+      try {
+        const result: DeliveriesResult = await callTool('sap__get_deliveries', { sales_order: soKey, item_number: item.item_number });
+        setDeliveries(prev => ({ ...prev, [key]: result?.items || [] }));
+      } catch (e: any) {
+        toast(e.message || 'Failed to load deliveries', 'error');
+        setExpandedItem(prev => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingItem(prev => ({ ...prev, [key]: false }));
+      }
+    }
+  }, [expandedItem, deliveries, callTool, toast]);
+
+  function soStatusBadge(s: string) {
+    const semantic: BadgeSemantic =
+      s === 'Completed' || s === 'Delivered' ? 'success' :
+      s === 'Open' ? 'info' : 'neutral';
+    return <Badge label={s} semantic={semantic} />;
+  }
+
+  const cols = [
+    { label: '', width: 32 },
+    { label: 'Sales Order', width: 130 },
+    { label: 'Sold-to Party' },
+    { label: 'Order Date', width: 110 },
+    { label: 'Net Value', width: 100 },
+    { label: 'Currency', width: 80 },
+    { label: 'Status', width: 110 },
+  ];
+
+  const itemCols = [
+    { label: '', width: 32 },
+    { label: 'Item#', width: 70 },
+    { label: 'Material', width: 100 },
+    { label: 'Description' },
+    { label: 'Qty', width: 60 },
+    { label: 'Unit', width: 50 },
+    { label: 'Net Price', width: 90 },
+    { label: 'Currency', width: 70 },
+  ];
+
+  const deliveryCols = [
+    { label: 'Delivery', width: 120 },
+    { label: 'GI Date', width: 110 },
+    { label: 'Qty', width: 70 },
+    { label: 'Unit', width: 50 },
+    { label: 'Status' },
+  ];
+
+  return (
+    <>
+      <SectionHeader title="Sales Orders" count={filtered.length} />
+
+      <FilterBar>
+        <FilterInput label="Sold-to Party" value={soldTo} onChange={setSoldTo} placeholder="Search…" />
+        <FilterSelect label="Currency" value={currency} onChange={setCurrency} options={currencyOptions} />
+        <FilterSelect label="Status" value={status} onChange={setStatus} options={statusOptions} />
+        <FilterInput label="Date From" value={dateFrom} onChange={setDateFrom} placeholder="YYYY-MM-DD" />
+        <FilterInput label="Date To" value={dateTo} onChange={setDateTo} placeholder="YYYY-MM-DD" />
+      </FilterBar>
+
+      {filtered.length === 0
+        ? <EmptyState label="No sales orders match the current filters." />
+        : (
+          <Table columns={cols}>
+            {filtered.map(so => (
+              <React.Fragment key={so.sales_order}>
+                <TableRow expandable>
+                  <TD>
+                    <ExpandToggle
+                      expanded={!!expanded[so.sales_order]}
+                      loading={!!loading[so.sales_order]}
+                      onClick={() => toggleSO(so)}
+                    />
+                  </TD>
+                  <TD><Mono>{so.sales_order}</Mono></TD>
+                  <TD>{so.sold_to_party}</TD>
+                  <TD style={{ color: t.textWeak }}>{so.order_date}</TD>
+                  <TD style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                    {typeof so.net_value === 'number' ? so.net_value.toFixed(2) : so.net_value}
+                  </TD>
+                  <TD style={{ color: t.textWeak }}>{so.currency}</TD>
+                  <TD>{soStatusBadge(so.status)}</TD>
+                </TableRow>
+
+                {expanded[so.sales_order] && (
+                  <SubRow colSpan={cols.length}>
+                    {loading[so.sales_order]
+                      ? <SubSkeleton />
+                      : (soItems[so.sales_order] || []).length === 0
+                        ? <EmptyState label="No items for this sales order." />
+                        : (
+                          <>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                              SO Items — {so.sales_order}
+                            </div>
+                            <Table columns={itemCols}>
+                              {(soItems[so.sales_order] || []).map(item => {
+                                const itemKey = `${so.sales_order}/${item.item_number}`;
+                                return (
+                                  <React.Fragment key={item.item_number}>
+                                    <TableRow expandable>
+                                      <TD>
+                                        <ExpandToggle
+                                          expanded={!!expandedItem[itemKey]}
+                                          loading={!!loadingItem[itemKey]}
+                                          onClick={() => toggleItem(so.sales_order, item)}
+                                        />
+                                      </TD>
+                                      <TD><Mono>{item.item_number}</Mono></TD>
+                                      <TD><Mono>{item.material}</Mono></TD>
+                                      <TD>{item.description}</TD>
+                                      <TD style={{ textAlign: 'right' }}>{item.quantity}</TD>
+                                      <TD style={{ color: t.textWeak }}>{item.unit}</TD>
+                                      <TD style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                                        {typeof item.net_price === 'number' ? item.net_price.toFixed(2) : item.net_price}
+                                      </TD>
+                                      <TD style={{ color: t.textWeak }}>{item.currency}</TD>
+                                    </TableRow>
+                                    {expandedItem[itemKey] && (
+                                      <SubRow colSpan={itemCols.length}>
+                                        {loadingItem[itemKey]
+                                          ? <SubSkeleton />
+                                          : (deliveries[itemKey] || []).length === 0
+                                            ? <EmptyState label="No deliveries." />
+                                            : (
+                                              <>
+                                                <div style={{ fontSize: '12px', fontWeight: 600, color: t.textWeak, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                                  Deliveries — Item {item.item_number}
+                                                </div>
+                                                <Table columns={deliveryCols}>
+                                                  {(deliveries[itemKey] || []).map(d => (
+                                                    <TableRow key={d.delivery}>
+                                                      <TD><Mono>{d.delivery}</Mono></TD>
+                                                      <TD style={{ color: t.textWeak }}>{d.actual_gi_date}</TD>
+                                                      <TD style={{ textAlign: 'right' }}>{d.delivery_quantity}</TD>
+                                                      <TD style={{ color: t.textWeak }}>{d.unit}</TD>
+                                                      <TD>
+                                                        <Badge
+                                                          label={d.delivery_status}
+                                                          semantic={d.delivery_status === 'Delivered' ? 'success' : d.delivery_status === 'In Transit' ? 'warning' : 'neutral'}
+                                                        />
+                                                      </TD>
+                                                    </TableRow>
+                                                  ))}
+                                                </Table>
+                                              </>
+                                            )
+                                        }
+                                      </SubRow>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
+                            </Table>
+                          </>
+                        )
+                    }
+                  </SubRow>
+                )}
+              </React.Fragment>
+            ))}
+          </Table>
+        )
+      }
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    MAIN APP
    ══════════════════════════════════════════════════════════════════════ */
 export function SapApp() {
@@ -973,6 +1456,7 @@ export function SapApp() {
     purchase_orders:  'SAP S/4HANA — Purchase Orders',
     business_partners:'SAP S/4HANA — Business Partners',
     materials:        'SAP S/4HANA — Materials',
+    sales_orders:     'SAP S/4HANA — Sales Orders',
     material_detail:  `SAP S/4HANA — Material ${data.product || ''}`,
   };
   const shellTitle = titleMap[data.type] || 'SAP S/4HANA';
@@ -1035,6 +1519,13 @@ export function SapApp() {
         {data.type === 'materials' && (
           <MaterialsView
             items={(data.items || []) as Material[]}
+            callTool={callTool}
+            toast={toast}
+          />
+        )}
+        {data.type === 'sales_orders' && (
+          <SalesOrdersView
+            items={(data.items || []) as SalesOrder[]}
             callTool={callTool}
             toast={toast}
           />

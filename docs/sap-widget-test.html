@@ -43,15 +43,16 @@
 <table class="cap-table">
   <thead>
     <tr>
-      <th>Entity</th><th>List</th><th>Form</th><th>Child / Drill Down</th>
-      <th>Parent CRUD</th><th>Child CRUD</th><th>Widget</th><th>FK Case</th>
+      <th>Entity</th><th>List</th><th>Form</th><th>L1 Drill Down</th><th>L2 Drill Down</th>
+      <th>Parent CRUD</th><th>Widget</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td>Purchase Order</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ Line Items (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
-    <tr><td>Business Partner</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ POs (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
-    <tr><td>Material</td><td class="y">Y</td><td class="n">N (read-only)</td><td>▶ Material Detail (expand)</td><td class="n">—</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
-    <tr><td>Material Detail</td><td class="n">N (top-level card)</td><td class="n">N</td><td class="n">—</td><td class="n">read-only</td><td class="n">—</td><td>SAP S/4HANA</td><td class="n">—</td></tr>
+    <tr><td>Purchase Order</td><td class="y">Y</td><td class="n">N</td><td>▶ Line Items (expand)</td><td>▶ Goods Receipts (expand)</td><td class="n">—</td><td>SAP S/4HANA</td></tr>
+    <tr><td>Business Partner</td><td class="y">Y</td><td class="n">N</td><td>▶ POs (expand)</td><td>▶ Line Items (expand)</td><td class="n">—</td><td>SAP S/4HANA</td></tr>
+    <tr><td>Material</td><td class="y">Y</td><td class="n">N</td><td>▶ Plant Data (expand)</td><td>▶ Stock Levels (expand)</td><td class="n">—</td><td>SAP S/4HANA</td></tr>
+    <tr><td>Sales Order</td><td class="y">Y</td><td class="n">N</td><td>▶ SO Items (expand)</td><td>▶ Deliveries (expand)</td><td class="n">—</td><td>SAP S/4HANA</td></tr>
+    <tr><td>Material Detail</td><td class="n">N (top-level card)</td><td class="n">N</td><td class="n">—</td><td class="n">—</td><td class="n">read-only</td><td>SAP S/4HANA</td></tr>
   </tbody>
 </table>
 
@@ -75,6 +76,13 @@
   <button class="secondary" onclick="sendEmptyMaterials()">Send Empty</button>
 </div>
 <p class="hint">Includes filter bar (material#, type, group) + ▶ expand for material detail panel.</p>
+
+<div class="section-label">💼 Sales Orders</div>
+<div class="controls">
+  <button class="dark" onclick="sendSalesOrders()">Send Sales Orders (5)</button>
+  <button class="secondary" onclick="sendEmptySalesOrders()">Send Empty</button>
+</div>
+<p class="hint">▶ SO → expand items (sap__get_so_items) → expand deliveries (sap__get_deliveries).</p>
 
 <div class="section-label">📋 Material Detail</div>
 <div class="controls">
@@ -160,6 +168,20 @@
     product_description: "High-precision finished component for industrial assembly"
   };
 
+  /* ── Mock Data: Sales Orders ──────────────────────────────────────── */
+  var MOCK_SALES_ORDERS = {
+    type: "sales_orders",
+    total: 5,
+    items: [
+      { sales_order: "4700010001", sold_to_party: "CUST-001", order_date: "2025-01-10", net_value: 12500.00, currency: "USD", status: "Open" },
+      { sales_order: "4700010002", sold_to_party: "CUST-042", order_date: "2025-01-15", net_value:  8750.50, currency: "EUR", status: "Completed" },
+      { sales_order: "4700010003", sold_to_party: "CUST-017", order_date: "2025-01-22", net_value: 34100.00, currency: "USD", status: "In Progress" },
+      { sales_order: "4700010004", sold_to_party: "CUST-005", order_date: "2025-02-01", net_value:  2200.00, currency: "GBP", status: "Open" },
+      { sales_order: "4700010005", sold_to_party: "CUST-033", order_date: "2025-02-08", net_value:  7890.00, currency: "USD", status: "Delivered" }
+    ]
+  };
+  var MOCK_EMPTY_SALES_ORDERS = { type: "sales_orders", total: 0, items: [] };
+
   /* ── Mock Error ────────────────────────────────────────────────────── */
   var MOCK_ERROR = {
     error: true,
@@ -187,8 +209,10 @@
   function sendEmptyBPs()        { send(JSON.parse(JSON.stringify(MOCK_EMPTY_BPS)));         log('→ Sent empty business partners'); }
   function sendMaterials()       { send(JSON.parse(JSON.stringify(MOCK_MATERIALS)));         log('→ Sent materials (5)'); }
   function sendEmptyMaterials()  { send(JSON.parse(JSON.stringify(MOCK_EMPTY_MATERIALS)));   log('→ Sent empty materials'); }
-  function sendMaterialDetail()  { send(JSON.parse(JSON.stringify(MOCK_MATERIAL_DETAIL)));   log('→ Sent material detail'); }
-  function sendError()           { send(JSON.parse(JSON.stringify(MOCK_ERROR)));             log('→ Sent auth error'); }
+  function sendMaterialDetail()      { send(JSON.parse(JSON.stringify(MOCK_MATERIAL_DETAIL)));       log('→ Sent material detail'); }
+  function sendSalesOrders()         { send(JSON.parse(JSON.stringify(MOCK_SALES_ORDERS)));            log('→ Sent sales orders (5)'); }
+  function sendEmptySalesOrders()    { send(JSON.parse(JSON.stringify(MOCK_EMPTY_SALES_ORDERS)));      log('→ Sent empty sales orders'); }
+  function sendError()               { send(JSON.parse(JSON.stringify(MOCK_ERROR)));                   log('→ Sent auth error'); }
 
   function toggleTheme() {
     isDark = !isDark;
@@ -245,6 +269,75 @@
             ]
           };
           log('→ Returned 2 POs for partner ' + args.partner_id);
+        }
+
+        /* sap__get_goods_receipts */
+        else if (tool === 'sap__get_goods_receipts') {
+          result = {
+            type: "goods_receipts",
+            purchase_order: args.purchase_order,
+            item_number: args.item_number,
+            items: [
+              { gr_document: "5000001234", posting_date: "2026-04-20", quantity: 60, unit: "EA", delivery_note: "DN-88210" },
+              { gr_document: "5000001289", posting_date: "2026-04-28", quantity: 40, unit: "EA", delivery_note: "DN-88471" }
+            ]
+          };
+          log('→ Returned 2 GRs for PO ' + args.purchase_order + ' item ' + args.item_number);
+        }
+
+        /* sap__get_material_plant_data */
+        else if (tool === 'sap__get_material_plant_data') {
+          result = {
+            type: "material_plant_data",
+            material_id: args.material_id,
+            items: [
+              { plant: "1010", mrp_type: "PD", lot_size: "EX", safety_stock: 10, lead_time: 5 },
+              { plant: "1710", mrp_type: "VB", lot_size: "HB", safety_stock:  5, lead_time: 3 },
+              { plant: "2000", mrp_type: "ND", lot_size: "FX", safety_stock:  0, lead_time: 7 }
+            ]
+          };
+          log('→ Returned 3 plants for material ' + args.material_id);
+        }
+
+        /* sap__get_stock_levels */
+        else if (tool === 'sap__get_stock_levels') {
+          result = {
+            type: "stock_levels",
+            material_id: args.material_id,
+            plant: args.plant,
+            items: [
+              { storage_location: "0001", unrestricted: 120, quality_inspection: 5, blocked: 0, in_transit: 10, unit: "EA" },
+              { storage_location: "0002", unrestricted:  45, quality_inspection: 0, blocked: 2, in_transit:  0, unit: "EA" }
+            ]
+          };
+          log('→ Returned stock levels for ' + args.material_id + ' @ plant ' + args.plant);
+        }
+
+        /* sap__get_so_items */
+        else if (tool === 'sap__get_so_items') {
+          result = {
+            type: "so_items",
+            sales_order: args.sales_order,
+            items: [
+              { item_number: "000010", material: "MAT-10001", description: "Finished Trading Good A",   quantity: 2, unit: "EA", net_price: 5000.00, currency: "USD" },
+              { item_number: "000020", material: "INST-SVC",  description: "Installation Service",      quantity: 1, unit: "AU", net_price: 2500.00, currency: "USD" },
+              { item_number: "000030", material: "SUPPORT-1Y",description: "Annual Support 12 Month",   quantity: 1, unit: "AU", net_price: 5000.00, currency: "USD" }
+            ]
+          };
+          log('→ Returned 3 items for SO ' + args.sales_order);
+        }
+
+        /* sap__get_deliveries */
+        else if (tool === 'sap__get_deliveries') {
+          result = {
+            type: "deliveries",
+            sales_order: args.sales_order,
+            item_number: args.item_number,
+            items: [
+              { delivery: "80000001", actual_gi_date: "2025-01-28", delivery_quantity: 2, unit: "EA", delivery_status: "Delivered" }
+            ]
+          };
+          log('→ Returned 1 delivery for SO ' + args.sales_order + ' item ' + args.item_number);
         }
 
         /* sap__get_material_details */
