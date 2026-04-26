@@ -6,17 +6,17 @@
 <title>⚓ The Great Trading Company — LOB MCP Apps</title>
 <style>
   :root {
-    --bg: #0a0a0a;
-    --surface: #141414;
-    --surface2: #1e1e1e;
-    --surface3: #282828;
+    --bg: #12131a;
+    --surface: #1c1e2a;
+    --surface2: #252735;
+    --surface3: #2e3040;
     --text: #ffffff;
-    --text-dim: #cccccc;
-    --text-muted: #888888;
-    --border: #2a2a2a;
+    --text-dim: #d0d4e8;
+    --text-muted: #8890a8;
+    --border: #303348;
     --gold: #C9A84C;
-    --gold-dim: rgba(201,168,76,0.7);
-    --gold-glow: rgba(201,168,76,0.35);
+    --gold-dim: rgba(201,168,76,0.8);
+    --gold-glow: rgba(201,168,76,0.4);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -89,15 +89,15 @@
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(135deg, #0a0a14 0%, #0d1a35 35%, #0f3460 65%, #150a2e 100%);
+      linear-gradient(135deg, #151726 0%, #1a2545 35%, #1b3f7a 65%, #1e1535 100%);
   }
   .hero-glow {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse at 15% 60%, rgba(201,168,76,0.14) 0%, transparent 45%),
-      radial-gradient(ellipse at 75% 25%, rgba(79,172,254,0.12) 0%, transparent 45%),
-      radial-gradient(ellipse at 55% 85%, rgba(76,0,255,0.08) 0%, transparent 40%);
+      radial-gradient(ellipse at 15% 60%, rgba(201,168,76,0.22) 0%, transparent 45%),
+      radial-gradient(ellipse at 75% 25%, rgba(79,172,254,0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 55% 85%, rgba(120,80,255,0.12) 0%, transparent 40%);
     animation: glowPulse 14s ease-in-out infinite alternate;
   }
   @keyframes glowPulse {
@@ -382,17 +382,17 @@
   }
 
   /* ── Brand thumbnails ── */
-  .thumb-sf   { background: linear-gradient(145deg, #003d7a 0%, #0070D2 45%, #00A1E0 75%, #33bdff 100%); }
-  .thumb-snow { background: linear-gradient(145deg, #0d1e1f 0%, #1e3335 40%, #293E40 65%, #3d6660 100%); }
-  .thumb-sap  { background: linear-gradient(145deg, #1a2e40 0%, #274055 35%, #0FAAFF 70%, #45c8ff 100%); }
-  .thumb-hs   { background: linear-gradient(145deg, #c01800 0%, #e84520 40%, #FF7A59 70%, #ffb59e 100%); }
-  .thumb-ft   { background: linear-gradient(145deg, #03153e 0%, #0441a0 40%, #1B9CFC 70%, #72d0ff 100%); }
-  .thumb-ds   { background: linear-gradient(145deg, #0e0025 0%, #2d007a 40%, #4C00FF 70%, #9b59ff 100%); }
-  .thumb-snhr { background: linear-gradient(145deg, #062820 0%, #0d5940 40%, #1ABC9C 70%, #5de8d0 100%); }
-  .thumb-saphr{ background: linear-gradient(145deg, #2c1200 0%, #6b3200 40%, #E37722 70%, #f0a050 100%); }
-  .thumb-wd   { background: linear-gradient(145deg, #001030 0%, #00338a 40%, #0052CC 70%, #4d94ff 100%); }
-  .thumb-coupa{ background: linear-gradient(145deg, #4a0000 0%, #8b0000 40%, #DC3232 70%, #ff7070 100%); }
-  .thumb-jira { background: linear-gradient(145deg, #001530 0%, #003380 40%, #0052CC 70%, #4c9aff 100%); }
+  .thumb-sf   { background: linear-gradient(145deg, #1a5fa0 0%, #0070D2 45%, #00A1E0 80%, #33bdff 100%); }
+  .thumb-snow { background: linear-gradient(145deg, #1e3d3f 0%, #293E40 50%, #3d6660 80%, #5a9e92 100%); }
+  .thumb-sap  { background: linear-gradient(145deg, #1e3a50 0%, #2060a0 45%, #0FAAFF 75%, #45c8ff 100%); }
+  .thumb-hs   { background: linear-gradient(145deg, #c83010 0%, #e84520 45%, #FF7A59 75%, #ffb59e 100%); }
+  .thumb-ft   { background: linear-gradient(145deg, #0a2d7a 0%, #0d57c8 45%, #1B9CFC 75%, #72d0ff 100%); }
+  .thumb-ds   { background: linear-gradient(145deg, #2a008a 0%, #5200cc 45%, #7030ff 75%, #a070ff 100%); }
+  .thumb-snhr { background: linear-gradient(145deg, #0a4535 0%, #0d7855 45%, #1ABC9C 75%, #5de8d0 100%); }
+  .thumb-saphr{ background: linear-gradient(145deg, #7a3000 0%, #b05010 45%, #E37722 75%, #f0a050 100%); }
+  .thumb-wd   { background: linear-gradient(145deg, #003080 0%, #0050cc 45%, #1a7aff 75%, #4d94ff 100%); }
+  .thumb-coupa{ background: linear-gradient(145deg, #7a0505 0%, #bb1515 45%, #DC3232 75%, #ff6060 100%); }
+  .thumb-jira { background: linear-gradient(145deg, #003080 0%, #0050cc 45%, #0077ff 75%, #4c9aff 100%); }
 
   /* ── Per-brand hover glow ── */
   .card-sf:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(0,161,224,0.4), 0 0 0 1px rgba(0,161,224,0.2); }
@@ -475,7 +475,7 @@
   </div>
   <div class="nav-links">
     <a href="#live">Widgets</a>
-    <a href="#soon">Server MCPs</a>
+    <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">GitHub</a>
     <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample" class="nav-cta">GitHub →</a>
   </div>
 </nav>
@@ -503,16 +503,16 @@
     </div>
     <div class="hero-stats">
       <div class="stat">
-        <div class="stat-num">11<span>+</span></div>
-        <div class="stat-label">MCP Apps</div>
-      </div>
-      <div class="stat">
         <div class="stat-num">7</div>
         <div class="stat-label">Live Widgets</div>
       </div>
       <div class="stat">
         <div class="stat-num">150<span>+</span></div>
         <div class="stat-label">MCP Tools</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">11<span>+</span></div>
+        <div class="stat-label">LOB Systems</div>
       </div>
       <div class="stat">
         <div class="stat-num">React<span> 19</span></div>
@@ -679,95 +679,6 @@
         </div>
       </div>
     </a>
-
-  </div>
-</div>
-
-<!-- ══ COMING SOON ══ -->
-<div class="section" id="soon">
-  <div class="section-header">
-    <h2>Server-Side MCPs</h2>
-    <span class="sh-tag soon">Backend Only</span>
-    <span class="sh-desc">MCP servers complete · React widgets coming soon</span>
-  </div>
-
-  <div class="card-grid">
-
-    <div class="card card-saphr card-disabled">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-saphr"></div>
-        <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">SHR</div>
-        <span class="card-status status-soon">Soon</span>
-      </div>
-      <div class="card-body">
-        <div class="card-system">SAP SuccessFactors</div>
-        <div class="card-title">SAP HR</div>
-        <div class="card-desc">Employee records, leave balances, payslips, background checks, documents and time-off management via SuccessFactors API.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3006</span>
-          <span class="chip">15 tools</span>
-          <span class="chip">OAuth 2.0</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card card-wd card-disabled">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-wd"></div>
-        <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">WD</div>
-        <span class="card-status status-soon">Soon</span>
-      </div>
-      <div class="card-body">
-        <div class="card-system">Workday Design</div>
-        <div class="card-title">Workday HR</div>
-        <div class="card-desc">Worker profiles, skills and learning reports, time-off management, org hierarchy and pay details via Workday REST APIs.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3007</span>
-          <span class="chip">20 tools</span>
-          <span class="chip">OAuth 2.0</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card card-coupa card-disabled">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-coupa"></div>
-        <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">CP</div>
-        <span class="card-status status-soon">Soon</span>
-      </div>
-      <div class="card-body">
-        <div class="card-system">Coupa BSM</div>
-        <div class="card-title">Coupa Procurement</div>
-        <div class="card-desc">Invoices, purchase orders, requisitions, supplier management, catalog search and approval queue management.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3008</span>
-          <span class="chip">14 tools</span>
-          <span class="chip">REST API</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card card-jira card-disabled">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-jira"></div>
-        <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">JR</div>
-        <span class="card-status status-soon">Soon</span>
-      </div>
-      <div class="card-body">
-        <div class="card-system">Atlassian Design</div>
-        <div class="card-title">Jira</div>
-        <div class="card-desc">Issue search and triage, sprint boards, create and update tasks, backlog management and JQL-powered queries.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3009</span>
-          <span class="chip">18 tools</span>
-          <span class="chip">REST v3</span>
-        </div>
-      </div>
-    </div>
 
   </div>
 </div>
