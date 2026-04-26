@@ -16,6 +16,39 @@ This is the most common contribution. See the [Scaffolding Guide](README.md#-usi
 6. Add a test harness with mock data
 7. Update the README and SETUP.md
 
+### Module naming convention
+
+Every server package uses a strict `{domain}_` prefix on all module files:
+
+```
+{domain}_client.py    — HTTP client for the LOB API (auth, requests, mock data)
+{domain}_server.py    — MCP server bootstrap only (register tools, start uvicorn)
+{domain}_settings.py  — Pydantic settings / env var loading only
+{domain}_tools.py     — Tool handler functions + TOOL_SPECS registry
+__init__.py           — Empty or minimal public re-exports
+__main__.py           — Entry point: `from .{domain}_server import main`
+```
+
+Examples: `salesforce_client.py`, `servicenow_server.py`, `sap_settings.py`.
+The `{domain}` matches the package folder name (e.g. `servicenow_mcp` → `servicenow`).
+
+### Single Responsibility Principle (SRP)
+
+Each file has exactly one responsibility — violations are rejected in review:
+
+| File | Owns | Must NOT contain |
+|------|------|-----------------|
+| `{domain}_server.py` | FastMCP bootstrap, tool/prompt registration, uvicorn startup | Tool logic, HTTP calls, settings parsing |
+| `{domain}_tools.py` | Tool handler functions, `TOOL_SPECS` list | Server startup, HTTP calls, settings |
+| `{domain}_client.py` | HTTP client, auth, mock data, field helpers | Tool specs, server bootstrap, MCP imports |
+| `{domain}_settings.py` | Pydantic `BaseSettings` model, `get_settings()` loader | Business logic, tool handlers |
+| `shared_mcp/auth.py` | Bearer token extraction | HTTP, logging, settings |
+| `shared_mcp/http.py` | `create_async_client()` factory | Auth, business logic |
+| `shared_mcp/logger.py` | `get_logger()` wrapper | Anything else |
+| `shared_mcp/settings.py` | Shared `BaseSettings` subclasses for all servers | Tool logic, HTTP calls |
+
+Tool spec constant is always named `TOOL_SPECS` (not `{DOMAIN}_TOOL_SPECS`).
+
 ### Code style
 
 - **Python:** Follow the patterns in `sf-mcp-app/` (the gold standard)
