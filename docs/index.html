@@ -311,10 +311,21 @@
     width: 58px;
     height: 58px;
     object-fit: contain;
-    filter: brightness(0) invert(1) drop-shadow(0 4px 16px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35));
     transition: transform 0.3s ease;
   }
-  .card:not(.card-disabled):hover .card-logo-icon { transform: scale(1.1); }
+  .card-logo-text {
+    position: relative;
+    z-index: 1;
+    font-size: 32px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -1px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.45);
+    transition: transform 0.3s ease;
+  }
+  .card:not(.card-disabled):hover .card-logo-icon,
+  .card:not(.card-disabled):hover .card-logo-text { transform: scale(1.1); }
 
   /* Status badge */
   .card-status {
@@ -545,7 +556,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-sf"></div>
         <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/salesforce/ffffff" alt="Salesforce">
+        <img class="card-logo-icon" src="https://api.iconify.design/simple-icons:salesforce.svg?color=white" alt="Salesforce">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -564,7 +575,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-snow"></div>
         <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/servicenow/ffffff" alt="ServiceNow">
+        <span class="card-logo-text">SN</span>
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -640,7 +651,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-ds"></div>
         <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/docusign/ffffff" alt="DocuSign">
+        <img class="card-logo-icon" src="https://api.iconify.design/simple-icons:docusign.svg?color=white" alt="DocuSign">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -659,7 +670,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-snhr"></div>
         <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/servicenow/ffffff" alt="ServiceNow HR">
+        <span class="card-logo-text">HR</span>
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
