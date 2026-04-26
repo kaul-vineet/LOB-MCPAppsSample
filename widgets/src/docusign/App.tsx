@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Badge,
   Button,
@@ -311,12 +311,34 @@ function PipelineBar({ envelopes, theme }: { envelopes: Envelope[]; theme: 'ligh
 }
 
 // ── Envelopes View ────────────────────────────────────────────────────────
-function EnvelopesView({ items, theme }: {
+function EnvelopesView({ items, theme, callTool, toast }: {
   items: Envelope[];
   theme: 'light' | 'dark';
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: any) => void;
 }) {
   const styles = useStyles();
   const t = ds(theme);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [envelopeDetails, setEnvelopeDetails] = useState<Record<string, EnvelopeDetail>>({});
+
+  const toggleExpand = useCallback(async (envId: string) => {
+    if (expandedId === envId) { setExpandedId(null); return; }
+    setExpandedId(envId);
+    if (envelopeDetails[envId]) return;
+    setLoadingId(envId);
+    try {
+      const r = await callTool('ds__get_envelope_details', { envelope_id: envId });
+      const detail: EnvelopeDetail = r?.data || r;
+      setEnvelopeDetails(p => ({ ...p, [envId]: detail }));
+    } catch (e: any) {
+      toast(e.message || 'Failed to load envelope details', 'error');
+      setExpandedId(null);
+    } finally {
+      setLoadingId(null);
+    }
+  }, [expandedId, envelopeDetails, callTool, toast]);
 
   const cellStyle: React.CSSProperties = {
     padding: '6px 10px', fontSize: 12, whiteSpace: 'nowrap',
@@ -348,6 +370,7 @@ function EnvelopesView({ items, theme }: {
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
+            <TableHeaderCell style={{ ...headerCellStyle, width: 28 }} />
             <TableHeaderCell style={headerCellStyle}>Status</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Subject</TableHeaderCell>
             <TableHeaderCell style={headerCellStyle}>Sent</TableHeaderCell>
@@ -357,28 +380,66 @@ function EnvelopesView({ items, theme }: {
         <TableBody>
           {items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className={styles.empty}>
+              <TableCell colSpan={5} className={styles.empty}>
                 <Text>📭 No envelopes found</Text>
               </TableCell>
             </TableRow>
           )}
           {items.map((env, idx) => (
-            <TableRow key={env.envelopeId || idx} style={{
-              borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}`,
-            }}>
-              <TableCell style={cellStyle}>
-                <StatusBadge status={env.status} theme={theme} />
-              </TableCell>
-              <TableCell style={{ ...cellStyle, maxWidth: 220 }} title={env.emailSubject}>
-                {env.emailSubject || '(no subject)'}
-              </TableCell>
-              <TableCell style={{ ...cellStyle, fontSize: 12, color: t.textWeak }}>
-                {formatDate(env.sentDateTime)}
-              </TableCell>
-              <TableCell style={{ ...cellStyle, fontFamily: 'monospace', fontSize: 11, color: t.textWeak }}>
-                {shortId(env.envelopeId)}
-              </TableCell>
-            </TableRow>
+            <React.Fragment key={env.envelopeId || idx}>
+              <TableRow style={{ borderBottom: `1px solid ${t.border}` }}>
+                <TableCell style={{ padding: '4px 8px', width: 28 }}>
+                  <button onClick={() => toggleExpand(env.envelopeId)}
+                    style={{ width: 20, height: 20, border: `1px solid ${t.border}`, borderRadius: 3, background: expandedId === env.envelopeId ? t.surface : 'transparent', cursor: 'pointer', fontSize: 10, color: t.brand, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {loadingId === env.envelopeId ? '…' : expandedId === env.envelopeId ? '▼' : '▶'}
+                  </button>
+                </TableCell>
+                <TableCell style={cellStyle}>
+                  <StatusBadge status={env.status} theme={theme} />
+                </TableCell>
+                <TableCell style={{ ...cellStyle, maxWidth: 220 }} title={env.emailSubject}>
+                  {env.emailSubject || '(no subject)'}
+                </TableCell>
+                <TableCell style={{ ...cellStyle, fontSize: 12, color: t.textWeak }}>
+                  {formatDate(env.sentDateTime)}
+                </TableCell>
+                <TableCell style={{ ...cellStyle, fontFamily: 'monospace', fontSize: 11, color: t.textWeak }}>
+                  {shortId(env.envelopeId)}
+                </TableCell>
+              </TableRow>
+              {expandedId === env.envelopeId && envelopeDetails[env.envelopeId] && (
+                <TableRow>
+                  <TableCell colSpan={5} style={{ padding: 0, backgroundColor: t.surface }}>
+                    <div style={{ padding: '10px 20px 14px', borderTop: `2px solid ${t.brand}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: t.textWeak, marginBottom: 8 }}>Recipients</div>
+                      {(envelopeDetails[env.envelopeId].signers || []).length === 0 ? (
+                        <div style={{ fontSize: 12, color: t.textWeak, fontStyle: 'italic' }}>No recipients.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ backgroundColor: t.headerBg }}>
+                              {['Name', 'Email', 'Status', 'Signed'].map(h => (
+                                <th key={h} style={{ padding: '4px 10px', textAlign: 'left', color: t.textWeak, borderBottom: `1px solid ${t.border}`, fontWeight: 600 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(envelopeDetails[env.envelopeId].signers || []).map((s, i) => (
+                              <tr key={i} style={{ borderBottom: `1px solid ${t.border}` }}>
+                                <td style={{ padding: '4px 10px', color: t.text, fontWeight: 500 }}>{s.name}</td>
+                                <td style={{ padding: '4px 10px', color: t.textWeak }}>{s.email}</td>
+                                <td style={{ padding: '4px 10px' }}><StatusBadge status={s.status} theme={theme} /></td>
+                                <td style={{ padding: '4px 10px', color: t.textWeak }}>{s.signedDateTime ? formatDate(s.signedDateTime) : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
@@ -444,9 +505,10 @@ function EnvelopeDetailView({ detail, theme }: {
 }
 
 // ── Templates View ────────────────────────────────────────────────────────
-function TemplatesView({ items, theme }: {
+function TemplatesView({ items, theme, onSendFromTemplate }: {
   items: Template[];
   theme: 'light' | 'dark';
+  onSendFromTemplate?: (tpl: Template) => void;
 }) {
   const styles = useStyles();
   const t = ds(theme);
@@ -473,12 +535,22 @@ function TemplatesView({ items, theme }: {
           <div key={tpl.templateId || i} className={styles.templateCard} style={{
             background: t.surface, border: `1px solid ${t.border}`,
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{tpl.name}</div>
-            <div style={{ fontSize: 12, color: t.textWeak, marginTop: 4 }}>
-              {tpl.description || 'No description'}
-            </div>
-            <div style={{ fontSize: 11, color: t.textWeak, marginTop: 4 }}>
-              ID: {shortId(tpl.templateId)} · Folder: {tpl.folderName || '—'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{tpl.name}</div>
+                <div style={{ fontSize: 12, color: t.textWeak, marginTop: 4 }}>
+                  {tpl.description || 'No description'}
+                </div>
+                <div style={{ fontSize: 11, color: t.textWeak, marginTop: 4 }}>
+                  ID: {shortId(tpl.templateId)} · Folder: {tpl.folderName || '—'}
+                </div>
+              </div>
+              {onSendFromTemplate && (
+                <button onClick={() => onSendFromTemplate(tpl)}
+                  style={{ marginLeft: 12, padding: '5px 14px', borderRadius: 4, border: 'none', background: t.brand, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  📤 Send →
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -607,8 +679,11 @@ function SendEnvelopeForm({ prefill, theme }: {
 export function DocuSignApp() {
   const styles = useStyles();
   const data = useToolData<DsData>();
+  const { callTool } = useMcpBridge();
   const theme = useTheme();
   const t = ds(theme);
+  const toast = useToast();
+  const [sendFromTemplate, setSendFromTemplate] = useState<Template | null>(null);
 
   const shellStyle: React.CSSProperties = { padding: 12, fontSize: 12 };
 
@@ -642,16 +717,30 @@ export function DocuSignApp() {
     );
   }
 
+  if (sendFromTemplate) {
+    return (
+      <div className={styles.shell} style={shellStyle}>
+        <div style={{ marginBottom: 8 }}>
+          <button onClick={() => setSendFromTemplate(null)}
+            style={{ background: 'none', border: 'none', color: t.brand, cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0, textDecoration: 'underline' }}>
+            ← Back to Templates
+          </button>
+        </div>
+        <SendEnvelopeForm prefill={{ template_id: sendFromTemplate.templateId, subject: `Please sign: ${sendFromTemplate.name}` }} theme={theme} />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.shell} style={shellStyle}>
       {data.type === 'envelopes' && (
-        <EnvelopesView items={data.data || []} theme={theme} />
+        <EnvelopesView items={data.data || []} theme={theme} callTool={callTool} toast={toast} />
       )}
       {data.type === 'envelope_detail' && (
         <EnvelopeDetailView detail={data.data} theme={theme} />
       )}
       {data.type === 'templates' && (
-        <TemplatesView items={data.data || []} theme={theme} />
+        <TemplatesView items={data.data || []} theme={theme} onSendFromTemplate={setSendFromTemplate} />
       )}
       {data.type === 'form' && data.entity === 'send_envelope' && (
         <SendEnvelopeForm prefill={data.prefill} theme={theme} />

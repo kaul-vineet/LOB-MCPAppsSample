@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>⚓ GTC Dockyard — DocuSign eSignature Widget Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #4C00FF; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #3a0099; }
+  button.green  { background: #28a745; } button.green:hover  { background: #1e7e34; }
+  button.teal   { background: #0d7d7d; } button.teal:hover   { background: #0a6060; }
+  button.dark   { background: #1a1a2e; } button.dark:hover   { background: #0d0d1a; }
+  button.secondary { background: #706e6b; } button.secondary:hover { background: #514f4d; }
+  button.error  { background: #dc3545; } button.error:hover  { background: #b02a37; }
+  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #ede0ff; color: #4C00FF; margin-left: 8px; }
+  /* Capability table */
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 920px; }
+  .cap-table th { background: #4C00FF; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #28a745; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
+</style>
+</head>
+<body>
+
+<h2>⚓ ✒️ GTC Dockyard — DocuSign eSignature MCP Widget <span class="badge">Single-Ask Flow</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
+<p class="subtitle">Test harness for the DocuSign MCP widget. Data pushed via postMessage.</p>
+
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Entity</th>
+      <th>List</th>
+      <th>Drill Down</th>
+      <th>Form</th>
+      <th>CRUD</th>
+      <th>Widget</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Envelopes</td>
+      <td class="y">Y — pipeline bar + table</td>
+      <td class="y">▶ → Recipients inline</td>
+      <td class="n">—</td>
+      <td>Read-only list</td>
+      <td>DocuSign eSignature</td>
+    </tr>
+    <tr>
+      <td>Envelope Detail (recipients)</td>
+      <td class="y">Y — standalone push</td>
+      <td class="n">—</td>
+      <td class="n">—</td>
+      <td>Read-only</td>
+      <td>DocuSign eSignature</td>
+    </tr>
+    <tr>
+      <td>Templates</td>
+      <td class="y">Y — cards</td>
+      <td class="n">—</td>
+      <td class="y">📤 Send → prefills form</td>
+      <td>Read-only list</td>
+      <td>DocuSign eSignature</td>
+    </tr>
+    <tr>
+      <td>Send Envelope (form)</td>
+      <td class="n">—</td>
+      <td class="n">—</td>
+      <td class="y">Y — 5 fields + submit</td>
+      <td>Create (ds__send_envelope)</td>
+      <td>DocuSign eSignature</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-label">✒️ Envelopes</div>
+<div class="controls">
+  <button onclick="sendEnvelopes()">Send Envelopes (6)</button>
+  <button class="secondary" onclick="sendEmptyEnvelopes()">Send Empty</button>
+</div>
+<p class="hint">Shows pipeline bar + envelope table. Click ▶ on any row to load recipients inline via <code>ds__get_envelope_details</code>.</p>
+
+<div class="section-label">📄 Envelope Detail (Standalone)</div>
+<div class="controls">
+  <button class="teal" onclick="sendEnvelopeDetail()">Send Envelope Detail (3 signers)</button>
+  <button class="teal" onclick="sendEnvelopeDetailCompleted()">Send Completed Envelope</button>
+</div>
+<p class="hint">Pushes a single envelope detail with signer status panel. Tool: <code>ds__get_envelope_details</code></p>
+
+<div class="section-label">📋 Templates</div>
+<div class="controls">
+  <button class="green" onclick="sendTemplates()">Send Templates (4)</button>
+  <button class="secondary" onclick="sendEmptyTemplates()">Send Empty</button>
+</div>
+<p class="hint">Template cards with <strong>📤 Send →</strong> button — navigates to Send Envelope form pre-filled with template ID.</p>
+
+<div class="section-label">✨ Send Envelope Form</div>
+<div class="controls">
+  <button onclick="sendForm()">Send Envelope Form</button>
+  <button class="green" onclick="sendFormPrefill()">Prefilled Form</button>
+</div>
+<p class="hint">Standalone form — fills in recipient, subject, body and calls <code>ds__send_envelope</code>.</p>
+
+<div class="section-label">⚠️ Error Simulation</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Send API Error</button>
+</div>
+
+<div class="section-label">🎨 Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="docusign_mcp/web/widget.html"></iframe>
+</div>
+
+<div class="section-label">📜 Event Log</div>
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+
+  // ── Mock Data: Envelopes ────────────────────────────────────────────────
+  var MOCK_ENVELOPES = {
+    type: "envelopes",
+    data: [
+      { envelopeId: "e1a2b3c4-0001-0001-0001-111111111111", emailSubject: "NDA — Acme Corp Partnership", status: "completed", statusEmoji: "✅", sentDateTime: "2026-04-20T09:00:00Z", completedDateTime: "2026-04-21T14:30:00Z", recipientCount: 2 },
+      { envelopeId: "e1a2b3c4-0002-0002-0002-222222222222", emailSubject: "SaaS Subscription Agreement — TechStart", status: "sent", statusEmoji: "📤", sentDateTime: "2026-04-22T11:15:00Z", recipientCount: 1 },
+      { envelopeId: "e1a2b3c4-0003-0003-0003-333333333333", emailSubject: "Employment Contract — Q2 Hire", status: "delivered", statusEmoji: "📬", sentDateTime: "2026-04-23T08:45:00Z", recipientCount: 1 },
+      { envelopeId: "e1a2b3c4-0004-0004-0004-444444444444", emailSubject: "Vendor MSA — GlobalTrade EU", status: "declined", statusEmoji: "❌", sentDateTime: "2026-04-18T15:00:00Z", recipientCount: 3 },
+      { envelopeId: "e1a2b3c4-0005-0005-0005-555555555555", emailSubject: "Insurance Renewal — BlueWave", status: "voided", statusEmoji: "🚫", sentDateTime: "2026-04-15T10:00:00Z", recipientCount: 1 },
+      { envelopeId: "e1a2b3c4-0006-0006-0006-666666666666", emailSubject: "Software License — Nordic Parts OY", status: "created", statusEmoji: "📝", sentDateTime: "2026-04-26T07:00:00Z", recipientCount: 2 }
+    ]
+  };
+
+  var MOCK_EMPTY_ENVELOPES = { type: "envelopes", data: [] };
+
+  // ── Mock Data: Envelope Details ─────────────────────────────────────────
+  var MOCK_DETAIL_SENT = {
+    type: "envelope_detail",
+    data: {
+      envelopeId: "e1a2b3c4-0002-0002-0002-222222222222",
+      emailSubject: "SaaS Subscription Agreement — TechStart",
+      status: "sent",
+      statusEmoji: "📤",
+      sentDateTime: "2026-04-22T11:15:00Z",
+      signers: [
+        { name: "Bruno Marchetti", email: "b.marchetti@techstart.io", status: "sent", signedDateTime: null, deliveredDateTime: "2026-04-22T11:20:00Z" }
+      ]
+    }
+  };
+
+  var MOCK_DETAIL_COMPLETED = {
+    type: "envelope_detail",
+    data: {
+      envelopeId: "e1a2b3c4-0001-0001-0001-111111111111",
+      emailSubject: "NDA — Acme Corp Partnership",
+      status: "completed",
+      statusEmoji: "✅",
+      sentDateTime: "2026-04-20T09:00:00Z",
+      completedDateTime: "2026-04-21T14:30:00Z",
+      signers: [
+        { name: "Alice Fontaine", email: "alice.fontaine@acme.com", status: "completed", signedDateTime: "2026-04-21T12:15:00Z", deliveredDateTime: "2026-04-20T09:05:00Z" },
+        { name: "James Parker", email: "j.parker@gtc.example", status: "completed", signedDateTime: "2026-04-21T14:30:00Z", deliveredDateTime: "2026-04-21T12:20:00Z" }
+      ]
+    }
+  };
+
+  // ── Mock Data: Templates ────────────────────────────────────────────────
+  var MOCK_TEMPLATES = {
+    type: "templates",
+    data: [
+      { templateId: "tpl-001-nda", name: "Standard NDA", description: "Mutual Non-Disclosure Agreement — for partner and vendor onboarding.", lastModified: "2026-01-15", folderName: "Legal" },
+      { templateId: "tpl-002-saas", name: "SaaS Subscription Agreement", description: "Enterprise SaaS license and subscription terms, 12 months.", lastModified: "2026-02-20", folderName: "Sales" },
+      { templateId: "tpl-003-emp", name: "Employment Offer Letter", description: "Standard employment offer with compensation, benefits, start date.", lastModified: "2026-03-01", folderName: "HR" },
+      { templateId: "tpl-004-vendor", name: "Vendor Master Services Agreement", description: "MSA for external vendors and service providers.", lastModified: "2026-03-28", folderName: "Procurement" }
+    ]
+  };
+
+  var MOCK_EMPTY_TEMPLATES = { type: "templates", data: [] };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function send(payload) {
+    post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(payload)) } });
+  }
+
+  function sendEnvelopes()          { send(MOCK_ENVELOPES);           log('→ Sent 6 envelopes'); }
+  function sendEmptyEnvelopes()     { send(MOCK_EMPTY_ENVELOPES);     log('→ Sent empty envelopes'); }
+  function sendEnvelopeDetail()     { send(MOCK_DETAIL_SENT);         log('→ Sent envelope detail (1 signer, sent)'); }
+  function sendEnvelopeDetailCompleted() { send(MOCK_DETAIL_COMPLETED); log('→ Sent completed envelope (2 signers)'); }
+  function sendTemplates()          { send(MOCK_TEMPLATES);           log('→ Sent 4 templates'); }
+  function sendEmptyTemplates()     { send(MOCK_EMPTY_TEMPLATES);     log('→ Sent empty templates'); }
+  function sendForm()               { send({ type: 'form', entity: 'send_envelope' }); log('→ Sent send_envelope form'); }
+  function sendFormPrefill()        { send({ type: 'form', entity: 'send_envelope', prefill: { template_id: 'tpl-001-nda', subject: 'NDA Signing Request', recipient_name: 'Jane Doe', recipient_email: 'jane@example.com' } }); log('→ Sent prefilled send_envelope form'); }
+  function sendError()              { send({ error: true, message: 'DocuSign API error: Access Token expired. Re-authenticate via /auth/docusign.' }); log('→ Sent API error'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#1a1a2e' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#e0e0e0' : '#111';
+    document.getElementById('frame-wrapper').style.background = isDark ? '#16213e' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3a3a5c' : '#ddd';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ─────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // SDK handshake
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
+      document.getElementById('widget').contentWindow.postMessage({
+        jsonrpc: '2.0', id: msg.id, result: {
+          protocolVersion: (msg.params && msg.params.protocolVersion) || '2026-01-26',
+          hostInfo: { name: 'ds-test-host', version: '1.0.0' },
+          hostCapabilities: { serverTools: {} },
+          hostContext: { theme: isDark ? 'dark' : 'light' }
+        }
+      }, '*');
+      log('← ui/initialize — handshake sent');
+      return;
+    }
+
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.arguments || {};
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+
+      setTimeout(function() {
+        var result;
+
+        // ── ENVELOPE DETAILS (drill-down) ──────────────────────────────────
+        if (tool === 'ds__get_envelope_details') {
+          var envId = args.envelope_id || '';
+          // Return appropriate mock based on envelope ID
+          if (envId === 'e1a2b3c4-0001-0001-0001-111111111111') {
+            result = MOCK_DETAIL_COMPLETED.data;
+          } else {
+            // Generic mock for any other envelope
+            result = {
+              envelopeId: envId,
+              emailSubject: 'Document Signing Request',
+              status: 'sent',
+              statusEmoji: '📤',
+              sentDateTime: '2026-04-26T10:00:00Z',
+              signers: [
+                { name: 'Jane Doe', email: 'jane.doe@example.com', status: 'delivered', signedDateTime: null, deliveredDateTime: '2026-04-26T10:05:00Z' },
+                { name: 'John Smith', email: 'j.smith@example.com', status: 'sent', signedDateTime: null, deliveredDateTime: null }
+              ]
+            };
+          }
+          log('→ Returned envelope details for ' + envId.substring(0, 8) + '…');
+        }
+
+        // ── SEND ENVELOPE ─────────────────────────────────────────────────
+        else if (tool === 'ds__send_envelope') {
+          result = {
+            envelopeId: 'new-' + Date.now(),
+            status: 'sent',
+            message: 'Envelope sent successfully to ' + (args.signers && args.signers[0] ? args.signers[0].email : 'recipient')
+          };
+          log('→ Sent envelope to ' + JSON.stringify(args.signers));
+        }
+
+        // ── UNKNOWN ────────────────────────────────────────────────────────
+        else {
+          result = { error: true, message: 'Unknown tool: ' + tool };
+          log('→ Unknown tool: ' + tool);
+        }
+
+        post({ jsonrpc: '2.0', id: msg.id, result: result });
+      }, 500);
+
+      return;
+    }
+
+    // Height notification from widget
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>
