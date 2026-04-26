@@ -39,9 +39,45 @@
   .cap-table .n  { color: #bbb; }
   .back-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 12px; font-weight: 600; color: #555; background: #fff; border: 1px solid #E0DEDD; border-radius: 4px; padding: 5px 14px; margin-bottom: 14px; transition: border-color 0.15s, color 0.15s; }
   .back-btn:hover { border-color: #0078D4; color: #0078D4; background: #EBF4FC; }
-</style>
+  /* ─── Fluent page header ──────────────────────────────────────── */
+  body > .back-btn, body > h2, body > .subtitle { display: none; }
+  body::before { display: none !important; }
+  .page-header { background: #FFFFFF; border-bottom: 1px solid #E0DEDD; padding: 20px; margin: -20px -20px 20px; position: relative; }
+  .page-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg,#0078D4 0%,#50E6FF 40%,#0078D4 70%,#773ADC 100%); }
+  .ph-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; margin-top: 3px; }
+  .ph-back { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-decoration: none; color: #707070; transition: color .15s; }
+  .ph-back:hover { color: #0078D4; }
+  .ph-nav-links { display: flex; gap: 16px; align-items: center; }
+  .ph-nav-links a { font-size: 12px; color: #707070; text-decoration: none; font-weight: 500; transition: color .15s; }
+  .ph-nav-links a:hover { color: #0078D4; }
+  .ph-nav-cta { padding: 5px 14px; border-radius: 4px; background: #0078D4 !important; color: #fff !important; font-weight: 600 !important; }
+  .ph-nav-cta:hover { background: #006CBE !important; }
+  .ph-body { display: flex; align-items: center; gap: 14px; }
+  .ph-logo { width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ph-logo img, .ph-logo svg { width: 26px; height: 26px; }
+  .ph-text { flex: 1; min-width: 0; }
+  .ph-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #0078D4; font-weight: 600; margin-bottom: 3px; }
+  .ph-title { font-size: 20px; font-weight: 600; color: #1B1B1B; letter-spacing: -.3px; line-height: 1.2; margin-bottom: 3px; }
+  .ph-subtitle { font-size: 13px; color: #707070; line-height: 1.5; }
+  .ph-badge { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; flex-shrink: 0; align-self: flex-start; }</style>
 </head>
 <body>
+
+<div class="page-header">
+  <div class="ph-top">
+    <a href="https://kaul-vineet.github.io/LOB-MCPAppsSample/" class="ph-back">← Library</a>
+    <div class="ph-nav-links"><a href="https://github.com/kaul-vineet/LOB-MCPAppsSample" class="ph-nav-cta">GitHub →</a></div>
+  </div>
+  <div class="ph-body">
+    <div class="ph-logo" style="background:linear-gradient(135deg,#293E40,#3d6660)"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px"><path d="M7 17V7l10 10V7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="ph-text">
+      <div class="ph-eyebrow">Now Design · ITSM</div>
+      <div class="ph-title">ServiceNow ITSM</div>
+      <div class="ph-subtitle">7 entity views · incidents · changes · problems · knowledge articles · service catalog · approvals</div>
+    </div>
+    <span class="ph-badge" style="background:#EBF4FC;color:#0078D4;border:1px solid #C7E0F4">Interactive</span>
+  </div>
+</div>
 <a href="https://kaul-vineet.github.io/LOB-MCPAppsSample/" class="back-btn">← Library</a>
 
 <h2>⚓ GTC Dockyard — ServiceNow ITSM <span class="badge">Interactive</span></h2>
