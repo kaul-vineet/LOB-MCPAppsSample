@@ -1,4 +1,4 @@
-"""Flight Tracker tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
+﻿"""Flight Tracker tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -7,7 +7,7 @@ import structlog
 from mcp import types
 from mcp.types import PromptMessage, TextContent
 
-from .client import format_unix, heading_to_compass, is_mock, opensky_request
+from .flight_client import format_unix, heading_to_compass, is_mock, opensky_request
 
 log = structlog.get_logger("ft")
 

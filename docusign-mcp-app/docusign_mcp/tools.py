@@ -1,10 +1,10 @@
-"""DocuSign tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
+﻿"""DocuSign tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 import structlog
 from mcp import types
 
-from .client import (
+from .docusign_client import (
     MOCK_ENVELOPES,
     MOCK_TEMPLATES,
     ds_request,

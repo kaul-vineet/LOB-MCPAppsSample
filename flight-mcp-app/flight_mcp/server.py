@@ -1,4 +1,4 @@
-"""Flight Tracker MCP server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""Flight Tracker MCP server — bootstrap only. Tools in tools.py, client in client.py."""
 import sys
 from pathlib import Path
 
@@ -36,7 +36,7 @@ for _spec in PROMPT_SPECS:
 
 
 def _validate_env() -> None:
-    from .client import is_mock
+    from .flight_client import is_mock
     cid = settings.opensky_client_id
     cs = settings.opensky_client_secret
     print("  ┌─ Environment ─────────────────────────────────")

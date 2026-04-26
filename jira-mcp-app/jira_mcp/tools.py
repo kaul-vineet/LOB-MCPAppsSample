@@ -1,4 +1,4 @@
-"""Jira MCP tool handlers. HTTP client and data helpers in client.py."""
+﻿"""Jira MCP tool handlers. HTTP client and data helpers in client.py."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -9,7 +9,7 @@ from mcp.server.fastmcp import Context
 
 from shared_mcp.logger import get_logger
 
-from .client import (
+from .jira_client import (
     _build_adf,
     _extract_adf_text,
     _jira_agile_get,

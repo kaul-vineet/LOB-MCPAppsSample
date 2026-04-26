@@ -1,4 +1,4 @@
-"""DocuSign MCP server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""DocuSign MCP server — bootstrap only. Tools in tools.py, client in client.py."""
 import sys
 from pathlib import Path
 
@@ -36,7 +36,7 @@ for _spec in PROMPT_SPECS:
 
 
 def _validate_env() -> None:
-    from .client import validate_env
+    from .docusign_client import validate_env
     key = settings.docusign_integration_key
     uid = settings.docusign_user_id
     acct = settings.docusign_account_id

@@ -1,9 +1,9 @@
-"""ServiceNow tool handlers + TOOL_SPECS registry."""
+﻿"""ServiceNow tool handlers + TOOL_SPECS registry."""
 import httpx
 from mcp import types
 from mcp.types import PromptMessage, TextContent
 
-from .client import (
+from .servicenow_client import (
     CHANGE_FIELDS,
     INCIDENT_FIELDS,
     REQUEST_FIELDS,

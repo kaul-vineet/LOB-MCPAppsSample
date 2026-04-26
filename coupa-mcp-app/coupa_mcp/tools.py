@@ -1,4 +1,4 @@
-"""Coupa MCP tool definitions — ALL MOCKED. Data store in client.py."""
+﻿"""Coupa MCP tool definitions — ALL MOCKED. Data store in client.py."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from mcp.server.fastmcp import Context
 
 from shared_mcp.logger import get_logger
 
-from .client import (
+from .coupa_client import (
     _MOCK_APPROVALS,
     _MOCK_CATALOG,
     _MOCK_INVOICES,

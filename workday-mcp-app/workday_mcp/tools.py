@@ -1,4 +1,4 @@
-"""Workday HR MCP tool handlers. HTTP client, endpoints, and worker context in client.py."""
+﻿"""Workday HR MCP tool handlers. HTTP client, endpoints, and worker context in client.py."""
 from __future__ import annotations
 
 import asyncio
@@ -11,7 +11,7 @@ from mcp.server.fastmcp import Context
 
 from shared_mcp.logger import get_logger
 
-from .client import (
+from .workday_client import (
     WorkdayApiNotAvailable,
     WorkerContext,
     _fetch_json,

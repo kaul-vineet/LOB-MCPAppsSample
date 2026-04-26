@@ -1,4 +1,4 @@
-"""Salesforce CRM tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
+﻿"""Salesforce CRM tool handlers, TOOL_SPECS, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 import copy
@@ -10,7 +10,7 @@ import structlog
 from mcp import types
 from mcp.types import PromptMessage, TextContent
 
-from .salesforce import SalesforceAPIError, SalesforceAuthError, get_client
+from .salesforce_client import SalesforceAPIError, SalesforceAuthError, get_client
 
 log = structlog.get_logger("sf")
 

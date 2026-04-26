@@ -7,7 +7,7 @@ from mcp.server.fastmcp import Context
 
 from shared_mcp.logger import get_logger
 
-from .client import (
+from .saphr_client import (
     _MOCK_BACKGROUND_CHECKS,
     _MOCK_DOCUMENTS,
     _MOCK_EMPLOYEES,
