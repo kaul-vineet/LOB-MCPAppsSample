@@ -268,6 +268,22 @@ class HubSpotClient:
         )
         self._raise_for_error(resp, f"remove from list {list_id}")
 
+    async def get_associated_ids(
+        self,
+        from_type: str,
+        from_id: str,
+        to_type: str,
+        limit: int = 10,
+    ) -> list[str]:
+        """Fetch associated record IDs via the HubSpot v4 Associations API."""
+        resp = await self._request(
+            "GET",
+            f"/crm/v4/objects/{from_type}/{from_id}/associations/{to_type}",
+        )
+        self._raise_for_error(resp, f"associations {from_type}/{from_id}/{to_type}")
+        results = resp.json().get("results", [])[:limit]
+        return [str(r["toObjectId"]) for r in results]
+
     async def search_contact_by_email(self, email: str) -> str | None:
         """Search for a contact by email and return their ID."""
         resp = await self._request(

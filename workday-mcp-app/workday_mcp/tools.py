@@ -1,99 +1,29 @@
+"""Workday HR MCP tool handlers. HTTP client, endpoints, and worker context in client.py."""
+from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urlencode
 
+import httpx
 from mcp.server.fastmcp import Context
 
-from shared_mcp.auth import get_bearer_token
-from shared_mcp.http import create_async_client
 from shared_mcp.logger import get_logger
-from .config import get_endpoints
-from .helpers import build_worker_context_from_bearer
-import httpx
+
+from .client import (
+    WorkdayApiNotAvailable,
+    WorkerContext,
+    _fetch_json,
+    _fetch_json_with_params,
+    _get_auth_token,
+    _tool_response,
+    _transform_worker,
+    build_worker_context_from_bearer,
+    get_endpoints,
+)
 
 LOGGER = get_logger(__name__)
-
-
-class WorkdayApiNotAvailable(Exception):
-    """Raised when a Workday REST API returns 404 (not enabled for this tenant)."""
-
-    def __init__(self, api_name: str, status_code: int, detail: str = ""):
-        self.api_name = api_name
-        self.status_code = status_code
-        self.detail = detail
-        super().__init__(f"{api_name} API is not available for this Workday tenant: {detail}")
-
-
-def _get_auth_token(ctx: Optional[Context] = None) -> str:
-    """Extract the OAuth 2.0 Bearer token from the Authorization request header."""
-    return get_bearer_token(ctx)
-
-
-
-def _transform_worker(worker_data: Dict[str, Any]) -> Dict[str, Any]:
-    primary_job = worker_data.get("primaryJob", {})
-    location = primary_job.get("location", {})
-    country = location.get("country", {})
-
-    # The staffing API provides primaryJob/person/workerType.
-    # Fall back to the flat /workers/me shape for fields available there.
-    return {
-        "workdayId": worker_data.get("id"),
-        "workerId": worker_data.get("workerId"),
-        "name": worker_data.get("descriptor"),
-        "email": worker_data.get("person", {}).get("email")
-            or worker_data.get("primaryWorkEmail"),
-        "workerType": worker_data.get("workerType", {}).get("descriptor"),
-        "businessTitle": primary_job.get("businessTitle")
-            or worker_data.get("businessTitle"),
-        "location": location.get("descriptor")
-            or worker_data.get("location", {}).get("descriptor"),
-        "locationId": location.get("Location_ID"),
-        "country": country.get("descriptor"),
-        "countryCode": country.get("ISO_3166-1_Alpha-3_Code"),
-        "supervisoryOrganization": primary_job.get("supervisoryOrganization", {}).get("descriptor")
-            or worker_data.get("primarySupervisoryOrganization", {}).get("descriptor"),
-        "jobType": primary_job.get("jobType", {}).get("descriptor"),
-        "jobProfile": primary_job.get("jobProfile", {}).get("descriptor"),
-        "primaryJobId": primary_job.get("id"),
-        "primaryJobDescriptor": primary_job.get("descriptor"),
-        "isManager": worker_data.get("isManager"),
-        "yearsOfService": worker_data.get("yearsOfService"),
-        "primaryWorkAddress": worker_data.get("primaryWorkAddressText"),
-    }
-
-
-async def _fetch_json(url: str, access_token: str) -> Dict[str, Any]:
-    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
-    async with create_async_client() as client:
-        response = await client.get(url, headers=headers)
-        if response.status_code in (404, 400):
-            try:
-                body = response.json()
-                detail = body.get("error", response.text[:200])
-            except Exception:
-                detail = response.text[:200]
-            # Extract the API name from the URL path for a clear message
-            api_name = url.split("/ccx/api/")[-1].split("/")[0] if "/ccx/api/" in url else url
-            raise WorkdayApiNotAvailable(api_name, response.status_code, detail)
-        response.raise_for_status()
-        return response.json()
-
-
-def _tool_response(summary: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Return payload dict directly; fastmcp serialises it as structuredContent."""
-    return payload
-
-
-async def _fetch_json_with_params(
-    url: str, access_token: str, params: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    """Fetch JSON from a Workday API endpoint with optional query parameters."""
-    if params:
-        url = f"{url}?{urlencode(params)}"
-    return await _fetch_json(url, access_token)
 
 
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:

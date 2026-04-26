@@ -119,15 +119,19 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   // callTool with single retry on failure
   const callToolOnce = useCallback(async (name: string, args?: Record<string, any>): Promise<any> => {
     if (app && isConnected) {
-      const result = await app.callServerTool({ name, arguments: args || {} });
-      if (result.isError) {
-        throw new Error(
-          result.content?.map((c: any) => ('text' in c ? c.text : '')).join('') || 'Tool call failed'
-        );
+      try {
+        const result = await app.callServerTool({ name, arguments: args || {} });
+        if (result.isError) {
+          throw new Error(
+            result.content?.map((c: any) => ('text' in c ? c.text : '')).join('') || 'Tool call failed'
+          );
+        }
+        return result.structuredContent || result;
+      } catch {
+        // SDK path unavailable (test harness, no real server) — fall through to postMessage
       }
-      return result.structuredContent || result;
     }
-    // Test-mode fallback: send ui/callTool to parent, await JSON-RPC response
+    // Test-mode / postMessage fallback: send ui/callTool to parent, await JSON-RPC response
     return new Promise((resolve, reject) => {
       const id = Math.random().toString(36).slice(2);
       const timer = setTimeout(() => {

@@ -1,9 +1,11 @@
-"""Settings loaders for all new GTC LOBs (SAP HR, Workday, Coupa, Jira)."""
+"""Settings loaders for all GTC LOB MCP servers."""
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 
 @dataclass
@@ -86,3 +88,114 @@ def reset_settings_cache() -> None:
     load_workday_settings.cache_clear()
     load_jira_settings.cache_clear()
     load_coupa_settings.cache_clear()
+
+
+# ── Pydantic BaseSettings for LOB servers (auto-load from env) ───────────────
+
+class HSSettings(BaseSettings):
+    """HubSpot MCP server settings."""
+    hubspot_access_token: str = ""
+    port: int = 3003
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class SNSettings(BaseSettings):
+    """ServiceNow ITSM MCP server settings."""
+    servicenow_instance: str = ""
+    servicenow_auth_mode: str = "oauth"
+    servicenow_client_id: str = ""
+    servicenow_client_secret: str = ""
+    servicenow_username: str = ""
+    servicenow_password: str = ""
+    port: int = 3001
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class DSSettings(BaseSettings):
+    """DocuSign MCP server settings."""
+    docusign_integration_key: str = ""
+    docusign_user_id: str = ""
+    docusign_account_id: str = ""
+    docusign_rsa_private_key: str = ""  # base64-encoded PEM
+    docusign_auth_server: str = "account-d.docusign.com"
+    docusign_base_url: str = "https://demo.docusign.net/restapi"
+    mock_mode: bool = False
+    port: int = 3005
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class FTSettings(BaseSettings):
+    """Flight Tracker MCP server settings."""
+    opensky_client_id: str = ""
+    opensky_client_secret: str = ""
+    mock_mode: bool = False
+    port: int = 3004
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class SAPSettings(BaseSettings):
+    """SAP S/4HANA MCP server settings."""
+    sap_mode: str = "sandbox"
+    sap_api_key: str = ""
+    sap_tenant_url: str = ""
+    sap_username: str = ""
+    sap_password: str = ""
+    port: int = 3002
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class SFSettings(BaseSettings):
+    """Salesforce CRM MCP server settings."""
+    sf_instance_url: str = ""
+    sf_client_id: str = ""
+    sf_client_secret: str = ""
+    port: int = 3000
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class CoupaMCPSettings(BaseSettings):
+    """Coupa Procurement MCP server settings."""
+    coupa_instance_url: str = "https://mock.coupahost.com"
+    coupa_mock: bool = True
+    port: int = 3008
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class JiraMCPSettings(BaseSettings):
+    """Jira Project Management MCP server settings."""
+    jira_base_url: str = ""
+    jira_project_key: str = ""
+    port: int = 3009
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class SapHRSettings(BaseSettings):
+    """SAP SuccessFactors HR MCP server settings."""
+    port: int = 3006
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}
+
+
+class WorkdayMCPSettings(BaseSettings):
+    """Workday HR MCP server settings."""
+    port: int = 3007
+    cors_origins: str = "*"
+
+    model_config = {"env_prefix": "", "case_sensitive": False}

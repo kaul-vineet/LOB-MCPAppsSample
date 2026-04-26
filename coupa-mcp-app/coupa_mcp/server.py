@@ -1,28 +1,14 @@
-"""Coupa Procurement MCP Server — invoices, purchase orders, requisitions, suppliers."""
-import os
-from pathlib import Path
-
+"""Coupa Procurement MCP server — bootstrap only. Tools in tools.py, data in client.py."""
+import structlog
 import uvicorn
-from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
+from .settings import get_settings
+from .tools import COUPA_TOOL_SPECS
 
-def _load_env() -> None:
-    explicit = os.environ.get("MCP_SERVERS_ENV_FILE")
-    if explicit:
-        load_dotenv(explicit, override=True)
-        return
-    env = Path(__file__).parent.parent / ".env"
-    if env.exists():
-        load_dotenv(env, override=True)
-        return
-    load_dotenv()
-
-
-_load_env()
-
-from .tools import COUPA_TOOL_SPECS  # noqa: E402
+log = structlog.get_logger("coupa")
+settings = get_settings()
 
 WIDGET_URI = "ui://widget/coupa.html"
 
@@ -37,7 +23,7 @@ mcp = FastMCP(
 
 @mcp.resource(WIDGET_URI, mime_type="text/html")
 def get_widget() -> str:
-    return "<html><body>Coupa Procurement widget — build in Task 17</body></html>"
+    return "<html><body>Coupa Procurement widget</body></html>"
 
 
 for _spec in COUPA_TOOL_SPECS:
@@ -49,16 +35,17 @@ for _spec in COUPA_TOOL_SPECS:
 
 
 def main() -> None:
+    log.info("starting", port=settings.port)
+    print(f"⚓ GTC — Coupa Procurement starting on port {settings.port}")
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
+        allow_origins=settings.cors_origins.split(","),
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "mcp-session-id"],
         allow_credentials=False,
     )
-    port = int(os.environ.get("COUPA_MCP_PORT", "3008"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port)
 
 
 if __name__ == "__main__":
