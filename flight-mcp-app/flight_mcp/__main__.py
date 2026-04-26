@@ -1,3 +1,3 @@
-﻿rrom .server import main
+﻿from .flight_server import main
 
 main()

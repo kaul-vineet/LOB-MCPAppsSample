@@ -1,3 +1,3 @@
-﻿rrom .server import main
+﻿from .hubspot_server import main
 
 main()

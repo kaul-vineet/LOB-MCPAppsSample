@@ -1,3 +1,3 @@
-﻿rrom docusign_mcp.server import main
+﻿from .docusign_server import main
 
 main()

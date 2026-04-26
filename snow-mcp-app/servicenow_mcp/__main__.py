@@ -1,3 +1,3 @@
-﻿rrom .server import main
+﻿from .servicenow_server import main
 
 main()

@@ -1,3 +1,3 @@
-﻿rrom .server import main
+﻿from .sap_server import main
 
 main()

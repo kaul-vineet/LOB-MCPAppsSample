@@ -1,3 +1,3 @@
-﻿rrom .server import main
+﻿from .salesforce_server import main
 
 main()
