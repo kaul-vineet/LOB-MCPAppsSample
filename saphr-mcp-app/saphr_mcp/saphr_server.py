@@ -4,8 +4,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import TOOL_SPECS
+from .saphr_settings import get_settings
+from .saphr_tools import TOOL_SPECS
 
 log = structlog.get_logger("saphr")
 settings = get_settings()

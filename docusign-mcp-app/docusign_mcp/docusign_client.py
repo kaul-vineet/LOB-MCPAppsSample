@@ -1,4 +1,4 @@
-"""DocuSign API client — JWT auth, HTTP, mock data. No MCP imports."""
+﻿"""DocuSign API client — JWT auth, HTTP, mock data. No MCP imports."""
 from __future__ import annotations
 
 import base64
@@ -13,7 +13,7 @@ import structlog
 from dotenv import load_dotenv
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from .settings import get_settings
+from .docusign_settings import get_settings
 
 log = structlog.get_logger("ds")
 

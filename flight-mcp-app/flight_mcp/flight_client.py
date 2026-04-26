@@ -1,4 +1,4 @@
-"""Flight Tracker API client — OpenSky auth, HTTP, helpers. No MCP imports."""
+﻿"""Flight Tracker API client — OpenSky auth, HTTP, helpers. No MCP imports."""
 from __future__ import annotations
 
 import os
@@ -11,7 +11,7 @@ import structlog
 from dotenv import load_dotenv
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from .settings import get_settings
+from .flight_settings import get_settings
 
 log = structlog.get_logger("ft")
 

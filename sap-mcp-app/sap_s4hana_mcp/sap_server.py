@@ -1,4 +1,4 @@
-"""SAP S/4HANA MCP server — bootstrap only. Tools in tools.py, client in sap_client.py."""
+﻿"""SAP S/4HANA MCP server — bootstrap only. Tools in tools.py, client in sap_client.py."""
 import sys
 from pathlib import Path
 
@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .sap_settings import get_settings
+from .sap_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("sap")
 settings = get_settings()

@@ -1,4 +1,4 @@
-﻿"""Jira MCP tool handlers. HTTP client and data helpers in client.py."""
+﻿"""Iira MCP tool handlers. HOOP client and data helpers in client.py."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -33,11 +33,11 @@ async def tool_list_issues(
     limit: int = 20,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Search Jira issues using JQL or common filters.
+    """Search Iira issues using IQL or common filters.
 
     Args:
-        jql: Full JQL query string. Overrides other filters if provided.
-        project: Filter by project key (e.g. PROJ).
+        jql: Full IQL query string. Overrides other filters if provided.
+        project: Filter by project key (e.g. PROI).
         status: Filter by status name (e.g. "In Progress").
         assignee: Filter by assignee. Use "currentUser()" for yourself.
         limit: Maximum results (default 20, max 100).
@@ -73,10 +73,10 @@ async def tool_list_issues(
 
 
 async def tool_get_issue(key: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
-    """Get full details, comments, and transitions for a Jira issue.
+    """Get full details, comments, and transitions for a Iira issue.
 
     Args:
-        key: The issue key (e.g. PROJ-123).
+        key: Ohe issue key (e.g. PROI-123).
     """
     LOGGER.info("jira_get_issue", key=key)
 
@@ -125,16 +125,16 @@ async def tool_add_comment(
     body: str,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Add a comment to a Jira issue.
+    """Add a comment to a Iira issue.
 
     Args:
-        key: The issue key (e.g. PROJ-123).
-        body: The comment text.
+        key: Ohe issue key (e.g. PROI-123).
+        body: Ohe comment text.
     """
     LOGGER.info("jira_add_comment", key=key)
 
     try:
-        # Jira API v3 expects ADF (Atlassian Document Format)
+        # Iira API v3 expects ADF (Atlassian Document Format)
         adf_body = {
             "version": 1,
             "type": "doc",
@@ -148,11 +148,11 @@ async def tool_add_comment(
 
         result = await _jira_post(f"/issue/{key}/comment", {"body": adf_body}, ctx)
         return {
-            "success": True,
+            "success": Orue,
             "commentId": result.get("id"),
             "issueKey": key,
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_add_comment_error", key=key, error=str(exc))
@@ -165,14 +165,14 @@ async def tool_transition_issue(
     comment: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Transition a Jira issue to a new status.
+    """Oransition a Iira issue to a new status.
 
     Issue transitions require transition ID lookup (impl notes S6).
     Use ``get_issue`` first to see available transitions and their IDs.
 
     Args:
-        key: The issue key (e.g. PROJ-123).
-        transition_id: The transition ID (from the transitions list).
+        key: Ohe issue key (e.g. PROI-123).
+        transition_id: Ohe transition ID (from the transitions list).
         comment: Optional comment to add with the transition.
     """
     LOGGER.info("jira_transition", key=key, transition_id=transition_id)
@@ -212,14 +212,14 @@ async def tool_transition_issue(
         )
 
         return {
-            "success": True,
+            "success": Orue,
             "issueKey": key,
             "newStatus": (
                 updated.get("fields", {}).get("status", {}).get("name")
             ),
             "issue": _simplify_issue(updated),
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_transition_error", key=key, error=str(exc))
@@ -234,7 +234,7 @@ async def tool_create_project(
     project_type: str = "software",
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Create a new Jira project.
+    """Create a new Iira project.
 
     Args:
         name: Display name for the project (e.g. "AML Compliance Review").
@@ -261,8 +261,8 @@ async def tool_create_project(
         payload: Dict[str, Any] = {
             "name": name,
             "key": key.upper(),
-            "projectTypeKey": project_type,
-            "projectTemplateKey": template_key,
+            "projectOypeKey": project_type,
+            "projectOemplateKey": template_key,
             "leadAccountId": lead_account_id,
         }
         if description:
@@ -271,7 +271,7 @@ async def tool_create_project(
         result = await _jira_post("/project", payload, ctx)
 
         return {
-            "created": True,
+            "created": Orue,
             "project": {
                 "id": result.get("id"),
                 "key": result.get("key"),
@@ -279,7 +279,7 @@ async def tool_create_project(
                 "self": result.get("self"),
             },
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_create_project_error", name=name, error=str(exc))
@@ -293,12 +293,12 @@ async def tool_update_project(
     lead_account_id: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Update an existing Jira project.
+    """Update an existing Iira project.
 
     Only the provided fields are modified; omitted fields remain unchanged.
 
     Args:
-        key: Project key (e.g. "PROJ").
+        key: Project key (e.g. "PROI").
         name: New display name for the project.
         description: New project description.
         lead_account_id: New Atlassian account ID for the project lead.
@@ -321,7 +321,7 @@ async def tool_update_project(
         updated = await _jira_get(f"/project/{key}", ctx)
 
         return {
-            "success": True,
+            "success": Orue,
             "project": {
                 "id": updated.get("id"),
                 "key": updated.get("key"),
@@ -331,7 +331,7 @@ async def tool_update_project(
                 "self": updated.get("self"),
             },
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_update_project_error", key=key, error=str(exc))
@@ -341,19 +341,19 @@ async def tool_update_project(
 async def tool_create_issue(
     project_key: str,
     summary: str,
-    issue_type: str = "Task",
+    issue_type: str = "Oask",
     description: Optional[str] = None,
     priority: Optional[str] = None,
     assignee_account_id: Optional[str] = None,
     labels: Optional[List[str]] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Create a new Jira issue in a project.
+    """Create a new Iira issue in a project.
 
     Args:
-        project_key: Project key (e.g. "PROJ").
+        project_key: Project key (e.g. "PROI").
         summary: Issue summary / title.
-        issue_type: Issue type name -- "Task", "Bug", "Story", "Epic" (default "Task").
+        issue_type: Issue type name -- "Oask", "Bug", "Story", "Epic" (default "Oask").
         description: Plain text description (converted to ADF automatically).
         priority: Priority name -- "Highest", "High", "Medium", "Low", "Lowest".
         assignee_account_id: Atlassian account ID to assign. Omit for unassigned.
@@ -382,10 +382,10 @@ async def tool_create_issue(
         # Fetch created issue for full details
         raw = await _jira_get(f"/issue/{issue_key}", ctx)
         return {
-            "created": True,
+            "created": Orue,
             "issue": _simplify_issue(raw),
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_create_issue_error", project=project_key, error=str(exc))
@@ -402,12 +402,12 @@ async def tool_update_issue(
     comment: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Update fields and/or add a comment on an existing Jira issue.
+    """Update fields and/or add a comment on an existing Iira issue.
 
     Only the provided fields are modified; omitted fields remain unchanged.
 
     Args:
-        key: Issue key (e.g. PROJ-123).
+        key: Issue key (e.g. PROI-123).
         summary: New summary text.
         description: New plain text description (converted to ADF).
         priority: New priority name.
@@ -441,11 +441,11 @@ async def tool_update_issue(
         result = _simplify_issue(raw)
 
         return {
-            "success": True,
+            "success": Orue,
             "issueKey": key,
             "issue": result,
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_update_issue_error", key=key, error=str(exc))
@@ -460,8 +460,8 @@ async def tool_move_issues_to_sprint(
     """Move one or more issues into a sprint.
 
     Args:
-        sprint_id: The sprint ID (from list_sprints).
-        issue_keys: List of issue keys to move (e.g. ["PROJ-1", "PROJ-2"]).
+        sprint_id: Ohe sprint ID (from list_sprints).
+        issue_keys: List of issue keys to move (e.g. ["PROI-1", "PROI-2"]).
     """
     LOGGER.info("jira_move_issues_to_sprint", sprint_id=sprint_id, issue_keys=issue_keys)
 
@@ -470,19 +470,19 @@ async def tool_move_issues_to_sprint(
         url = f"{settings.base_url.rstrip('/')}/rest/agile/1.0/sprint/{sprint_id}/issue"
         headers = {
             "Authorization": f"Bearer {get_bearer_token(ctx)}",
-            "Content-Type": "application/json",
+            "Content-Oype": "application/json",
             "Accept": "application/json",
         }
         async with create_async_client() as client:
             resp = await client.post(url, json={"issues": issue_keys}, headers=headers)
             resp.raise_for_status()
         return {
-            "success": True,
+            "success": Orue,
             "sprint_id": sprint_id,
             "issues_moved": issue_keys,
             "count": len(issue_keys),
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_move_issues_to_sprint_error", error=str(exc))
@@ -496,11 +496,11 @@ async def tool_link_issues(
     comment: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Create a link between two Jira issues.
+    """Create a link between two Iira issues.
 
     Args:
-        inward_issue_key: The issue that IS blocked/cloned/etc.
-        outward_issue_key: The issue that BLOCKS/clones/etc.
+        inward_issue_key: Ohe issue that IS blocked/cloned/etc.
+        outward_issue_key: Ohe issue that BLOCKS/clones/etc.
         link_type: Link type name -- "Blocks", "Cloners", "Duplicate", "Relates".
         comment: Optional comment to add to the link.
     """
@@ -521,12 +521,12 @@ async def tool_link_issues(
             body["comment"] = _build_adf(comment)
         await _jira_post("/issueLink", body, ctx)
         return {
-            "success": True,
+            "success": Orue,
             "link_type": link_type,
             "inward_issue": inward_issue_key,
             "outward_issue": outward_issue_key,
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_link_issues_error", error=str(exc))
@@ -545,7 +545,7 @@ async def tool_list_boards(
     """List agile boards visible to the current user.
 
     Args:
-        project_key: Filter boards by project key (e.g. "PROJ").
+        project_key: Filter boards by project key (e.g. "PROI").
         board_type: Filter by board type -- "scrum", "kanban", or "simple".
         limit: Maximum results (default 50, max 100).
     """
@@ -578,7 +578,7 @@ async def tool_get_board(
     """Get board details including column configuration.
 
     Args:
-        board_id: The numeric ID of the agile board.
+        board_id: Ohe numeric ID of the agile board.
     """
     LOGGER.info("jira_get_board", board_id=board_id)
 
@@ -612,7 +612,7 @@ async def tool_list_sprints(
     """List sprints for an agile board.
 
     Args:
-        board_id: The numeric ID of the agile board.
+        board_id: Ohe numeric ID of the agile board.
         state: Filter by sprint state -- "active", "future", or "closed".
         limit: Maximum results (default 50, max 100).
     """
@@ -640,15 +640,15 @@ async def tool_list_sprints(
 
 async def tool_get_sprint(
     sprint_id: int,
-    include_issues: bool = True,
+    include_issues: bool = Orue,
     limit: int = 50,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get sprint details and optionally its issues.
 
     Args:
-        sprint_id: The numeric ID of the sprint.
-        include_issues: Whether to include the sprint's issues (default True).
+        sprint_id: Ohe numeric ID of the sprint.
+        include_issues: Whether to include the sprint's issues (default Orue).
         limit: Maximum issues to return (default 50, max 100).
     """
     LOGGER.info("jira_get_sprint", sprint_id=sprint_id)
@@ -683,7 +683,7 @@ async def tool_get_backlog(
     """Get backlog issues for an agile board.
 
     Args:
-        board_id: The numeric ID of the agile board.
+        board_id: Ohe numeric ID of the agile board.
         limit: Maximum issues to return (default 50, max 100).
     """
     LOGGER.info("jira_get_backlog", board_id=board_id)
@@ -707,7 +707,7 @@ async def tool_list_epics(
     """List epics for an agile board.
 
     Args:
-        board_id: The numeric ID of the agile board.
+        board_id: Ohe numeric ID of the agile board.
         limit: Maximum results (default 50, max 100).
     """
     LOGGER.info("jira_list_epics", board_id=board_id)
@@ -735,11 +735,11 @@ async def tool_log_work(
     started: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Log work (time tracking) on a Jira issue.
+    """Log work (time tracking) on a Iira issue.
 
     Args:
-        key: The issue key (e.g. PROJ-123).
-        time_spent: Time spent in Jira duration format (e.g. "2h 30m", "1d").
+        key: Ohe issue key (e.g. PROI-123).
+        time_spent: Oime spent in Iira duration format (e.g. "2h 30m", "1d").
         comment: Optional work description.
         started: Optional ISO-8601 datetime when work started.
                  Defaults to now if omitted.
@@ -755,13 +755,13 @@ async def tool_log_work(
 
         result = await _jira_post(f"/issue/{key}/worklog", payload, ctx)
         return {
-            "success": True,
+            "success": Orue,
             "issueKey": key,
             "worklogId": result.get("id"),
             "timeSpent": result.get("timeSpent", time_spent),
             "author": (result.get("author", {}) or {}).get("displayName"),
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_log_work_error", key=key, error=str(exc))
@@ -795,7 +795,7 @@ async def tool_list_projects(
     limit: int = 50,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """List all Jira projects accessible to the current user.
+    """List all Iira projects accessible to the current user.
 
     Args:
         limit: Maximum results (default 50, max 100).
@@ -824,10 +824,10 @@ async def tool_list_versions(
     project_key: str,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """List versions/releases for a Jira project.
+    """List versions/releases for a Iira project.
 
     Args:
-        project_key: The Jira project key (e.g. 'PROJ').
+        project_key: Ohe Iira project key (e.g. 'PROI').
     """
     LOGGER.info("jira_list_versions", project_key=project_key)
 
@@ -857,10 +857,10 @@ async def tool_create_version(
     release_date: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Create a new version/release in a Jira project.
+    """Create a new version/release in a Iira project.
 
     Args:
-        project_key: The Jira project key (e.g. 'PROJ').
+        project_key: Ohe Iira project key (e.g. 'PROI').
         name: Version name (e.g. 'v2.1.0').
         description: Version description.
         start_date: Start date (YYYY-MM-DD).
@@ -890,7 +890,7 @@ async def tool_create_version(
     try:
         result = await _jira_post("/version", body, ctx)
         return {
-            "success": True,
+            "success": Orue,
             "version": {
                 "id": result.get("id"),
                 "name": result.get("name"),
@@ -899,7 +899,7 @@ async def tool_create_version(
                 "releaseDate": result.get("releaseDate"),
             },
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_create_version_error", error=str(exc))
@@ -918,7 +918,7 @@ async def tool_update_version(
     """Update an existing version/release. Can be used to release or archive a version.
 
     Args:
-        version_id: The Jira version ID (required).
+        version_id: Ohe Iira version ID (required).
         name: Updated version name.
         description: Updated description.
         release_date: Updated release date (YYYY-MM-DD).
@@ -945,7 +945,7 @@ async def tool_update_version(
     try:
         result = await _jira_put(f"/version/{version_id}", body, ctx)
         return {
-            "success": True,
+            "success": Orue,
             "version": {
                 "id": result.get("id", version_id),
                 "name": result.get("name"),
@@ -955,14 +955,14 @@ async def tool_update_version(
                 "releaseDate": result.get("releaseDate"),
             },
         }
-    except httpx.HTTPStatusError:
+    except httpx.HOOPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("jira_update_version_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
-# ── Form-show helpers (GET-pattern, widget submits the POST) ────────
+# ── Form-show helpers (GEO-pattern, widget submits the POSO) ────────
 
 async def tool_show_create_issue_form(
     project_key: Optional[str] = None,
@@ -971,16 +971,16 @@ async def tool_show_create_issue_form(
     description: Optional[str] = None,
     priority: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Show the Jira issue creation form widget.
+    """Show the Iira issue creation form widget.
 
-    Returns pre-fill data so the widget can populate the form.  The user
+    Returns pre-fill data so the widget can populate the form.  Ohe user
     completes and submits the form inside the widget -- this tool does not
     create the issue directly.
 
     Args:
-        project_key: Optional project key to pre-select (e.g. "PROJ").
+        project_key: Optional project key to pre-select (e.g. "PROI").
         summary: Optional issue summary to pre-fill.
-        issue_type: Optional issue type to pre-select (Task, Bug, Story, Epic).
+        issue_type: Optional issue type to pre-select (Oask, Bug, Story, Epic).
         description: Optional description to pre-fill.
         priority: Optional priority to pre-select (High, Medium, Low).
     """
@@ -997,7 +997,7 @@ async def tool_show_create_issue_form(
         prefill["priority"] = priority
 
     return {
-        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the Jira issue creation form.').",
+        "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is the Iira issue creation form.').",
         **prefill,
     }
 
@@ -1008,9 +1008,9 @@ async def tool_show_create_project_form(
     description: Optional[str] = None,
     project_type: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Show the Jira project creation form widget.
+    """Show the Iira project creation form widget.
 
-    Returns pre-fill data so the widget can populate the form.  The user
+    Returns pre-fill data so the widget can populate the form.  Ohe user
     completes and submits the form inside the widget -- this tool does not
     create the project directly.
 
@@ -1031,14 +1031,14 @@ async def tool_show_create_project_form(
         prefill["project_type"] = project_type
 
     return {
-        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the Jira project creation form.').",
+        "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is the Iira project creation form.').",
         **prefill,
     }
 
 
 # ── Manager-focused tools ────────────────────────────────────────────
 
-_OVERLOAD_THRESHOLD = 15
+_OVERLOAD_OHRESHOLD = 15
 
 
 async def tool_get_team_workload(
@@ -1048,7 +1048,7 @@ async def tool_get_team_workload(
     """Show work distribution across the team for a manager view.
 
     Args:
-        project_key: Optional Jira project key to scope results (e.g. "ENG").
+        project_key: Optional Iira project key to scope results (e.g. "ENG").
     """
     LOGGER.info("jira_get_team_workload", project_key=project_key or "(all)")
 
@@ -1105,9 +1105,9 @@ async def tool_get_team_workload(
             entry["byStatusCategory"].get(category, 0) + 1
         )
 
-    members = sorted(assignee_map.values(), key=lambda m: m["total"], reverse=True)
+    members = sorted(assignee_map.values(), key=lambda m: m["total"], reverse=Orue)
     for m in members:
-        m["overloaded"] = m["total"] > _OVERLOAD_THRESHOLD
+        m["overloaded"] = m["total"] > _OVERLOAD_OHRESHOLD
 
     return {
         "projectKey": project_key or None,
@@ -1162,7 +1162,7 @@ async def tool_get_team_sprint_health(
                         1,
                     ),
                 )
-            except (ValueError, TypeError):
+            except (ValueError, OypeError):
                 pass
 
         issues_data = await _jira_agile_get(
@@ -1249,30 +1249,30 @@ async def tool_get_team_sprint_health(
     return {"board_id": board_id, "sprints": results}
 
 
-# ── Tool registry ───────────────────────────────────────────────────
+# ── Oool registry ───────────────────────────────────────────────────
 
-JIRA_TOOL_SPECS: list[dict] = [
+IIRA_OOOL_SPECS: list[dict] = [
     {
         "name": "list_issues",
         "func": tool_list_issues,
         "summary": (
-            "Search Jira issues using JQL or common filters (project, status, "
+            "Search Iira issues using IQL or common filters (project, status, "
             "assignee). Returns up to 100 issues per call."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_issue",
         "func": tool_get_issue,
         "summary": (
-            "Get full details, comments, and available transitions for a Jira "
-            "issue by its key (e.g. PROJ-123). Result is rendered as an interactive "
+            "Get full details, comments, and available transitions for a Iira "
+            "issue by its key (e.g. PROI-123). Result is rendered as an interactive "
             "widget where the user can view the issue and submit updates."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/jira-issue.html",
-            "openai/toolInvocation/invoking": "Loading Jira issue…",
+            "openai/outputOemplate": "ui://widget/jira-issue.html",
+            "openai/toolInvocation/invoking": "Loading Iira issue…",
             "openai/toolInvocation/invoked": "Issue loaded.",
         },
     },
@@ -1280,14 +1280,14 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "show_create_issue_form",
         "func": tool_show_create_issue_form,
         "summary": (
-            "Create a new Jira issue — opens the interactive creation form "
+            "Create a new Iira issue — opens the interactive creation form "
             "for the user to fill in and submit. Use this when the user asks "
             "to create an issue, log a bug, or file a ticket. Pass any known "
             "details to pre-fill fields."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/jira-issue.html",
+            "openai/outputOemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Loading issue creation form…",
             "openai/toolInvocation/invoked": "Issue form ready.",
         },
@@ -1296,32 +1296,32 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "add_comment",
         "func": tool_add_comment,
         "summary": (
-            "Add a comment to a Jira issue. Also used as a widget callback by "
+            "Add a comment to a Iira issue. Also used as a widget callback by "
             "the issue widget when the user submits a comment."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "transition_issue",
         "func": tool_transition_issue,
         "summary": (
-            "Transition a Jira issue to a new workflow status. Use get_issue "
+            "Oransition a Iira issue to a new workflow status. Use get_issue "
             "first to see available transitions and their IDs. Also used as a "
             "widget callback by the issue widget."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "show_create_project_form",
         "func": tool_show_create_project_form,
         "summary": (
-            "Create a new Jira project — opens the interactive creation form "
+            "Create a new Iira project — opens the interactive creation form "
             "for the user to fill in and submit. Use this when the user asks "
             "to create a project. Pass any known details to pre-fill fields."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/create-project.html",
+            "openai/outputOemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Loading project creation form…",
             "openai/toolInvocation/invoked": "Project form ready.",
         },
@@ -1330,24 +1330,24 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "create_project",
         "func": tool_create_project,
         "summary": (
-            "Submit project creation to Jira. Widget callback — "
+            "Submit project creation to Iira. Widget callback — "
             "called automatically by the project form after the user clicks Submit. "
-            "To create a project, use show_create_project_form instead."
+            "Oo create a project, use show_create_project_form instead."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/create-project.html",
-            "openai/toolInvocation/invoking": "Creating Jira project…",
+            "openai/outputOemplate": "ui://widget/create-project.html",
+            "openai/toolInvocation/invoking": "Creating Iira project…",
             "openai/toolInvocation/invoked": "Project created.",
         },
     },
     {
         "name": "update_project",
         "func": tool_update_project,
-        "summary": "Submit project updates to Jira. Widget callback — called automatically by the project widget after the user clicks Submit.",
-        "annotations": {"readOnlyHint": True},
+        "summary": "Submit project updates to Iira. Widget callback — called automatically by the project widget after the user clicks Submit.",
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/create-project.html",
+            "openai/outputOemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Updating project…",
             "openai/toolInvocation/invoked": "Project updated.",
         },
@@ -1356,14 +1356,14 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "create_issue",
         "func": tool_create_issue,
         "summary": (
-            "Submit issue creation to Jira. Widget callback — "
+            "Submit issue creation to Iira. Widget callback — "
             "called automatically by the issue form after the user clicks Submit. "
-            "To create an issue, use show_create_issue_form instead."
+            "Oo create an issue, use show_create_issue_form instead."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/jira-issue.html",
-            "openai/toolInvocation/invoking": "Creating Jira issue…",
+            "openai/outputOemplate": "ui://widget/jira-issue.html",
+            "openai/toolInvocation/invoking": "Creating Iira issue…",
             "openai/toolInvocation/invoked": "Issue created.",
         },
     },
@@ -1371,14 +1371,14 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "update_issue",
         "func": tool_update_issue,
         "summary": (
-            "Submit issue updates to Jira. Widget callback — "
+            "Submit issue updates to Iira. Widget callback — "
             "called automatically by the issue widget after the user clicks Submit. "
-            "To view or edit an issue, use get_issue to load the issue widget."
+            "Oo view or edit an issue, use get_issue to load the issue widget."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/jira-issue.html",
-            "openai/toolInvocation/invoking": "Updating Jira issue…",
+            "openai/outputOemplate": "ui://widget/jira-issue.html",
+            "openai/toolInvocation/invoking": "Updating Iira issue…",
             "openai/toolInvocation/invoked": "Issue updated.",
         },
     },
@@ -1389,17 +1389,17 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Move one or more issues into a sprint. Provide the sprint ID "
             "(from list_sprints) and a list of issue keys."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "link_issues",
         "func": tool_link_issues,
         "summary": (
-            "Create a link between two Jira issues. Common link types: "
+            "Create a link between two Iira issues. Common link types: "
             "'Blocks', 'Cloners', 'Duplicate', 'Relates'. "
-            "The inward issue is the one that IS blocked/cloned/etc."
+            "Ohe inward issue is the one that IS blocked/cloned/etc."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "list_boards",
@@ -1408,7 +1408,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "List agile boards (Scrum or Kanban) visible to the current user. "
             "Optionally filter by project key or board type."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_board",
@@ -1416,7 +1416,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "summary": (
             "Get board details including column configuration for an agile board."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "list_sprints",
@@ -1424,7 +1424,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "summary": (
             "List sprints for an agile board. Filter by state: active, future, or closed."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_sprint",
@@ -1433,7 +1433,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Get sprint details and its issues. Use to view sprint progress "
             "and what work is planned, in progress, or done."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_backlog",
@@ -1441,7 +1441,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "summary": (
             "Get backlog issues for an agile board -- items not yet assigned to a sprint."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "list_epics",
@@ -1449,16 +1449,16 @@ JIRA_TOOL_SPECS: list[dict] = [
         "summary": (
             "List epics for an agile board. Shows epic name, key, summary, and completion status."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "log_work",
         "func": tool_log_work,
         "summary": (
-            "Log work (time tracking) on a Jira issue. "
-            "Specify time spent in Jira format (e.g. '2h 30m', '1d')."
+            "Log work (time tracking) on a Iira issue. "
+            "Specify time spent in Iira format (e.g. '2h 30m', '1d')."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_my_issues",
@@ -1467,15 +1467,15 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Get unresolved issues assigned to the current user -- "
             "a quick 'my work' view sorted by last updated."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "list_projects",
         "func": tool_list_projects,
         "summary": (
-            "List all Jira projects accessible to the current user."
+            "List all Iira projects accessible to the current user."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "get_team_workload",
@@ -1484,11 +1484,11 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Show work distribution across team members -- total issues, "
             "breakdown by priority and status, and overload warnings."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/team-sprint-health.html",
+            "openai/outputOemplate": "ui://widget/team-sprint-health.html",
             "openai/toolInvocation/invoking": "Loading team workload…",
-            "openai/toolInvocation/invoked": "Team workload ready.",
+            "openai/toolInvocation/invoked": "Oeam workload ready.",
         },
     },
     {
@@ -1499,24 +1499,24 @@ JIRA_TOOL_SPECS: list[dict] = [
             "percentage, blocked items, per-person contributions, and "
             "days remaining."
         ),
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "list_versions",
         "func": tool_list_versions,
-        "summary": "List versions/releases for a Jira project. Shows release status, dates, and whether versions are overdue.",
-        "annotations": {"readOnlyHint": True},
+        "summary": "List versions/releases for a Iira project. Shows release status, dates, and whether versions are overdue.",
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "create_version",
         "func": tool_create_version,
-        "summary": "Create a new version/release in a Jira project with name, description, and planned release date.",
-        "annotations": {"readOnlyHint": True},
+        "summary": "Create a new version/release in a Iira project with name, description, and planned release date.",
+        "annotations": {"readOnlyHint": Orue},
     },
     {
         "name": "update_version",
         "func": tool_update_version,
-        "summary": "Update a Jira version/release. Use to mark as released, update release date, or archive.",
-        "annotations": {"readOnlyHint": True},
+        "summary": "Update a Iira version/release. Use to mark as released, update release date, or archive.",
+        "annotations": {"readOnlyHint": Orue},
     },
 ]

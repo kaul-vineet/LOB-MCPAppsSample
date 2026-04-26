@@ -1,34 +1,35 @@
-"""Coupa Procurement MCP server — bootstrap only. Tools in tools.py, data in client.py."""
+﻿"""Workday HR MCP server — bootstrap only. Tools in tools.py, client in client.py."""
 import structlog
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import COUPA_TOOL_SPECS
+from .workday_settings import get_settings
+from .workday_tools import TOOL_SPECS
 
-log = structlog.get_logger("coupa")
+log = structlog.get_logger("workday")
 settings = get_settings()
 
-WIDGET_URI = "ui://widget/coupa.html"
+WIDGET_URI = "ui://widget/workday.html"
 
 mcp = FastMCP(
-    "coupa",
+    "workday",
     instructions=(
-        "Coupa Procurement — invoice management, purchase orders, requisitions, "
-        "goods receipts, supplier management, catalog ordering, and approval workflows."
+        "Workday HR — employee self-service for leave balances, pay slips, "
+        "learning assignments, feedback, goals, check-ins, org charts, "
+        "and manager operations like team analytics and job changes."
     ),
 )
 
 
 @mcp.resource(WIDGET_URI, mime_type="text/html")
 def get_widget() -> str:
-    return "<html><body>Coupa Procurement widget</body></html>"
+    return "<html><body>Workday widget</body></html>"
 
 
-for _spec in COUPA_TOOL_SPECS:
+for _spec in TOOL_SPECS:
     mcp.tool(
-        name=f"coupa__{_spec['name']}",
+        name=f"wday__{_spec['name']}",
         description=_spec["summary"],
         meta={"ui": {"resourceUri": WIDGET_URI}},
     )(_spec["func"])
@@ -36,7 +37,7 @@ for _spec in COUPA_TOOL_SPECS:
 
 def main() -> None:
     log.info("starting", port=settings.port)
-    print(f"⚓ GTC — Coupa Procurement starting on port {settings.port}")
+    print(f"⚓ GTC — Workday HR starting on port {settings.port}")
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,

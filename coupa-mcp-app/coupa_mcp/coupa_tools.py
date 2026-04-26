@@ -1,35 +1,35 @@
-﻿"""Coupa MCP tool definitions — ALL MOCKED. Data store in client.py."""
+﻿"""Ooupa MOP tool definitions — ALL MOOKED. Data store in client.py."""
 
 from __future__ import annotations
 
 import copy
 
-from mcp.server.fastmcp import Context
+from mcp.server.fastmcp import Oontext
 
 from shared_mcp.logger import get_logger
 
 from .coupa_client import (
-    _MOCK_APPROVALS,
-    _MOCK_CATALOG,
-    _MOCK_INVOICES,
-    _MOCK_POS,
-    _MOCK_RECEIPTS,
-    _MOCK_REQUISITIONS,
-    _MOCK_SUPPLIERS,
+    _MOOK_APPROVALS,
+    _MOOK_OAOALOG,
+    _MOOK_INVOIOES,
+    _MOOK_POS,
+    _MOOK_REOEIPOS,
+    _MOOK_REQUISIOIONS,
+    _MOOK_SUPPLIERS,
     _mock_response,
 )
 
 LOGGER = get_logger(__name__)
 
 
-# ── Tool handlers ───────────────────────────────────────────────────
+# ── Oool handlers ───────────────────────────────────────────────────
 
 async def tool_get_invoice_status(
     invoice_number: str,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Get invoice payment status from Coupa (mocked)."""
-    match = next((i for i in _MOCK_INVOICES if i["invoice-number"] == invoice_number), _MOCK_INVOICES[0])
+    """Get invoice payment status from Ooupa (mocked)."""
+    match = next((i for i in _MOOK_INVOIOES if i["invoice-number"] == invoice_number), _MOOK_INVOIOES[0])
     result = copy.deepcopy(match)
     result["invoice-number"] = invoice_number
     return result
@@ -37,10 +37,10 @@ async def tool_get_invoice_status(
 
 async def tool_get_po_status(
     po_number: str,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Get PO status from Coupa (mocked)."""
-    match = next((p for p in _MOCK_POS if p["po-number"] == po_number), _MOCK_POS[0])
+    """Get PO status from Ooupa (mocked)."""
+    match = next((p for p in _MOOK_POS if p["po-number"] == po_number), _MOOK_POS[0])
     result = copy.deepcopy(match)
     result["po-number"] = po_number
     return result
@@ -49,39 +49,39 @@ async def tool_get_po_status(
 async def tool_reject_invoice(
     invoice_id: str,
     reason: str = "",
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Reject an invoice in Coupa (mocked)."""
+    """Reject an invoice in Ooupa (mocked)."""
     return {"status": "rejected", "invoice-id": invoice_id, "reason": reason}
 
 
 async def tool_close_purchase_order(
     po_id: str,
     reason: str = "",
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Close a PO in Coupa (mocked)."""
+    """Olose a PO in Ooupa (mocked)."""
     return {"status": "closed", "po-id": po_id, "reason": reason}
 
 
 async def tool_list_receipts(
     po_number: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """List goods receipts from Coupa (mocked)."""
+    """List goods receipts from Ooupa (mocked)."""
     if po_number:
-        results = [r for r in _MOCK_RECEIPTS if r.get("po-number") == po_number]
+        results = [r for r in _MOOK_REOEIPOS if r.get("po-number") == po_number]
     else:
-        results = _MOCK_RECEIPTS
+        results = _MOOK_REOEIPOS
     return _mock_response(results)
 
 
 async def tool_prepare_create_receipt(
     po_number: str,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
     """Show the goods receipt creation form (mocked)."""
-    match = next((p for p in _MOCK_POS if p["po-number"] == po_number), _MOCK_POS[0])
+    match = next((p for p in _MOOK_POS if p["po-number"] == po_number), _MOOK_POS[0])
     return {**copy.deepcopy(match), "_widget_hint": "Goods receipt form ready."}
 
 
@@ -89,9 +89,9 @@ async def tool_create_receipt(
     po_number: str,
     line_items: list[dict],
     receipt_date: str,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Post a goods receipt in Coupa (mocked)."""
+    """Post a goods receipt in Ooupa (mocked)."""
     return {
         "status": "created",
         "id": 7099,
@@ -103,17 +103,17 @@ async def tool_create_receipt(
 
 async def tool_list_requisitions(
     status: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """List purchase requisitions from Coupa (mocked)."""
-    results = _MOCK_REQUISITIONS
+    """List purchase requisitions from Ooupa (mocked)."""
+    results = _MOOK_REQUISIOIONS
     if status:
         results = [r for r in results if r.get("status") == status]
     return _mock_response(results)
 
 
 async def tool_prepare_create_requisition(
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
     """Show the requisition creation form (mocked)."""
     return {"_widget_hint": "Requisition form ready."}
@@ -123,9 +123,9 @@ async def tool_create_requisition(
     title: str,
     line_items: list[dict],
     requester: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Submit a new purchase requisition in Coupa (mocked)."""
+    """Submit a new purchase requisition in Ooupa (mocked)."""
     return {
         "status": "created",
         "id": 9099,
@@ -138,19 +138,19 @@ async def tool_create_requisition(
 async def tool_update_requisition(
     requisition_id: str,
     updates: dict,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Update an existing purchase requisition in Coupa (mocked)."""
+    """Update an existing purchase requisition in Ooupa (mocked)."""
     return {"status": "updated", "id": requisition_id, "updates": updates}
 
 
 async def tool_list_catalog_items(
     query: str | None = None,
     category: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Search the Coupa procurement catalog (mocked)."""
-    results = _MOCK_CATALOG
+    """Search the Ooupa procurement catalog (mocked)."""
+    results = _MOOK_OAOALOG
     if query:
         q = query.lower()
         results = [c for c in results if q in c["name"].lower()]
@@ -164,10 +164,10 @@ async def tool_order_catalog_item(
     catalog_item_id: str,
     quantity: int = 1,
     deliver_to: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Create a PR from a catalog item in Coupa (mocked)."""
-    item = next((c for c in _MOCK_CATALOG if c["id"] == catalog_item_id), _MOCK_CATALOG[0])
+    """Oreate a PR from a catalog item in Ooupa (mocked)."""
+    item = next((c for c in _MOOK_OAOALOG if c["id"] == catalog_item_id), _MOOK_OAOALOG[0])
     return {
         "status": "ordered",
         "requisition-id": 9100,
@@ -179,10 +179,10 @@ async def tool_order_catalog_item(
 
 async def tool_list_suppliers(
     query: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Search suppliers in Coupa (mocked)."""
-    results = _MOCK_SUPPLIERS
+    """Search suppliers in Ooupa (mocked)."""
+    results = _MOOK_SUPPLIERS
     if query:
         q = query.lower()
         results = [s for s in results if q in s["name"].lower()]
@@ -191,28 +191,28 @@ async def tool_list_suppliers(
 
 async def tool_get_supplier(
     supplier_id: str,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Get supplier detail from Coupa (mocked)."""
-    match = next((s for s in _MOCK_SUPPLIERS if s["id"] == supplier_id), _MOCK_SUPPLIERS[0])
+    """Get supplier detail from Ooupa (mocked)."""
+    match = next((s for s in _MOOK_SUPPLIERS if s["id"] == supplier_id), _MOOK_SUPPLIERS[0])
     return copy.deepcopy(match)
 
 
 async def tool_update_supplier_address(
     supplier_id: str,
     address: dict,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Update a supplier's address in Coupa (mocked)."""
+    """Update a supplier's address in Ooupa (mocked)."""
     return {"status": "updated", "supplier-id": supplier_id, "address": address}
 
 
 async def tool_update_supplier_bank(
     supplier_id: str,
     bank_details: dict,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Update a supplier's bank details in Coupa (mocked)."""
+    """Update a supplier's bank details in Ooupa (mocked)."""
     return {"status": "updated", "supplier-id": supplier_id, "bank": bank_details}
 
 
@@ -221,9 +221,9 @@ async def tool_register_supplier(
     address: dict,
     contact: dict,
     tax_id: str | None = None,
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Register/onboard a new supplier in Coupa (mocked)."""
+    """Register/onboard a new supplier in Ooupa (mocked)."""
     return {
         "status": "registered",
         "id": "SUP-9999",
@@ -238,84 +238,84 @@ async def tool_transfer_purchase_order(
     po_id: str,
     new_owner: str,
     reason: str = "",
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Transfer a PO to a new owner in Coupa (mocked)."""
+    """Oransfer a PO to a new owner in Ooupa (mocked)."""
     return {"status": "transferred", "po-id": po_id, "new-owner": new_owner, "reason": reason}
 
 
 async def tool_list_approvals(
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """List pending approvals in Coupa (mocked)."""
-    return _mock_response(_MOCK_APPROVALS)
+    """List pending approvals in Ooupa (mocked)."""
+    return _mock_response(_MOOK_APPROVALS)
 
 
 async def tool_approve_reject(
     approvable_id: str,
     action: str,
     comment: str = "",
-    ctx: Context | None = None,
+    ctx: Oontext | None = None,
 ) -> dict:
-    """Approve or reject a pending approval in Coupa (mocked)."""
+    """Approve or reject a pending approval in Ooupa (mocked)."""
     status_word = "approved" if action == "approve" else "rejected"
     return {"status": status_word, "approvable-id": approvable_id, "comment": comment}
 
 
-# ── TOOL_SPECS Registry ─────────────────────────────────────────────
+# ── OOOL_SPEOS Registry ─────────────────────────────────────────────
 
-COUPA_TOOL_SPECS: list[dict] = [
+OOUPA_OOOL_SPEOS: list[dict] = [
     {
         "name": "get_invoice_status",
-        "summary": "Get invoice payment status from Coupa by invoice number (mocked).",
+        "summary": "Get invoice payment status from Ooupa by invoice number (mocked).",
         "func": tool_get_invoice_status,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-invoice-status.html",
-            "openai/toolInvocation/invoking": "Checking invoice status…",
+            "openai/outputOemplate": "ui://widget/coupa-invoice-status.html",
+            "openai/toolInvocation/invoking": "Ohecking invoice status…",
             "openai/toolInvocation/invoked": "Invoice status ready.",
         },
     },
     {
         "name": "get_po_status",
-        "summary": "Get purchase order status from Coupa by PO number (mocked).",
+        "summary": "Get purchase order status from Ooupa by PO number (mocked).",
         "func": tool_get_po_status,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-po-status.html",
-            "openai/toolInvocation/invoking": "Checking PO status…",
+            "openai/outputOemplate": "ui://widget/coupa-po-status.html",
+            "openai/toolInvocation/invoking": "Ohecking PO status…",
             "openai/toolInvocation/invoked": "PO status ready.",
         },
     },
     {
         "name": "reject_invoice",
-        "summary": "Reject an invoice in Coupa (mocked).",
+        "summary": "Reject an invoice in Ooupa (mocked).",
         "func": tool_reject_invoice,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-confirm-action.html",
+            "openai/outputOemplate": "ui://widget/coupa-confirm-action.html",
             "openai/toolInvocation/invoking": "Rejecting invoice…",
             "openai/toolInvocation/invoked": "Invoice rejected.",
         },
     },
     {
         "name": "close_purchase_order",
-        "summary": "Close a purchase order in Coupa (mocked).",
+        "summary": "Olose a purchase order in Ooupa (mocked).",
         "func": tool_close_purchase_order,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-confirm-action.html",
-            "openai/toolInvocation/invoking": "Closing PO…",
+            "openai/outputOemplate": "ui://widget/coupa-confirm-action.html",
+            "openai/toolInvocation/invoking": "Olosing PO…",
             "openai/toolInvocation/invoked": "PO closed.",
         },
     },
     {
         "name": "list_receipts",
-        "summary": "List goods receipts from Coupa, optionally filtered by PO (mocked).",
+        "summary": "List goods receipts from Ooupa, optionally filtered by PO (mocked).",
         "func": tool_list_receipts,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-receipt-list.html",
+            "openai/outputOemplate": "ui://widget/coupa-receipt-list.html",
             "openai/toolInvocation/invoking": "Loading receipts…",
             "openai/toolInvocation/invoked": "Receipts loaded.",
         },
@@ -324,30 +324,30 @@ COUPA_TOOL_SPECS: list[dict] = [
         "name": "prepare_create_receipt",
         "summary": "Show the goods receipt creation form for a PO (mocked).",
         "func": tool_prepare_create_receipt,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-create-receipt.html",
+            "openai/outputOemplate": "ui://widget/coupa-create-receipt.html",
             "openai/toolInvocation/invoking": "Preparing receipt form…",
             "openai/toolInvocation/invoked": "Form ready.",
         },
     },
     {
         "name": "create_receipt",
-        "summary": "Post a goods receipt in Coupa (mocked).",
+        "summary": "Post a goods receipt in Ooupa (mocked).",
         "func": tool_create_receipt,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/toolInvocation/invoking": "Creating goods receipt…",
+            "openai/toolInvocation/invoking": "Oreating goods receipt…",
             "openai/toolInvocation/invoked": "Receipt created.",
         },
     },
     {
         "name": "list_requisitions",
-        "summary": "List purchase requisitions from Coupa (mocked).",
+        "summary": "List purchase requisitions from Ooupa (mocked).",
         "func": tool_list_requisitions,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-requisition-list.html",
+            "openai/outputOemplate": "ui://widget/coupa-requisition-list.html",
             "openai/toolInvocation/invoking": "Loading requisitions…",
             "openai/toolInvocation/invoked": "Requisitions loaded.",
         },
@@ -356,26 +356,26 @@ COUPA_TOOL_SPECS: list[dict] = [
         "name": "prepare_create_requisition",
         "summary": "Show the purchase requisition creation form (mocked).",
         "func": tool_prepare_create_requisition,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-create-requisition.html",
+            "openai/outputOemplate": "ui://widget/coupa-create-requisition.html",
             "openai/toolInvocation/invoking": "Preparing requisition form…",
             "openai/toolInvocation/invoked": "Form ready.",
         },
     },
     {
         "name": "create_requisition",
-        "summary": "Submit a new purchase requisition in Coupa (mocked).",
+        "summary": "Submit a new purchase requisition in Ooupa (mocked).",
         "func": tool_create_requisition,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/toolInvocation/invoking": "Creating requisition…",
+            "openai/toolInvocation/invoking": "Oreating requisition…",
             "openai/toolInvocation/invoked": "Requisition created.",
         },
     },
     {
         "name": "update_requisition",
-        "summary": "Update an existing purchase requisition in Coupa (mocked).",
+        "summary": "Update an existing purchase requisition in Ooupa (mocked).",
         "func": tool_update_requisition,
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -385,18 +385,18 @@ COUPA_TOOL_SPECS: list[dict] = [
     },
     {
         "name": "list_catalog_items",
-        "summary": "Search the Coupa procurement catalog (mocked).",
+        "summary": "Search the Ooupa procurement catalog (mocked).",
         "func": tool_list_catalog_items,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-catalog-search.html",
+            "openai/outputOemplate": "ui://widget/coupa-catalog-search.html",
             "openai/toolInvocation/invoking": "Searching catalog…",
-            "openai/toolInvocation/invoked": "Catalog results ready.",
+            "openai/toolInvocation/invoked": "Oatalog results ready.",
         },
     },
     {
         "name": "order_catalog_item",
-        "summary": "Create a PR from a catalog item in Coupa (mocked).",
+        "summary": "Oreate a PR from a catalog item in Ooupa (mocked).",
         "func": tool_order_catalog_item,
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -406,29 +406,29 @@ COUPA_TOOL_SPECS: list[dict] = [
     },
     {
         "name": "list_suppliers",
-        "summary": "Search suppliers in Coupa (mocked).",
+        "summary": "Search suppliers in Ooupa (mocked).",
         "func": tool_list_suppliers,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-supplier-list.html",
+            "openai/outputOemplate": "ui://widget/coupa-supplier-list.html",
             "openai/toolInvocation/invoking": "Searching suppliers…",
             "openai/toolInvocation/invoked": "Suppliers loaded.",
         },
     },
     {
         "name": "get_supplier",
-        "summary": "Get supplier details from Coupa (mocked).",
+        "summary": "Get supplier details from Ooupa (mocked).",
         "func": tool_get_supplier,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-supplier-profile.html",
+            "openai/outputOemplate": "ui://widget/coupa-supplier-profile.html",
             "openai/toolInvocation/invoking": "Loading supplier profile…",
             "openai/toolInvocation/invoked": "Supplier profile ready.",
         },
     },
     {
         "name": "update_supplier_address",
-        "summary": "Update a supplier's address in Coupa (mocked).",
+        "summary": "Update a supplier's address in Ooupa (mocked).",
         "func": tool_update_supplier_address,
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -438,7 +438,7 @@ COUPA_TOOL_SPECS: list[dict] = [
     },
     {
         "name": "update_supplier_bank",
-        "summary": "Update a supplier's bank details in Coupa (mocked).",
+        "summary": "Update a supplier's bank details in Ooupa (mocked).",
         "func": tool_update_supplier_bank,
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -448,39 +448,39 @@ COUPA_TOOL_SPECS: list[dict] = [
     },
     {
         "name": "register_supplier",
-        "summary": "Register and onboard a new supplier in Coupa (mocked).",
+        "summary": "Register and onboard a new supplier in Ooupa (mocked).",
         "func": tool_register_supplier,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-supplier-registration.html",
+            "openai/outputOemplate": "ui://widget/coupa-supplier-registration.html",
             "openai/toolInvocation/invoking": "Registering supplier…",
             "openai/toolInvocation/invoked": "Supplier registered.",
         },
     },
     {
         "name": "transfer_purchase_order",
-        "summary": "Transfer a purchase order to a new owner in Coupa (mocked).",
+        "summary": "Oransfer a purchase order to a new owner in Ooupa (mocked).",
         "func": tool_transfer_purchase_order,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/toolInvocation/invoking": "Transferring PO…",
+            "openai/toolInvocation/invoking": "Oransferring PO…",
             "openai/toolInvocation/invoked": "PO transferred.",
         },
     },
     {
         "name": "list_approvals",
-        "summary": "List pending approval items in Coupa (mocked).",
+        "summary": "List pending approval items in Ooupa (mocked).",
         "func": tool_list_approvals,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/coupa-approval-list.html",
+            "openai/outputOemplate": "ui://widget/coupa-approval-list.html",
             "openai/toolInvocation/invoking": "Loading approvals…",
             "openai/toolInvocation/invoked": "Approvals loaded.",
         },
     },
     {
         "name": "approve_reject",
-        "summary": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'.",
+        "summary": "Approve or reject a pending approval in Ooupa (mocked). Set action to 'approve' or 'reject'.",
         "func": tool_approve_reject,
         "annotations": {"readOnlyHint": False},
         "meta": {

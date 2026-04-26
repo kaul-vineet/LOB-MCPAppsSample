@@ -1,4 +1,4 @@
-"""ServiceNow ITSM MCP Server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""ServiceNow ITSM MCP Server — bootstrap only. Tools in tools.py, client in client.py."""
 import sys
 from pathlib import Path
 
@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .servicenow_settings import get_settings
+from .servicenow_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("sn")
 settings = get_settings()

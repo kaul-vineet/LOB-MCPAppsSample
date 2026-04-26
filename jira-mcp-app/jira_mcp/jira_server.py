@@ -1,35 +1,34 @@
-"""Workday HR MCP server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""Jira Project Management MCP server — bootstrap only. Tools in tools.py, client in client.py."""
 import structlog
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import WORKDAY_TOOL_SPECS
+from .jira_settings import get_settings
+from .jira_tools import TOOL_SPECS
 
-log = structlog.get_logger("workday")
+log = structlog.get_logger("jira")
 settings = get_settings()
 
-WIDGET_URI = "ui://widget/workday.html"
+WIDGET_URI = "ui://widget/jira.html"
 
 mcp = FastMCP(
-    "workday",
+    "jira",
     instructions=(
-        "Workday HR — employee self-service for leave balances, pay slips, "
-        "learning assignments, feedback, goals, check-ins, org charts, "
-        "and manager operations like team analytics and job changes."
+        "Jira — issue search, CRUD, workflow transitions, sprint management, "
+        "work logging, team workload analysis, and version/release management."
     ),
 )
 
 
 @mcp.resource(WIDGET_URI, mime_type="text/html")
 def get_widget() -> str:
-    return "<html><body>Workday widget</body></html>"
+    return "<html><body>Jira widget</body></html>"
 
 
-for _spec in WORKDAY_TOOL_SPECS:
+for _spec in TOOL_SPECS:
     mcp.tool(
-        name=f"wday__{_spec['name']}",
+        name=f"jira__{_spec['name']}",
         description=_spec["summary"],
         meta={"ui": {"resourceUri": WIDGET_URI}},
     )(_spec["func"])
@@ -37,7 +36,7 @@ for _spec in WORKDAY_TOOL_SPECS:
 
 def main() -> None:
     log.info("starting", port=settings.port)
-    print(f"⚓ GTC — Workday HR starting on port {settings.port}")
+    print(f"⚓ GTC — Jira Project Management starting on port {settings.port}")
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,

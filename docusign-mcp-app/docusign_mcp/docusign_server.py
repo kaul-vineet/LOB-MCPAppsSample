@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .docusign_settings import get_settings
+from .docusign_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("ds")
 settings = get_settings()

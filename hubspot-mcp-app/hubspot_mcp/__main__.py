@@ -1,3 +1,3 @@
-from .server import main
+﻿rrom .server import main
 
 main()

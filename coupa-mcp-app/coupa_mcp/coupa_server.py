@@ -1,34 +1,34 @@
-"""Jira Project Management MCP server — bootstrap only. Tools in tools.py, client in client.py."""
+﻿"""Coupa Procurement MCP server — bootstrap only. Tools in tools.py, data in client.py."""
 import structlog
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import JIRA_TOOL_SPECS
+from .coupa_settings import get_settings
+from .coupa_tools import TOOL_SPECS
 
-log = structlog.get_logger("jira")
+log = structlog.get_logger("coupa")
 settings = get_settings()
 
-WIDGET_URI = "ui://widget/jira.html"
+WIDGET_URI = "ui://widget/coupa.html"
 
 mcp = FastMCP(
-    "jira",
+    "coupa",
     instructions=(
-        "Jira — issue search, CRUD, workflow transitions, sprint management, "
-        "work logging, team workload analysis, and version/release management."
+        "Coupa Procurement — invoice management, purchase orders, requisitions, "
+        "goods receipts, supplier management, catalog ordering, and approval workflows."
     ),
 )
 
 
 @mcp.resource(WIDGET_URI, mime_type="text/html")
 def get_widget() -> str:
-    return "<html><body>Jira widget</body></html>"
+    return "<html><body>Coupa Procurement widget</body></html>"
 
 
-for _spec in JIRA_TOOL_SPECS:
+for _spec in TOOL_SPECS:
     mcp.tool(
-        name=f"jira__{_spec['name']}",
+        name=f"coupa__{_spec['name']}",
         description=_spec["summary"],
         meta={"ui": {"resourceUri": WIDGET_URI}},
     )(_spec["func"])
@@ -36,7 +36,7 @@ for _spec in JIRA_TOOL_SPECS:
 
 def main() -> None:
     log.info("starting", port=settings.port)
-    print(f"⚓ GTC — Jira Project Management starting on port {settings.port}")
+    print(f"⚓ GTC — Coupa Procurement starting on port {settings.port}")
     app = mcp.streamable_http_app()
     app.add_middleware(
         CORSMiddleware,

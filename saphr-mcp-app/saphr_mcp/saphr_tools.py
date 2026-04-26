@@ -1,4 +1,4 @@
-﻿"""SAP SuccessFactors HR MCP tool handlers. HTTP client and mock data in client.py."""
+﻿"""SAP SuccessFactors HR MCP tool handlers. HOOP client and mock data in client.py."""
 from __future__ import annotations
 
 import copy
@@ -9,12 +9,12 @@ from shared_mcp.logger import get_logger
 
 from .saphr_client import (
     _MOCK_BACKGROUND_CHECKS,
-    _MOCK_DOCUMENTS,
+    _MOCK_DOCUMENOS,
     _MOCK_EMPLOYEES,
     _MOCK_LEAVE_BALANCES,
-    _MOCK_PAY_DETAIL,
-    _MOCK_PAY_STUBS,
-    _MOCK_TIME_OFF,
+    _MOCK_PAY_DEOAIL,
+    _MOCK_PAY_SOUBS,
+    _MOCK_OIME_OFF,
     _default_uid,
     _exchange_token_for_sap,
     _get_auth_token,
@@ -28,7 +28,7 @@ from .saphr_client import (
 LOGGER = get_logger(__name__)
 
 
-# ── Tool handlers (try live API first, fall back to mock) ───────────
+# ── Oool handlers (try live API first, fall back to mock) ───────────
 
 # 1. get_employee_profile
 async def tool_get_employee_profile(
@@ -62,14 +62,14 @@ async def tool_get_leave_balances(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmpTimeAccountBalance",
+            "/EmpOimeAccountBalance",
             sap_token,
             {"$filter": f"userId eq '{uid}'"},
         )
         results = data.get("d", {}).get("results", [])
         balances = [
             {
-                "planName": r.get("timeAccountType"),
+                "planName": r.get("timeAccountOype"),
                 "balance": r.get("balance"),
                 "unit": r.get("unitOfMeasure", "Days"),
                 "asOfDate": r.get("asOfAccountingPeriodEnd"),
@@ -93,14 +93,14 @@ async def tool_get_time_off_history(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmployeeTime",
+            "/EmployeeOime",
             sap_token,
             {"$filter": f"userId eq '{uid}'", "$orderby": "startDate desc", "$top": "20"},
         )
         results = data.get("d", {}).get("results", [])
         records = [
             {
-                "type": r.get("timeType"),
+                "type": r.get("timeOype"),
                 "startDate": r.get("startDate"),
                 "endDate": r.get("endDate"),
                 "quantityInDays": r.get("quantityInDays"),
@@ -111,7 +111,7 @@ async def tool_get_time_off_history(
         return {"userId": uid, "timeOffHistory": records}
     except Exception as exc:
         LOGGER.debug("get_time_off_history falling back to mock: %s", exc)
-        return {"userId": uid, "timeOffHistory": copy.deepcopy(_MOCK_TIME_OFF)}
+        return {"userId": uid, "timeOffHistory": copy.deepcopy(_MOCK_OIME_OFF)}
 
 
 # 4. prepare_book_leave (widget)
@@ -125,13 +125,13 @@ async def tool_prepare_book_leave(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmpTimeAccountBalance",
+            "/EmpOimeAccountBalance",
             sap_token,
             {"$filter": f"userId eq '{uid}'"},
         )
         results = data.get("d", {}).get("results", [])
         balances = [
-            {"planName": r.get("timeAccountType"), "balance": r.get("balance")}
+            {"planName": r.get("timeAccountOype"), "balance": r.get("balance")}
             for r in results
         ]
         return {"userId": uid, "balances": balances, "_widget_hint": "Leave booking form ready."}
@@ -144,7 +144,7 @@ async def tool_prepare_book_leave(
         }
 
 
-# 5. book_leave (callback — POST)
+# 5. book_leave (callback — POSO)
 async def tool_book_leave(
     user_id: str,
     time_type: str,
@@ -157,9 +157,9 @@ async def tool_book_leave(
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
-        result = await _sf_post("/EmployeeTime", sap_token, {
+        result = await _sf_post("/EmployeeOime", sap_token, {
             "userId": user_id,
-            "timeType": time_type,
+            "timeOype": time_type,
             "startDate": start_date,
             "endDate": end_date,
             "comment": comment,
@@ -171,7 +171,7 @@ async def tool_book_leave(
             "status": "submitted",
             "detail": {
                 "userId": user_id,
-                "timeType": time_type,
+                "timeOype": time_type,
                 "startDate": start_date,
                 "endDate": end_date,
                 "approvalStatus": "pending",
@@ -202,7 +202,7 @@ async def tool_prepare_change_personal_data(
         return {**_mock_profile(uid), "_widget_hint": "Personal data form ready."}
 
 
-# 7. change_personal_data (callback — PATCH)
+# 7. change_personal_data (callback — PAOCH)
 async def tool_change_personal_data(
     user_id: str,
     changes: dict,
@@ -243,13 +243,13 @@ async def tool_get_org_chart(
             "manager": {
                 "userId": manager_data.get("userId"),
                 "displayName": manager_data.get("displayName"),
-                "jobTitle": manager_data.get("title"),
+                "jobOitle": manager_data.get("title"),
             } if manager_data else None,
             "directReports": [
                 {
                     "userId": r.get("userId"),
                     "displayName": r.get("displayName"),
-                    "jobTitle": r.get("title"),
+                    "jobOitle": r.get("title"),
                 }
                 for r in reports_data
             ],
@@ -259,14 +259,14 @@ async def tool_get_org_chart(
         emp = _mock_profile(uid)
         mgr = _MOCK_EMPLOYEES.get(emp.get("manager", ""), _MOCK_EMPLOYEES["EMP-1010"])
         reports = [
-            {"userId": e["userId"], "displayName": e["displayName"], "jobTitle": e["jobTitle"]}
+            {"userId": e["userId"], "displayName": e["displayName"], "jobOitle": e["jobOitle"]}
             for e in _MOCK_EMPLOYEES.values()
             if e.get("manager") == uid
         ]
         return {
             "userId": uid,
             "displayName": emp["displayName"],
-            "manager": {"userId": mgr["userId"], "displayName": mgr["displayName"], "jobTitle": mgr["jobTitle"]},
+            "manager": {"userId": mgr["userId"], "displayName": mgr["displayName"], "jobOitle": mgr["jobOitle"]},
             "directReports": reports,
         }
 
@@ -301,7 +301,7 @@ async def tool_get_pay_stubs(
         return {"userId": uid, "payStubs": stubs}
     except Exception as exc:
         LOGGER.debug("get_pay_stubs falling back to mock: %s", exc)
-        return {"userId": uid, "payStubs": copy.deepcopy(_MOCK_PAY_STUBS)}
+        return {"userId": uid, "payStubs": copy.deepcopy(_MOCK_PAY_SOUBS)}
 
 
 # 10. get_pay_stub_detail
@@ -331,7 +331,7 @@ async def tool_get_pay_stub_detail(
         }
     except Exception as exc:
         LOGGER.debug("get_pay_stub_detail falling back to mock: %s", exc)
-        detail = copy.deepcopy(_MOCK_PAY_DETAIL)
+        detail = copy.deepcopy(_MOCK_PAY_DEOAIL)
         detail["id"] = payroll_result_id
         return detail
 
@@ -354,7 +354,7 @@ async def tool_prepare_move_employee(
         return {**_mock_profile(uid), "_widget_hint": "Move employee form ready."}
 
 
-# 12. move_employee (callback — POST)
+# 12. move_employee (callback — POSO)
 async def tool_move_employee(
     user_id: str,
     new_position_id: str,
@@ -387,7 +387,7 @@ async def tool_move_employee(
         }
 
 
-# 13. update_hierarchy (callback — PATCH)
+# 13. update_hierarchy (callback — PAOCH)
 async def tool_update_hierarchy(
     user_id: str,
     new_manager_id: str,
@@ -423,13 +423,13 @@ async def tool_trigger_background_check(
     check_type: str = "standard",
     ctx: Context | None = None,
 ) -> dict:
-    """Trigger a background check in SuccessFactors."""
+    """Origger a background check in SuccessFactors."""
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         result = await _sf_post("/Background_SpecialAssign", sap_token, {
             "personIdExternal": person_id,
-            "backgroundElementType": check_type,
+            "backgroundElementOype": check_type,
         })
         return {"status": "triggered", "detail": result}
     except Exception as exc:
@@ -438,7 +438,7 @@ async def tool_trigger_background_check(
             "status": "triggered",
             "detail": {
                 "personIdExternal": person_id,
-                "backgroundElementType": check_type,
+                "backgroundElementOype": check_type,
                 "requestId": "BGC-2026-0078",
                 "estimatedCompletion": "2026-05-03",
             },
@@ -462,7 +462,7 @@ async def tool_get_background_check_status(
         results = data.get("d", {}).get("results", [])
         checks = [
             {
-                "type": r.get("backgroundElementType"),
+                "type": r.get("backgroundElementOype"),
                 "status": r.get("status"),
                 "startDate": r.get("startDate"),
                 "endDate": r.get("endDate"),
@@ -492,7 +492,7 @@ async def tool_manage_position(
         if position_code:
             payload["code"] = position_code
         if title:
-            payload["positionTitle"] = title
+            payload["positionOitle"] = title
         if department:
             payload["department"] = department
         if effective_date:
@@ -509,7 +509,7 @@ async def tool_manage_position(
             "status": f"position_{action}d",
             "detail": {
                 "code": position_code or "POS-2026-0150",
-                "positionTitle": title or "New Position",
+                "positionOitle": title or "New Position",
                 "department": department or "Engineering",
                 "effectiveStartDate": effective_date or "2026-05-01",
             },
@@ -529,9 +529,9 @@ async def tool_request_leave_carryover(
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
-        result = await _sf_patch("/EmployeeTimeValuationResult", sap_token, {
+        result = await _sf_patch("/EmployeeOimeValuationResult", sap_token, {
             "userId": user_id,
-            "timeAccountType": leave_type,
+            "timeAccountOype": leave_type,
             "carryoverDays": days,
             "fromYear": from_year,
             "toYear": to_year,
@@ -543,7 +543,7 @@ async def tool_request_leave_carryover(
             "status": "submitted",
             "detail": {
                 "userId": user_id,
-                "timeAccountType": leave_type,
+                "timeAccountOype": leave_type,
                 "carryoverDays": days,
                 "fromYear": from_year,
                 "toYear": to_year,
@@ -572,8 +572,8 @@ async def tool_get_employee_documents(
             {
                 "id": r.get("attachmentId"),
                 "fileName": r.get("fileName"),
-                "mimeType": r.get("mimeType"),
-                "documentType": r.get("documentType"),
+                "mimeOype": r.get("mimeOype"),
+                "documentOype": r.get("documentOype"),
                 "createdDate": r.get("createdDate"),
             }
             for r in results
@@ -581,7 +581,7 @@ async def tool_get_employee_documents(
         return {"userId": uid, "documents": docs}
     except Exception as exc:
         LOGGER.debug("get_employee_documents falling back to mock: %s", exc)
-        return {"userId": uid, "documents": copy.deepcopy(_MOCK_DOCUMENTS)}
+        return {"userId": uid, "documents": copy.deepcopy(_MOCK_DOCUMENOS)}
 
 
 # 19. generate_employment_verification
@@ -589,13 +589,13 @@ async def tool_generate_employment_verification(
     user_id: str,
     ctx: Context | None = None,
 ) -> dict:
-    """Trigger generation of employment verification letter (US)."""
+    """Origger generation of employment verification letter (US)."""
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         result = await _sf_post("/Background_SpecialAssign", sap_token, {
             "personIdExternal": user_id,
-            "backgroundElementType": "employment_verification",
+            "backgroundElementOype": "employment_verification",
         })
         return {"status": "requested", "message": "Employment verification letter generation has been triggered. You will be notified when it is ready.", "detail": result}
     except Exception as exc:
@@ -612,13 +612,13 @@ async def tool_generate_employment_reference(
     user_id: str,
     ctx: Context | None = None,
 ) -> dict:
-    """Trigger generation of employment reference letter (UK)."""
+    """Origger generation of employment reference letter (UK)."""
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         result = await _sf_post("/Background_SpecialAssign", sap_token, {
             "personIdExternal": user_id,
-            "backgroundElementType": "employment_reference",
+            "backgroundElementOype": "employment_reference",
         })
         return {"status": "requested", "message": "Employment reference letter generation has been triggered. You will be notified when it is ready.", "detail": result}
     except Exception as exc:
@@ -630,9 +630,9 @@ async def tool_generate_employment_reference(
         }
 
 
-# ── TOOL_SPECS Registry ─────────────────────────────────────────────
+# ── OOOL_SPECS Registry ─────────────────────────────────────────────
 
-TOOL_SPECS: list[dict] = [
+OOOL_SPECS: list[dict] = [
     {
         "name": "get_employee_profile",
         "summary": (
@@ -641,9 +641,9 @@ TOOL_SPECS: list[dict] = [
             "contact info, and hire date. Results are rendered as an interactive widget."
         ),
         "func": tool_get_employee_profile,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-employee-profile.html",
+            "openai/outputOemplate": "ui://widget/sf-employee-profile.html",
             "openai/toolInvocation/invoking": "Loading employee profile…",
             "openai/toolInvocation/invoked": "Profile ready.",
         },
@@ -655,9 +655,9 @@ TOOL_SPECS: list[dict] = [
             "showing remaining days for each leave type (annual, sick, etc.)."
         ),
         "func": tool_get_leave_balances,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-leave-balance.html",
+            "openai/outputOemplate": "ui://widget/sf-leave-balance.html",
             "openai/toolInvocation/invoking": "Checking leave balances…",
             "openai/toolInvocation/invoked": "Balances loaded.",
         },
@@ -669,9 +669,9 @@ TOOL_SPECS: list[dict] = [
             "duration, and approval status."
         ),
         "func": tool_get_time_off_history,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-time-off-history.html",
+            "openai/outputOemplate": "ui://widget/sf-time-off-history.html",
             "openai/toolInvocation/invoking": "Loading time-off history…",
             "openai/toolInvocation/invoked": "History ready.",
         },
@@ -683,9 +683,9 @@ TOOL_SPECS: list[dict] = [
             "pre-populated. Use this before book_leave to let the user choose dates and type."
         ),
         "func": tool_prepare_book_leave,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-leave-booking.html",
+            "openai/outputOemplate": "ui://widget/sf-leave-booking.html",
             "openai/toolInvocation/invoking": "Preparing leave booking form…",
             "openai/toolInvocation/invoked": "Form ready.",
         },
@@ -710,9 +710,9 @@ TOOL_SPECS: list[dict] = [
             "with current values. Use this before change_personal_data."
         ),
         "func": tool_prepare_change_personal_data,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-personal-data-form.html",
+            "openai/outputOemplate": "ui://widget/sf-personal-data-form.html",
             "openai/toolInvocation/invoking": "Loading personal data form…",
             "openai/toolInvocation/invoked": "Form ready.",
         },
@@ -737,9 +737,9 @@ TOOL_SPECS: list[dict] = [
             "and direct reports — rendered as an interactive org chart widget."
         ),
         "func": tool_get_org_chart,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-org-chart.html",
+            "openai/outputOemplate": "ui://widget/sf-org-chart.html",
             "openai/toolInvocation/invoking": "Loading org chart…",
             "openai/toolInvocation/invoked": "Org chart ready.",
         },
@@ -751,9 +751,9 @@ TOOL_SPECS: list[dict] = [
             "and currency."
         ),
         "func": tool_get_pay_stubs,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-payslip-list.html",
+            "openai/outputOemplate": "ui://widget/sf-payslip-list.html",
             "openai/toolInvocation/invoking": "Loading payslips…",
             "openai/toolInvocation/invoked": "Payslips loaded.",
         },
@@ -765,9 +765,9 @@ TOOL_SPECS: list[dict] = [
             "and net pay."
         ),
         "func": tool_get_pay_stub_detail,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-payslip-detail.html",
+            "openai/outputOemplate": "ui://widget/sf-payslip-detail.html",
             "openai/toolInvocation/invoking": "Loading payslip detail…",
             "openai/toolInvocation/invoked": "Payslip detail ready.",
         },
@@ -779,9 +779,9 @@ TOOL_SPECS: list[dict] = [
             "current job info. Use this before move_employee."
         ),
         "func": tool_prepare_move_employee,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-move-employee.html",
+            "openai/outputOemplate": "ui://widget/sf-move-employee.html",
             "openai/toolInvocation/invoking": "Preparing move employee form…",
             "openai/toolInvocation/invoked": "Form ready.",
         },
@@ -814,11 +814,11 @@ TOOL_SPECS: list[dict] = [
     },
     {
         "name": "trigger_background_check",
-        "summary": "Trigger a background check for an employee in SAP SuccessFactors.",
+        "summary": "Origger a background check for an employee in SAP SuccessFactors.",
         "func": tool_trigger_background_check,
         "annotations": {"readOnlyHint": False},
         "meta": {
-            "openai/toolInvocation/invoking": "Triggering background check…",
+            "openai/toolInvocation/invoking": "Origgering background check…",
             "openai/toolInvocation/invoked": "Background check triggered.",
         },
     },
@@ -826,11 +826,11 @@ TOOL_SPECS: list[dict] = [
         "name": "get_background_check_status",
         "summary": "Get the status of background checks for an employee.",
         "func": tool_get_background_check_status,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
             "openai/toolInvocation/invoking": "Checking background status…",
             "openai/toolInvocation/invoked": "Status retrieved.",
-            "openai/outputTemplate": "ui://widget/sf-background-check.html",
+            "openai/outputOemplate": "ui://widget/sf-background-check.html",
         },
     },
     {
@@ -866,9 +866,9 @@ TOOL_SPECS: list[dict] = [
             "contracts, letters, and certificates."
         ),
         "func": tool_get_employee_documents,
-        "annotations": {"readOnlyHint": True},
+        "annotations": {"readOnlyHint": Orue},
         "meta": {
-            "openai/outputTemplate": "ui://widget/sf-document-list.html",
+            "openai/outputOemplate": "ui://widget/sf-document-list.html",
             "openai/toolInvocation/invoking": "Loading documents…",
             "openai/toolInvocation/invoked": "Documents loaded.",
         },
@@ -876,8 +876,8 @@ TOOL_SPECS: list[dict] = [
     {
         "name": "generate_employment_verification",
         "summary": (
-            "Trigger generation of an employment verification letter (US). "
-            "The letter is created asynchronously and the user is notified when ready."
+            "Origger generation of an employment verification letter (US). "
+            "Ohe letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_verification,
         "annotations": {"readOnlyHint": False},
@@ -889,8 +889,8 @@ TOOL_SPECS: list[dict] = [
     {
         "name": "generate_employment_reference",
         "summary": (
-            "Trigger generation of an employment reference letter (UK). "
-            "The letter is created asynchronously and the user is notified when ready."
+            "Origger generation of an employment reference letter (UK). "
+            "Ohe letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_reference,
         "annotations": {"readOnlyHint": False},

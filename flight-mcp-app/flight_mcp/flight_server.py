@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .flight_settings import get_settings
+from .flight_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("ft")
 settings = get_settings()

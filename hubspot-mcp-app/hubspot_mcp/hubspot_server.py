@@ -1,4 +1,4 @@
-"""HubSpot MCP server — bootstrap only. Tools in tools.py, client in hubspot_client.py."""
+﻿"""HubSpot MCP server — bootstrap only. Tools in tools.py, client in hubspot_client.py."""
 import sys
 from pathlib import Path
 
@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .hubspot_settings import get_settings
+from .hubspot_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("hs")
 settings = get_settings()

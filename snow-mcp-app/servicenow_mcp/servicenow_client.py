@@ -1,4 +1,4 @@
-"""ServiceNow API client — auth, HTTP, field helpers. No MCP imports."""
+﻿"""ServiceNow API client — auth, HTTP, field helpers. No MCP imports."""
 import base64
 import os
 import time
@@ -9,7 +9,7 @@ import structlog
 from dotenv import load_dotenv
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from .settings import get_settings
+from .servicenow_settings import get_settings
 
 log = structlog.get_logger("sn")
 

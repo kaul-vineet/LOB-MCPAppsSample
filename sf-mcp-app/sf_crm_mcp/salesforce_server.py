@@ -1,4 +1,4 @@
-"""Salesforce CRM MCP server — bootstrap only. Tools in tools.py, client in salesforce.py."""
+﻿"""Salesforce CRM MCP server — bootstrap only. Tools in tools.py, client in salesforce.py."""
 import sys
 from pathlib import Path
 
@@ -7,8 +7,8 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from .settings import get_settings
-from .tools import PROMPT_SPECS, TOOL_SPECS
+from .salesforce_settings import get_settings
+from .salesforce_tools import PROMPT_SPECS, TOOL_SPECS
 
 log = structlog.get_logger("sf")
 settings = get_settings()
