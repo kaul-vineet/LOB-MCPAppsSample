@@ -2685,3 +2685,74 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "summary": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change.",
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp import types as _t  # noqa: E402
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OORKDAY_OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-inbox",
+        "description": "Show pending tasks and actions waiting in your Workday inbox.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my Workday inbox. "
+            "Call wday__get_inbox_tasks and display the pending tasks in the widget."
+        )))],
+    },
+    {
+        "name": "my-pay-slips",
+        "description": "Show your recent payslips from Workday.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my recent payslips from Workday. "
+            "Call wday__get_pay_slips and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-day",
+        "description": "Start your day with a summary of inbox tasks, time-off entries, and direct reports.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me my Workday daily summary. "
+            "Call wday__get_inbox_tasks, wday__get_time_off_entries, and wday__get_direct_reports "
+            "— these are independent. "
+            "Once all three return, summarise: pending inbox actions, upcoming time off, "
+            "and a list of my direct reports."
+        )))],
+    },
+    {
+        "name": "book-time-off",
+        "description": "Check leave balances and submit a time-off request in Workday.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to book time off in Workday. "
+            "Call wday__get_leave_balances to show available leave types and their timeOffTypeId values. "
+            "Ask me for: start date, end date, leave type (use the timeOffTypeId from the balances), "
+            "quantity, and unit (Hours or Days). "
+            "Call wday__prepare_request_leave with startDate, endDate, timeOffTypeId, quantity, and unit. "
+            "Once the user reviews and confirms, call wday__book_leave to submit."
+        )))],
+    },
+    {
+        "name": "my-learning",
+        "description": "See your assigned learning and discover new courses in Workday.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my learning in Workday. "
+            "Call wday__get_learning_assignments and wday__search_learning_content "
+            "— these are independent. "
+            "Once both return, show my assigned courses and recommend relevant content "
+            "based on the search results."
+        )))],
+    },
+    {
+        "name": "team-dashboard",
+        "description": "See your team overview, calendar, and performance summary in one view.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my team dashboard. "
+            "Call wday__get_team_overview, wday__get_team_calendar, and "
+            "wday__get_team_performance_summary — these are independent. "
+            "Once all three return, display team headcount/structure, who is out this week, "
+            "and pending performance review items."
+        )))],
+    },
+]

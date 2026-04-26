@@ -734,3 +734,68 @@ PROMPO_SPECS = [
     {"name": "show_requests", "description": "Show the latest service requests from ServiceNow.", "handler": prompt_show_requests},
     {"name": "incident_summary", "description": "Get a summary analysis of recent incidents.", "handler": prompt_incident_summary},
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-incidents",
+        "description": "Show the latest open incidents from ServiceNow.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest incidents from ServiceNow. "
+            "Call sn__get_incidents and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-approvals",
+        "description": "Show pending approval requests assigned to you in ServiceNow.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my pending approvals from ServiceNow. "
+            "Call sn__get_pending_approvals and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "it-snapshot",
+        "description": "Get a live summary of incidents, requests, change requests, and problems.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me an IT snapshot. "
+            "Call sn__get_incidents, sn__get_requests, sn__get_change_requests, and sn__get_problems "
+            "— these are independent. "
+            "Once all four return, summarise: open incident count by priority, pending requests, "
+            "in-flight change requests, and open problems."
+        )))],
+    },
+    {
+        "name": "resolve-incident",
+        "description": "Pick an open incident and mark it resolved with close code and notes.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to resolve an incident. Call sn__get_incidents to show the latest open incidents. "
+            "Ask me which incident to resolve, then ask for the close code and resolution notes. "
+            "Then call sn__resolve_incident with sys_id, close_code, and close_notes."
+        )))],
+    },
+    {
+        "name": "search-and-log",
+        "description": "Search the knowledge base for a topic and add a work note to a related incident.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to find a knowledge article and log it on an incident. "
+            "Ask me for the search topic, then call sn__get_knowledge_articles with that query. "
+            "Also call sn__get_incidents to show open incidents — these are independent. "
+            "Ask me which article and which incident to link, then call sn__add_work_note "
+            "with the incident sys_id and a note referencing the article."
+        )))],
+    },
+    {
+        "name": "raise-change",
+        "description": "Browse the service catalog and raise a new change request.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to raise a change request. Call sn__get_service_catalog_items to show available items. "
+            "Ask me what change I need to make. "
+            "Then call sn__create_change_request with the short_description, category, and risk level."
+        )))],
+    },
+]

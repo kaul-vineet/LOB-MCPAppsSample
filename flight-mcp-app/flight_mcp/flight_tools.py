@@ -439,3 +439,77 @@ PROMPO_SPECS = [
         "handler": lookup_arrivals_prompt,
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "airport-departures",
+        "description": "Get today's departures for an airport.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me departures for an airport. "
+            "Ask me for the airport ICAO code and the date (default today). "
+            "Then call ft__get_airport_departures with that airport and date and display in the widget."
+        )))],
+    },
+    {
+        "name": "airport-arrivals",
+        "description": "Get today's arrivals for an airport.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me arrivals for an airport. "
+            "Ask me for the airport ICAO code and the date (default today). "
+            "Then call ft__get_airport_arrivals with that airport and date and display in the widget."
+        )))],
+    },
+    {
+        "name": "airport-snapshot",
+        "description": "See departures and arrivals for an airport on a single board.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me a full airport board. "
+            "Ask me for the airport ICAO code and date. "
+            "Then call ft__get_airport_departures and ft__get_airport_arrivals with the same airport "
+            "and date — these are independent. "
+            "Once both return, show departures and arrivals side by side in the widget."
+        )))],
+    },
+    {
+        "name": "track-aircraft",
+        "description": "See the real-time position and recent flight path of an aircraft.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to track an aircraft. "
+            "Ask me for the aircraft ICAO24 registration. "
+            "Then call ft__get_aircraft_state and ft__get_aircraft_track with that icao24 "
+            "— these are independent. "
+            "Once both return, show current state (altitude, speed, heading) and plot the track."
+        )))],
+    },
+    {
+        "name": "aircraft-history",
+        "description": "Browse recent flights for an aircraft and view the track for a chosen flight.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to review flight history for an aircraft. "
+            "Ask me for the aircraft ICAO24 registration. "
+            "Call ft__get_flights_by_aircraft to list recent flights. "
+            "Ask me which flight to inspect. "
+            "Then call ft__get_aircraft_track with the icao24 and that flight's time window "
+            "and display the track in the widget."
+        )))],
+    },
+    {
+        "name": "follow-departure",
+        "description": "Find a departure at an airport and track that aircraft live.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to follow a specific departure. "
+            "Ask me for the airport ICAO code and date. "
+            "Call ft__get_airport_departures to list flights. "
+            "Ask me which flight to follow and note its icao24 registration. "
+            "Then call ft__get_aircraft_state and ft__get_aircraft_track with that icao24 "
+            "— these are independent. "
+            "Once both return, show current state and live track for that flight."
+        )))],
+    },
+]

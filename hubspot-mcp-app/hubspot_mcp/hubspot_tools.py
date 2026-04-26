@@ -1008,3 +1008,69 @@ PROMPO_SPECS = [
         "handler": show_marketing_prompt,
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-contacts",
+        "description": "Show the latest contacts in your HubSpot CRM.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest contacts from HubSpot. "
+            "Call hs__get_contacts and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-deals",
+        "description": "Show the latest deals in your HubSpot pipeline.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest deals from HubSpot. "
+            "Call hs__get_deals and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "crm-snapshot",
+        "description": "Get a live summary of contacts, deals, and companies in HubSpot.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me a HubSpot CRM snapshot. "
+            "Call hs__get_contacts, hs__get_deals, and hs__get_companies — these are independent. "
+            "Once all three return, summarise: total contacts, open deals by stage, and top companies."
+        )))],
+    },
+    {
+        "name": "email-audience",
+        "description": "Browse a marketing list and see who is in the audience.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to see the audience for a marketing list. "
+            "Call hs__get_lists to show available lists. "
+            "Ask me which list to inspect. "
+            "Then call hs__get_list_contacts with that list_id and show the contacts in the widget."
+        )))],
+    },
+    {
+        "name": "new-contact-and-deal",
+        "description": "Add a new contact to HubSpot and create a linked deal in one flow.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to add a new contact and create a deal for them. "
+            "Ask me for the contact's first name, last name, and email. "
+            "Call hs__create_contact with those details and note the returned contact_id. "
+            "Then ask me for the deal name, stage, and close date. "
+            "Call hs__create_deal with deal_name, stage, close_date, and the contact_id from the previous step."
+        )))],
+    },
+    {
+        "name": "manage-list",
+        "description": "Add or remove a contact from a HubSpot marketing list.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to manage a marketing list. "
+            "Call hs__get_lists and hs__get_contacts — these are independent. "
+            "Once both return, ask me which contact and which list to act on, "
+            "and whether to add or remove. "
+            "Then call hs__add_to_list or hs__remove_from_list with the list_id and contact_email."
+        )))],
+    },
+]

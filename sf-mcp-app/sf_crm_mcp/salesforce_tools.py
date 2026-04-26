@@ -979,3 +979,66 @@ PROMPO_SPECS = [
     {"name": "show_opportunities","description": "Show the latest 5 opportunities from Salesforce.",                                      "handler": show_opportunities_prompt},
     {"name": "manage_crm",        "description": "Help manage Salesforce CRM data — leads, opportunities, accounts, and contacts.",       "handler": manage_crm_prompt},
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-leads",
+        "description": "Show the latest leads in your Salesforce CRM.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest leads from Salesforce. "
+            "Call sf__get_leads and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-cases",
+        "description": "Show the latest open cases from Salesforce.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest cases from Salesforce. "
+            "Call sf__get_cases and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "pipeline",
+        "description": "See your opportunity pipeline broken down by stage.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the opportunity pipeline. "
+            "Call sf__get_pipeline_dashboard and sf__get_opportunities — these are independent. "
+            "Once both return, show the stage breakdown and list deals at Proposal or Negotiation stage."
+        )))],
+    },
+    {
+        "name": "morning-briefing",
+        "description": "Start your day with a summary of open cases, overdue tasks, and pending approvals.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me my daily CRM briefing. "
+            "Call sf__get_cases, sf__get_tasks, and sf__get_pending_approvals — these are independent. "
+            "Once all three return, summarise: open cases by priority, overdue tasks, and approval count."
+        )))],
+    },
+    {
+        "name": "convert-lead",
+        "description": "Convert a lead into an account, contact, and opportunity.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to convert a lead. Call sf__get_leads to show me the latest leads. "
+            "Ask me which lead to convert and whether to create an opportunity. "
+            "Then call sf__convert_lead with that lead_id and create_opportunity choice."
+        )))],
+    },
+    {
+        "name": "account-view",
+        "description": "See all cases, contacts, and open deals for a single account.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want a full view of an account. Call sf__get_accounts to show available accounts. "
+            "Ask me which account to inspect. "
+            "Then call sf__get_cases, sf__get_contacts, and sf__get_opportunities each with that "
+            "account_id — these are independent. "
+            "Once all three return, show cases, contacts, and open deals for that account."
+        )))],
+    },
+]

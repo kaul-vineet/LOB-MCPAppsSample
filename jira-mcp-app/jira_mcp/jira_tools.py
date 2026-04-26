@@ -1520,3 +1520,76 @@ IIRA_OOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": Orue},
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp import types as _t  # noqa: E402
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = IIRA_OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-issues",
+        "description": "Show Jira issues currently assigned to you.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the Jira issues assigned to me. "
+            "Call jira__get_my_issues and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "log-issue",
+        "description": "Show your open Jira issues and log time on one of them.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to log time on a Jira issue. "
+            "Call jira__get_my_issues to show my open issues. "
+            "Ask me which issue to log time on and how many hours. "
+            "Then call jira__log_work with that issue_key, time_spent (e.g. '2h'), "
+            "and an optional comment."
+        )))],
+    },
+    {
+        "name": "sprint-health",
+        "description": "Check the health of the current sprint — burn-down, completion, and blockers.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the current sprint health. "
+            "Call jira__list_boards to get available boards. "
+            "Use the first board's id, then call jira__list_sprints with that board_id "
+            "to find the active sprint. "
+            "Then call jira__get_team_sprint_health with the active sprint id "
+            "and display the health metrics."
+        )))],
+    },
+    {
+        "name": "backlog",
+        "description": "View the product backlog for a Jira board.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the product backlog. "
+            "Call jira__list_boards to get available boards. "
+            "Use the id from the first board returned and call jira__get_backlog "
+            "with that board_id explicitly. "
+            "Display the backlog issues in the widget."
+        )))],
+    },
+    {
+        "name": "triage-issue",
+        "description": "Review your open issues and move one to a new status.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to triage a Jira issue. "
+            "Call jira__get_my_issues to show my open issues. "
+            "Ask me which issue to move and what the new status should be. "
+            "Then call jira__transition_issue with that issue_key and the target transition name."
+        )))],
+    },
+    {
+        "name": "release-tracker",
+        "description": "See all release versions for a Jira project and their completion status.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to track releases for a project. "
+            "Call jira__list_projects to show available projects. "
+            "Ask me which project to view. "
+            "Then call jira__list_versions with that project_key and display all versions "
+            "with their status, release date, and whether they are overdue."
+        )))],
+    },
+]

@@ -1,10 +1,10 @@
 {
     "$schema": "https://aka.ms/json-schemas/copilot-extensions/v2.1/plugin.schema.json",
     "schema_version": "v2.4",
-    "name_for_human": "The Great Trading Company",
-    "description_for_human": "The Great Trading Company${{APP_NAME_SUFFIX}}",
+    "name_for_human": "Enterprise LOB Copilot MCP Apps",
+    "description_for_human": "Enterprise LOB Copilot MCP Apps${{APP_NAME_SUFFIX}}",
     "contact_email": "publisher-email@example.com",
-    "namespace": "gtc",
+    "namespace": "lob",
     "functions": [
         {
             "name": "sf__get_leads",
@@ -93,18 +93,6 @@
         {
             "name": "sf__get_pending_approvals",
             "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action."
-        },
-        {
-            "name": "sf__create_lead_form",
-            "description": "Opens a form to create a new Salesforce Lead. The user fills in details and submits."
-        },
-        {
-            "name": "sf__create_account_form",
-            "description": "Opens a form to create a new Salesforce Account. The user fills in details and submits."
-        },
-        {
-            "name": "sf__create_contact_form",
-            "description": "Opens a form to create a new Salesforce Contact. The user fills in details and submits."
         },
         {
             "name": "sn__get_incidents",
@@ -204,7 +192,7 @@
         },
         {
             "name": "hs__get_emails",
-            "description": "Get the latest marketing emails from HubSpot with performance stats. This is the entry point \u2014 the widget handles drill-down to lists and contacts."
+            "description": "Get the latest marketing emails from HubSpot with performance stats. This is the entry point — the widget handles drill-down to lists and contacts."
         },
         {
             "name": "hs__get_lists",
@@ -272,7 +260,7 @@
         },
         {
             "name": "ft__get_airport_arrivals",
-            "description": "Retrieve flights arriving at an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day. Use yesterday's date \u2014 same-day arrival data is not yet available."
+            "description": "Retrieve flights arriving at an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow, 'KJFK' for JFK). Date range must not exceed 1 day. Use yesterday's date — same-day arrival data is not yet available."
         },
         {
             "name": "ft__get_aircraft_track",
@@ -344,7 +332,7 @@
         },
         {
             "name": "saphr__get_org_chart",
-            "description": "Get the organisational hierarchy for an employee \u2014 manager, current role, and direct reports \u2014 rendered as an interactive org chart widget."
+            "description": "Get the organisational hierarchy for an employee — manager, current role, and direct reports — rendered as an interactive org chart widget."
         },
         {
             "name": "saphr__get_pay_stubs",
@@ -424,19 +412,19 @@
         },
         {
             "name": "wday__prepare_request_leave",
-            "description": "Book time off \u2014 opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget."
+            "description": "Book time off — opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget."
         },
         {
             "name": "wday__book_leave",
-            "description": "Submit leave request to Workday. Widget callback \u2014 called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
+            "description": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
         },
         {
             "name": "wday__prepare_change_business_title",
-            "description": "Change business title \u2014 opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
+            "description": "Change business title — opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
         },
         {
             "name": "wday__change_business_title",
-            "description": "Submit business title change to Workday. Widget callback \u2014 called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
+            "description": "Submit business title change to Workday. Widget callback — called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
         },
         {
             "name": "wday__search_learning_content",
@@ -520,11 +508,11 @@
         },
         {
             "name": "wday__prepare_give_feedback",
-            "description": "Open the give feedback widget \u2014 select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
+            "description": "Open the give feedback widget — select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
         },
         {
             "name": "wday__prepare_create_check_in",
-            "description": "Open the check-in creation widget \u2014 select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+            "description": "Open the check-in creation widget — select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
         },
         {
             "name": "wday__get_job_profiles",
@@ -672,7 +660,7 @@
         },
         {
             "name": "jira__show_create_issue_form",
-            "description": "Create a new Jira issue \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create an issue, log a bug, or file a ticket. Pass any known details to pre-fill fields."
+            "description": "Create a new Jira issue — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create an issue, log a bug, or file a ticket. Pass any known details to pre-fill fields."
         },
         {
             "name": "jira__add_comment",
@@ -684,23 +672,23 @@
         },
         {
             "name": "jira__show_create_project_form",
-            "description": "Create a new Jira project \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a project. Pass any known details to pre-fill fields."
+            "description": "Create a new Jira project — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a project. Pass any known details to pre-fill fields."
         },
         {
             "name": "jira__create_project",
-            "description": "Submit project creation to Jira. Widget callback \u2014 called automatically by the project form after the user clicks Submit. To create a project, use show_create_project_form instead."
+            "description": "Submit project creation to Jira. Widget callback — called automatically by the project form after the user clicks Submit. To create a project, use show_create_project_form instead."
         },
         {
             "name": "jira__update_project",
-            "description": "Submit project updates to Jira. Widget callback \u2014 called automatically by the project widget after the user clicks Submit."
+            "description": "Submit project updates to Jira. Widget callback — called automatically by the project widget after the user clicks Submit."
         },
         {
             "name": "jira__create_issue",
-            "description": "Submit issue creation to Jira. Widget callback \u2014 called automatically by the issue form after the user clicks Submit. To create an issue, use show_create_issue_form instead."
+            "description": "Submit issue creation to Jira. Widget callback — called automatically by the issue form after the user clicks Submit. To create an issue, use show_create_issue_form instead."
         },
         {
             "name": "jira__update_issue",
-            "description": "Submit issue updates to Jira. Widget callback \u2014 called automatically by the issue widget after the user clicks Submit. To view or edit an issue, use get_issue to load the issue widget."
+            "description": "Submit issue updates to Jira. Widget callback — called automatically by the issue widget after the user clicks Submit. To view or edit an issue, use get_issue to load the issue widget."
         },
         {
             "name": "jira__move_issues_to_sprint",
@@ -765,6 +753,158 @@
         {
             "name": "jira__update_version",
             "description": "Update a Jira version/release. Use to mark as released, update release date, or archive."
+        },
+        {
+            "name": "sf__get_lead",
+            "description": "Get full details for a single Salesforce Lead by Id. Returns all fields including description, title, website, revenue, and created date."
+        },
+        {
+            "name": "sf__get_case",
+            "description": "Get full details for a single Salesforce Case by Id. Returns all fields including description, comments, origin, type, account, and dates."
+        },
+        {
+            "name": "sf__get_case_comments",
+            "description": "Get notes/comments for a Salesforce Case by case Id."
+        },
+        {
+            "name": "sf__update_task",
+            "description": "Update a Salesforce Task. Pass task_id plus any fields to change."
+        },
+        {
+            "name": "sf__get_task",
+            "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record."
+        },
+        {
+            "name": "sf__get_entity_config",
+            "description": "Get the current display configuration for a Salesforce entity. entity_type: Lead, Opportunity, Account, Contact, Case, or Task."
+        },
+        {
+            "name": "sf__update_entity_config",
+            "description": "Update the display configuration for a Salesforce entity. Pass entity_type and a JSON patch string. Changes take effect immediately and are saved to disk."
+        },
+        {
+            "name": "sf__reset_entity_config",
+            "description": "Reset a Salesforce entity configuration to factory defaults. Pass entity_type=all to reset every entity at once."
+        },
+        {
+            "name": "sf__show_create_form",
+            "description": "Opens a create form in the widget for the specified Salesforce entity. Supported entities: lead, account, contact, opportunity, case, task. FK pre-resolution required for contact, opportunity, case."
+        },
+        {
+            "name": "sn__get_change_tasks",
+            "description": "Get change tasks for a specific change request. Requires change_sys_id (the sys_id of the parent change_request). Called from the widget when expanding a change request row."
+        },
+        {
+            "name": "sn__create_hr_case",
+            "description": "Create a new HR case in ServiceNow. Requires subject. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low)."
+        },
+        {
+            "name": "sn__update_hr_case",
+            "description": "Update an existing HR case in ServiceNow. Requires sys_id. Optional editable fields: subject, priority, state."
+        },
+        {
+            "name": "sn__add_hr_work_note",
+            "description": "Add a work note to an existing HR case in ServiceNow. Requires sys_id and work_note text."
+        },
+        {
+            "name": "sn__hr_approve_record",
+            "description": "Approve an HR approval record in ServiceNow. Requires sys_id of the sysapproval_approver record."
+        },
+        {
+            "name": "sn__hr_reject_record",
+            "description": "Reject an HR approval record in ServiceNow. Requires sys_id. Optional: comments explaining the rejection."
+        },
+        {
+            "name": "sap__get_po_line_items",
+            "description": "Fetch line items for a specific Purchase Order from SAP S/4HANA. Returns item number, material, description, quantity, unit, price, currency, and delivery date."
+        },
+        {
+            "name": "sap__get_goods_receipts",
+            "description": "Fetch goods receipts for a specific PO line item. Returns GR document number, posting date, quantity, unit, and delivery note."
+        },
+        {
+            "name": "sap__get_bp_purchase_orders",
+            "description": "Fetch purchase orders for a specific Business Partner (supplier). Returns all POs linked to the given partner ID."
+        },
+        {
+            "name": "sap__get_material_plant_data",
+            "description": "Fetch plant-level data for a material from SAP S/4HANA. Returns MRP type, lot size, safety stock, and planned lead time per plant."
+        },
+        {
+            "name": "sap__get_stock_levels",
+            "description": "Fetch stock levels for a material at a specific plant. Returns unrestricted, QI, blocked, and in-transit quantities per storage location."
+        },
+        {
+            "name": "sap__get_sales_orders",
+            "description": "Fetch sales orders from SAP S/4HANA. Returns SO number, sold-to party, order date, net value, currency, and status."
+        },
+        {
+            "name": "sap__get_so_items",
+            "description": "Fetch line items for a specific Sales Order from SAP S/4HANA. Returns item number, material, description, quantity, unit, and net price."
+        },
+        {
+            "name": "sap__get_deliveries",
+            "description": "Fetch deliveries for a specific Sales Order item. Returns delivery document, GI date, quantity, and delivery status."
+        },
+        {
+            "name": "hs__get_companies",
+            "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry."
+        },
+        {
+            "name": "hs__create_company",
+            "description": "Create a new Company in HubSpot CRM. Requires company name at minimum. Returns updated list."
+        },
+        {
+            "name": "hs__update_company",
+            "description": "Update an existing Company in HubSpot CRM by its record Id. Only fields provided will be updated."
+        },
+        {
+            "name": "hs__get_tickets",
+            "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category."
+        },
+        {
+            "name": "hs__create_ticket",
+            "description": "Create a new Support Ticket in HubSpot CRM. Requires subject and pipeline_stage. Returns updated list."
+        },
+        {
+            "name": "hs__update_ticket",
+            "description": "Update an existing Support Ticket in HubSpot CRM by its record Id."
+        },
+        {
+            "name": "hs__update_deal",
+            "description": "Update an existing Deal in HubSpot CRM by its record Id. Updates name, stage, amount, or close date."
+        },
+        {
+            "name": "hs__get_company_contacts",
+            "description": "Get contacts associated with a specific HubSpot Company. Called when drilling into a company row."
+        },
+        {
+            "name": "hs__get_company_deals",
+            "description": "Get deals associated with a specific HubSpot Company. Called when drilling into a company row."
+        },
+        {
+            "name": "hs__get_company_tickets",
+            "description": "Get support tickets associated with a specific HubSpot Company. Called when drilling into a company row."
+        },
+        {
+            "name": "hs__get_contact_deals",
+            "description": "Get deals associated with a specific HubSpot Contact. Called when drilling into a contact row."
+        },
+        {
+            "name": "hs__get_deal_contacts",
+            "description": "Get contacts associated with a specific HubSpot Deal. Called when drilling into a deal row."
+        },
+        {
+            "name": "hs__get_ticket_notes",
+            "description": "Get notes/comments for a specific HubSpot Support Ticket. Called when drilling into a ticket row."
+        },
+        {
+            "name": "hs__create_company_form",
+            "description": "Opens a form to create a new HubSpot Company. The user fills in details and submits."
+        },
+        {
+            "name": "hs__create_ticket_form",
+            "description": "Opens a form to create a new HubSpot Support Ticket. The user fills in details and submits."
         }
     ],
     "runtimes": [
@@ -777,31 +917,37 @@
                 }
             },
             "run_for_functions": [
-                "sf__get_leads",
-                "sf__create_lead",
-                "sf__update_lead",
-                "sf__get_opportunities",
-                "sf__create_opportunity",
-                "sf__update_opportunity",
-                "sf__get_accounts",
+                "sf__convert_lead",
                 "sf__create_account",
-                "sf__update_account",
-                "sf__get_contacts",
-                "sf__create_contact",
-                "sf__update_contact",
-                "sf__get_cases",
                 "sf__create_case",
-                "sf__update_case",
-                "sf__get_tasks",
+                "sf__create_contact",
+                "sf__create_lead",
+                "sf__create_opportunity",
                 "sf__create_task",
                 "sf__delete_lead",
-                "sf__convert_lead",
-                "sf__get_pipeline_dashboard",
+                "sf__get_accounts",
                 "sf__get_campaigns",
+                "sf__get_case",
+                "sf__get_case_comments",
+                "sf__get_cases",
+                "sf__get_contacts",
+                "sf__get_entity_config",
+                "sf__get_lead",
+                "sf__get_leads",
+                "sf__get_opportunities",
                 "sf__get_pending_approvals",
-                "sf__create_lead_form",
-                "sf__create_account_form",
-                "sf__create_contact_form"
+                "sf__get_pipeline_dashboard",
+                "sf__get_task",
+                "sf__get_tasks",
+                "sf__reset_entity_config",
+                "sf__show_create_form",
+                "sf__update_account",
+                "sf__update_case",
+                "sf__update_contact",
+                "sf__update_entity_config",
+                "sf__update_lead",
+                "sf__update_opportunity",
+                "sf__update_task"
             ],
             "auth": {
                 "type": "None"
@@ -816,24 +962,30 @@
                 }
             },
             "run_for_functions": [
-                "sn__get_incidents",
-                "sn__get_requests",
-                "sn__get_request_items",
+                "sn__add_hr_work_note",
+                "sn__add_work_note",
+                "sn__create_change_request",
+                "sn__create_hr_case",
                 "sn__create_incident",
+                "sn__create_incident_form",
                 "sn__create_request",
+                "sn__create_request_form",
+                "sn__get_change_requests",
+                "sn__get_change_tasks",
+                "sn__get_incidents",
+                "sn__get_knowledge_articles",
+                "sn__get_pending_approvals",
+                "sn__get_problems",
+                "sn__get_request_items",
+                "sn__get_requests",
+                "sn__get_service_catalog_items",
+                "sn__hr_approve_record",
+                "sn__hr_reject_record",
+                "sn__resolve_incident",
+                "sn__update_hr_case",
                 "sn__update_incident",
                 "sn__update_request",
-                "sn__update_request_item",
-                "sn__resolve_incident",
-                "sn__add_work_note",
-                "sn__get_knowledge_articles",
-                "sn__get_change_requests",
-                "sn__create_change_request",
-                "sn__get_problems",
-                "sn__get_pending_approvals",
-                "sn__get_service_catalog_items",
-                "sn__create_incident_form",
-                "sn__create_request_form"
+                "sn__update_request_item"
             ],
             "auth": {
                 "type": "None"
@@ -848,12 +1000,20 @@
                 }
             },
             "run_for_functions": [
-                "sap__get_purchase_orders",
-                "sap__get_business_partners",
-                "sap__get_materials",
                 "sap__create_purchase_order",
-                "sap__update_purchase_order",
-                "sap__get_material_details"
+                "sap__get_bp_purchase_orders",
+                "sap__get_business_partners",
+                "sap__get_deliveries",
+                "sap__get_goods_receipts",
+                "sap__get_material_details",
+                "sap__get_material_plant_data",
+                "sap__get_materials",
+                "sap__get_po_line_items",
+                "sap__get_purchase_orders",
+                "sap__get_sales_orders",
+                "sap__get_so_items",
+                "sap__get_stock_levels",
+                "sap__update_purchase_order"
             ],
             "auth": {
                 "type": "None"
@@ -868,20 +1028,35 @@
                 }
             },
             "run_for_functions": [
-                "hs__get_emails",
-                "hs__get_lists",
-                "hs__get_list_contacts",
                 "hs__add_to_list",
+                "hs__create_company",
+                "hs__create_company_form",
+                "hs__create_contact",
+                "hs__create_contact_form",
+                "hs__create_deal",
+                "hs__create_deal_form",
+                "hs__create_ticket",
+                "hs__create_ticket_form",
+                "hs__get_companies",
+                "hs__get_company_contacts",
+                "hs__get_company_deals",
+                "hs__get_company_tickets",
+                "hs__get_contact_deals",
+                "hs__get_contacts",
+                "hs__get_deal_contacts",
+                "hs__get_deals",
+                "hs__get_emails",
+                "hs__get_list_contacts",
+                "hs__get_lists",
+                "hs__get_ticket_notes",
+                "hs__get_tickets",
                 "hs__remove_from_list",
+                "hs__update_company",
+                "hs__update_contact",
+                "hs__update_deal",
                 "hs__update_email",
                 "hs__update_list",
-                "hs__get_contacts",
-                "hs__create_contact",
-                "hs__update_contact",
-                "hs__get_deals",
-                "hs__create_deal",
-                "hs__create_contact_form",
-                "hs__create_deal_form"
+                "hs__update_ticket"
             ],
             "auth": {
                 "type": "None"

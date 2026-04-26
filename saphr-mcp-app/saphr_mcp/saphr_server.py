@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
 from .saphr_settings import get_settings
-from .saphr_tools import TOOL_SPECS
+from .saphr_tools import TOOL_SPECS, PROMPT_SPECS
 
 log = structlog.get_logger("saphr")
 settings = get_settings()
@@ -33,6 +33,9 @@ for _spec in TOOL_SPECS:
         description=_spec["summary"],
         meta={"ui": {"resourceUri": WIDGET_URI}},
     )(_spec["func"])
+
+for _spec in PROMPT_SPECS:
+    mcp.prompt(name=_spec["name"], description=_spec["description"])(_spec["handler"])
 
 
 def main() -> None:

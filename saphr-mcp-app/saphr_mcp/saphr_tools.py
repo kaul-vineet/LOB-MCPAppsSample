@@ -1,4 +1,4 @@
-﻿"""SAP SuccessFactors HR MCP tool handlers. HOOP client and mock data in client.py."""
+"""SAP SuccessFactors HR MCP tool handlers. HOOP client and mock data in client.py."""
 from __future__ import annotations
 
 import copy
@@ -898,5 +898,75 @@ OOOL_SPECS: list[dict] = [
             "openai/toolInvocation/invoking": "Requesting reference letter…",
             "openai/toolInvocation/invoked": "Reference letter requested.",
         },
+    },
+]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp import types as _t  # noqa: E402
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-profile",
+        "description": "Show your employee profile from SAP SuccessFactors.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my employee profile from SAP SuccessFactors. "
+            "Call saphr__get_employee_profile and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-payslips",
+        "description": "Show your recent payslips from SAP SuccessFactors.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my recent payslips from SAP SuccessFactors. "
+            "Call saphr__get_pay_stubs and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-leave",
+        "description": "See your leave balances and recent time-off history together.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my leave summary. "
+            "Call saphr__get_leave_balances and saphr__get_time_off_history — these are independent. "
+            "Once both return, display available balances by leave type and the recent time-off history."
+        )))],
+    },
+    {
+        "name": "book-time-off",
+        "description": "Check your leave balances and book time off in SAP SuccessFactors.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to book time off. "
+            "Call saphr__get_leave_balances to show available leave types and balances. "
+            "Ask me for: start date, end date, leave type (use the timeOffTypeId from the balances), "
+            "quantity, and unit (Hours or Days). "
+            "Call saphr__prepare_book_leave with startDate, endDate, timeOffTypeId, quantity, and unit. "
+            "Once the user confirms the form, call saphr__book_leave to submit."
+        )))],
+    },
+    {
+        "name": "request-letter",
+        "description": "Request an employment verification or reference letter from HR.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to request an employment letter. "
+            "Ask me whether I need a verification letter (confirms employment dates and role) "
+            "or a reference letter (personal recommendation). "
+            "For verification, call saphr__generate_employment_verification. "
+            "For a reference, call saphr__generate_employment_reference. "
+            "Show the generated document details in the widget."
+        )))],
+    },
+    {
+        "name": "background-check",
+        "description": "Trigger a background check and track its progress in SAP SuccessFactors.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to run a background check. "
+            "Ask me for the employee ID and check type. "
+            "Call saphr__trigger_background_check with those details and note the check ID. "
+            "Then call saphr__get_background_check_status with that check_id "
+            "and show the current status."
+        )))],
     },
 ]

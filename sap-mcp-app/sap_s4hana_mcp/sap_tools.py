@@ -624,3 +624,71 @@ PROMPO_SPECS = [
         "handler": manage_erp_prompt,
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-purchase-orders",
+        "description": "Show the latest purchase orders from SAP S/4HANA.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest purchase orders from SAP. "
+            "Call sap__get_purchase_orders and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-sales-orders",
+        "description": "Show the latest sales orders from SAP S/4HANA.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me the latest sales orders from SAP. "
+            "Call sap__get_sales_orders and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "po-line-items",
+        "description": "Drill into the line items for a specific purchase order.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to see line items for a purchase order. "
+            "Call sap__get_purchase_orders to show the latest POs. "
+            "Ask me which PO to inspect. "
+            "Then call sap__get_po_line_items with that purchase_order number and display the items."
+        )))],
+    },
+    {
+        "name": "stock-levels",
+        "description": "Check stock levels for a material across plants in SAP.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to check stock levels. "
+            "Call sap__get_materials to show available materials. "
+            "Ask me which material to check. "
+            "Then call sap__get_stock_levels with that material_id and the plant code, "
+            "and display the stock quantities."
+        )))],
+    },
+    {
+        "name": "orders-by-supplier",
+        "description": "View all purchase orders for a specific supplier in SAP.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to see orders for a specific supplier. "
+            "Call sap__get_business_partners to show available suppliers. "
+            "Ask me which supplier to look up. "
+            "Then call sap__get_bp_purchase_orders with that partner_id and display their orders."
+        )))],
+    },
+    {
+        "name": "track-delivery",
+        "description": "Track the delivery status for items in a specific sales order.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to track a delivery. "
+            "Call sap__get_sales_orders to show the latest SOs. "
+            "Ask me which sales order to track. "
+            "Then call sap__get_so_items with that sales_order number. "
+            "Ask me which line item to check. "
+            "Then call sap__get_deliveries with the sales_order and item_number and show delivery status."
+        )))],
+    },
+]

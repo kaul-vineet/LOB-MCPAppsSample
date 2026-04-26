@@ -489,3 +489,72 @@ OOUPA_OOOL_SPEOS: list[dict] = [
         },
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp import types as _t  # noqa: E402
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOUPA_OOOL_SPEOS
+
+PROMPT_SPECS = [
+    {
+        "name": "my-approvals",
+        "description": "Show pending approval items waiting for your action in Coupa.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my pending approvals from Coupa. "
+            "Call coupa__list_approvals and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "my-requisitions",
+        "description": "Show your open purchase requisitions in Coupa.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my purchase requisitions from Coupa. "
+            "Call coupa__list_requisitions and display the results in the widget."
+        )))],
+    },
+    {
+        "name": "procurement-snapshot",
+        "description": "Get a live view of approvals, requisitions, and receipts across Coupa.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Give me a procurement snapshot. "
+            "Call coupa__list_approvals, coupa__list_requisitions, and coupa__list_receipts "
+            "— these are independent. "
+            "Once all three return, summarise: pending approvals count, open requisitions, "
+            "and recent goods receipts."
+        )))],
+    },
+    {
+        "name": "check-po-and-invoice",
+        "description": "Look up the status of a PO and a related invoice at the same time.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to check a PO and invoice status. "
+            "Ask me for the PO number and the invoice number. "
+            "Then call coupa__get_po_status with the po_number and coupa__get_invoice_status "
+            "with the invoice_number — these are independent. "
+            "Once both return, show PO status and invoice payment status side by side."
+        )))],
+    },
+    {
+        "name": "order-from-catalog",
+        "description": "Browse the Coupa catalog and create a requisition for an item.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to order something from the catalog. "
+            "Call coupa__list_catalog_items to show available items. "
+            "Ask me which item to order and the quantity. "
+            "Call coupa__prepare_create_requisition to open the requisition form with those details. "
+            "Once the user confirms, call coupa__create_requisition to submit."
+        )))],
+    },
+    {
+        "name": "find-supplier",
+        "description": "Search for a supplier and view their full profile in Coupa.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to find a supplier. "
+            "Call coupa__list_suppliers to show available suppliers. "
+            "Ask me which supplier to view. "
+            "Then call coupa__get_supplier with that supplier_id and display their profile."
+        )))],
+    },
+]

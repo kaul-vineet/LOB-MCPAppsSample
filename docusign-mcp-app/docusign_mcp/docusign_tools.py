@@ -404,3 +404,67 @@ PROMPO_SPECS = [
         "handler": docusign_overview_prompt,
     },
 ]
+
+
+# ── Aliases for server.py imports ────────────────────────────────────────────
+from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
+
+TOOL_SPECS = OOOL_SPECS
+
+PROMPT_SPECS = [
+    {
+        "name": "awaiting-signature",
+        "description": "Show envelopes that are out for signature and still pending.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me envelopes that are awaiting signature. "
+            "Call ds__get_envelopes and display only those with status 'sent' or 'delivered' in the widget."
+        )))],
+    },
+    {
+        "name": "signed-documents",
+        "description": "Show envelopes that have been signed and completed.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my completed/signed documents. "
+            "Call ds__get_envelopes and display only those with status 'completed' in the widget."
+        )))],
+    },
+    {
+        "name": "envelope-and-templates",
+        "description": "See your recent envelopes and available templates side by side.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "Show me my recent envelopes and available templates. "
+            "Call ds__get_envelopes and ds__get_templates — these are independent. "
+            "Once both return, display envelopes in the widget and list the available templates below."
+        )))],
+    },
+    {
+        "name": "send-for-signing",
+        "description": "Pick a template and send a document out for signature.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to send a document for signing. Call ds__get_templates to show available templates. "
+            "Ask me which template to use and who should sign (name and email). "
+            "Then call ds__send_envelope_form to open the sending form with those details."
+        )))],
+    },
+    {
+        "name": "manage-envelope",
+        "description": "Void or resend an envelope that is currently out for signature.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to manage an envelope. Call ds__get_envelopes to show envelopes in flight. "
+            "Ask me which envelope to act on and whether to void or resend. "
+            "If voiding, ask me for the void reason before proceeding. "
+            "Then call ds__void_envelope with envelope_id and void_reason, "
+            "or ds__resend_envelope with envelope_id."
+        )))],
+    },
+    {
+        "name": "check-signing-status",
+        "description": "Get the full signing status and recipient details for an envelope.",
+        "handler": lambda: [_PM(role="user", content=_TC(type="text", text=(
+            "I want to check the signing status of an envelope. "
+            "Call ds__get_envelopes to show the list. "
+            "Ask me which envelope to inspect. "
+            "Then call ds__get_envelope_details with that envelope_id and show signer status."
+        )))],
+    },
+]
