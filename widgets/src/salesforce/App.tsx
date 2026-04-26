@@ -291,7 +291,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const doSearch = async () => {
     setFiltering(true);
     try {
-      const res = await callTool('get_accounts', { name: filterName });
+      const res = await callTool('sf__get_accounts', { name: filterName });
       setLocalItems(res?.items || []);
     } finally { setFiltering(false); }
   };
@@ -303,8 +303,8 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (creating) { await callTool('create_account', form); toast('✓ Account created'); }
-      else { await callTool('update_account', { account_id: editingId, ...form }); toast('✓ Account updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_account', form); toast('✓ Account created'); }
+      else { await callTool('sf__update_account', { account_id: editingId, ...form }); toast('✓ Account updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -319,9 +319,9 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
     setLoadingChildren(p => new Set([...p, id]));
     try {
       const [rc, ro, rca] = await Promise.all([
-        childContacts[id] !== undefined ? null : callTool('get_contacts', { account_id: id }).catch(() => null),
-        childOpps[id]     !== undefined ? null : callTool('get_opportunities', { account_id: id }).catch(() => null),
-        childCases[id]    !== undefined ? null : callTool('get_cases', { account_id: id }).catch(() => null),
+        childContacts[id] !== undefined ? null : callTool('sf__get_contacts', { account_id: id }).catch(() => null),
+        childOpps[id]     !== undefined ? null : callTool('sf__get_opportunities', { account_id: id }).catch(() => null),
+        childCases[id]    !== undefined ? null : callTool('sf__get_cases', { account_id: id }).catch(() => null),
       ]);
       setChildContacts(p => ({ ...p, [id]: rc?.items  ?? p[id] ?? [] }));
       setChildOpps(p =>     ({ ...p, [id]: ro?.items  ?? p[id] ?? [] }));
@@ -443,7 +443,7 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
     setFiltering(true);
-    try { const res = await callTool('get_leads', { name: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('sf__get_leads', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -454,8 +454,8 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (creating) { await callTool('create_lead', form); toast('✓ Lead created'); }
-      else { await callTool('update_lead', { lead_id: editingId, ...form }); toast('✓ Lead updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_lead', form); toast('✓ Lead created'); }
+      else { await callTool('sf__update_lead', { lead_id: editingId, ...form }); toast('✓ Lead updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -464,7 +464,7 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const handleConvert = async (leadId: string, leadName: string) => {
     setConverting(leadId);
     try {
-      await callTool('convert_lead', { lead_id: leadId });
+      await callTool('sf__convert_lead', { lead_id: leadId });
       toast(`✓ ${leadName} converted to Account/Contact`);
       setLocalItems(p => p.filter(x => x.id !== leadId));
     } catch (e: any) { toast(e.message || 'Convert failed', 'error'); }
@@ -569,7 +569,7 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
     setFiltering(true);
-    try { const res = await callTool('get_contacts', { name: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('sf__get_contacts', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -580,8 +580,8 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (creating) { await callTool('create_contact', form); toast('✓ Contact created'); }
-      else { await callTool('update_contact', { contact_id: editingId, ...form }); toast('✓ Contact updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_contact', form); toast('✓ Contact created'); }
+      else { await callTool('sf__update_contact', { contact_id: editingId, ...form }); toast('✓ Contact updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -594,7 +594,7 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
     setExpandedId(c.id);
     if (childOpps[c.id] || !c.account_id) return;
     setLoadingChild(c.id);
-    try { const res = await callTool('get_opportunities', { account_id: c.account_id }); setChildOpps(p => ({ ...p, [c.id]: res?.items || [] })); }
+    try { const res = await callTool('sf__get_opportunities', { account_id: c.account_id }); setChildOpps(p => ({ ...p, [c.id]: res?.items || [] })); }
     catch { setChildOpps(p => ({ ...p, [c.id]: [] })); }
     finally { setLoadingChild(null); }
   };
@@ -683,7 +683,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_opportunities', { name: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('sf__get_opportunities', { name: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -695,8 +695,8 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
     setSaving(true);
     try {
       const args = { ...form, amount: form.amount ? parseFloat(form.amount) : null, probability: form.probability ? parseInt(form.probability) : null };
-      if (creating) { await callTool('create_opportunity', args); toast('✓ Opportunity created'); }
-      else { await callTool('update_opportunity', { opportunity_id: editingId, ...args }); toast('✓ Opportunity updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_opportunity', args); toast('✓ Opportunity created'); }
+      else { await callTool('sf__update_opportunity', { opportunity_id: editingId, ...args }); toast('✓ Opportunity updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -719,7 +719,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
     setExpandedId(o.id);
     if (childContacts[o.id] || !o.account_id) return;
     setLoadingChild(o.id);
-    try { const res = await callTool('get_contacts', { account_id: o.account_id }); setChildContacts(p => ({ ...p, [o.id]: res?.items || [] })); }
+    try { const res = await callTool('sf__get_contacts', { account_id: o.account_id }); setChildContacts(p => ({ ...p, [o.id]: res?.items || [] })); }
     catch { setChildContacts(p => ({ ...p, [o.id]: [] })); }
     finally { setLoadingChild(null); }
   };
@@ -799,7 +799,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_cases', { subject: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('sf__get_cases', { subject: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -810,8 +810,8 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (creating) { await callTool('create_case', form); toast('✓ Case created'); }
-      else { await callTool('update_case', { case_id: editingId, ...form }); toast('✓ Case updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_case', form); toast('✓ Case created'); }
+      else { await callTool('sf__update_case', { case_id: editingId, ...form }); toast('✓ Case updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -823,7 +823,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
   const loadComments = async (id: string) => {
     if (childComments[id]) return;
     setLoadingChild(id);
-    try { const res = await callTool('get_case_comments', { case_id: id }); setChildComments(p => ({ ...p, [id]: res?.items || [] })); }
+    try { const res = await callTool('sf__get_case_comments', { case_id: id }); setChildComments(p => ({ ...p, [id]: res?.items || [] })); }
     catch { setChildComments(p => ({ ...p, [id]: [] })); }
     finally { setLoadingChild(null); }
   };
@@ -915,7 +915,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   const doSearch = async () => {
     setFiltering(true);
-    try { const res = await callTool('get_tasks', { subject: filterName }); setLocalItems(res?.items || []); }
+    try { const res = await callTool('sf__get_tasks', { subject: filterName }); setLocalItems(res?.items || []); }
     finally { setFiltering(false); }
   };
 
@@ -926,8 +926,8 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (creating) { await callTool('create_task', form); toast('✓ Task created'); }
-      else { await callTool('update_task', { task_id: editingId, ...form }); toast('✓ Task updated'); setLastSavedId(editingId); }
+      if (creating) { await callTool('sf__create_task', form); toast('✓ Task created'); }
+      else { await callTool('sf__update_task', { task_id: editingId, ...form }); toast('✓ Task updated'); setLastSavedId(editingId); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -992,7 +992,7 @@ function CampaignsView({ items, callTool, theme }: { items: any[]; callTool: (n:
     setExpandedId(id);
     if (childLeads[id]) return;
     setLoadingChild(id);
-    try { const res = await callTool('get_leads', { campaign_id: id }); setChildLeads(p => ({ ...p, [id]: res?.items || [] })); }
+    try { const res = await callTool('sf__get_leads', { campaign_id: id }); setChildLeads(p => ({ ...p, [id]: res?.items || [] })); }
     catch { setChildLeads(p => ({ ...p, [id]: [] })); }
     finally { setLoadingChild(null); }
   };

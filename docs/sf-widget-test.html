@@ -483,25 +483,25 @@ window.addEventListener('message', function(e) {
       var result;
 
       // get_accounts — search by name/industry
-      if (tool === 'get_accounts') {
+      if (tool === 'sf__get_accounts') {
         var n = (args.name||'').toLowerCase(), ind = (args.industry||'').toLowerCase();
         result = { type:'accounts', items: MOCK_ACCOUNTS.items.filter(function(a){ return (!n||(a.name||'').toLowerCase().includes(n))&&(!ind||(a.industry||'').toLowerCase().includes(ind)); }) };
         log('→ get_accounts: ' + result.items.length);
       }
-      else if (tool === 'create_account') {
+      else if (tool === 'sf__create_account') {
         var na = { id:'001'+(nextId.account++), name:args.name||'', industry:args.industry||'', phone:args.phone||'', website:args.website||'', type:args.type||'', billing_city:args.billing_city||'' };
         MOCK_ACCOUNTS.items.unshift(na);
         result = { type:'accounts', items:MOCK_ACCOUNTS.items, _createdId:na.id };
         log('→ created account: ' + na.name);
       }
-      else if (tool === 'update_account') {
+      else if (tool === 'sf__update_account') {
         MOCK_ACCOUNTS.items.forEach(function(a){ if(a.id===args.account_id){ ['name','industry','phone','website','type','billing_city'].forEach(function(k){ if(args[k]!==undefined) a[k]=args[k]; }); } });
         result = { type:'accounts', items:MOCK_ACCOUNTS.items };
         log('→ updated account');
       }
 
       // get_leads — campaign drill-down or name search
-      else if (tool === 'get_leads') {
+      else if (tool === 'sf__get_leads') {
         if (args.campaign_id) {
           result = CAMPAIGN_LEADS[args.campaign_id] || { items: [] };
           log('→ campaign leads: ' + (result.items||[]).length);
@@ -513,25 +513,25 @@ window.addEventListener('message', function(e) {
       }
 
       // Lead ops
-      else if (tool === 'create_lead') {
+      else if (tool === 'sf__create_lead') {
         var nl = { id:'00Q'+(nextId.lead++), first_name:args.first_name||'', last_name:args.last_name||'', company:args.company||'', email:args.email||'', phone:args.phone||'', status:args.status||'Open - Not Contacted', lead_source:args.lead_source||'' };
         currentLeads.items.unshift(nl);
         result = JSON.parse(JSON.stringify(currentLeads)); result._createdId = nl.id;
         log('→ created lead: ' + nl.last_name);
       }
-      else if (tool === 'update_lead') {
+      else if (tool === 'sf__update_lead') {
         currentLeads.items.forEach(function(l){ if(l.id===args.lead_id){ ['first_name','last_name','company','email','phone','status','lead_source'].forEach(function(k){ if(args[k]!==undefined) l[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentLeads));
         log('→ updated lead');
       }
-      else if (tool === 'convert_lead') {
+      else if (tool === 'sf__convert_lead') {
         currentLeads.items = currentLeads.items.filter(function(l){ return l.id!==args.lead_id; });
         result = { type:'lead_convert', leadId:args.lead_id, accountId:'001NEW001', contactId:'003NEW001', opportunityId:'006NEW001' };
         log('→ converted lead');
       }
 
       // get_contacts — account drill-down or name search
-      else if (tool === 'get_contacts') {
+      else if (tool === 'sf__get_contacts') {
         if (args.account_id) {
           result = ACCOUNT_CONTACTS[args.account_id] || { items: [] };
           log('→ account contacts: ' + (result.items||[]).length);
@@ -543,19 +543,19 @@ window.addEventListener('message', function(e) {
       }
 
       // Contact ops
-      else if (tool === 'create_contact') {
+      else if (tool === 'sf__create_contact') {
         var nc = { id:'003'+(nextId.contact++), first_name:args.first_name||'', last_name:args.last_name||'', email:args.email||'', phone:args.phone||'', title:args.title||'', account_name:args.account_name||'' };
         currentContacts.items.unshift(nc);
         result = JSON.parse(JSON.stringify(currentContacts)); result._createdId = nc.id;
         log('→ created contact: ' + nc.last_name);
       }
-      else if (tool === 'update_contact') {
+      else if (tool === 'sf__update_contact') {
         currentContacts.items.forEach(function(c){ if(c.id===args.contact_id){ ['first_name','last_name','email','phone','title','account_name'].forEach(function(k){ if(args[k]!==undefined) c[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentContacts));
         log('→ updated contact');
       }
       // get_opportunities — account drill-down or name/stage search
-      else if (tool === 'get_opportunities') {
+      else if (tool === 'sf__get_opportunities') {
         if (args.account_id) {
           result = ACCOUNT_OPPS[args.account_id] || { items: [] };
           log('→ account opps: ' + (result.items||[]).length);
@@ -567,19 +567,19 @@ window.addEventListener('message', function(e) {
       }
 
       // Opportunity ops
-      else if (tool === 'create_opportunity') {
+      else if (tool === 'sf__create_opportunity') {
         var no = { id:'006'+(nextId.opp++), name:args.name||'', account_name:args.account_name||'', stage:args.stage||'Prospecting', amount:args.amount||0, close_date:args.close_date||'', probability:args.probability||0 };
         currentOpps.items.unshift(no);
         result = JSON.parse(JSON.stringify(currentOpps)); result._createdId = no.id;
         log('→ created opp: ' + no.name);
       }
-      else if (tool === 'update_opportunity') {
+      else if (tool === 'sf__update_opportunity') {
         currentOpps.items.forEach(function(o){ if(o.id===args.opportunity_id){ ['name','account_name','stage','amount','close_date','probability'].forEach(function(k){ if(args[k]!==undefined) o[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentOpps));
         log('→ updated opp');
       }
       // get_cases — account drill-down or subject text search
-      else if (tool === 'get_cases') {
+      else if (tool === 'sf__get_cases') {
         if (args.account_id) {
           result = ACCOUNT_CASES[args.account_id] || { items: [] };
           log('→ account cases: ' + (result.items||[]).length);
@@ -591,43 +591,43 @@ window.addEventListener('message', function(e) {
       }
 
       // Case ops
-      else if (tool === 'create_case') {
+      else if (tool === 'sf__create_case') {
         var ncas = { id:'500'+(nextId.case++), case_number:'CS-'+(10050+nextId.case), subject:args.subject||'', status:args.status||'New', priority:args.priority||'Medium', account_name:args.account_name||'', created_date:new Date().toISOString().slice(0,10) };
         currentCases.items.unshift(ncas);
         result = JSON.parse(JSON.stringify(currentCases));
         log('→ created case: ' + ncas.subject);
       }
-      else if (tool === 'update_case') {
+      else if (tool === 'sf__update_case') {
         currentCases.items.forEach(function(c){ if(c.id===args.case_id){ ['subject','status','priority','account_name','description'].forEach(function(k){ if(args[k]!==undefined) c[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentCases));
         log('→ updated case');
       }
-      else if (tool === 'get_case_comments') {
+      else if (tool === 'sf__get_case_comments') {
         result = CASE_COMMENTS[args.case_id] || { items: [] };
         log('→ ' + (result.items||[]).length + ' comments');
       }
       // get_tasks — subject text search
-      else if (tool === 'get_tasks') {
+      else if (tool === 'sf__get_tasks') {
         var ts=(args.subject||'').toLowerCase();
         result = { type:'tasks', items: currentTasks.items.filter(function(t){ return !ts||(t.subject||'').toLowerCase().includes(ts); }) };
         log('→ get_tasks: ' + result.items.length);
       }
 
       // Task ops
-      else if (tool === 'create_task') {
+      else if (tool === 'sf__create_task') {
         var nt = { id:'00T'+(nextId.task++), subject:args.subject||'', status:args.status||'Not Started', priority:args.priority||'Normal', activity_date:args.activity_date||'', what_name:'' };
         currentTasks.items.unshift(nt);
         result = JSON.parse(JSON.stringify(currentTasks));
         log('→ created task: ' + nt.subject);
       }
-      else if (tool === 'update_task') {
+      else if (tool === 'sf__update_task') {
         currentTasks.items.forEach(function(t){ if(t.id===args.task_id){ ['subject','status','priority','activity_date','description'].forEach(function(k){ if(args[k]!==undefined) t[k]=args[k]; }); } });
         result = JSON.parse(JSON.stringify(currentTasks));
         log('→ updated task');
       }
 
       // Generic delete
-      else if (tool === 'delete_record') {
+      else if (tool === 'sf__delete_record') {
         result = { success: true, deleted_id: args.record_id };
         log('→ deleted: ' + args.entity_type + ' ' + args.record_id);
       }
