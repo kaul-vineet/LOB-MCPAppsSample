@@ -3,330 +3,791 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚓ The Great Trading Company — LOB MCP Apps Gallery</title>
+<title>⚓ The Great Trading Company — LOB MCP Apps</title>
 <style>
   :root {
-    --bg: #f5f5f0;
-    --surface: #ffffff;
-    --text: #2c2c2c;
-    --text-light: #6b6b6b;
-    --border: #e0ddd5;
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --surface3: #282828;
+    --text: #ffffff;
+    --text-dim: #cccccc;
+    --text-muted: #888888;
+    --border: #2a2a2a;
     --gold: #C9A84C;
-    --gold-dark: #a08030;
-    --sf-color: #00A1E0;
-    --snow-color: #293E40;
-    --sap-color: #0FAAFF;
-    --hs-color: #FF7A59;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --text: #e6edf3;
-      --text-light: #8b949e;
-      --border: #30363d;
-      --gold: #d4b85c;
-      --gold-dark: #C9A84C;
-    }
+    --gold-dim: rgba(201,168,76,0.7);
+    --gold-glow: rgba(201,168,76,0.35);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-  /* ── Hero ── */
-  .hero {
-    text-align: center;
-    padding: 72px 24px 56px;
-    background: linear-gradient(135deg, #0d1117 0%, #161b22 40%, #1a2332 70%, #0f3460 100%);
-    color: #e6edf3;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse at 70% 50%, rgba(15,52,96,0.15) 0%, transparent 60%);
-    animation: shimmer 8s ease-in-out infinite alternate;
-  }
-  @keyframes shimmer {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-5%, 3%); }
-  }
-  .hero > * { position: relative; z-index: 1; }
-  .hero .anchor { font-size: 56px; display: block; margin-bottom: 20px; filter: drop-shadow(0 4px 12px rgba(201,168,76,0.3)); }
-  .hero h1 { font-size: 32px; font-weight: 600; letter-spacing: 3px; margin-bottom: 6px; }
-  .hero h1 span { color: var(--gold); }
-  .hero .subtitle { font-size: 16px; color: #8b949e; margin-top: 12px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
-  .hero .badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
-  .hero .badge { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); color: #a0a0a0; background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); }
-
-  /* ── Section titles ── */
-  .section-title {
-    text-align: center;
-    max-width: 700px;
-    margin: 40px auto 24px;
-    padding: 0 20px;
-  }
-  .section-title h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
-  .section-title p { font-size: 13px; color: var(--text-light); line-height: 1.5; }
-
-  /* ── Card grid ── */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    max-width: 1100px;
-    margin: 0 auto 40px;
-    padding: 0 24px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 0;
-    text-decoration: none;
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
     color: var(--text);
-    transition: transform 0.2s ease, box-shadow 0.25s ease;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ══════════════════════════════════════
+     NAV
+  ══════════════════════════════════════ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 60px;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(10,10,10,0));
+    transition: background 0.3s;
+  }
+  nav.scrolled { background: rgba(10,10,10,0.97); backdrop-filter: blur(12px); }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .nav-brand .anchor { font-size: 22px; }
+  .nav-brand .brand-name { color: var(--gold); }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: #fff; }
+  .nav-links .nav-cta {
+    padding: 7px 18px;
+    border-radius: 5px;
+    background: var(--gold);
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+  .nav-links .nav-cta:hover { background: #d4b85c; color: #000; }
+
+  /* ══════════════════════════════════════
+     HERO
+  ══════════════════════════════════════ */
+  .hero {
+    position: relative;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    padding: 100px 80px 80px;
     overflow: hidden;
   }
-  .card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
-
-  .card-accent { height: 4px; }
-  .card-accent.sf { background: linear-gradient(90deg, #00A1E0, #0070D2); }
-  .card-accent.snow { background: linear-gradient(90deg, #293E40, #81B5A1); }
-  .card-accent.sap { background: linear-gradient(90deg, #0FAAFF, #354A5F); }
-  .card-accent.hs { background: linear-gradient(90deg, #FF7A59, #FF5C35); }
-  .card-accent.ft { background: linear-gradient(90deg, #1B9CFC, #0652DD); }
-  .card-accent.ds { background: linear-gradient(90deg, #4C00FF, #7B2FFF); }
-
-  .card-body { padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-  .card .top { display: flex; align-items: center; gap: 12px; }
-  .card .logo { height: 32px; width: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
-  .card .logo.sf { background: #00A1E0; }
-  .card .logo.snow { background: #293E40; }
-  .card .logo.sap { background: #0FAAFF; }
-  .card .logo.hs { background: #FF7A59; }
-  .card .logo.ft { background: #1B9CFC; }
-  .card .logo.ds { background: #4C00FF; }
-  .card h2 { font-size: 17px; font-weight: 600; }
-  .card .design-tag { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
-  .card .desc { font-size: 13px; color: var(--text-light); line-height: 1.55; flex: 1; }
-  .card .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-  .card .chip { font-size: 11px; font-family: 'Segoe UI', monospace; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-light); background: transparent; }
-  .card .chip.port { color: var(--gold-dark); border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.06); }
-
-  /* ── Note ── */
-  .note {
-    max-width: 720px;
-    margin: 0 auto 40px;
-    padding: 18px 28px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--text-light);
-    line-height: 1.6;
-    text-align: center;
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, #0a0a14 0%, #0d1a35 35%, #0f3460 65%, #150a2e 100%);
   }
-  .note code { background: rgba(201,168,76,0.12); padding: 2px 7px; border-radius: 4px; font-size: 12px; color: var(--text); }
-
-  /* ── CTA ── */
-  .cta {
-    text-align: center;
-    margin: 0 auto 48px;
-    padding: 0 20px;
+  .hero-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 60%, rgba(201,168,76,0.14) 0%, transparent 45%),
+      radial-gradient(ellipse at 75% 25%, rgba(79,172,254,0.12) 0%, transparent 45%),
+      radial-gradient(ellipse at 55% 85%, rgba(76,0,255,0.08) 0%, transparent 40%);
+    animation: glowPulse 14s ease-in-out infinite alternate;
   }
-  .cta a {
+  @keyframes glowPulse {
+    0%   { transform: scale(1)    translate(0, 0); opacity: 1; }
+    50%  { transform: scale(1.04) translate(-1%, 2%); opacity: 0.85; }
+    100% { transform: scale(1.02) translate(2%, -1%); opacity: 1; }
+  }
+  .hero-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 75%);
+  }
+  .hero-bottom-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 220px;
+    background: linear-gradient(to top, var(--bg), transparent);
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 780px;
+  }
+  .hero-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-    color: #1a1a2e;
-    font-size: 14px;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
     font-weight: 600;
+    margin-bottom: 22px;
+    padding: 6px 14px;
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 20px;
+    background: rgba(201,168,76,0.06);
+  }
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 76px);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -2px;
+    margin-bottom: 22px;
+  }
+  .hero h1 .line2 { color: var(--gold); }
+  .hero-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+    margin-bottom: 36px;
+    max-width: 560px;
+  }
+  .hero-cta-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 52px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 30px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
     text-decoration: none;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
   }
-  .cta a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.35); }
-  .cta .secondary {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-    margin-left: 12px;
+  .btn-gold {
+    background: linear-gradient(135deg, #a06810, var(--gold), #d4b85c);
+    color: #0a0a0a;
+    letter-spacing: 0.2px;
   }
-  .cta .secondary:hover { border-color: var(--gold); color: var(--gold-dark); box-shadow: none; }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 30px var(--gold-glow); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.75);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* ── Footer ── */
-  .footer {
-    text-align: center;
-    padding: 32px 20px;
-    font-size: 12px;
-    color: var(--text-light);
-    border-top: 1px solid var(--border);
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
   }
-  .footer a { color: var(--gold-dark); text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-num { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; }
+  .stat-num span { color: var(--gold); }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); font-weight: 500; }
+
+  /* ══════════════════════════════════════
+     SCROLL INDICATOR
+  ══════════════════════════════════════ */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 80px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+  .scroll-line {
+    width: 40px; height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.3), transparent);
+  }
+
+  /* ══════════════════════════════════════
+     SECTION
+  ══════════════════════════════════════ */
+  .section {
+    padding: 0 48px 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 64px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .section-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .section-header .sh-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+  .sh-tag.live { background: rgba(229,9,20,0.15); color: #ff4d4d; border: 1px solid rgba(229,9,20,0.3); }
+  .sh-tag.soon { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+  .section-header .sh-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  /* ══════════════════════════════════════
+     CARD GRID
+  ══════════════════════════════════════ */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  /* ══════════════════════════════════════
+     CARD
+  ══════════════════════════════════════ */
+  .card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: transform 0.28s cubic-bezier(0.34, 1.46, 0.64, 1),
+                box-shadow 0.28s ease,
+                border-color 0.28s ease;
+    text-decoration: none;
+    color: #fff;
+    display: block;
+  }
+  .card:not(.card-disabled):hover {
+    transform: scale(1.035) translateY(-6px);
+    border-color: rgba(255,255,255,0.15);
+  }
+  .card-disabled { cursor: default; opacity: 0.55; }
+
+  /* Thumbnail */
+  .card-thumb {
+    height: 170px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-thumb-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.4s ease;
+  }
+  .card:not(.card-disabled):hover .card-thumb-bg { transform: scale(1.06); }
+  .card-thumb-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60%;
+    background: linear-gradient(to top, rgba(20,20,20,0.85), transparent);
+  }
+  .card-logo-text {
+    position: relative;
+    z-index: 1;
+    font-size: 38px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -2px;
+    text-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+  }
+  .card:not(.card-disabled):hover .card-logo-text { transform: scale(1.1); }
+
+  /* Status badge */
+  .card-status {
+    position: absolute;
+    top: 12px; right: 12px;
+    z-index: 2;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 4px;
+  }
+  .status-live { background: #e50914; color: #fff; }
+  .status-soon {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Body */
+  .card-body { padding: 16px 18px 18px; }
+  .card-system {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 8px;
+    line-height: 1.15;
+  }
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  .card-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: var(--surface2);
+    font-weight: 500;
+  }
+  .chip-port {
+    color: var(--gold-dim);
+    border-color: rgba(201,168,76,0.25);
+    background: rgba(201,168,76,0.06);
+    font-weight: 600;
+  }
+
+  /* ── Brand thumbnails ── */
+  .thumb-sf   { background: linear-gradient(145deg, #003d7a 0%, #0070D2 45%, #00A1E0 75%, #33bdff 100%); }
+  .thumb-snow { background: linear-gradient(145deg, #0d1e1f 0%, #1e3335 40%, #293E40 65%, #3d6660 100%); }
+  .thumb-sap  { background: linear-gradient(145deg, #1a2e40 0%, #274055 35%, #0FAAFF 70%, #45c8ff 100%); }
+  .thumb-hs   { background: linear-gradient(145deg, #c01800 0%, #e84520 40%, #FF7A59 70%, #ffb59e 100%); }
+  .thumb-ft   { background: linear-gradient(145deg, #03153e 0%, #0441a0 40%, #1B9CFC 70%, #72d0ff 100%); }
+  .thumb-ds   { background: linear-gradient(145deg, #0e0025 0%, #2d007a 40%, #4C00FF 70%, #9b59ff 100%); }
+  .thumb-snhr { background: linear-gradient(145deg, #062820 0%, #0d5940 40%, #1ABC9C 70%, #5de8d0 100%); }
+  .thumb-saphr{ background: linear-gradient(145deg, #2c1200 0%, #6b3200 40%, #E37722 70%, #f0a050 100%); }
+  .thumb-wd   { background: linear-gradient(145deg, #001030 0%, #00338a 40%, #0052CC 70%, #4d94ff 100%); }
+  .thumb-coupa{ background: linear-gradient(145deg, #4a0000 0%, #8b0000 40%, #DC3232 70%, #ff7070 100%); }
+  .thumb-jira { background: linear-gradient(145deg, #001530 0%, #003380 40%, #0052CC 70%, #4c9aff 100%); }
+
+  /* ── Per-brand hover glow ── */
+  .card-sf:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(0,161,224,0.4), 0 0 0 1px rgba(0,161,224,0.2); }
+  .card-snow:not(.card-disabled):hover  { box-shadow: 0 24px 64px rgba(61,102,96,0.5), 0 0 0 1px rgba(61,102,96,0.3); }
+  .card-sap:not(.card-disabled):hover   { box-shadow: 0 24px 64px rgba(15,170,255,0.4), 0 0 0 1px rgba(15,170,255,0.2); }
+  .card-hs:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(255,122,89,0.4), 0 0 0 1px rgba(255,122,89,0.2); }
+  .card-ft:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(27,156,252,0.4), 0 0 0 1px rgba(27,156,252,0.2); }
+  .card-ds:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(76,0,255,0.4),   0 0 0 1px rgba(76,0,255,0.25); }
+  .card-snhr:not(.card-disabled):hover  { box-shadow: 0 24px 64px rgba(26,188,156,0.4), 0 0 0 1px rgba(26,188,156,0.2); }
+  .card-saphr:not(.card-disabled):hover { box-shadow: 0 24px 64px rgba(227,119,34,0.35);  }
+  .card-wd:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(0,82,204,0.4);  }
+  .card-coupa:not(.card-disabled):hover { box-shadow: 0 24px 64px rgba(220,50,50,0.4); }
+  .card-jira:not(.card-disabled):hover  { box-shadow: 0 24px 64px rgba(0,82,204,0.4);  }
+
+  /* ══════════════════════════════════════
+     TECH STRIP
+  ══════════════════════════════════════ */
+  .tech-strip {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .tech-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-react  { background: #61dafb; }
+  .dot-python { background: #3776ab; }
+  .dot-mcp    { background: var(--gold); }
+  .dot-fluent { background: #0078d4; }
+
+  /* ══════════════════════════════════════
+     FOOTER
+  ══════════════════════════════════════ */
+  footer {
+    text-align: center;
+    padding: 48px 20px;
+    font-size: 12px;
+    color: #3a3a3a;
+    border-top: 1px solid #161616;
+  }
+  footer a { color: #6a6a6a; text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+  footer .footer-brand { font-size: 18px; margin-bottom: 12px; color: #3a3a3a; }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links .nav-cta { display: none; }
+    .hero { padding: 90px 24px 64px; min-height: auto; }
+    .scroll-indicator { display: none; }
+    .section { padding: 0 20px 48px; }
+    .section-header { padding-top: 48px; }
+    .tech-strip { padding: 16px 20px; gap: 20px; }
+    .hero-stats { gap: 24px; }
+    .section-header .sh-desc { display: none; }
+  }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <span class="anchor">⚓</span>
-  <h1>The <span>Great Trading Company</span></h1>
-  <p class="subtitle">A gallery of LOB MCP Apps for M365 Copilot — interactive React widgets rendered directly in chat with LOB-native design</p>
-  <div class="badges">
-    <span class="badge">MCP Apps</span>
-    <span class="badge">React 19</span>
-    <span class="badge">Fluent UI v9</span>
-    <span class="badge">Python</span>
-    <span class="badge">Docker</span>
-    <span class="badge">M365 Copilot</span>
+<!-- ══ NAV ══ -->
+<nav id="nav">
+  <div class="nav-brand">
+    <span class="anchor">⚓</span>
+    <span>The <span class="brand-name">Great Trading Company</span></span>
+  </div>
+  <div class="nav-links">
+    <a href="#live">Widgets</a>
+    <a href="#soon">Server MCPs</a>
+    <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample" class="nav-cta">GitHub →</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-grid-lines"></div>
+  <div class="hero-bottom-fade"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">⚓ LOB MCP Apps · M365 Copilot</div>
+    <h1>
+      Enterprise LOB<br>
+      <span class="line2">Copilot Widgets</span>
+    </h1>
+    <p class="hero-sub">
+      Production-grade React widgets rendered directly in M365 Copilot chat —
+      with LOB-native design systems, MCP tool integration, and live mock data harnesses.
+    </p>
+    <div class="hero-cta-row">
+      <a class="btn btn-gold" href="#live">Explore Widgets ↓</a>
+      <a class="btn btn-ghost" href="https://github.com/kaul-vineet/LOB-MCPAppsSample">View on GitHub</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">11<span>+</span></div>
+        <div class="stat-label">MCP Apps</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">7</div>
+        <div class="stat-label">Live Widgets</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">150<span>+</span></div>
+        <div class="stat-label">MCP Tools</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">React<span> 19</span></div>
+        <div class="stat-label">Fluent UI v9</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    Scroll to explore
+  </div>
+</section>
+
+<!-- ══ TECH STRIP ══ -->
+<div class="tech-strip">
+  <div class="tech-item"><div class="tech-dot dot-mcp"></div>MCP Protocol</div>
+  <div class="tech-item"><div class="tech-dot dot-react"></div>React 19</div>
+  <div class="tech-item"><div class="tech-dot dot-fluent"></div>Fluent UI v9</div>
+  <div class="tech-item"><div class="tech-dot dot-python"></div>Python FastMCP</div>
+  <div class="tech-item"><div class="tech-dot dot-react"></div>TypeScript</div>
+  <div class="tech-item"><div class="tech-dot dot-python"></div>Docker</div>
+</div>
+
+<!-- ══ LIVE WIDGETS ══ -->
+<div class="section" id="live">
+  <div class="section-header">
+    <h2>Live Widgets</h2>
+    <span class="sh-tag live">Interactive</span>
+    <span class="sh-desc">7 test harnesses · mock data · no setup needed</span>
+  </div>
+
+  <div class="card-grid">
+
+    <a class="card card-sf" href="sf-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-sf"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">SF</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Lightning SLDS</div>
+        <div class="card-title">Salesforce CRM</div>
+        <div class="card-desc">Leads, opportunities, contacts with inline editing, pipeline stage updates, and drill-down detail views.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3000</span>
+          <span class="chip">15 tools</span>
+          <span class="chip">CRUD</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-snow" href="snow-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-snow"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">SN</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Now Design</div>
+        <div class="card-title">ServiceNow ITSM</div>
+        <div class="card-desc">Incidents by priority, service requests with expandable request items, P1–P4 color coding and SLA tracking.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3001</span>
+          <span class="chip">13 tools</span>
+          <span class="chip">CRUD</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-sap" href="sap-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-sap"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">SAP</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Fiori Design</div>
+        <div class="card-title">SAP S/4HANA</div>
+        <div class="card-desc">POs → Line Items → Goods Receipts, Business Partners, Materials with 3-level drill-down and Fiori Object Page.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3002</span>
+          <span class="chip">10 tools</span>
+          <span class="chip">Drill-down</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-hs" href="hs-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-hs"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">HS</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">HubSpot Canvas</div>
+        <div class="card-title">HubSpot CRM</div>
+        <div class="card-desc">Companies → Contacts + Deals + Tickets (3-panel expand), deal contacts, ticket notes — full CRM association drill-down.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3003</span>
+          <span class="chip">20 tools</span>
+          <span class="chip">3-panel</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-ft" href="flight-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-ft"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">FT</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Aviation</div>
+        <div class="card-title">Flight Tracker</div>
+        <div class="card-desc">Live aircraft tracking via OpenSky Network — flight history, departures, arrivals, state vectors and waypoint tracks.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3004</span>
+          <span class="chip">5 tools</span>
+          <span class="chip">OpenSky API</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-ds" href="docusign-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-ds"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">DS</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Pipeline</div>
+        <div class="card-title">DocuSign eSignature</div>
+        <div class="card-desc">Envelope pipeline with inline recipient drill-down, template library and Send from Template with prefill.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3005</span>
+          <span class="chip">9 tools</span>
+          <span class="chip">JWT Auth</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="card card-snhr" href="snow-hr-widget-test.html">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-snhr"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">HR</div>
+        <span class="card-status status-live">Live</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Now HR</div>
+        <div class="card-title">ServiceNow HR</div>
+        <div class="card-desc">HR case management, leave requests, employee profiles, payslip access and multi-step approvals workflow.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3001</span>
+          <span class="chip">10 tools</span>
+          <span class="chip">HR Workflows</span>
+        </div>
+      </div>
+    </a>
+
   </div>
 </div>
 
-<div class="section-title">
-  <h2>🎨 Widget Gallery</h2>
-  <p>Click any card to open its interactive test harness — runs entirely in the browser with mock data, no setup needed.</p>
+<!-- ══ COMING SOON ══ -->
+<div class="section" id="soon">
+  <div class="section-header">
+    <h2>Server-Side MCPs</h2>
+    <span class="sh-tag soon">Backend Only</span>
+    <span class="sh-desc">MCP servers complete · React widgets coming soon</span>
+  </div>
+
+  <div class="card-grid">
+
+    <div class="card card-saphr card-disabled">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-saphr"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">SHR</div>
+        <span class="card-status status-soon">Soon</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">SAP SuccessFactors</div>
+        <div class="card-title">SAP HR</div>
+        <div class="card-desc">Employee records, leave balances, payslips, background checks, documents and time-off management via SuccessFactors API.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3006</span>
+          <span class="chip">15 tools</span>
+          <span class="chip">OAuth 2.0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-wd card-disabled">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-wd"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">WD</div>
+        <span class="card-status status-soon">Soon</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Workday Design</div>
+        <div class="card-title">Workday HR</div>
+        <div class="card-desc">Worker profiles, skills and learning reports, time-off management, org hierarchy and pay details via Workday REST APIs.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3007</span>
+          <span class="chip">20 tools</span>
+          <span class="chip">OAuth 2.0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-coupa card-disabled">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-coupa"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">CP</div>
+        <span class="card-status status-soon">Soon</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Coupa BSM</div>
+        <div class="card-title">Coupa Procurement</div>
+        <div class="card-desc">Invoices, purchase orders, requisitions, supplier management, catalog search and approval queue management.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3008</span>
+          <span class="chip">14 tools</span>
+          <span class="chip">REST API</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-jira card-disabled">
+      <div class="card-thumb">
+        <div class="card-thumb-bg thumb-jira"></div>
+        <div class="card-thumb-fade"></div>
+        <div class="card-logo-text">JR</div>
+        <span class="card-status status-soon">Soon</span>
+      </div>
+      <div class="card-body">
+        <div class="card-system">Atlassian Design</div>
+        <div class="card-title">Jira</div>
+        <div class="card-desc">Issue search and triage, sprint boards, create and update tasks, backlog management and JQL-powered queries.</div>
+        <div class="card-chips">
+          <span class="chip chip-port">:3009</span>
+          <span class="chip">18 tools</span>
+          <span class="chip">REST v3</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<div class="grid">
-  <a class="card" href="sf-widget-test.html">
-    <div class="card-accent sf"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo sf">SF</div>
-        <div>
-          <h2>Salesforce CRM</h2>
-          <div class="design-tag">Lightning SLDS</div>
-        </div>
-      </div>
-      <div class="desc">Browse leads & opportunities, create new leads, update pipeline stages, drill into deal details with inline editing.</div>
-      <div class="meta">
-        <span class="chip port">:3000</span>
-        <span class="chip">15 tools</span>
-        <span class="chip">CRUD</span>
-      </div>
-    </div>
-  </a>
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-brand">⚓</div>
+  The Great Trading Company ·
+  Built by <a href="https://github.com/kaul-vineet">Vineet Kaul</a> ·
+  Principal PM Architect, Agentic AI ·
+  <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">MIT License</a>
+</footer>
 
-  <a class="card" href="snow-widget-test.html">
-    <div class="card-accent snow"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo snow">SN</div>
-        <div>
-          <h2>ServiceNow ITSM</h2>
-          <div class="design-tag">Now Design</div>
-        </div>
-      </div>
-      <div class="desc">View incidents by priority, track service requests & request items with expandable rows and P1–P4 color coding.</div>
-      <div class="meta">
-        <span class="chip port">:3001</span>
-        <span class="chip">13 tools</span>
-        <span class="chip">CRUD</span>
-      </div>
-    </div>
-  </a>
-
-  <a class="card" href="sap-widget-test.html">
-    <div class="card-accent sap"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo sap">SAP</div>
-        <div>
-          <h2>SAP S/4HANA</h2>
-          <div class="design-tag">Fiori</div>
-        </div>
-      </div>
-      <div class="desc">Purchase orders, business partners, materials master — drill into material details with Object Page layout.</div>
-      <div class="meta">
-        <span class="chip port">:3002</span>
-        <span class="chip">6 tools</span>
-        <span class="chip">Sandbox</span>
-      </div>
-    </div>
-  </a>
-
-  <a class="card" href="hs-widget-test.html">
-    <div class="card-accent hs"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo hs">HS</div>
-        <div>
-          <h2>HubSpot Marketing</h2>
-          <div class="design-tag">Canvas</div>
-        </div>
-      </div>
-      <div class="desc">Email campaign analytics with 3-level drill-down: campaigns → contact lists → individual subscribers with engagement metrics.</div>
-      <div class="meta">
-        <span class="chip port">:3003</span>
-        <span class="chip">14 tools</span>
-        <span class="chip">Drill-down</span>
-      </div>
-    </div>
-  </a>
-
-  <a class="card" href="flight-widget-test.html">
-    <div class="card-accent ft"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo ft">FT</div>
-        <div>
-          <h2>Flight Tracker</h2>
-          <div class="design-tag">Aviation</div>
-        </div>
-      </div>
-      <div class="desc">Live aircraft tracking via OpenSky Network — flight history, departures, arrivals, real-time state vectors, and waypoint tracks.</div>
-      <div class="meta">
-        <span class="chip port">:3004</span>
-        <span class="chip">5 tools</span>
-        <span class="chip">OpenSky API</span>
-      </div>
-    </div>
-  </a>
-
-  <a class="card" href="docusign-widget-test.html">
-    <div class="card-accent ds"></div>
-    <div class="card-body">
-      <div class="top">
-        <div class="logo ds">DS</div>
-        <div>
-          <h2>DocuSign eSignature</h2>
-          <div class="design-tag">Pipeline</div>
-        </div>
-      </div>
-      <div class="desc">Envelope pipeline dashboard — send, track, void, and resend signing requests. Template management and embedded signing URLs.</div>
-      <div class="meta">
-        <span class="chip port">:3005</span>
-        <span class="chip">9 tools</span>
-        <span class="chip">JWT Auth</span>
-      </div>
-    </div>
-  </a>
-</div>
-
-<div class="note">
-  These test harnesses run entirely in the browser with <strong>mock data</strong> — no server or credentials needed.<br>
-  They simulate the M365 Copilot <code>postMessage</code> bridge so you can test widget rendering, CRUD forms, error states, and dark mode.
-</div>
-
-<div class="cta">
-  <a href="https://github.com/kaul-vineet/LOB-MCPAppsSample">⭐ View on GitHub</a>
-  <a class="secondary" href="https://github.com/kaul-vineet/LOB-MCPAppsSample/blob/main/SETUP.md">📖 Setup Guide</a>
-</div>
-
-<div class="footer">
-  ⚓ The Great Trading Company · Built by <a href="https://github.com/kaul-vineet">Vineet Kaul</a> · PM Architect, Agentic AI · MIT License
-</div>
+<script>
+  // Navbar scroll effect
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+</script>
 
 </body>
 </html>
