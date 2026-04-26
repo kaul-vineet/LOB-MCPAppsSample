@@ -25,17 +25,18 @@ import type {
   Template,
 } from './types';
 
-// ── DocuSign Color Tokens ───────────────────────────────────────────────────
+// ── DocuSign Color Tokens — aligned to official brand.docusign.com palette ──
 const DS_LIGHT = {
-  brand: '#4C00FF',
+  brand: '#4C00FF',       // Cobalt
   brandHover: '#3a0099',
-  accent: '#7B2FFF',
+  accent: '#7B2FFF',      // mid-violet
+  mist: '#CBC2FF',        // Mist — soft violet tint
   background: '#ffffff',
-  surface: '#f8f9fa',
-  text: '#1a1a2e',
-  textWeak: '#6c757d',
-  border: '#e0e0e0',
-  headerBg: '#f8f9fa',
+  surface: '#F8F3F0',     // Ecru — DocuSign off-white surface
+  text: '#130032',        // Inkwell — primary text
+  textWeak: '#6b6880',
+  border: '#ddd8f5',      // Mist-tinted border
+  headerBg: '#F8F3F0',    // Ecru
   success: '#28a745',
   danger: '#dc3545',
   warning: '#ffc107',
@@ -45,12 +46,13 @@ const DS_DARK = {
   brand: '#7B2FFF',
   brandHover: '#4C00FF',
   accent: '#9B5FFF',
-  background: '#1a1a2e',
-  surface: '#16213e',
+  mist: '#3d2a7a',        // Mist darkened for dark surfaces
+  background: '#130032',  // Inkwell
+  surface: '#1d0052',     // Deep Violet
   text: '#eaeaea',
-  textWeak: '#a0a0b0',
-  border: '#2a2a4a',
-  headerBg: '#16213e',
+  textWeak: '#a89cc8',
+  border: '#2e1870',      // violet-tinted border
+  headerBg: '#1d0052',
   success: '#28a745',
   danger: '#dc3545',
   warning: '#ffc107',
@@ -62,8 +64,8 @@ function ds(theme: 'light' | 'dark') {
 
 function headerGradient(theme: 'light' | 'dark') {
   return theme === 'dark'
-    ? 'linear-gradient(135deg, #3a0099 0%, #1a0044 100%)'
-    : 'linear-gradient(135deg, #4C00FF 0%, #7B2FFF 100%)';
+    ? 'linear-gradient(135deg, #26065D 0%, #130032 100%)'
+    : 'linear-gradient(135deg, #4C00FF 0%, #26065D 100%)';
 }
 
 // ── Status badge colors ─────────────────────────────────────────────────────
@@ -95,7 +97,7 @@ const useStyles = makeStyles({
   shell: {
     margin: '0 auto',
     padding: '12px',
-    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+    fontFamily: "'DocuSign Indigo', 'Helvetica Neue', Helvetica, Arial, sans-serif",
     fontSize: '13px',
   },
   card: {
@@ -222,7 +224,7 @@ function shortId(id?: string): string {
 function SkeletonLoader() {
   const shimmerStyle: React.CSSProperties = {
     height: 16, borderRadius: 4, marginBottom: 8,
-    background: 'linear-gradient(90deg, #e8e0ff 25%, #d4c5ff 50%, #e8e0ff 75%)',
+    background: 'linear-gradient(90deg, #ede8ff 25%, #CBC2FF 50%, #ede8ff 75%)',
     backgroundSize: '200% 100%',
     animation: 'dsShimmer 1.5s infinite',
   };
@@ -260,7 +262,7 @@ function DsFooter({ theme }: { theme: 'light' | 'dark' }) {
   const { openExternal } = useMcpBridge();
   return (
     <div className={styles.mcpFooter} style={{
-      background: theme === 'dark' ? '#0f0f2e' : '#f8f9fa',
+      background: theme === 'dark' ? '#0d0022' : '#F8F3F0',
       borderTop: `1px solid ${t.border}`,
       color: t.textWeak,
     }}>

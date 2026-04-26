@@ -30,21 +30,25 @@ import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
 import type { HubSpotData, Email, ContactList, Contact, CrmContact, Company, Deal, Ticket } from './types';
 
-// HubSpot Canvas palette
+// HubSpot brand palette — aligned to official HubSpot design system
+// Primary: Atomic (#33475B), Coral (#FF7A59), Teal (#00BDA5) — brand.hubspot.com
 const HS = {
-  coral: '#FF7A59',
+  coral: '#FF7A59',       // Sorbet/Coral — primary CTA
   coralDark: '#E8563D',
   coralHover: 'rgba(255,122,89,0.08)',
-  teal: '#00BDA5',
-  error: '#F2545B',
+  teal: '#00BDA5',        // Sprout — success/positive
+  error: '#F2545B',       // Candy Apple
   manual: '#7C98B6',
   // Light
   bgLight: '#ffffff',
-  surfaceLight: '#F5F8FA',
-  textLight: '#33475B',
-  textLightSec: '#516F90',
-  borderLight: '#CBD6E2',
+  surfaceLight: '#F5F8FA',  // official HubSpot light surface
+  textLight: '#33475B',     // Atomic — primary text
+  textLightSec: '#516F90',  // Steel Blue — secondary text
+  borderLight: '#CBD6E2',   // official HubSpot border
   barBgLight: '#EAF0F6',
+  // Nav/header: Atomic dark blue as shell background
+  navBgLight: '#33475B',    // Atomic — nav bar background
+  navBgDark: '#2D3E50',     // slightly lighter for dark mode
   // Dark
   coralDarkMode: '#FF8F73',
   tealDarkMode: '#33D6C1',
@@ -61,7 +65,7 @@ const useStyles = makeStyles({
     maxWidth: '1120px',
     margin: '0 auto',
     padding: '20px 24px',
-    fontFamily: tokens.fontFamilyBase,
+    fontFamily: "'Lexend Deca', 'Avenir Next', system-ui, -apple-system, sans-serif",
   },
   header: {
     display: 'flex',
@@ -201,6 +205,7 @@ function fmtNum(n: number | undefined): string {
 
 // ── Shimmer CSS & Skeleton Components ────────────────────────────────
 const shimmerCSS = `
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;500;600;700&display=swap');
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -401,6 +406,9 @@ function useHsColors() {
     badgeDraft: dark ? '#3a4a5c' : '#CBD6E2',
     badgeDraftText: dark ? '#d0d0d0' : '#33475B',
     barBg: dark ? HS.barBgDark : HS.barBgLight,
+    navBg: dark ? HS.navBgDark : HS.navBgLight,
+    navText: '#ffffff',
+    navTextSec: 'rgba(255,255,255,0.65)',
   };
 }
 
@@ -1284,13 +1292,13 @@ function HsViewHeader({ icon, title, count, onNew, newLabel }: {
   const styles = useStyles();
   const c = useHsColors();
   return (
-    <div className={styles.header} style={{ backgroundColor: c.bg, border: `1px solid ${c.border}`, borderLeftWidth: '4px', borderLeftColor: c.coral }}>
+    <div className={styles.header} style={{ backgroundColor: c.navBg, border: 'none', borderRadius: '4px' }}>
       <div>
         <div className={styles.titleRow}>
           {icon}
-          <Text style={{ color: c.text, fontSize: '18px', fontWeight: 600 }}>{title}</Text>
+          <Text style={{ color: c.navText, fontSize: '18px', fontWeight: 600 }}>{title}</Text>
         </div>
-        <Text style={{ color: c.textSec, fontSize: '13px', marginLeft: '32px' }}>{count} record{count !== 1 ? 's' : ''}</Text>
+        <Text style={{ color: c.navTextSec, fontSize: '13px', marginLeft: '32px' }}>{count} record{count !== 1 ? 's' : ''}</Text>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {onNew && (
