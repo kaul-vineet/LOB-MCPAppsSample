@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>⚓ GTC Dockyard — Flight Tracker Widget Test</title>
+<style>
+  body    { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; }
+  h2      { margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 14px 0 6px; letter-spacing: 0.5px; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  button  { padding: 8px 14px; border: none; border-radius: 6px; background: #0066cc; color: white; cursor: pointer; font-size: 13px; }
+  button:hover { background: #004499; }
+  button.green  { background: #0d7d3b; }
+  button.green:hover  { background: #0a5e2a; }
+  button.teal   { background: #006680; }
+  button.teal:hover   { background: #004d60; }
+  button.dark   { background: #1a1a2e; }
+  button.dark:hover   { background: #0d0d1a; }
+  button.secondary    { background: #706e6b; }
+  button.secondary:hover { background: #514f4d; }
+  button.error  { background: #ba0517; }
+  button.error:hover  { background: #8a0311; }
+  .hint   { font-size: 12px; color: #666; margin: 4px 0 12px; }
+  .log    { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 920px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  iframe  { width: 100%; border: none; min-height: 60px; display: block; }
+  .badge  { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e8f0fe; color: #0066cc; margin-left: 8px; }
+  /* Capability table */
+  .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 920px; }
+  .cap-table th { background: #0066cc; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table tr:last-child td { border-bottom: none; }
+  .cap-table .y  { color: #0d7d3b; font-weight: 700; }
+  .cap-table .n  { color: #bbb; }
+</style>
+</head>
+<body>
+
+<h2>⚓ ✈️ GTC Dockyard — Flight Tracker MCP Widget <span class="badge">Read-only · OpenSky Network</span></h2>
+<p class="subtitle">The Great Trading Company — Dockyard Test Facility</p>
+<p class="subtitle">Test harness for the Flight Tracker MCP widget. All data is pushed via postMessage — no real API calls in this test page.</p>
+
+<div class="section-label">📋 Widget Capability Reference</div>
+<table class="cap-table">
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>View</th>
+      <th>List</th>
+      <th>Drill Down</th>
+      <th>CRUD</th>
+      <th>Widget</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ft__get_flights_by_aircraft</code></td>
+      <td>Flights by ICAO24</td>
+      <td class="y">Y — table of flights</td>
+      <td class="n">—</td>
+      <td class="n">Read only</td>
+      <td>Flight Tracker</td>
+    </tr>
+    <tr>
+      <td><code>ft__get_aircraft_state</code></td>
+      <td>Live State</td>
+      <td class="n">—</td>
+      <td class="n">—</td>
+      <td class="n">Read only</td>
+      <td>Flight Tracker</td>
+    </tr>
+    <tr>
+      <td><code>ft__get_airport_departures</code></td>
+      <td>Airport Departures</td>
+      <td class="y">Y — table + detail pane</td>
+      <td class="y">Click row → detail panel</td>
+      <td class="n">Read only</td>
+      <td>Flight Tracker</td>
+    </tr>
+    <tr>
+      <td><code>ft__get_airport_arrivals</code></td>
+      <td>Airport Arrivals</td>
+      <td class="y">Y — table + detail pane</td>
+      <td class="y">Click row → detail panel</td>
+      <td class="n">Read only</td>
+      <td>Flight Tracker</td>
+    </tr>
+    <tr>
+      <td><code>ft__get_aircraft_track</code></td>
+      <td>Track / Waypoints</td>
+      <td class="n">—</td>
+      <td class="n">—</td>
+      <td class="n">Read only</td>
+      <td>Flight Tracker</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-label">✈️ Aircraft Flights (by ICAO24)</div>
+<div class="controls">
+  <button onclick="sendFlightsByAircraft()">Send Flights — a4ec24</button>
+  <button class="secondary" onclick="sendEmptyFlights()">Send Empty Flights</button>
+</div>
+<p class="hint">Shows a table of historical flights for a given aircraft (ICAO24). Tool: <code>ft__get_flights_by_aircraft</code></p>
+
+<div class="section-label">📡 Live Aircraft State</div>
+<div class="controls">
+  <button class="teal" onclick="sendAircraftState()">Send Live State (airborne)</button>
+  <button class="teal" onclick="sendAircraftStateGround()">Send State (on ground)</button>
+  <button class="secondary" onclick="sendAircraftStateNotFound()">Send State (not found)</button>
+</div>
+<p class="hint">Shows real-time position, altitude, speed, heading. Tool: <code>ft__get_aircraft_state</code></p>
+
+<div class="section-label">🛫 Airport Departures</div>
+<div class="controls">
+  <button class="green" onclick="sendDepartures()">Send EGLL Departures (5)</button>
+  <button class="secondary" onclick="sendEmptyDepartures()">Send Empty Departures</button>
+</div>
+<p class="hint">Departures table with click-to-expand detail pane. Tool: <code>ft__get_airport_departures</code></p>
+
+<div class="section-label">🛬 Airport Arrivals</div>
+<div class="controls">
+  <button class="teal" onclick="sendArrivals()">Send EGLL Arrivals (5)</button>
+  <button class="secondary" onclick="sendEmptyArrivals()">Send Empty Arrivals</button>
+</div>
+<p class="hint">Arrivals table with click-to-expand detail pane. Tool: <code>ft__get_airport_arrivals</code></p>
+
+<div class="section-label">📍 Aircraft Track</div>
+<div class="controls">
+  <button onclick="sendTrack()">Send Track — a4ec24</button>
+  <button class="secondary" onclick="sendTrackNotFound()">Send Track (not found)</button>
+</div>
+<p class="hint">Waypoint summary — start/end position, waypoint count, timestamps. Tool: <code>ft__get_aircraft_track</code></p>
+
+<div class="section-label">⚠️ Error Simulation</div>
+<div class="controls">
+  <button class="error" onclick="sendError()">Send API Error</button>
+</div>
+<p class="hint">Simulates an OpenSky API error response.</p>
+
+<div class="section-label">🎨 Theme</div>
+<div class="controls">
+  <button class="dark" onclick="toggleTheme()">Toggle Dark / Light</button>
+</div>
+
+<br/>
+<div class="frame-wrapper" id="frame-wrapper">
+  <iframe id="widget" src="flight_mcp/web/widget.html"></iframe>
+</div>
+
+<div class="section-label">📜 Event Log</div>
+<div class="log" id="log">— event log —</div>
+
+<script>
+  var isDark = false;
+
+  // ── Mock Data: Flights by Aircraft ─────────────────────────────────────
+  var MOCK_FLIGHTS = {
+    icao24: "a4ec24",
+    total_flights: 5,
+    flights: [
+      { callsign: "UAL289",   from: "KEWR",  to: "EGLL",  departed: "2026-04-25 14:22 UTC", arrived: "2026-04-26 02:48 UTC" },
+      { callsign: "UAL290",   from: "EGLL",  to: "KEWR",  departed: "2026-04-26 08:15 UTC", arrived: "2026-04-26 11:42 UTC" },
+      { callsign: "UAL1123",  from: "KEWR",  to: "KDFW",  departed: "2026-04-27 06:30 UTC", arrived: "2026-04-27 09:15 UTC" },
+      { callsign: "UAL2201",  from: "KDFW",  to: "KLAX",  departed: "2026-04-27 11:05 UTC", arrived: "2026-04-27 12:50 UTC" },
+      { callsign: "UAL289",   from: "KLAX",  to: "EGLL",  departed: "2026-04-28 22:10 UTC", arrived: "2026-04-29 16:55 UTC" }
+    ]
+  };
+
+  var MOCK_EMPTY_FLIGHTS = { icao24: "a4ec24", total_flights: 0, flights: [] };
+
+  // ── Mock Data: Aircraft State ───────────────────────────────────────────
+  var MOCK_STATE_AIRBORNE = {
+    icao24: "a4ec24",
+    found: true,
+    callsign: "UAL289",
+    origin_country: "United States",
+    latitude: 51.4775,
+    longitude: -0.4614,
+    altitude_m: 10668,
+    altitude_ft: 35000,
+    on_ground: false,
+    velocity_kmh: 889,
+    heading_deg: 285,
+    heading_compass: "WNW",
+    vertical_rate: 0.0,
+    last_contact: "2026-04-26 02:30 UTC"
+  };
+
+  var MOCK_STATE_GROUND = {
+    icao24: "a4ec24",
+    found: true,
+    callsign: "UAL289",
+    origin_country: "United States",
+    latitude: 51.4775,
+    longitude: -0.4614,
+    altitude_m: 25,
+    altitude_ft: 82,
+    on_ground: true,
+    velocity_kmh: 0,
+    heading_deg: 90,
+    heading_compass: "E",
+    vertical_rate: 0.0,
+    last_contact: "2026-04-26 03:15 UTC"
+  };
+
+  var MOCK_STATE_NOT_FOUND = {
+    icao24: "a4ec24",
+    found: false
+  };
+
+  // ── Mock Data: Airport Departures ──────────────────────────────────────
+  var MOCK_DEPARTURES = {
+    type: "departures",
+    airport: "EGLL",
+    total_flights: 5,
+    flights: [
+      { icao24: "a4ec24", callsign: "UAL289",  from: "EGLL", to: "KEWR", departed: "2026-04-26 08:15 UTC", arrived: null, first_seen_ts: 1745654100 },
+      { icao24: "407692", callsign: "BAW101",  from: "EGLL", to: "KJFK", departed: "2026-04-26 09:30 UTC", arrived: null, first_seen_ts: 1745658600 },
+      { icao24: "3c6442", callsign: "DLH900",  from: "EGLL", to: "EDDF", departed: "2026-04-26 10:05 UTC", arrived: "2026-04-26 12:40 UTC", first_seen_ts: 1745660700 },
+      { icao24: "3950c8", callsign: "AFR1680", from: "EGLL", to: "LFPG", departed: "2026-04-26 10:45 UTC", arrived: "2026-04-26 12:10 UTC", first_seen_ts: 1745663100 },
+      { icao24: "480b9e", callsign: "EZY8452", from: "EGLL", to: "LEMD", departed: "2026-04-26 11:20 UTC", arrived: null, first_seen_ts: 1745665200 }
+    ]
+  };
+
+  var MOCK_EMPTY_DEPARTURES = { type: "departures", airport: "EGLL", total_flights: 0, flights: [] };
+
+  // ── Mock Data: Airport Arrivals ────────────────────────────────────────
+  var MOCK_ARRIVALS = {
+    type: "arrivals",
+    airport: "EGLL",
+    total_flights: 5,
+    flights: [
+      { icao24: "a4ec24", callsign: "UAL289",  from: "KEWR", to: "EGLL", departed: "2026-04-25 14:22 UTC", arrived: "2026-04-26 02:48 UTC", first_seen_ts: 1745631880 },
+      { icao24: "407692", callsign: "BAW100",  from: "KJFK", to: "EGLL", departed: "2026-04-25 18:00 UTC", arrived: "2026-04-26 05:45 UTC", first_seen_ts: 1745642700 },
+      { icao24: "3c6442", callsign: "DLH901",  from: "EDDF", to: "EGLL", departed: "2026-04-26 06:10 UTC", arrived: "2026-04-26 07:30 UTC", first_seen_ts: 1745645400 },
+      { icao24: "3950c8", callsign: "AFR1681", from: "LFPG", to: "EGLL", departed: "2026-04-26 07:25 UTC", arrived: "2026-04-26 08:10 UTC", first_seen_ts: 1745647800 },
+      { icao24: "480b9e", callsign: "EZY9101", from: "LEMD", to: "EGLL", departed: "2026-04-26 07:50 UTC", arrived: "2026-04-26 10:15 UTC", first_seen_ts: 1745650200 }
+    ]
+  };
+
+  var MOCK_EMPTY_ARRIVALS = { type: "arrivals", airport: "EGLL", total_flights: 0, flights: [] };
+
+  // ── Mock Data: Track ───────────────────────────────────────────────────
+  var MOCK_TRACK = {
+    icao24: "a4ec24",
+    found: true,
+    callsign: "UAL289",
+    start_time: "2026-04-25 14:22 UTC",
+    end_time: "2026-04-26 02:48 UTC",
+    waypoints: 847,
+    first_position: { lat: 40.6895, lon: -74.1745 },
+    last_position: { lat: 51.4775, lon: -0.4614 }
+  };
+
+  var MOCK_TRACK_NOT_FOUND = { icao24: "a4ec24", found: false };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  function post(data) {
+    document.getElementById('widget').contentWindow.postMessage(data, '*');
+  }
+
+  function log(msg) {
+    var el = document.getElementById('log');
+    el.innerHTML += '\n' + new Date().toLocaleTimeString() + '  ' + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function send(payload) {
+    post({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: { structuredContent: JSON.parse(JSON.stringify(payload)) } });
+  }
+
+  function sendFlightsByAircraft()  { send(MOCK_FLIGHTS);           log('→ Sent flights for a4ec24 (5 rows)'); }
+  function sendEmptyFlights()       { send(MOCK_EMPTY_FLIGHTS);     log('→ Sent empty flights'); }
+  function sendAircraftState()      { send(MOCK_STATE_AIRBORNE);    log('→ Sent aircraft state (airborne)'); }
+  function sendAircraftStateGround(){ send(MOCK_STATE_GROUND);      log('→ Sent aircraft state (on ground)'); }
+  function sendAircraftStateNotFound(){ send(MOCK_STATE_NOT_FOUND); log('→ Sent aircraft state (not found)'); }
+  function sendDepartures()         { send(MOCK_DEPARTURES);        log('→ Sent EGLL departures (5)'); }
+  function sendEmptyDepartures()    { send(MOCK_EMPTY_DEPARTURES);  log('→ Sent empty departures'); }
+  function sendArrivals()           { send(MOCK_ARRIVALS);          log('→ Sent EGLL arrivals (5)'); }
+  function sendEmptyArrivals()      { send(MOCK_EMPTY_ARRIVALS);    log('→ Sent empty arrivals'); }
+  function sendTrack()              { send(MOCK_TRACK);             log('→ Sent aircraft track (847 waypoints)'); }
+  function sendTrackNotFound()      { send(MOCK_TRACK_NOT_FOUND);   log('→ Sent track not found'); }
+  function sendError()              { send({ error: true, message: 'OpenSky Network API error: rate limit exceeded (max 100 req/day for anonymous users).' }); log('→ Sent API error'); }
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.style.background = isDark ? '#1a1a2e' : '#f0f0f0';
+    document.body.style.color      = isDark ? '#e0e0e0' : '#111';
+    document.getElementById('frame-wrapper').style.background = isDark ? '#16213e' : 'white';
+    document.getElementById('frame-wrapper').style.borderColor = isDark ? '#3a3a5c' : '#ddd';
+    post({ jsonrpc: '2.0', method: 'ui/notifications/theme-change', params: { theme: isDark ? 'dark' : 'light' } });
+    log('→ Theme: ' + (isDark ? 'dark' : 'light'));
+  }
+
+  // ── Handle messages FROM the widget ─────────────────────────────────────
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg) return;
+
+    // SDK handshake
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
+      document.getElementById('widget').contentWindow.postMessage({
+        jsonrpc: '2.0', id: msg.id, result: {
+          protocolVersion: (msg.params && msg.params.protocolVersion) || '2026-01-26',
+          hostInfo: { name: 'flight-test-host', version: '1.0.0' },
+          hostCapabilities: { serverTools: {} },
+          hostContext: { theme: isDark ? 'dark' : 'light' }
+        }
+      }, '*');
+      log('← ui/initialize — handshake sent');
+      return;
+    }
+
+    if (msg.jsonrpc === '2.0' && msg.method === 'ui/callTool') {
+      var tool = msg.params.name;
+      var args = msg.params.arguments || {};
+      log('← callTool: ' + tool + '(' + JSON.stringify(args) + ')');
+      // Flight widget is read-only — no callTool responses needed
+      post({ jsonrpc: '2.0', id: msg.id, result: { error: true, message: 'Flight widget is read-only. Data is pushed by the agent.' } });
+      return;
+    }
+
+    // Height notification from widget
+    if (msg.method === 'ui/notifyIntrinsicHeight') {
+      document.getElementById('widget').style.height = msg.params.height + 'px';
+    }
+  });
+</script>
+</body>
+</html>
