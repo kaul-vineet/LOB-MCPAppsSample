@@ -11,16 +11,18 @@ export function ExpandButton() {
       onClick={isFullscreen ? exitFullscreen : requestFullscreen}
       title={isFullscreen ? 'Exit expanded view' : 'Expand'}
       style={{
-        background: 'transparent',
-        border: '1px solid rgba(255,255,255,0.4)',
-        color: 'inherit',
+        background: 'rgba(255,255,255,0.92)',
+        border: '1px solid rgba(255,255,255,0.95)',
+        color: '#111',
         borderRadius: '4px',
         padding: '4px 10px',
         cursor: 'pointer',
         fontSize: '12px',
+        fontWeight: 600,
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
       }}
     >
       {isFullscreen ? '✕ Exit' : '⤢ Expand'}
