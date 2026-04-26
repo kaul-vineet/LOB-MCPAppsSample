@@ -283,7 +283,6 @@
     transform: scale(1.035) translateY(-6px);
     border-color: rgba(255,255,255,0.15);
   }
-  .card-disabled { cursor: default; opacity: 0.55; }
 
   /* Thumbnail */
   .card-thumb {
@@ -306,17 +305,16 @@
     height: 60%;
     background: linear-gradient(to top, rgba(20,20,20,0.85), transparent);
   }
-  .card-logo-text {
+  .card-logo-icon {
     position: relative;
     z-index: 1;
-    font-size: 38px;
-    font-weight: 900;
-    color: rgba(255,255,255,0.92);
-    letter-spacing: -2px;
-    text-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) drop-shadow(0 4px 16px rgba(0,0,0,0.4));
     transition: transform 0.3s ease;
   }
-  .card:not(.card-disabled):hover .card-logo-text { transform: scale(1.1); }
+  .card:not(.card-disabled):hover .card-logo-icon { transform: scale(1.1); }
 
   /* Status badge */
   .card-status {
@@ -402,10 +400,6 @@
   .card-ft:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(27,156,252,0.4), 0 0 0 1px rgba(27,156,252,0.2); }
   .card-ds:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(76,0,255,0.4),   0 0 0 1px rgba(76,0,255,0.25); }
   .card-snhr:not(.card-disabled):hover  { box-shadow: 0 24px 64px rgba(26,188,156,0.4), 0 0 0 1px rgba(26,188,156,0.2); }
-  .card-saphr:not(.card-disabled):hover { box-shadow: 0 24px 64px rgba(227,119,34,0.35);  }
-  .card-wd:not(.card-disabled):hover    { box-shadow: 0 24px 64px rgba(0,82,204,0.4);  }
-  .card-coupa:not(.card-disabled):hover { box-shadow: 0 24px 64px rgba(220,50,50,0.4); }
-  .card-jira:not(.card-disabled):hover  { box-shadow: 0 24px 64px rgba(0,82,204,0.4);  }
 
   /* ══════════════════════════════════════
      TECH STRIP
@@ -551,7 +545,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-sf"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">SF</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/salesforce/ffffff" alt="Salesforce">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -570,7 +564,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-snow"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">SN</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/servicenow/ffffff" alt="ServiceNow">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -589,7 +583,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-sap"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">SAP</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/sap/ffffff" alt="SAP">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -608,7 +602,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-hs"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">HS</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/hubspot/ffffff" alt="HubSpot">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -627,7 +621,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-ft"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">FT</div>
+        <svg class="card-logo-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -646,7 +640,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-ds"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">DS</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/docusign/ffffff" alt="DocuSign">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
@@ -665,7 +659,7 @@
       <div class="card-thumb">
         <div class="card-thumb-bg thumb-snhr"></div>
         <div class="card-thumb-fade"></div>
-        <div class="card-logo-text">HR</div>
+        <img class="card-logo-icon" src="https://cdn.simpleicons.org/servicenow/ffffff" alt="ServiceNow HR">
         <span class="card-status status-live">Live</span>
       </div>
       <div class="card-body">
