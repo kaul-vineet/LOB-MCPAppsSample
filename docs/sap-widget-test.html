@@ -4,10 +4,11 @@
 <meta charset="UTF-8"/>
 <title>⚓ GTC Dockyard — SAP S/4HANA Widget Test</title>
 <style>
-  body         { font-family: system-ui, sans-serif; background: #f0f0f0; padding: 24px; transition: background 0.2s, color 0.2s; }
+  body::before { content: ''; display: block; position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #0078D4 0%, #50E6FF 40%, #0078D4 70%, #773ADC 100%); z-index: 999; pointer-events: none; }
+  body         { font-family: 'Segoe UI', system-ui, sans-serif; background: #F7F6F4; padding: 24px; transition: background 0.2s, color 0.2s; }
   h2           { margin-bottom: 4px; }
   .subtitle    { font-size: 13px; color: #666; margin-bottom: 20px; }
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; margin: 16px 0 6px; letter-spacing: 0.5px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #707070; margin: 16px 0 6px; letter-spacing: 0.5px; }
   .controls    { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
   button       { padding: 8px 14px; border: none; border-radius: 6px; background: #0070F2; color: white; cursor: pointer; font-size: 13px; font-family: inherit; }
   button:hover { background: #0054B4; }
@@ -22,18 +23,18 @@
   button.error        { background: #BB0000; }
   button.error:hover  { background: #990000; }
   .hint        { font-size: 12px; color: #666; margin: 4px 0 10px; }
-  .log         { font-size: 11px; color: #555; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
-  .frame-wrapper { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 960px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .log         { font-size: 11px; color: #555; background: #fff; border: 1px solid #E0DEDD; border-radius: 6px; padding: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .frame-wrapper { background: #FFFFFF; border: 1px solid #E0DEDD; border-radius: 8px; padding: 16px; max-width: 960px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   iframe       { width: 100%; border: none; min-height: 60px; display: block; }
   .badge       { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #e6f0ff; color: #0070F2; margin-left: 8px; }
   .cap-table { border-collapse: collapse; font-size: 11px; margin: 8px 0 16px; max-width: 960px; }
   .cap-table th { background: #32363a; color: #fff; padding: 5px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
-  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; background: #fff; }
+  .cap-table td { padding: 4px 10px; border-bottom: 1px solid #E0DEDD; white-space: nowrap; background: #fff; }
   .cap-table tr:last-child td { border-bottom: none; }
   .cap-table .y  { color: #107E3E; font-weight: 700; }
   .cap-table .n  { color: #bbb; }
-  .back-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 12px; font-weight: 600; color: #555; background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 5px 12px; margin-bottom: 14px; transition: border-color 0.15s, color 0.15s; }
-  .back-btn:hover { border-color: #0176d3; color: #0176d3; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 12px; font-weight: 600; color: #555; background: #fff; border: 1px solid #E0DEDD; border-radius: 4px; padding: 5px 14px; margin-bottom: 14px; transition: border-color 0.15s, color 0.15s; }
+  .back-btn:hover { border-color: #0078D4; color: #0078D4; background: #EBF4FC; }
 </style>
 </head>
 <body>
