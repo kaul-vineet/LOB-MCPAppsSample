@@ -83,29 +83,29 @@
     <tr>
       <td>CRM Contacts</td>
       <td class="y">Y</td><td class="y">Y (3-col)</td>
-      <td>—</td>
+      <td class="y">→ Deals (inline)</td>
       <td>Create · Edit inline</td><td>—</td>
       <td>HubSpot CRM</td><td class="n">—</td>
     </tr>
     <tr>
       <td>Companies</td>
       <td class="y">Y</td><td class="y">Y (3-col)</td>
-      <td>—</td>
+      <td class="y">→ Contacts + Deals + Tickets</td>
       <td>Create · Edit inline</td><td>—</td>
       <td>HubSpot CRM</td><td class="n">—</td>
     </tr>
     <tr>
       <td>Deals</td>
       <td class="y">Y</td><td class="y">Y (3-col)</td>
-      <td>—</td>
+      <td class="y">→ Contacts (inline)</td>
       <td>Create · Edit inline</td><td>—</td>
       <td>HubSpot CRM</td><td class="n">—</td>
     </tr>
     <tr>
       <td>Tickets</td>
-      <td class="y">Y</td><td class="n">— (edit inline)</td>
-      <td>Description (expand)</td>
-      <td>Edit inline</td><td>—</td>
+      <td class="y">Y</td><td class="y">Y (3-col)</td>
+      <td class="y">→ Notes on-demand</td>
+      <td>Create · Edit inline</td><td>—</td>
       <td>HubSpot CRM</td><td class="n">—</td>
     </tr>
   </tbody>
@@ -122,9 +122,11 @@
 <div class="controls">
   <button class="green" onclick="sendForm('contact')">New Contact Form</button>
   <button class="green" onclick="sendForm('deal')">New Deal Form</button>
+  <button class="blue" onclick="sendForm('company')">New Company Form</button>
+  <button class="dark" onclick="sendForm('ticket')">New Ticket Form</button>
   <button class="blue" onclick="sendFormPrefill()">Prefill Contact Form</button>
 </div>
-<p class="hint">Standalone create forms — agent sends <code>{ type: 'form', entity: '...' }</code>. Prefill test pre-fills firstname + company.</p>
+<p class="hint">Standalone create forms — agent sends <code>{ type: 'form', entity: '...' }</code>. Supports contact, deal, company, ticket.</p>
 
 <div class="section-label">👤 CRM — Contacts</div>
 <div class="controls">
@@ -483,6 +485,50 @@
             }
           }
           result = JSON.parse(JSON.stringify(currentTickets));
+        }
+
+        // ── DRILL-DOWN ASSOCIATIONS ────────────────────────────────────────
+        else if (tool === 'hs__get_company_contacts') {
+          result = { type: 'company_contacts', items: [
+            { id: '601', firstname: 'Alice', lastname: 'Fontaine', email: 'alice.fontaine@acme.com', lifecyclestage: 'customer' },
+            { id: '602', firstname: 'Bruno', lastname: 'Marchetti', email: 'b.marchetti@acme.com', lifecyclestage: 'lead' }
+          ]};
+          log('→ Returned mock company contacts for ' + args.company_id);
+        }
+        else if (tool === 'hs__get_company_deals') {
+          result = { type: 'company_deals', items: [
+            { id: '901', dealname: 'Renewal Q2 2025', amount: 42000, dealstage: 'contractsent' },
+            { id: '902', dealname: 'Expansion Phase 2', amount: 95000, dealstage: 'qualifiedtobuy' }
+          ]};
+          log('→ Returned mock company deals for ' + args.company_id);
+        }
+        else if (tool === 'hs__get_company_tickets') {
+          result = { type: 'company_tickets', items: [
+            { id: '1001', subject: 'Login issue after SSO migration', status: 'new' },
+            { id: '1002', subject: 'Billing discrepancy March', status: 'waiting on contact' }
+          ]};
+          log('→ Returned mock company tickets for ' + args.company_id);
+        }
+        else if (tool === 'hs__get_contact_deals') {
+          result = { type: 'contact_deals', items: [
+            { id: '901', dealname: 'Initial Purchase', amount: 12000, dealstage: 'closedwon', closedate: '2025-12-01' },
+            { id: '905', dealname: 'Upsell Pro Plan', amount: 28000, dealstage: 'presentationscheduled', closedate: '2026-06-30' }
+          ]};
+          log('→ Returned mock contact deals for ' + args.contact_id);
+        }
+        else if (tool === 'hs__get_deal_contacts') {
+          result = { type: 'deal_contacts', items: [
+            { id: '601', firstname: 'Sarah', lastname: 'Kim', email: 'sarah.kim@example.com', company: 'Acme Corp', lifecyclestage: 'customer' },
+            { id: '602', firstname: 'James', lastname: 'Park', email: 'j.park@example.com', company: 'TechStart', lifecyclestage: 'lead' }
+          ]};
+          log('→ Returned mock deal contacts for ' + args.deal_id);
+        }
+        else if (tool === 'hs__get_ticket_notes') {
+          result = { type: 'ticket_notes', items: [
+            { id: 'n1', body: 'Reached out to the customer via email. Awaiting confirmation on affected accounts.', created_at: '2026-04-21 09:14' },
+            { id: 'n2', body: 'Engineering confirmed root cause: SSO certificate mismatch. Fix scheduled for April 25 deployment.', created_at: '2026-04-22 14:30' }
+          ]};
+          log('→ Returned mock ticket notes for ' + args.ticket_id);
         }
 
         // ── UNKNOWN ────────────────────────────────────────────────────────

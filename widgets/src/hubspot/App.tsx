@@ -28,7 +28,7 @@ import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { ExpandButton } from '../shared/ExpandButton';
 import { McpFooter } from '../shared/McpFooter';
 import { useToast } from '../shared/Toast';
-import type { HubSpotData, Email, ContactList, Contact } from './types';
+import type { HubSpotData, Email, ContactList, Contact, CrmContact, Company, Deal, Ticket } from './types';
 
 // HubSpot Canvas palette
 const HS = {
@@ -1093,7 +1093,7 @@ function FormView({
   callTool,
   toast,
 }: {
-  entity: 'contact' | 'deal';
+  entity: 'contact' | 'deal' | 'company' | 'ticket';
   prefill?: Record<string, string>;
   callTool: (tool: string, args: Record<string, unknown>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -1101,7 +1101,6 @@ function FormView({
 }) {
   const styles = useStyles();
   const c = useHsColors();
-  const isContact = entity === 'contact';
 
   const [fields, setFields] = useState<Record<string, string>>(() => ({
     ...(prefill || {}),
@@ -1111,34 +1110,32 @@ function FormView({
   const set = (key: string, value: string) =>
     setFields((prev) => ({ ...prev, [key]: value }));
 
+  const titleMap: Record<typeof entity, string> = {
+    contact: 'New Contact',
+    deal: 'New Deal',
+    company: 'New Company',
+    ticket: 'New Ticket',
+  };
+
   const handleSubmit = async () => {
-    if (isContact && !fields.email) {
-      toast('Email is required', 'error');
-      return;
-    }
-    if (!isContact && !fields.deal_name) {
-      toast('Deal Name is required', 'error');
-      return;
-    }
+    if (entity === 'contact' && !fields.email) { toast('Email is required', 'error'); return; }
+    if (entity === 'deal' && !fields.deal_name) { toast('Deal Name is required', 'error'); return; }
+    if (entity === 'company' && !fields.name) { toast('Company Name is required', 'error'); return; }
+    if (entity === 'ticket' && !fields.subject) { toast('Subject is required', 'error'); return; }
     setSubmitting(true);
     try {
-      if (isContact) {
-        await callTool('hs__create_contact', {
-          email: fields.email || '',
-          firstname: fields.firstname || '',
-          lastname: fields.lastname || '',
-          phone: fields.phone || '',
-          company: fields.company || '',
-        });
+      if (entity === 'contact') {
+        await callTool('hs__create_contact', { email: fields.email || '', firstname: fields.firstname || '', lastname: fields.lastname || '', phone: fields.phone || '', company: fields.company || '' });
         toast('Contact created successfully!', 'success');
-      } else {
-        await callTool('hs__create_deal', {
-          deal_name: fields.deal_name || '',
-          amount: fields.amount || '',
-          pipeline: fields.pipeline || '',
-          deal_stage: fields.deal_stage || '',
-        });
+      } else if (entity === 'deal') {
+        await callTool('hs__create_deal', { deal_name: fields.deal_name || '', amount: fields.amount || '', pipeline: fields.pipeline || '', deal_stage: fields.deal_stage || '' });
         toast('Deal created successfully!', 'success');
+      } else if (entity === 'company') {
+        await callTool('hs__create_company', { name: fields.name || '', domain: fields.domain || '', phone: fields.phone || '', city: fields.city || '', industry: fields.industry || '' });
+        toast('Company created successfully!', 'success');
+      } else {
+        await callTool('hs__create_ticket', { subject: fields.subject || '', status: fields.status || 'new', priority: fields.priority || 'MEDIUM', category: fields.category || '', description: fields.description || '' });
+        toast('Ticket created successfully!', 'success');
       }
     } catch (e: any) {
       toast(e.message || `Failed to create ${entity}`, 'error');
@@ -1153,116 +1150,75 @@ function FormView({
     <>
       <div
         className={styles.header}
-        style={{
-          background: `linear-gradient(135deg, ${c.coral}, ${c.coralDark})`,
-          color: '#fff',
-        }}
+        style={{ background: `linear-gradient(135deg, ${c.coral}, ${c.coralDark})`, color: '#fff' }}
       >
         <div className={styles.titleRow}>
-          <Text size={500} weight="bold" style={{ color: '#fff' }}>
-            ✨ {isContact ? 'New Contact' : 'New Deal'}
-          </Text>
+          <Text size={500} weight="bold" style={{ color: '#fff' }}>✨ {titleMap[entity]}</Text>
         </div>
       </div>
 
-      <div
-        style={{
-          background: c.surface,
-          border: `1px solid ${c.border}`,
-          borderRadius: '8px',
-          padding: '20px',
-        }}
-      >
-        {isContact ? (
+      <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: '8px', padding: '20px' }}>
+        {entity === 'contact' && (
           <>
-            <Field label="First Name" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.firstname || ''}
-                onChange={(_, d) => set('firstname', d.value)}
-                placeholder="Jane"
-              />
-            </Field>
-            <Field label="Last Name *" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.lastname || ''}
-                onChange={(_, d) => set('lastname', d.value)}
-                placeholder="Doe"
-              />
-            </Field>
-            <Field label="Email *" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.email || ''}
-                onChange={(_, d) => set('email', d.value)}
-                placeholder="jane@example.com"
-                type="email"
-              />
-            </Field>
-            <Field label="Phone" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.phone || ''}
-                onChange={(_, d) => set('phone', d.value)}
-                placeholder="+1 555-0100"
-              />
-            </Field>
-            <Field label="Company" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.company || ''}
-                onChange={(_, d) => set('company', d.value)}
-                placeholder="Acme Inc."
-              />
-            </Field>
+            <Field label="First Name" style={{ marginBottom: 12 }}><Input value={fields.firstname || ''} onChange={(_, d) => set('firstname', d.value)} placeholder="Jane" /></Field>
+            <Field label="Last Name *" style={{ marginBottom: 12 }}><Input value={fields.lastname || ''} onChange={(_, d) => set('lastname', d.value)} placeholder="Doe" /></Field>
+            <Field label="Email *" style={{ marginBottom: 12 }}><Input value={fields.email || ''} onChange={(_, d) => set('email', d.value)} placeholder="jane@example.com" type="email" /></Field>
+            <Field label="Phone" style={{ marginBottom: 12 }}><Input value={fields.phone || ''} onChange={(_, d) => set('phone', d.value)} placeholder="+1 555-0100" /></Field>
+            <Field label="Company" style={{ marginBottom: 12 }}><Input value={fields.company || ''} onChange={(_, d) => set('company', d.value)} placeholder="Acme Inc." /></Field>
           </>
-        ) : (
+        )}
+        {entity === 'deal' && (
           <>
-            <Field label="Deal Name *" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.deal_name || ''}
-                onChange={(_, d) => set('deal_name', d.value)}
-                placeholder="Enterprise License"
-              />
-            </Field>
-            <Field label="Amount" style={{ marginBottom: 12 }}>
-              <Input
-                value={fields.amount || ''}
-                onChange={(_, d) => set('amount', d.value)}
-                placeholder="50000"
-              />
-            </Field>
+            <Field label="Deal Name *" style={{ marginBottom: 12 }}><Input value={fields.deal_name || ''} onChange={(_, d) => set('deal_name', d.value)} placeholder="Enterprise License" /></Field>
+            <Field label="Amount" style={{ marginBottom: 12 }}><Input value={fields.amount || ''} onChange={(_, d) => set('amount', d.value)} placeholder="50000" /></Field>
             <Field label="Pipeline" style={{ marginBottom: 12 }}>
-              <Select
-                value={fields.pipeline || 'default'}
-                onChange={(_, d) => set('pipeline', d.value)}
-              >
-                <option value="default">Default</option>
-              </Select>
+              <Select value={fields.pipeline || 'default'} onChange={(_, d) => set('pipeline', d.value)}><option value="default">Default</option></Select>
             </Field>
             <Field label="Deal Stage" style={{ marginBottom: 12 }}>
-              <Select
-                value={fields.deal_stage || ''}
-                onChange={(_, d) => set('deal_stage', d.value)}
-              >
-                {DEAL_STAGES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
+              <Select value={fields.deal_stage || ''} onChange={(_, d) => set('deal_stage', d.value)}>
+                {DEAL_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </Select>
             </Field>
           </>
         )}
+        {entity === 'company' && (
+          <>
+            <Field label="Company Name *" style={{ marginBottom: 12 }}><Input value={fields.name || ''} onChange={(_, d) => set('name', d.value)} placeholder="Acme Corp" /></Field>
+            <Field label="Domain" style={{ marginBottom: 12 }}><Input value={fields.domain || ''} onChange={(_, d) => set('domain', d.value)} placeholder="acme.com" /></Field>
+            <Field label="Phone" style={{ marginBottom: 12 }}><Input value={fields.phone || ''} onChange={(_, d) => set('phone', d.value)} placeholder="+1 555-0100" /></Field>
+            <Field label="City" style={{ marginBottom: 12 }}><Input value={fields.city || ''} onChange={(_, d) => set('city', d.value)} placeholder="San Francisco" /></Field>
+            <Field label="Industry" style={{ marginBottom: 12 }}>
+              <Select value={fields.industry || ''} onChange={(_, d) => set('industry', d.value)}>
+                <option value="">— Select —</option>
+                {HS_INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+              </Select>
+            </Field>
+          </>
+        )}
+        {entity === 'ticket' && (
+          <>
+            <Field label="Subject *" style={{ marginBottom: 12 }}><Input value={fields.subject || ''} onChange={(_, d) => set('subject', d.value)} placeholder="Login issue" /></Field>
+            <Field label="Status" style={{ marginBottom: 12 }}>
+              <Select value={fields.status || 'new'} onChange={(_, d) => set('status', d.value)}>
+                {HS_TICKET_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
+              </Select>
+            </Field>
+            <Field label="Priority" style={{ marginBottom: 12 }}>
+              <Select value={fields.priority || 'MEDIUM'} onChange={(_, d) => set('priority', d.value)}>
+                {HS_TICKET_PRIORITY.map(p => <option key={p} value={p}>{p}</option>)}
+              </Select>
+            </Field>
+            <Field label="Category" style={{ marginBottom: 12 }}><Input value={fields.category || ''} onChange={(_, d) => set('category', d.value)} placeholder="Billing" /></Field>
+            <Field label="Description" style={{ marginBottom: 12 }}><Input value={fields.description || ''} onChange={(_, d) => set('description', d.value)} placeholder="Describe the issue…" /></Field>
+          </>
+        )}
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-          <Button
-            appearance="primary"
-            onClick={handleSubmit}
-            disabled={submitting}
-            style={!submitting ? { backgroundColor: c.coral, borderColor: c.coral } : undefined}
-          >
+          <Button appearance="primary" onClick={handleSubmit} disabled={submitting}
+            style={!submitting ? { backgroundColor: c.coral, borderColor: c.coral } : undefined}>
             {submitting ? <Spinner size="tiny" /> : 'Submit'}
           </Button>
-          <Button appearance="subtle" onClick={handleCancel} disabled={submitting}>
-            Cancel
-          </Button>
+          <Button appearance="subtle" onClick={handleCancel} disabled={submitting}>Cancel</Button>
         </div>
       </div>
     </>
@@ -1385,6 +1341,9 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ firstname: '', lastname: '', email: '', phone: '', company: '', jobtitle: '', lifecyclestage: '' });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingExpand, setLoadingExpand] = useState<string | null>(null);
+  const [contactDeals, setContactDeals] = useState<Record<string, any[]>>({});
 
   useEffect(() => setLocalItems(initItems), [initItems]);
 
@@ -1395,7 +1354,19 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
     finally { setFiltering(false); }
   };
 
-  const openEdit = (ct: any) => { setCreating(false); setEditingId(ct.id); setForm({ firstname: ct.firstname || '', lastname: ct.lastname || '', email: ct.email || '', phone: ct.phone || '', company: ct.company || '', jobtitle: ct.jobtitle || '', lifecyclestage: ct.lifecyclestage || '' }); };
+  const toggleExpand = useCallback(async (ctId: string) => {
+    if (expandedId === ctId) { setExpandedId(null); return; }
+    setExpandedId(ctId);
+    if (contactDeals[ctId]) return;
+    setLoadingExpand(ctId);
+    try {
+      const r = await callTool('hs__get_contact_deals', { contact_id: ctId });
+      setContactDeals(p => ({ ...p, [ctId]: r?.items || [] }));
+    } catch { setContactDeals(p => ({ ...p, [ctId]: [] })); }
+    finally { setLoadingExpand(null); }
+  }, [expandedId, contactDeals, callTool]);
+
+  const openEdit = (ct: any) => { setCreating(false); setExpandedId(null); setEditingId(ct.id); setForm({ firstname: ct.firstname || '', lastname: ct.lastname || '', email: ct.email || '', phone: ct.phone || '', company: ct.company || '', jobtitle: ct.jobtitle || '', lifecyclestage: ct.lifecyclestage || '' }); };
   const openCreate = () => { setEditingId(null); setCreating(true); setForm({ firstname: '', lastname: '', email: '', phone: '', company: '', jobtitle: '', lifecyclestage: '' }); };
   const cancel = () => { setEditingId(null); setCreating(false); };
 
@@ -1429,8 +1400,8 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
-            {['Name', 'Email', 'Company', 'Job Title', 'Stage', ''].map(h => (
-              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            {['', 'Name', 'Email', 'Company', 'Stage', ''].map((h, i) => (
+              <TableHeaderCell key={i} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE, ...(i === 0 ? { width: 28 } : {}) }}>{h}</TableHeaderCell>
             ))}
           </TableRow>
         </TableHeader>
@@ -1442,16 +1413,53 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
               <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ width: 28, padding: '6px 8px' }}>
+                  <button onClick={() => toggleExpand(ct.id)}
+                    style={{ width: 22, height: 22, border: `1px solid ${c.border}`, borderRadius: '3px', background: expandedId === ct.id ? c.surface : 'transparent', cursor: 'pointer', fontSize: '11px', color: c.coral, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {loadingExpand === ct.id ? '…' : expandedId === ct.id ? '▼' : '▶'}
+                  </button>
+                </TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{ct.firstname} {ct.lastname}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.textSec }}>{ct.email || '—'}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text }}>{ct.company || '—'}</TableCell>
-                <TableCell className={styles.cell} style={{ color: c.textSec }}>{ct.jobtitle || '—'}</TableCell>
                 <TableCell className={styles.cell}>
                   {ct.lifecyclestage ? <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, backgroundColor: c.surface, color: c.coral, border: `1px solid ${c.border}` }}>{ct.lifecyclestage}</span> : '—'}
                 </TableCell>
                 <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(ct)} /></TableCell>
               </TableRow>
               {editingId === ct.id && <HsFormRow colSpan={6} title="✏️ Edit Contact" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+              {expandedId === ct.id && (
+                <TableRow>
+                  <TableCell colSpan={6} style={{ padding: 0, backgroundColor: c.surface }}>
+                    <div style={{ padding: '10px 20px 14px', borderTop: `2px solid ${c.coral}` }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 8 }}>Associated Deals</div>
+                      {(contactDeals[ct.id] || []).length === 0 ? (
+                        <div style={{ fontSize: '13px', color: c.textSec, fontStyle: 'italic' }}>No deals associated.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: c.bg }}>
+                              {['Deal', 'Stage', 'Amount', 'Close Date'].map(h => (
+                                <th key={h} style={{ padding: '4px 10px', textAlign: 'left', color: c.textSec, borderBottom: `1px solid ${c.border}`, fontWeight: 600 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(contactDeals[ct.id] || []).map((d: any) => (
+                              <tr key={d.id} style={{ borderBottom: `1px solid ${c.border}` }}>
+                                <td style={{ padding: '4px 10px', color: c.text, fontWeight: 500 }}>{d.dealname}</td>
+                                <td style={{ padding: '4px 10px', color: c.teal }}>{d.dealstage || '—'}</td>
+                                <td style={{ padding: '4px 10px', color: c.teal }}>{d.amount != null ? '$' + Number(d.amount).toLocaleString() : '—'}</td>
+                                <td style={{ padding: '4px 10px', color: c.textSec }}>{d.closedate ? d.closedate.slice(0, 10) : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -1475,6 +1483,10 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: '', domain: '', phone: '', city: '', industry: '' });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingExpand, setLoadingExpand] = useState<string | null>(null);
+  type CompanyDetails = { contacts: any[]; deals: any[]; tickets: any[] };
+  const [companyDetails, setCompanyDetails] = useState<Record<string, CompanyDetails>>({});
 
   useEffect(() => setLocalItems(initItems), [initItems]);
 
@@ -1485,7 +1497,23 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
     finally { setFiltering(false); }
   };
 
-  const openEdit = (co: any) => { setCreating(false); setEditingId(co.id); setForm({ name: co.name || '', domain: co.domain || '', phone: co.phone || '', city: co.city || '', industry: co.industry || '' }); };
+  const toggleExpand = useCallback(async (coId: string) => {
+    if (expandedId === coId) { setExpandedId(null); return; }
+    setExpandedId(coId);
+    if (companyDetails[coId]) return;
+    setLoadingExpand(coId);
+    try {
+      const [rc, rd, rt] = await Promise.all([
+        callTool('hs__get_company_contacts', { company_id: coId }),
+        callTool('hs__get_company_deals', { company_id: coId }),
+        callTool('hs__get_company_tickets', { company_id: coId }),
+      ]);
+      setCompanyDetails(p => ({ ...p, [coId]: { contacts: rc?.items || [], deals: rd?.items || [], tickets: rt?.items || [] } }));
+    } catch { setCompanyDetails(p => ({ ...p, [coId]: { contacts: [], deals: [], tickets: [] } })); }
+    finally { setLoadingExpand(null); }
+  }, [expandedId, companyDetails, callTool]);
+
+  const openEdit = (co: any) => { setCreating(false); setExpandedId(null); setEditingId(co.id); setForm({ name: co.name || '', domain: co.domain || '', phone: co.phone || '', city: co.city || '', industry: co.industry || '' }); };
   const openCreate = () => { setEditingId(null); setCreating(true); setForm({ name: '', domain: '', phone: '', city: '', industry: '' }); };
   const cancel = () => { setEditingId(null); setCreating(false); };
 
@@ -1510,6 +1538,25 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
 
   const H_STYLE: React.CSSProperties = { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 12px' };
 
+  const SubTable = ({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) => (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+      <thead>
+        <tr style={{ backgroundColor: c.bg }}>
+          {headers.map(h => <th key={h} style={{ padding: '4px 10px', textAlign: 'left', color: c.textSec, borderBottom: `1px solid ${c.border}`, fontWeight: 600 }}>{h}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.length === 0 ? (
+          <tr><td colSpan={headers.length} style={{ padding: '6px 10px', color: c.textSec, fontStyle: 'italic' }}>None</td></tr>
+        ) : rows.map((cells, i) => (
+          <tr key={i} style={{ borderBottom: `1px solid ${c.border}` }}>
+            {cells.map((cell, j) => <td key={j} style={{ padding: '4px 10px', color: j === 0 ? c.text : c.textSec }}>{cell}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
       <HsViewHeader icon={<span style={{ fontSize: 20, color: c.coral }}>🏢</span>} title="Companies" count={total ?? localItems.length} onNew={openCreate} newLabel="New Company" />
@@ -1517,8 +1564,8 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
-            {['Name', 'Domain', 'City', 'Industry', 'Phone', ''].map(h => (
-              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            {['', 'Name', 'Domain', 'City', 'Industry', ''].map((h, i) => (
+              <TableHeaderCell key={i} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE, ...(i === 0 ? { width: 28 } : {}) }}>{h}</TableHeaderCell>
             ))}
           </TableRow>
         </TableHeader>
@@ -1530,14 +1577,42 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
               <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ width: 28, padding: '6px 8px' }}>
+                  <button onClick={() => toggleExpand(co.id)}
+                    style={{ width: 22, height: 22, border: `1px solid ${c.border}`, borderRadius: '3px', background: expandedId === co.id ? c.surface : 'transparent', cursor: 'pointer', fontSize: '11px', color: c.coral, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {loadingExpand === co.id ? '…' : expandedId === co.id ? '▼' : '▶'}
+                  </button>
+                </TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{co.name}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.domain || '—'}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text }}>{co.city || '—'}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.industry || '—'}</TableCell>
-                <TableCell className={styles.cell} style={{ color: c.textSec }}>{co.phone || '—'}</TableCell>
                 <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(co)} /></TableCell>
               </TableRow>
               {editingId === co.id && <HsFormRow colSpan={6} title="✏️ Edit Company" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+              {expandedId === co.id && companyDetails[co.id] && (
+                <TableRow>
+                  <TableCell colSpan={6} style={{ padding: 0, backgroundColor: c.surface }}>
+                    <div style={{ padding: '12px 20px 16px', borderTop: `2px solid ${c.coral}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 6 }}>Contacts</div>
+                        <SubTable headers={['Name', 'Email']}
+                          rows={companyDetails[co.id].contacts.map((ct: any) => [`${ct.firstname || ''} ${ct.lastname || ''}`.trim() || '—', ct.email || '—'])} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 6 }}>Deals</div>
+                        <SubTable headers={['Deal', 'Amount']}
+                          rows={companyDetails[co.id].deals.map((d: any) => [d.dealname || '—', d.amount != null ? '$' + Number(d.amount).toLocaleString() : '—'])} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 6 }}>Tickets</div>
+                        <SubTable headers={['Subject', 'Status']}
+                          rows={companyDetails[co.id].tickets.map((tk: any) => [tk.subject || '—', tk.status || '—'])} />
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -1561,6 +1636,9 @@ function DealsView({ items: initItems, total, callTool, toast }: {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ dealname: '', amount: '', dealstage: '', closedate: '', pipeline: '' });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingExpand, setLoadingExpand] = useState<string | null>(null);
+  const [dealContacts, setDealContacts] = useState<Record<string, any[]>>({});
 
   useEffect(() => setLocalItems(initItems), [initItems]);
 
@@ -1573,7 +1651,19 @@ function DealsView({ items: initItems, total, callTool, toast }: {
     finally { setFiltering(false); }
   };
 
-  const openEdit = (d: any) => { setCreating(false); setEditingId(d.id); setForm({ dealname: d.dealname || '', amount: d.amount != null ? String(d.amount) : '', dealstage: d.dealstage || '', closedate: d.closedate || '', pipeline: d.pipeline || '' }); };
+  const toggleExpand = useCallback(async (dId: string) => {
+    if (expandedId === dId) { setExpandedId(null); return; }
+    setExpandedId(dId);
+    if (dealContacts[dId]) return;
+    setLoadingExpand(dId);
+    try {
+      const r = await callTool('hs__get_deal_contacts', { deal_id: dId });
+      setDealContacts(p => ({ ...p, [dId]: r?.items || [] }));
+    } catch { setDealContacts(p => ({ ...p, [dId]: [] })); }
+    finally { setLoadingExpand(null); }
+  }, [expandedId, dealContacts, callTool]);
+
+  const openEdit = (d: any) => { setCreating(false); setExpandedId(null); setEditingId(d.id); setForm({ dealname: d.dealname || '', amount: d.amount != null ? String(d.amount) : '', dealstage: d.dealstage || '', closedate: d.closedate || '', pipeline: d.pipeline || '' }); };
   const openCreate = () => { setEditingId(null); setCreating(true); setForm({ dealname: '', amount: '', dealstage: '', closedate: '', pipeline: '' }); };
   const cancel = () => { setEditingId(null); setCreating(false); };
 
@@ -1606,8 +1696,8 @@ function DealsView({ items: initItems, total, callTool, toast }: {
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
-            {['Deal Name', 'Amount', 'Stage', 'Close Date', 'Pipeline', ''].map(h => (
-              <TableHeaderCell key={h} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE }}>{h}</TableHeaderCell>
+            {['', 'Deal Name', 'Amount', 'Stage', 'Close Date', ''].map((h, i) => (
+              <TableHeaderCell key={i} className={styles.headerCell} style={{ color: c.textSec, borderBottom: `2px solid ${c.border}`, ...H_STYLE, ...(i === 0 ? { width: 28 } : {}) }}>{h}</TableHeaderCell>
             ))}
           </TableRow>
         </TableHeader>
@@ -1619,16 +1709,53 @@ function DealsView({ items: initItems, total, callTool, toast }: {
               <TableRow style={{ backgroundColor: c.bg, borderBottom: `1px solid ${c.border}` }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
+                <TableCell className={styles.cell} style={{ width: 28, padding: '6px 8px' }}>
+                  <button onClick={() => toggleExpand(d.id)}
+                    style={{ width: 22, height: 22, border: `1px solid ${c.border}`, borderRadius: '3px', background: expandedId === d.id ? c.surface : 'transparent', cursor: 'pointer', fontSize: '11px', color: c.teal, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {loadingExpand === d.id ? '…' : expandedId === d.id ? '▼' : '▶'}
+                  </button>
+                </TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{d.dealname}</TableCell>
                 <TableCell className={styles.cell} style={{ color: c.teal, fontWeight: 500 }}>{d.amount != null ? '$' + Number(d.amount).toLocaleString() : '—'}</TableCell>
                 <TableCell className={styles.cell}>
                   {d.dealstage ? <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '3px', fontSize: '11px', fontWeight: 600, backgroundColor: c.surface, color: c.teal, border: `1px solid ${c.border}` }}>{stageLabels[d.dealstage] || d.dealstage}</span> : '—'}
                 </TableCell>
                 <TableCell className={styles.cell} style={{ color: c.textSec }}>{d.closedate ? d.closedate.slice(0, 10) : '—'}</TableCell>
-                <TableCell className={styles.cell} style={{ color: c.textSec }}>{d.pipeline || '—'}</TableCell>
                 <TableCell className={styles.cell}><Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(d)} /></TableCell>
               </TableRow>
               {editingId === d.id && <HsFormRow colSpan={6} title="✏️ Edit Deal" fields={fFields(form)} onSave={handleSave} onCancel={cancel} saving={saving} />}
+              {expandedId === d.id && (
+                <TableRow>
+                  <TableCell colSpan={6} style={{ padding: 0, backgroundColor: c.surface }}>
+                    <div style={{ padding: '10px 20px 14px', borderTop: `2px solid ${c.teal}` }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 8 }}>Associated Contacts</div>
+                      {(dealContacts[d.id] || []).length === 0 ? (
+                        <div style={{ fontSize: '13px', color: c.textSec, fontStyle: 'italic' }}>No contacts associated.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: c.bg }}>
+                              {['Name', 'Email', 'Company', 'Stage'].map(h => (
+                                <th key={h} style={{ padding: '4px 10px', textAlign: 'left', color: c.textSec, borderBottom: `1px solid ${c.border}`, fontWeight: 600 }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(dealContacts[d.id] || []).map((ct: any) => (
+                              <tr key={ct.id} style={{ borderBottom: `1px solid ${c.border}` }}>
+                                <td style={{ padding: '4px 10px', color: c.text, fontWeight: 500 }}>{`${ct.firstname || ''} ${ct.lastname || ''}`.trim() || '—'}</td>
+                                <td style={{ padding: '4px 10px', color: c.textSec }}>{ct.email || '—'}</td>
+                                <td style={{ padding: '4px 10px', color: c.textSec }}>{ct.company || '—'}</td>
+                                <td style={{ padding: '4px 10px', color: c.coral }}>{ct.lifecyclestage || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </React.Fragment>
           ))}
         </TableBody>
@@ -1652,6 +1779,8 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingExpand, setLoadingExpand] = useState<string | null>(null);
+  const [ticketNotes, setTicketNotes] = useState<Record<string, any[]>>({});
   const [form, setForm] = useState({ subject: '', status: '', priority: '', category: '', description: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
@@ -1662,6 +1791,18 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
     try { const r = await callTool('hs__get_tickets', { subject: filterSubject }); setLocalItems(r?.items || []); }
     finally { setFiltering(false); }
   };
+
+  const toggleExpand = useCallback(async (tkId: string) => {
+    if (expandedId === tkId) { setExpandedId(null); return; }
+    setExpandedId(tkId);
+    if (ticketNotes[tkId]) return;
+    setLoadingExpand(tkId);
+    try {
+      const r = await callTool('hs__get_ticket_notes', { ticket_id: tkId });
+      setTicketNotes(p => ({ ...p, [tkId]: r?.items || [] }));
+    } catch { setTicketNotes(p => ({ ...p, [tkId]: [] })); }
+    finally { setLoadingExpand(null); }
+  }, [expandedId, ticketNotes, callTool]);
 
   const openEdit = (tk: any) => { setCreating(false); setExpandedId(null); setEditingId(tk.id); setForm({ subject: tk.subject || '', status: tk.status || '', priority: tk.priority || '', category: tk.category || '', description: tk.description || '' }); };
   const openCreate = () => { setEditingId(null); setCreating(true); setForm({ subject: '', status: 'new', priority: 'MEDIUM', category: '', description: '' }); };
@@ -1710,9 +1851,9 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = c.hoverBg)}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = c.bg)}>
                 <TableCell className={styles.cell} style={{ width: 28, padding: '6px 8px' }}>
-                  <button onClick={() => setExpandedId(p => p === tk.id ? null : tk.id)}
+                  <button onClick={() => toggleExpand(tk.id)}
                     style={{ width: 22, height: 22, border: `1px solid ${c.border}`, borderRadius: '3px', background: expandedId === tk.id ? c.surface : 'transparent', cursor: 'pointer', fontSize: '11px', color: c.coral, fontWeight: 700, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {expandedId === tk.id ? '▼' : '▶'}
+                    {loadingExpand === tk.id ? '…' : expandedId === tk.id ? '▼' : '▶'}
                   </button>
                 </TableCell>
                 <TableCell className={styles.cell} style={{ color: c.text, fontWeight: 600 }}>{tk.subject}</TableCell>
@@ -1729,9 +1870,18 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
               {expandedId === tk.id && (
                 <TableRow>
                   <TableCell colSpan={6} style={{ padding: 0, backgroundColor: c.editPanelBg }}>
-                    <div style={{ padding: '10px 20px 12px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: c.textSec, marginBottom: '6px' }}>Description</div>
-                      <div style={{ fontSize: '13px', color: c.text, fontStyle: tk.description ? 'normal' : 'italic' }}>{tk.description || 'No description provided.'}</div>
+                    <div style={{ padding: '10px 20px 14px', borderTop: `2px solid ${c.coral}` }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: c.textSec, marginBottom: 8 }}>Notes</div>
+                      {(ticketNotes[tk.id] || []).length === 0 ? (
+                        <div style={{ fontSize: '13px', color: c.textSec, fontStyle: 'italic' }}>No notes on this ticket.</div>
+                      ) : (
+                        (ticketNotes[tk.id] || []).map((note: any, idx: number) => (
+                          <div key={idx} style={{ marginBottom: 8, padding: '6px 10px', backgroundColor: c.surface, borderRadius: 4, borderLeft: `3px solid ${c.coral}` }}>
+                            <div style={{ fontSize: '11px', color: c.textSec, marginBottom: 3 }}>{note.created_at || ''}</div>
+                            <div style={{ fontSize: '13px', color: c.text }}>{note.body || note.content || '—'}</div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
