@@ -81,7 +81,7 @@
      HERO
   ══════════════════════════════════════ */
   .hero {
-    padding: 80px 80px 72px;
+    padding: 48px 32px 64px 80px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     position: relative;
@@ -119,6 +119,7 @@
   .hero-layout {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 56px;
     position: relative;
     z-index: 2;
@@ -131,6 +132,9 @@
   .hero-visual {
     flex-shrink: 0;
     width: 480px;
+    margin-left: auto;
+    display: flex;
+    justify-content: flex-end;
   }
   .hv-label {
     font-size: 10px;
