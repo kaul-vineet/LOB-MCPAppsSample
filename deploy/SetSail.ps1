@@ -167,7 +167,24 @@ if (-not $SkipTunnel) {
         "`$host.UI.RawUI.WindowTitle = 'GTC Tunnel ($TunnelName)'; devtunnel host $TunnelName --allow-anonymous"
     )
 
-    Write-Host "  [ OPEN SEAS ] Tunnel window launched -- public URL in new terminal" -ForegroundColor Green
+    # Wait for devtunnel host to register before we try to read its URL
+    Write-Host "  [ WATCH     ] Waiting for tunnel to register..." -NoNewline -ForegroundColor Yellow
+    $tunnelUrl = $null
+    for ($i = 0; $i -lt 12; $i++) {
+        Start-Sleep 3
+        $info = (devtunnel show $TunnelName 2>$null) | Out-String
+        if ($info -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
+            $tunnelUrl = "https://$($Matches[1])"
+            break
+        }
+        Write-Host "." -NoNewline -ForegroundColor Yellow
+    }
+    Write-Host ""
+    if ($tunnelUrl) {
+        Write-Host "  [ OPEN SEAS ] Tunnel live --> $tunnelUrl" -ForegroundColor Green
+    } else {
+        Write-Host "  [ OPEN SEAS ] Tunnel window launched (URL not yet visible)" -ForegroundColor Yellow
+    }
     Write-Host ""
 }
 
@@ -177,9 +194,8 @@ $pluginPath = "$BuildDir\ai-plugin.dev.json"
 
 if (-not $SkipTunnel -and (Test-Path $pluginPath)) {
     Write-Host "  >> Checking tunnel URL..." -ForegroundColor Cyan
-    $tunnelInfo = (devtunnel show $TunnelName 2>$null) | Out-String
-    if ($tunnelInfo -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
-        $currentBase = "https://$($Matches[1])"
+    if ($tunnelUrl) {
+        $currentBase = $tunnelUrl
         $pluginRaw   = Get-Content $pluginPath -Raw
         if ($pluginRaw -match '"url"\s*:\s*"(https://[^"]+devtunnels\.ms)') {
             $existingBase = $Matches[1]
@@ -194,7 +210,7 @@ if (-not $SkipTunnel -and (Test-Path $pluginPath)) {
             }
         }
     } else {
-        Write-Host "  [ CHART     ] Could not read tunnel URL -- skipping patch" -ForegroundColor Yellow
+        Write-Host "  [ CHART     ] Tunnel URL unavailable -- skipping patch (URL in tunnel window)" -ForegroundColor Yellow
     }
     Write-Host ""
 }
