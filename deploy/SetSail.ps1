@@ -368,10 +368,17 @@ Copy-Item "$BuildDir\declarativeAgent.dev.json" "$TmpDir\declarativeAgent.json"
 Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
-Copy-Item "$SrcDir\mcp-tools.json"              "$TmpDir\mcp-tools.json"
 
-# Keep mcp_tool_description — Copilot needs the file reference to discover tool schemas
-Copy-Item "$BuildDir\ai-plugin.dev.json"        "$TmpDir\ai-plugin.json"
+# Inline mcp-tools.json into every runtime's mcp_tool_description.
+# {file:"mcp-tools.json"} is a Teams Toolkit template token; MOS3 doesn't
+# process it and tries an HTTP fallback that returns 500. Inline instead.
+$mcpTools = Get-Content "$SrcDir\mcp-tools.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+$plugin   = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+foreach ($rt in $plugin.runtimes) {
+    $rt.spec | Add-Member -Force -NotePropertyName 'mcp_tool_description' -NotePropertyValue $mcpTools
+}
+[System.IO.File]::WriteAllText("$TmpDir\ai-plugin.json",
+    ($plugin | ConvertTo-Json -Depth 30), [System.Text.Encoding]::UTF8)
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
