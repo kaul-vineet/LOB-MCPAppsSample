@@ -104,6 +104,8 @@ for plugin_path in [
         base["run_for_functions"] = [f["name"] for f in rt["functions"]]
         new_runtimes.append(base)
     plugin["runtimes"] = new_runtimes
+    if plugin_path.exists():
+        plugin_path.chmod(plugin_path.stat().st_mode | 0o200)
     plugin_path.write_text(json.dumps(plugin, indent=4), encoding="utf-8")
     print(f"[OK] {plugin_path.name} — {len(all_functions)} functions, {len(new_runtimes)} runtimes")
 

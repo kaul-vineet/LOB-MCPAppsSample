@@ -261,6 +261,10 @@ if (-not $SkipTunnel -and (Test-Path $pluginPath)) {
 
 # ── Sync tool names into manifests ───────────────────────────────────────────
 
+@("$BuildDir\ai-plugin.dev.json", "$BuildDir\declarativeAgent.dev.json") | ForEach-Object {
+    Set-ItemProperty $_ -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
+}
+
 Write-Host "  >> Syncing tool names into manifests..." -ForegroundColor Cyan
 & $VenvPython "$Root\deploy\regen_manifests.py"
 if ($LASTEXITCODE -ne 0) {
