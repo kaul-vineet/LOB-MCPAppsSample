@@ -364,8 +364,14 @@ Copy-Item "$BuildDir\declarativeAgent.dev.json" "$TmpDir\declarativeAgent.json"
 Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
-Copy-Item "$SrcDir\mcp-tools.json"              "$TmpDir\mcp-tools.json"
-Copy-Item "$BuildDir\ai-plugin.dev.json"        "$TmpDir\ai-plugin.json"
+
+$plugin = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw | ConvertFrom-Json
+foreach ($rt in $plugin.runtimes) {
+    if ($rt.spec.PSObject.Properties['mcp_tool_description']) {
+        $rt.spec.PSObject.Properties.Remove('mcp_tool_description')
+    }
+}
+$plugin | ConvertTo-Json -Depth 20 | Set-Content "$TmpDir\ai-plugin.json" -Encoding UTF8
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
