@@ -1,4 +1,4 @@
-# The Great Trading Company — Detailed Setup Guide
+﻿# The Great Trading Company — Detailed Setup Guide
 
 > **Audience:** This guide assumes no prior experience with Salesforce, ServiceNow, SAP, or HubSpot APIs. It walks you through getting free developer accounts, obtaining credentials, and running each MCP app step by step.
 
@@ -344,8 +344,8 @@ docker compose down
 
 Or use the automated script:
 ```powershell
-.\SetSail.ps1                    # Docker + tunnel
-.\SetSail.ps1 -SkipTunnel        # Docker only
+.\deploy\SetSail.ps1                    # Docker + tunnel
+.\deploy\SetSail.ps1 -SkipTunnel        # Docker only
 ```
 
 ### Option B: Python venvs (for development)

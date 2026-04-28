@@ -24,7 +24,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Root       = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$Root       = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)
 $VenvPython = "$Root\gateway\.venv\Scripts\python.exe"
 
 # ---- Banner ------------------------------------------------------------------

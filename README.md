@@ -1,4 +1,4 @@
-# Enterprise LOB Copilot MCP Apps
+﻿# Enterprise LOB Copilot MCP Apps
 
 <p align="center">
   <em>Ten enterprise LOB systems, one M365 Copilot agent, interactive React widgets with side-by-side support</em>
@@ -230,7 +230,7 @@ lob-mcp-apps/
 │   └── skills/                # Per-LOB scenario prompts
 │
 ├── docker-compose.yml         # All 10 LOBs (ports 3000–3009) + gateway profile
-└── SetSail.ps1               # One-command startup (Docker + tunnel)
+└── deploy/SetSail.ps1               # One-command startup (Docker + tunnel)
 ```
 
 ---
