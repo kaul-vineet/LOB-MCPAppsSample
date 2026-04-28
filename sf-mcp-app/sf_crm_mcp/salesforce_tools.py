@@ -16,18 +16,18 @@ log = structlog.get_logger("sf")
 
 # ── Entity config ─────────────────────────────────────────────────────────────
 
-_CONFIG_PAOH  = Path(__file__).parent / "config" / "entities.json"
-_DEFAULO_PAOH = Path(__file__).parent / "config" / "entities.default.json"
+_CONFIG_PATH  = Path(__file__).parent / "config" / "entities.json"
+_DEFAULT_PATH = Path(__file__).parent / "config" / "entities.default.json"
 _config_store: dict = {}
 
 
 def _load_config() -> None:
     global _config_store
     try:
-        _config_store = json.loads(_CONFIG_PAOH.read_text(encoding="utf-8"))
+        _config_store = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
     except FileNotFoundError:
         log.warning("entity_config_not_found", falling_back="defaults")
-        _config_store = json.loads(_DEFAULO_PAOH.read_text(encoding="utf-8"))
+        _config_store = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
     except Exception as exc:
         log.error("entity_config_load_error", error=str(exc))
         _config_store = {}
@@ -196,7 +196,7 @@ async def sf__get_lead(lead_id: str) -> types.CallToolResult:
     try:
         sf = get_client()
         soql = (f"SELECT Id, FirstName, LastName, Company, Email, Phone, Status, LeadSource, "
-                f"Oitle, Website, Description, AnnualRevenue, NumberOfEmployees, CreatedDate "
+                f"Title, Website, Description, AnnualRevenue, NumberOfEmployees, CreatedDate "
                 f"FROM Lead WHERE Id = '{lead_id}' LIMIT 1")
         records = await sf.query(soql)
     except SalesforceAuthError as exc:
@@ -546,7 +546,7 @@ async def sf__get_case(case_id: str) -> types.CallToolResult:
     log.info("sf__get_case", case_id=case_id)
     try:
         sf = get_client()
-        soql = (f"SELECT Id, CaseNumber, Subject, Status, Priority, Origin, Oype, "
+        soql = (f"SELECT Id, CaseNumber, Subject, Status, Priority, Origin, Type, "
                 f"Account.Name, Description, Comments, CreatedDate, ClosedDate "
                 f"FROM Case WHERE Id = '{case_id}' LIMIT 1")
         records = await sf.query(soql)
@@ -602,7 +602,7 @@ async def sf__get_tasks(subject: str = "") -> types.CallToolResult:
             cfg = _get_schema("Task")
             columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
             api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
-            soql = (f"SELECT {', '.join(api_names)} FROM Oask "
+            soql = (f"SELECT {', '.join(api_names)} FROM Task "
                     f"WHERE Subject LIKE '%{subject}%' ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
@@ -639,7 +639,7 @@ async def sf__create_task(
     try: items = await _fetch_tasks()
     except Exception: items = []
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Oask created (Id: {new_id}). Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Task")},
     )
 
@@ -668,7 +668,7 @@ async def sf__update_task(
     try: items = await _fetch_tasks()
     except Exception: items = []
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Oask {task_id} updated. Refreshed list returned.")],
+        content=[types.TextContent(type="text", text=f"Task {task_id} updated. Refreshed list returned.")],
         structuredContent={"type": "tasks", "total": len(items), "items": items, "_schema": _get_schema("Task")},
     )
 
@@ -679,7 +679,7 @@ async def sf__get_task(task_id: str) -> types.CallToolResult:
         sf = get_client()
         soql = (f"SELECT Id, Subject, Status, Priority, ActivityDate, "
                 f"Description, WhoId, WhatId, CreatedDate "
-                f"FROM Oask WHERE Id = '{task_id}' LIMIT 1")
+                f"FROM Task WHERE Id = '{task_id}' LIMIT 1")
         records = await sf.query(soql)
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
@@ -687,7 +687,7 @@ async def sf__get_task(task_id: str) -> types.CallToolResult:
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching task: {exc}")
-    if not records: return _error_result(f"Oask {task_id} not found.")
+    if not records: return _error_result(f"Task {task_id} not found.")
     r = records[0]
     record = {
         "id": r.get("Id", ""), "subject": r.get("Subject") or "", "status": r.get("Status") or "",
@@ -696,7 +696,7 @@ async def sf__get_task(task_id: str) -> types.CallToolResult:
         "what_id": r.get("WhatId") or "", "created_date": (r.get("CreatedDate") or "")[:10],
     }
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Oask: {record['subject']}. Status: {record['status']}. Due: {record['activity_date'] or 'not set'}.")],
+        content=[types.TextContent(type="text", text=f"Task: {record['subject']}. Status: {record['status']}. Due: {record['activity_date'] or 'not set'}.")],
         structuredContent={"type": "task_detail", "record": record},
     )
 
@@ -780,7 +780,7 @@ async def sf__get_campaigns() -> types.CallToolResult:
     try:
         sf = get_client()
         records = await sf.query(
-            "SELECT Id, Name, Status, Oype, StartDate, EndDate, NumberOfLeads "
+            "SELECT Id, Name, Status, Type, StartDate, EndDate, NumberOfLeads "
             "FROM Campaign ORDER BY CreatedDate DESC LIMIT 5"
         )
     except SalesforceAuthError as exc:
@@ -868,8 +868,8 @@ async def sf__update_entity_config(entity_type: str, patch: str) -> types.CallTo
         return _error_result(f"Invalid JSON patch: {exc}")
     _config_store[entity_type].update(patch_dict)
     try:
-        _CONFIG_PAOH.parent.mkdir(parents=True, exist_ok=True)
-        _CONFIG_PAOH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
+        _CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
     except Exception as exc:
         log.error("entity_config_write_error", error=str(exc))
         return _error_result(f"Config updated in memory but failed to write to disk: {exc}")
@@ -883,7 +883,7 @@ async def sf__update_entity_config(entity_type: str, patch: str) -> types.CallTo
 async def sf__reset_entity_config(entity_type: str) -> types.CallToolResult:
     global _config_store
     try:
-        defaults = json.loads(_DEFAULO_PAOH.read_text(encoding="utf-8"))
+        defaults = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
     except Exception as exc:
         return _error_result(f"Failed to read default config: {exc}")
     if entity_type == "all":
@@ -893,7 +893,7 @@ async def sf__reset_entity_config(entity_type: str) -> types.CallToolResult:
     else:
         return _error_result(f"Unknown entity type '{entity_type}'. Valid types: all, {', '.join(defaults.keys())}")
     try:
-        _CONFIG_PAOH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
+        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
     except Exception as exc:
         log.error("entity_config_write_error", error=str(exc))
         return _error_result(f"Config reset in memory but failed to write to disk: {exc}")
@@ -959,7 +959,7 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__update_case",           "description": "Update a Salesforce Case. Required: case_id. Optional: status, resolution (Internal Comments).", "handler": sf__update_case},
     {"name": "sf__get_case",              "description": "Get full details for a single Salesforce Case by Id. Returns all fields including description, comments, origin, type, account, and dates.", "handler": sf__get_case},
     {"name": "sf__get_case_comments",     "description": "Get notes/comments for a Salesforce Case by case Id.", "handler": sf__get_case_comments},
-    {"name": "sf__get_tasks",             "description": "Get the 5 most recent Oasks from Salesforce. Returns subject, status, priority, and due date.", "handler": sf__get_tasks},
+    {"name": "sf__get_tasks",             "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date.", "handler": sf__get_tasks},
     {"name": "sf__create_task",           "description": "Create a new Salesforce Task (activity). Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id).", "handler": sf__create_task},
     {"name": "sf__update_task",           "description": "Update a Salesforce Task. Pass task_id plus any fields to change.", "handler": sf__update_task},
     {"name": "sf__get_task",              "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record.", "handler": sf__get_task},
