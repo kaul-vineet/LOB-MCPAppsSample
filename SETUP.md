@@ -344,8 +344,8 @@ docker compose down
 
 Or use the automated script:
 ```powershell
-.\Set-Sail.ps1                    # Docker + tunnel
-.\Set-Sail.ps1 -SkipTunnel        # Docker only
+.\SetSail.ps1                    # Docker + tunnel
+.\SetSail.ps1 -SkipTunnel        # Docker only
 ```
 
 ### Option B: Python venvs (for development)

@@ -45,7 +45,7 @@ Built on `@modelcontextprotocol/ext-apps` — the official MCP Apps standard for
 ### 🐳 Docker-First, One-Command Startup
 
 ```bash
-.\Set-Sail.ps1    # Starts Docker containers + dev tunnel in one command
+.\SetSail.ps1    # Starts Docker containers + dev tunnel in one command
 ```
 
 Four containers, four ports, one tunnel, one agent. Or run natively with Python venvs.

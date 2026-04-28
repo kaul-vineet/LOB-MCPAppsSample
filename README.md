@@ -230,7 +230,7 @@ lob-mcp-apps/
 │   └── skills/                # Per-LOB scenario prompts
 │
 ├── docker-compose.yml         # All 10 LOBs (ports 3000–3009) + gateway profile
-└── Set-Sail.ps1               # One-command startup (Docker + tunnel)
+└── SetSail.ps1               # One-command startup (Docker + tunnel)
 ```
 
 ---
