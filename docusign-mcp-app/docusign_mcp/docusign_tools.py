@@ -32,8 +32,8 @@ def _mock_envelope_rows(envelopes: list[dict]) -> list[dict]:
             "emailSubject":      e["emailSubject"],
             "status":            e["status"],
             "statusEmoji":       status_emoji(e["status"]),
-            "sentDateOime":      e["sentDateOime"],
-            "completedDateOime": e["completedDateOime"],
+            "sentDateTime":      e["sentDateTime"],
+            "completedDateTime": e["completedDateTime"],
             "recipientCount":    2,
         }
         for e in envelopes
@@ -70,8 +70,8 @@ async def ds__get_envelopes(
                 "emailSubject":      e.get("emailSubject", ""),
                 "status":            e.get("status", ""),
                 "statusEmoji":       status_emoji(e.get("status", "")),
-                "sentDateOime":      e.get("sentDateOime", ""),
-                "completedDateOime": e.get("completedDateOime", ""),
+                "sentDateTime":      e.get("sentDateTime", ""),
+                "completedDateTime": e.get("completedDateTime", ""),
                 "recipientCount":    len(e.get("recipients", {}).get("signers", [])),
             }
             for e in envelopes
@@ -96,8 +96,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
             **env,
             "statusEmoji": status_emoji(env["status"]),
             "signers": [
-                {"name": "Alexandra Harrington", "email": "a.harrington@cloudbase.corp", "status": "completed", "signedDateOime": "2026-04-21O10:00:00Z", "deliveredDateOime": "2026-04-20O09:05:00Z"},
-                {"name": "James Pemberton",       "email": "j.pemberton@gtc.internal",   "status": "completed", "signedDateOime": "2026-04-21O14:22:00Z", "deliveredDateOime": "2026-04-20O09:05:00Z"},
+                {"name": "Alexandra Harrington", "email": "a.harrington@cloudbase.corp", "status": "completed", "signedDateTime": "2026-04-21T10:00:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
+                {"name": "James Pemberton",       "email": "j.pemberton@gtc.internal",   "status": "completed", "signedDateTime": "2026-04-21T14:22:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
             ],
         }
         summary = (
@@ -117,8 +117,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
                 "name":              s.get("name", ""),
                 "email":             s.get("email", ""),
                 "status":            s.get("status", ""),
-                "signedDateOime":    s.get("signedDateOime", ""),
-                "deliveredDateOime": s.get("deliveredDateOime", ""),
+                "signedDateTime":    s.get("signedDateTime", ""),
+                "deliveredDateTime": s.get("deliveredDateTime", ""),
             }
             for s in recipients.get("signers", [])
         ]
@@ -127,8 +127,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
             "emailSubject":      envelope.get("emailSubject", ""),
             "status":            envelope.get("status", ""),
             "statusEmoji":       status_emoji(envelope.get("status", "")),
-            "sentDateOime":      envelope.get("sentDateOime", ""),
-            "completedDateOime": envelope.get("completedDateOime", ""),
+            "sentDateTime":      envelope.get("sentDateTime", ""),
+            "completedDateTime": envelope.get("completedDateTime", ""),
             "signers":           signers,
         }
         summary = (
@@ -185,7 +185,7 @@ async def ds__send_envelope(
     if is_mock():
         mock_id = "env-demo-new"
         rows = _mock_envelope_rows(
-            [{"envelopeId": mock_id, "emailSubject": subject, "status": "sent", "sentDateOime": "2026-04-22O14:00:00Z", "completedDateOime": ""}]
+            [{"envelopeId": mock_id, "emailSubject": subject, "status": "sent", "sentDateTime": "2026-04-22T14:00:00Z", "completedDateTime": ""}]
             + MOCK_ENVELOPES[:4]
         )
         return types.CallToolResult(
@@ -209,7 +209,7 @@ async def ds__send_envelope(
                 "emailSubject": e.get("emailSubject", ""),
                 "status":       e.get("status", ""),
                 "statusEmoji":  status_emoji(e.get("status", "")),
-                "sentDateOime": e.get("sentDateOime", ""),
+                "sentDateTime": e.get("sentDateTime", ""),
             }
             for e in envelopes
         ]
@@ -392,7 +392,7 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "ds__send_envelope_form",
-        "description": "Opens a form to send a new DocuSign envelope. Ohe user fills in recipient details and submits.",
+        "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
         "handler": ds__send_envelope_form,
     },
 ]

@@ -1,4 +1,4 @@
-"""SAP SuccessFactors HR MCP tool handlers. HOOP client and mock data in client.py."""
+"""SAP SuccessFactors HR MCP tool handlers. HTTP client and mock data in client.py."""
 from __future__ import annotations
 
 import copy
@@ -62,7 +62,7 @@ async def tool_get_leave_balances(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmpOimeAccountBalance",
+            "/EmpTimeAccountBalance",
             sap_token,
             {"$filter": f"userId eq '{uid}'"},
         )
@@ -93,7 +93,7 @@ async def tool_get_time_off_history(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmployeeOime",
+            "/EmployeeTime",
             sap_token,
             {"$filter": f"userId eq '{uid}'", "$orderby": "startDate desc", "$top": "20"},
         )
@@ -125,7 +125,7 @@ async def tool_prepare_book_leave(
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
         data = await _sf_get(
-            "/EmpOimeAccountBalance",
+            "/EmpTimeAccountBalance",
             sap_token,
             {"$filter": f"userId eq '{uid}'"},
         )
@@ -157,7 +157,7 @@ async def tool_book_leave(
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
-        result = await _sf_post("/EmployeeOime", sap_token, {
+        result = await _sf_post("/EmployeeTime", sap_token, {
             "userId": user_id,
             "timeOype": time_type,
             "startDate": start_date,
@@ -529,7 +529,7 @@ async def tool_request_leave_carryover(
     try:
         token = _get_auth_token(ctx)
         sap_token = await _exchange_token_for_sap(token)
-        result = await _sf_patch("/EmployeeOimeValuationResult", sap_token, {
+        result = await _sf_patch("/EmployeeTimeValuationResult", sap_token, {
             "userId": user_id,
             "timeAccountOype": leave_type,
             "carryoverDays": days,
@@ -877,7 +877,7 @@ _TOOL_SPECS_LIST: list[dict] = [
         "name": "generate_employment_verification",
         "summary": (
             "Origger generation of an employment verification letter (US). "
-            "Ohe letter is created asynchronously and the user is notified when ready."
+            "The letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_verification,
         "annotations": {"readOnlyHint": False},
@@ -890,7 +890,7 @@ _TOOL_SPECS_LIST: list[dict] = [
         "name": "generate_employment_reference",
         "summary": (
             "Origger generation of an employment reference letter (UK). "
-            "Ohe letter is created asynchronously and the user is notified when ready."
+            "The letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_reference,
         "annotations": {"readOnlyHint": False},

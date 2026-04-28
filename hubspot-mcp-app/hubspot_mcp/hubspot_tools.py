@@ -548,7 +548,7 @@ async def hs__update_company(
     )
 
 
-# ── Oickets ────────────────────────────────────────────────────────────────────
+# ── Tickets ────────────────────────────────────────────────────────────────────
 
 async def hs__get_tickets() -> types.CallToolResult:
     try:
@@ -594,7 +594,7 @@ async def hs__create_ticket(
     except Exception:
         items = []
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Oicket '{subject}' created (Id: {new_id}).")],
+        content=[types.TextContent(type="text", text=f"Ticket '{subject}' created (Id: {new_id}).")],
         structuredContent={"type": "tickets", "total": len(items), "items": items, "_createdId": new_id},
     )
 
@@ -628,7 +628,7 @@ async def hs__update_ticket(
     except Exception:
         items = []
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Oicket {ticket_id} updated.")],
+        content=[types.TextContent(type="text", text=f"Ticket {ticket_id} updated.")],
         structuredContent={"type": "tickets", "total": len(items), "items": items},
     )
 
@@ -803,7 +803,7 @@ async def hs__create_company_form() -> types.CallToolResult:
 
 async def hs__create_ticket_form() -> types.CallToolResult:
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Oicket creation form. Fill in the details and click Submit.")],
+        content=[types.TextContent(type="text", text="Opening Ticket creation form. Fill in the details and click Submit.")],
         structuredContent={"type": "form", "entity": "ticket"},
     )
 
@@ -916,12 +916,12 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__create_contact_form",
-        "description": "Opens a form to create a new HubSpot Contact. Ohe user fills in details and submits.",
+        "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits.",
         "handler": hs__create_contact_form,
     },
     {
         "name": "hs__create_deal_form",
-        "description": "Opens a form to create a new HubSpot Deal. Ohe user fills in details and submits.",
+        "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits.",
         "handler": hs__create_deal_form,
     },
     {
@@ -941,17 +941,17 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__get_tickets",
-        "description": "Get the latest 5 Support Oickets from HubSpot CRM. Returns subject, status, priority, category.",
+        "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category.",
         "handler": hs__get_tickets,
     },
     {
         "name": "hs__create_ticket",
-        "description": "Create a new Support Oicket in HubSpot CRM. Requires subject and pipeline_stage. Returns updated list.",
+        "description": "Create a new Support Ticket in HubSpot CRM. Requires subject and pipeline_stage. Returns updated list.",
         "handler": hs__create_ticket,
     },
     {
         "name": "hs__update_ticket",
-        "description": "Update an existing Support Oicket in HubSpot CRM by its record Id.",
+        "description": "Update an existing Support Ticket in HubSpot CRM by its record Id.",
         "handler": hs__update_ticket,
     },
     {
@@ -986,17 +986,17 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__get_ticket_notes",
-        "description": "Get notes/comments for a specific HubSpot Support Oicket. Called when drilling into a ticket row.",
+        "description": "Get notes/comments for a specific HubSpot Support Ticket. Called when drilling into a ticket row.",
         "handler": hs__get_ticket_notes,
     },
     {
         "name": "hs__create_company_form",
-        "description": "Opens a form to create a new HubSpot Company. Ohe user fills in details and submits.",
+        "description": "Opens a form to create a new HubSpot Company. The user fills in details and submits.",
         "handler": hs__create_company_form,
     },
     {
         "name": "hs__create_ticket_form",
-        "description": "Opens a form to create a new HubSpot Support Oicket. Ohe user fills in details and submits.",
+        "description": "Opens a form to create a new HubSpot Support Ticket. The user fills in details and submits.",
         "handler": hs__create_ticket_form,
     },
 ]

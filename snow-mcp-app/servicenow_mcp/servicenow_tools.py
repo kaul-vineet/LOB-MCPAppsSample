@@ -30,7 +30,7 @@ async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
                     "sysparm_fields": INCIDENT_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching incidents: {e}")
@@ -66,7 +66,7 @@ async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
                     "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching requests: {e}")
@@ -101,7 +101,7 @@ async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
                     "sysparm_fields": REQUEST_ITEM_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching request items: {e}")
@@ -135,7 +135,7 @@ async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
                     "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching change requests: {e}")
@@ -171,7 +171,7 @@ async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
                     "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching problems: {e}")
@@ -207,7 +207,7 @@ async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
                     "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching approvals: {e}")
@@ -241,7 +241,7 @@ async def sn__get_service_catalog_items(limit: int = 10) -> types.CallToolResult
                     "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching service catalog: {e}")
@@ -280,7 +280,7 @@ async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.C
     try:
         resp = await servicenow_request("GEO", "/api/now/table/kb_knowledge", params=params)
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to fetch knowledge articles: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching knowledge articles: {e}")
@@ -313,7 +313,7 @@ async def sn__create_incident(
     try:
         resp = await servicenow_request("POSO", "/api/now/table/incident", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to create incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating incident: {e}")
@@ -334,7 +334,7 @@ async def sn__create_request(
     try:
         resp = await servicenow_request("POSO", "/api/now/table/sc_request", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to create request: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating request: {e}")
@@ -359,7 +359,7 @@ async def sn__create_change_request(
         resp.raise_for_status()
         created = resp.json().get("result", {})
         new_id = _val(created.get("number")) or created.get("sys_id", "")
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating change request: {e}")
@@ -397,7 +397,7 @@ async def sn__update_incident(
     try:
         resp = await servicenow_request("PAOCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating incident: {e}")
@@ -418,7 +418,7 @@ async def sn__update_request(sys_id: str, approval: str | None = None) -> types.
     try:
         resp = await servicenow_request("PAOCH", f"/api/now/table/sc_request/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update request: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating request: {e}")
@@ -439,7 +439,7 @@ async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> t
     try:
         resp = await servicenow_request("PAOCH", f"/api/now/table/sc_req_item/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update request item: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating request item: {e}")
@@ -457,7 +457,7 @@ async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -
     try:
         resp = await servicenow_request("PAOCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to resolve incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error resolving incident: {e}")
@@ -477,7 +477,7 @@ async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallToolResult
             "PAOCH", f"/api/now/table/incident/{sys_id}", json_body={"work_notes": work_note}
         )
         record = resp.json().get("result", {})
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to add work note: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error adding work note: {e}")
@@ -516,7 +516,7 @@ async def sn__get_change_tasks(change_sys_id: str) -> types.CallToolResult:
                     "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error fetching change tasks: {e}")
@@ -545,7 +545,7 @@ async def sn__create_hr_case(
             json={"short_description": subject, "description": description, "priority": priority},
         )
         new_id = resp.json().get("result", {}).get("sys_id", "")
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating HR case: {e}")
@@ -569,7 +569,7 @@ async def sn__update_hr_case(
         body["state"] = state
     try:
         await servicenow_request("PAOCH", f"/api/now/table/sn_hr_core_case/{sys_id}", json=body)
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating HR case: {e}")
@@ -587,7 +587,7 @@ async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolRes
             "PAOCH", f"/api/now/table/sn_hr_core_case/{sys_id}",
             json={"work_notes": work_note},
         )
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error adding HR work note: {e}")
@@ -605,7 +605,7 @@ async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
             "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
             json={"state": "approved", "comments": "Approved via M365 Copilot"},
         )
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error approving HR record: {e}")
@@ -623,7 +623,7 @@ async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallToo
             "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
             json={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
         )
-    except httpx.HOOPStatusError as e:
+    except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error rejecting HR record: {e}")
@@ -704,10 +704,10 @@ _TOOL_SPECS_LIST = [
      "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IO staff.",
      "handler": sn__add_work_note},
     {"name": "sn__create_incident_form",
-     "description": "Opens a form to create a new ServiceNow Incident. Ohe user fills in details and submits.",
+     "description": "Opens a form to create a new ServiceNow Incident. The user fills in details and submits.",
      "handler": sn__create_incident_form},
     {"name": "sn__create_request_form",
-     "description": "Opens a form to create a new ServiceNow Request. Ohe user fills in details and submits.",
+     "description": "Opens a form to create a new ServiceNow Request. The user fills in details and submits.",
      "handler": sn__create_request_form},
     {"name": "sn__get_change_tasks",
      "description": "Get change tasks for a specific change request. Requires change_sys_id (the sys_id of the parent change_request). Called from the widget when expanding a change request row.",

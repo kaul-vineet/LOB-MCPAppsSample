@@ -272,7 +272,7 @@ COUPA_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/coupa-invoice-status.html",
-            "openai/toolInvocation/invoking": "Ohecking invoice status…",
+            "openai/toolInvocation/invoking": "Checking invoice status…",
             "openai/toolInvocation/invoked": "Invoice status ready.",
         },
     },
@@ -283,7 +283,7 @@ COUPA_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/coupa-po-status.html",
-            "openai/toolInvocation/invoking": "Ohecking PO status…",
+            "openai/toolInvocation/invoking": "Checking PO status…",
             "openai/toolInvocation/invoked": "PO status ready.",
         },
     },

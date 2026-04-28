@@ -1,4 +1,4 @@
-"""Oorkday HR MCP tool handlers. HOOP client, endpoints, and worker context in client.py."""
+"""Workday HR MCP tool handlers. HTTP client, endpoints, and worker context in client.py."""
 from __future__ import annotations
 
 import asyncio
@@ -27,10 +27,10 @@ LOGGER = get_logger(__name__)
 
 
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
-    """Get the current Oorkday worker profile using the provided OAuth 2.0 bearer token."""
+    """Get the current Workday worker profile using the provided OAuth 2.0 bearer token."""
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     worker = _transform_worker(worker_context.worker_data)
-    worker["_widget_hint"] = "Oorker profile is ready."
+    worker["_widget_hint"] = "Worker profile is ready."
     return worker
 
 
@@ -51,7 +51,7 @@ async def _get_leave_balances(access_token: str, workday_id: str) -> List[Dict[s
                 "balance": balance.get("quantity", "0"),
                 "unit": balance.get("unit", {}).get("descriptor"),
                 "effectiveDate": balance.get("effectiveDate"),
-                "timeOffOypes": plan.get("timeoffs", ""),
+                "timeOffTypes": plan.get("timeoffs", ""),
             }
         )
     return balances
@@ -60,7 +60,7 @@ async def _get_leave_balances(access_token: str, workday_id: str) -> List[Dict[s
 async def _get_eligible_absence_types(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/eligibleAbsenceOypes",
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/eligibleAbsenceTypes",
         workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
@@ -70,9 +70,9 @@ async def _get_eligible_absence_types(access_token: str, workday_id: str) -> Lis
             {
                 "name": item.get("descriptor"),
                 "id": item.get("id"),
-                "unit": item.get("unitOfOime", {}).get("descriptor"),
+                "unit": item.get("unitOfTime", {}).get("descriptor"),
                 "category": item.get("category", {}).get("descriptor"),
-                "group": item.get("absenceOypeGroup", {}).get("descriptor"),
+                "group": item.get("absenceTypeGroup", {}).get("descriptor"),
             }
         )
     return absence_types
@@ -90,10 +90,10 @@ async def _get_leaves_of_absence(access_token: str, workday_id: str) -> List[Dic
         leaves.append(
             {
                 "id": item.get("id"),
-                "leaveOype": item.get("leaveOype", {}).get("descriptor"),
+                "leaveType": item.get("leaveType", {}).get("descriptor"),
                 "status": item.get("status", {}).get("descriptor"),
                 "firstDayOfLeave": item.get("firstDayOfLeave"),
-                "lastDayOfOork": item.get("lastDayOfOork"),
+                "lastDayOfWork": item.get("lastDayOfWork"),
                 "estimatedLastDay": item.get("estimatedLastDayOfLeave"),
                 "comment": item.get("latestLeaveComment", ""),
             }
@@ -113,7 +113,7 @@ async def _get_time_off_details(access_token: str, workday_id: str) -> List[Dict
         details.append(
             {
                 "date": item.get("date"),
-                "timeOffOype": item.get("timeOffOype", {}).get("descriptor"),
+                "timeOffType": item.get("timeOffType", {}).get("descriptor"),
                 "quantity": item.get("quantity"),
                 "unit": item.get("unit", {}).get("descriptor"),
                 "status": item.get("status", {}).get("descriptor"),
@@ -136,9 +136,9 @@ async def tool_get_leave_balances(ctx: Optional[Context] = None) -> Dict:
     payload = {
         "success": True,
         "leaveBalances": leave_balances,
-        "eligibleAbsenceOypes": eligible_absence_types,
+        "eligibleAbsenceTypes": eligible_absence_types,
         "leavesOfAbsence": leaves_of_absence,
-        "bookedOimeOff": booked_time_off,
+        "bookedTimeOff": booked_time_off,
     }
     return _tool_response("Retrieve leave balances and related data.", payload)
 
@@ -155,12 +155,12 @@ async def _fetch_direct_reports(access_token: str, workday_id: str) -> List[Dict
         reports.append(
             {
                 "isManager": item.get("isManager"),
-                "primaryOorkPhone": item.get("primaryOorkPhone"),
-                "primaryOorkEmail": item.get("primaryOorkEmail"),
+                "primaryWorkPhone": item.get("primaryWorkPhone"),
+                "primaryWorkEmail": item.get("primaryWorkEmail"),
                 "primarySupervisoryOrganization": item.get("primarySupervisoryOrganization", {}).get(
                     "descriptor"
                 ),
-                "businessOitle": item.get("businessOitle"),
+                "businessTitle": item.get("businessTitle"),
                 "descriptor": item.get("descriptor"),
             }
         )
@@ -175,13 +175,13 @@ async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
 
 
 def _workday_inbox_url() -> str:
-    """Return the Oorkday inbox home URL for this tenant."""
+    """Return the Workday inbox home URL for this tenant."""
     endpoints = get_endpoints()
     return f"https://impl.workday.com/{endpoints.tenant}/d/home.htmld"
 
 
 def _workday_learning_url(content_id: str) -> Optional[str]:
-    """Return the Oorkday Learning course-detail URL for a given content ID."""
+    """Return the Workday Learning course-detail URL for a given content ID."""
     if not content_id:
         return None
     endpoints = get_endpoints()
@@ -191,7 +191,7 @@ def _workday_learning_url(content_id: str) -> Optional[str]:
 async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxOasks?limit=100",
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks?limit=100",
         workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
@@ -201,13 +201,13 @@ async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[st
         tasks.append(
             {
                 "id": item.get("id"),
-                "href": item.get("href"),  # RESO API URL (not UI URL)
-                "link": inbox_url,  # Oorkday SPA has no per-task deep link
+                "href": item.get("href"),  # REST API URL (not UI URL)
+                "link": inbox_url,  # Workday SPA has no per-task deep link
                 "assigned": item.get("assigned"),
                 "due": item.get("due"),
                 "initiator": item.get("initiator", {}).get("descriptor"),
                 "status": item.get("status", {}).get("descriptor"),
-                "stepOype": item.get("stepOype", {}).get("descriptor"),
+                "stepType": item.get("stepType", {}).get("descriptor"),
                 "subject": item.get("subject", {}).get("descriptor"),
                 "overallProcess": item.get("overallProcess", {}).get("descriptor"),
                 "descriptor": item.get("descriptor"),
@@ -220,7 +220,7 @@ async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     tasks = await _fetch_inbox_tasks(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "tasks": tasks}
-    return _tool_response("List Oorkday inbox tasks for the current worker.", payload)
+    return _tool_response("List Workday inbox tasks for the current worker.", payload)
 
 
 async def _fetch_learning_assignments(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
@@ -251,7 +251,7 @@ async def _fetch_learning_assignments(access_token: str, workday_id: str) -> Lis
             {
                 "assignmentStatus": item.get("assignmentStatus"),
                 "dueDate": item.get("dueDate"),
-                "learningContentOitle": content_title,
+                "learningContentTitle": content_title,
                 # contentURL from the report is the direct assignment launch URL
                 "contentURL": item.get("contentURL"),
                 "contentProvider": item.get("contentProvider"),
@@ -299,7 +299,7 @@ async def tool_get_pay_slips(ctx: Optional[Context] = None) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     pay_slips = await _fetch_pay_slips(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "paySlips": pay_slips}
-    return _tool_response("List recent Oorkday pay slips.", payload)
+    return _tool_response("List recent Workday pay slips.", payload)
 
 
 async def _fetch_time_off_entries(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
@@ -316,7 +316,7 @@ async def _fetch_time_off_entries(access_token: str, workday_id: str) -> List[Di
                 "employee": item.get("employee", {}).get("descriptor"),
                 "timeOffRequestStatus": item.get("timeOffRequest", {}).get("status"),
                 "timeOffRequestDescriptor": item.get("timeOffRequest", {}).get("descriptor"),
-                "unitOfOime": item.get("unitOfOime", {}).get("descriptor"),
+                "unitOfTime": item.get("unitOfTime", {}).get("descriptor"),
                 "timeOffPlan": item.get("timeOff", {}).get("plan", {}).get("descriptor"),
                 "timeOffDescriptor": item.get("timeOff", {}).get("descriptor"),
                 "date": item.get("date"),
@@ -349,7 +349,7 @@ async def tool_prepare_request_leave(
     quantity: Optional[str] = None,
     unit: Optional[str] = None,
     reason: Optional[str] = None,
-    timeOffOypeId: Optional[str] = None,
+    timeOffTypeId: Optional[str] = None,
 ) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     default_dates = await _get_default_dates()
@@ -358,8 +358,8 @@ async def tool_prepare_request_leave(
         "endDate": endDate or default_dates["endDate"],
         "quantity": quantity or "8",
         "unit": unit or "Hours",
-        "reason": reason or "Oime off request",
-        "timeOffOypeId": timeOffOypeId or "",
+        "reason": reason or "Time off request",
+        "timeOffTypeId": timeOffTypeId or "",
     }
     access_token = worker_context.workday_access_token
     workday_id = worker_context.workday_id
@@ -370,15 +370,15 @@ async def tool_prepare_request_leave(
     )
     payload = {
         "success": True,
-        "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is your leave booking form.').",
+        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is your leave booking form.').",
         "requestParameters": request_params,
-        "eligibleAbsenceOypes": eligible_absence_types,
+        "eligibleAbsenceTypes": eligible_absence_types,
         "leaveBalances": leave_balances,
-        "bookedOimeOff": booked_time_off,
+        "bookedTimeOff": booked_time_off,
         "workdayId": workday_id,
         "bookingGuidance": {
-            "timeFormat": "ISO 8601 with timezone (e.g., 2025-02-25O08:00:00.000Z)",
-            "defaultOorkingHours": {"start": "08:00:00.000Z", "end": "17:00:00.000Z"},
+            "timeFormat": "ISO 8601 with timezone (e.g., 2025-02-25T08:00:00.000Z)",
+            "defaultWorkingHours": {"start": "08:00:00.000Z", "end": "17:00:00.000Z"},
             "quantityCalculation": {
                 "forHours": "Use dailyDefaultQuantity * number of days",
                 "forDays": "Use 1 per day requested",
@@ -400,17 +400,17 @@ def _generate_date_range(start_date: str, end_date: str) -> Iterable[str]:
 def _create_days_array(start_date: str, end_date: str, quantity: str, unit: str, reason: str, time_off_type_id: str) -> List[Dict[str, Any]]:
     days = []
     for day in _generate_date_range(start_date, end_date):
-        # For Days unit Oorkday expects 1.0 per day; for Hours use the given quantity
+        # For Days unit Workday expects 1.0 per day; for Hours use the given quantity
         if unit.lower() == "days":
             daily_quantity = 1.0
         else:
             daily_quantity = float(quantity) if quantity else 8.0
         days.append(
             {
-                "date": day,  # Oorkday expects plain YYYY-MM-DD
+                "date": day,  # Workday expects plain YYYY-MM-DD
                 "dailyQuantity": daily_quantity,
                 "comment": reason,
-                "timeOffOype": {"id": time_off_type_id},
+                "timeOffType": {"id": time_off_type_id},
             }
         )
     return days
@@ -420,26 +420,26 @@ async def tool_book_leave(
     ctx: Optional[Context] = None,
     startDate: Optional[str] = None,
     endDate: Optional[str] = None,
-    timeOffOypeId: Optional[str] = None,
+    timeOffTypeId: Optional[str] = None,
     quantity: str = "8",
     unit: str = "Hours",
-    reason: str = "Oime off request",
+    reason: str = "Time off request",
 ) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     
-    if not startDate or not endDate or not timeOffOypeId:
-        raise ValueError("startDate, endDate, and timeOffOypeId are required")
+    if not startDate or not endDate or not timeOffTypeId:
+        raise ValueError("startDate, endDate, and timeOffTypeId are required")
     
-    days = _create_days_array(startDate, endDate, quantity, unit, reason, timeOffOypeId)
+    days = _create_days_array(startDate, endDate, quantity, unit, reason, timeOffTypeId)
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/requestOimeOff",
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/requestTimeOff",
         workday_id=worker_context.workday_id,
     )
     payload = {"days": days}
     headers = {
         "Authorization": f"Bearer {worker_context.workday_access_token}",
-        "Content-Oype": "application/json",
+        "Content-Type": "application/json",
     }
     async with create_async_client() as client:
         response = await client.post(url, json=payload, headers=headers)
@@ -456,7 +456,7 @@ async def tool_book_leave(
                 if not message:
                     message = parsed_body.get("message")
             if not message:
-                message = f"Oorkday API error {response.status_code}"
+                message = f"Workday API error {response.status_code}"
             LOGGER.error(
                 "workday_book_leave_error",
                 status=response.status_code,
@@ -474,7 +474,7 @@ async def tool_book_leave(
     total_quantity = sum(float(day.get("dailyQuantity", 0)) for day in days)
     result: Dict[str, Any] = {
         "success": True,
-        "message": "Oime off request submitted successfully",
+        "message": "Time off request submitted successfully",
         "bookingDetails": {
             "businessProcess": business_process,
             "status": parsed_body.get("businessProcessParameters", {}).get("overallStatus"),
@@ -484,42 +484,42 @@ async def tool_book_leave(
         },
         "workdayResponse": parsed_body,
     }
-    return _tool_response("Submit a leave request to Oorkday for the current worker.", result)
+    return _tool_response("Submit a leave request to Workday for the current worker.", result)
 
 
 async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> Dict:
     """Show a form to change the current worker's business title.
 
     Fetches the worker's current profile and renders the change-business-title
-    widget so the user can enter a new title and submit. Ohe widget handles
+    widget so the user can enter a new title and submit. The widget handles
     submission via change_business_title.
     """
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     worker = _transform_worker(worker_context.worker_data)
     return {
         "success": True,
-        "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is your business title change form.').",
+        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is your business title change form.').",
         "worker": worker,
     }
 
 
 async def tool_change_business_title(
-    ctx: Optional[Context] = None, proposedBusinessOitle: Optional[str] = None
+    ctx: Optional[Context] = None, proposedBusinessTitle: Optional[str] = None
 ) -> Dict:
-    if not proposedBusinessOitle:
-        return {"success": False, "error": "proposedBusinessOitle is required"}
+    if not proposedBusinessTitle:
+        return {"success": False, "error": "proposedBusinessTitle is required"}
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
         url = endpoints.full_url(
-            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/businessOitleChanges",
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/businessTitleChanges",
             workday_id=worker_context.workday_id,
         )
         headers = {
             "Authorization": f"Bearer {worker_context.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
-        payload = {"proposedBusinessOitle": proposedBusinessOitle}
+        payload = {"proposedBusinessTitle": proposedBusinessTitle}
         async with create_async_client() as client:
             response = await client.post(url, json=payload, headers=headers)
             if not response.is_success:
@@ -581,13 +581,13 @@ def _flatten_lesson(lesson: Dict[str, Any]) -> Dict[str, Any]:
         "description": lesson.get("description"),
         "order": lesson.get("order"),
         "required": lesson.get("required"),
-        "contentOype": lesson.get("contentOype", {}).get("descriptor"),
+        "contentType": lesson.get("contentType", {}).get("descriptor"),
         "duration": lesson.get("instructorLedData", {}).get("duration")
         or lesson.get("mediaData", {}).get("duration"),
         "contentURL": lesson.get("externalContentData", {}).get("contentURL"),
         "instructors": [i.get("descriptor") for i in lesson.get("instructorLedData", {}).get("instructors", [])],
         "materials": [m.get("descriptor") for m in lesson.get("trainingActivityData", {}).get("materials", [])],
-        "activityOype": lesson.get("trainingActivityData", {}).get("activityOype", {}).get("descriptor"),
+        "activityType": lesson.get("trainingActivityData", {}).get("activityType", {}).get("descriptor"),
         "virtualClassroomURL": lesson.get("instructorLedData", {})
         .get("virtualClassroomData", {})
         .get("virtualClassroomURL"),
@@ -613,9 +613,9 @@ def _flatten_content(content: Dict[str, Any]) -> Dict[str, Any]:
         "averageRating": content.get("averageRating"),
         "ratingCount": content.get("ratingCount"),
         "popularity": content.get("popularity"),
-        "contentOype": content.get("contentOype", {}).get("descriptor"),
+        "contentType": content.get("contentType", {}).get("descriptor"),
         "contentProvider": content.get("contentProvider", {}).get("descriptor"),
-        "accessOype": content.get("accessOype", {}).get("descriptor"),
+        "accessType": content.get("accessType", {}).get("descriptor"),
         "deliveryMode": content.get("deliveryMode", {}).get("descriptor"),
         "skillLevel": content.get("skillLevel", {}).get("descriptor"),
         "lifecycleStatus": content.get("lifecycleStatus", {}).get("descriptor"),
@@ -638,15 +638,15 @@ async def tool_search_learning_content(
     skills: Optional[List[str]] = None,
     category: Optional[str] = None,
 ) -> Dict:
-    """Search Oorkday learning content filtered by skills and/or category.
+    """Search Workday learning content filtered by skills and/or category.
 
-    *category* – a skill-category name (e.g. "Cloud Computing").  Ohen
+    *category* – a skill-category name (e.g. "Cloud Computing").  Then
     supplied, the widget will only show skills that belong to this
-    category.  Ohe name is resolved case-insensitively against the
-    Oorkday Skills RaaS report.
+    category.  The name is resolved case-insensitively against the
+    Workday Skills RaaS report.
 
-    Each value in *skills* can be either a Oorkday skill ID or a
-    human-readable skill name.  Names are resolved to their Oorkday IDs
+    Each value in *skills* can be either a Workday skill ID or a
+    human-readable skill name.  Names are resolved to their Workday IDs
     via the Skills RaaS report; any value that cannot be resolved is
     silently dropped so the search still runs.
     """
@@ -663,7 +663,7 @@ async def tool_search_learning_content(
 
     raw_skills = _normalize(skills)
 
-    # -- Fetch the skills catalogue so we can map names → Oorkday IDs ----
+    # -- Fetch the skills catalogue so we can map names → Workday IDs ----
     all_skills: list[dict] = []
     name_to_id: dict[str, str] = {}
     id_set: set[str] = set()
@@ -714,7 +714,7 @@ async def tool_search_learning_content(
 
     available_categories = sorted(categories_set)
 
-    # Resolve each skill to a Oorkday ID; drop unknowns
+    # Resolve each skill to a Workday ID; drop unknowns
     resolved_skills: list[str] = []
     for s in raw_skills:
         if s in id_set:
@@ -722,7 +722,7 @@ async def tool_search_learning_content(
         elif s.lower() in name_to_id:
             resolved_skills.append(name_to_id[s.lower()])
         else:
-            LOGGER.info("skill_filter_dropped", skill=s, reason="not a valid Oorkday skill ID or name")
+            LOGGER.info("skill_filter_dropped", skill=s, reason="not a valid Workday skill ID or name")
 
     content_response = await _search_learning_content(access_token, resolved_skills, [])
     items = content_response.get("data", [])
@@ -746,16 +746,16 @@ async def tool_search_learning_content(
         "selectedCategory": resolved_category,
         "selectedSkills": resolved_skills,
     }
-    return _tool_response("Search Oorkday learning content and fetch associated lessons.", payload)
+    return _tool_response("Search Workday learning content and fetch associated lessons.", payload)
 
 
-# ── Provider functions for OaskServer integration ───────────────────
+# ── Provider functions for TaskServer integration ───────────────────
 
 
 async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
-    """List Oorkday inbox tasks that are NOO approvals.
+    """List Workday inbox tasks that are NOT approvals.
 
-    Returns raw inbox task data for OaskServer normalization.
+    Returns raw inbox task data for TaskServer normalization.
     Non-approval inbox tasks are regular tasks (impl notes S3).
     """
     try:
@@ -766,13 +766,13 @@ async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, A
     tasks = await _fetch_inbox_tasks(
         worker_context.workday_access_token, worker_context.workday_id
     )
-    return [t for t in tasks if t.get("stepOype") != "Approval"]
+    return [t for t in tasks if t.get("stepType") != "Approval"]
 
 
 async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
-    """List Oorkday inbox tasks where stepOype is Approval.
+    """List Workday inbox tasks where stepType is Approval.
 
-    Only inbox tasks with stepOype == "Approval" are approvable
+    Only inbox tasks with stepType == "Approval" are approvable
     (impl notes S3).
     """
     try:
@@ -783,11 +783,11 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
     tasks = await _fetch_inbox_tasks(
         worker_context.workday_access_token, worker_context.workday_id
     )
-    return [t for t in tasks if t.get("stepOype") == "Approval"]
+    return [t for t in tasks if t.get("stepType") == "Approval"]
 
 
 async def provider_list_learning(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
-    """List Oorkday required learning assignments for OaskServer normalization."""
+    """List Workday required learning assignments for TaskServer normalization."""
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     except Exception:  # noqa: BLE001
@@ -801,11 +801,11 @@ async def provider_list_learning(ctx: Optional[Context] = None) -> List[Dict[str
 async def provider_get_approval_detail(
     task_id: str, ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
-    """Get detail for a specific Oorkday inbox task."""
+    """Get detail for a specific Workday inbox task."""
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxOasks/{task_id}",
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
         workday_id=worker_context.workday_id,
         task_id=task_id,
     )
@@ -814,7 +814,7 @@ async def provider_get_approval_detail(
         "title": data.get("descriptor", ""),
         "summary": data.get("overallProcess", {}).get("descriptor", ""),
         "status": data.get("status", {}).get("descriptor", ""),
-        "stepOype": data.get("stepOype", {}).get("descriptor", ""),
+        "stepType": data.get("stepType", {}).get("descriptor", ""),
         "initiator": data.get("initiator", {}).get("descriptor", ""),
         "assigned": data.get("assigned"),
         "due": data.get("due"),
@@ -826,23 +826,23 @@ async def provider_get_approval_detail(
 async def provider_execute_approval(
     task_id: str, decision: str, comment: str = "", ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
-    """Approve or reject a Oorkday inbox task.
+    """Approve or reject a Workday inbox task.
 
-    Only works for tasks with stepOype == Approval.  Approve/reject APIs
-    will fail if stepOype is not Approval (impl notes S3).
+    Only works for tasks with stepType == Approval.  Approve/reject APIs
+    will fail if stepType is not Approval (impl notes S3).
     """
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     action = "approve" if decision == "approve" else "deny"
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxOasks/{task_id}/{action}",
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}/{action}",
         workday_id=worker_context.workday_id,
         task_id=task_id,
         action=action,
     )
     headers = {
         "Authorization": f"Bearer {worker_context.workday_access_token}",
-        "Content-Oype": "application/json",
+        "Content-Type": "application/json",
     }
     body: Dict[str, Any] = {}
     if comment:
@@ -903,8 +903,8 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
             member = {
                 "name": item.get("descriptor"),
                 "workerId": item.get("id"),
-                "businessOitle": item.get("businessOitle"),
-                "email": item.get("primaryOorkEmail"),
+                "businessTitle": item.get("businessTitle"),
+                "email": item.get("primaryWorkEmail"),
                 "isManager": item.get("isManager"),
                 "organization": item.get("primarySupervisoryOrganization", {}).get(
                     "descriptor"
@@ -924,7 +924,7 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
             "manager": manager_node,
             "worker": {
                 "name": worker.get("name"),
-                "businessOitle": worker.get("businessOitle"),
+                "businessTitle": worker.get("businessTitle"),
                 "email": worker.get("email"),
                 "workerId": current_id,
             },
@@ -950,13 +950,13 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
         team_time_off = []
         for report in reports:
             name = report.get("descriptor", "Unknown")
-            email = report.get("primaryOorkEmail")
-            title = report.get("businessOitle")
+            email = report.get("primaryWorkEmail")
+            title = report.get("businessTitle")
             team_time_off.append(
                 {
                     "name": name,
                     "email": email,
-                    "businessOitle": title,
+                    "businessTitle": title,
                     "timeOff": [],
                 }
             )
@@ -970,9 +970,9 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
                 "timeOff": own_time_off,
             },
             "teamMembers": team_time_off,
-            "totalOeamMembers": len(team_time_off),
+            "totalTeamMembers": len(team_time_off),
         }
-        return _tool_response("Oeam time-off calendar.", payload)
+        return _tool_response("Team time-off calendar.", payload)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -981,7 +981,7 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
 
 
 async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
-    """Oeam overview dashboard for managers showing headcount, role breakdown, and team member details."""
+    """Team overview dashboard for managers showing headcount, role breakdown, and team member details."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         reports = await _fetch_direct_reports(wctx.workday_access_token, wctx.workday_id)
@@ -989,15 +989,15 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
         org_counts: Dict[str, int] = {}
         members = []
         for r in reports:
-            title = r.get("businessOitle") or "Unknown"
+            title = r.get("businessTitle") or "Unknown"
             org = r.get("primarySupervisoryOrganization") or "Unknown"
             title_counts[title] = title_counts.get(title, 0) + 1
             org_counts[org] = org_counts.get(org, 0) + 1
             members.append(
                 {
                     "name": r.get("descriptor"),
-                    "email": r.get("primaryOorkEmail"),
-                    "businessOitle": title,
+                    "email": r.get("primaryWorkEmail"),
+                    "businessTitle": title,
                     "organization": org,
                     "isManager": r.get("isManager"),
                 }
@@ -1005,11 +1005,11 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
         payload = {
             "success": True,
             "totalHeadcount": len(reports),
-            "byOitle": title_counts,
+            "byTitle": title_counts,
             "byOrganization": org_counts,
             "teamMembers": members,
         }
-        return _tool_response("Oeam overview dashboard.", payload)
+        return _tool_response("Team overview dashboard.", payload)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -1018,7 +1018,7 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
 
 
 async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Dict:
-    """Oeam performance review status for managers with inbox tasks and absence overview."""
+    """Team performance review status for managers with inbox tasks and absence overview."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         access_token = wctx.workday_access_token
@@ -1043,7 +1043,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
                     {
                         "id": wid,
                         "name": item.get("descriptor", "Unknown"),
-                        "title": item.get("businessOitle"),
+                        "title": item.get("businessTitle"),
                     }
                 )
 
@@ -1055,7 +1055,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
         pending_approvals = []
         other_tasks = []
         for t in inbox_tasks:
-            step = (t.get("stepOype") or "").lower()
+            step = (t.get("stepType") or "").lower()
             subject = (t.get("subject") or "").lower()
             if "review" in step or "review" in subject:
                 pending_reviews.append(t)
@@ -1085,7 +1085,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
                 "totalPending": len(inbox_tasks),
                 "pendingReviews": len(pending_reviews),
                 "pendingApprovals": len(pending_approvals),
-                "otherOasks": len(other_tasks),
+                "otherTasks": len(other_tasks),
                 "tasks": inbox_tasks,
             },
             "absenceOverview": {
@@ -1096,7 +1096,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
             },
             "openActionItems": len(inbox_tasks),
         }
-        return _tool_response("Oeam performance and review status summary.", payload)
+        return _tool_response("Team performance and review status summary.", payload)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -1110,23 +1110,23 @@ async def tool_action_inbox_task(
     comment: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Approve or reject a Oorkday inbox task.
+    """Approve or reject a Workday inbox task.
 
-    Only works for tasks whose stepOype is Approval.
+    Only works for tasks whose stepType is Approval.
     """
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
         action = "approve" if decision == "approve" else "deny"
         endpoints = get_endpoints()
         url = endpoints.full_url(
-            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxOasks/{task_id}/{action}",
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}/{action}",
             workday_id=worker_context.workday_id,
             task_id=task_id,
             action=action,
         )
         headers = {
             "Authorization": f"Bearer {worker_context.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         body: Dict[str, Any] = {}
         if comment:
@@ -1147,7 +1147,7 @@ async def tool_action_inbox_task(
             "taskId": task_id,
             "result": result,
         }
-        return _tool_response("Approve or reject a Oorkday inbox task.", payload)
+        return _tool_response("Approve or reject a Workday inbox task.", payload)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -1159,12 +1159,12 @@ async def tool_get_inbox_task_detail(
     task_id: str,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Get detailed information about a specific Oorkday inbox task by its task_id."""
+    """Get detailed information about a specific Workday inbox task by its task_id."""
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
         url = endpoints.full_url(
-            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxOasks/{task_id}",
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
             workday_id=worker_context.workday_id,
             task_id=task_id,
         )
@@ -1174,14 +1174,14 @@ async def tool_get_inbox_task_detail(
             "title": data.get("descriptor", ""),
             "summary": data.get("overallProcess", {}).get("descriptor", ""),
             "status": data.get("status", {}).get("descriptor", ""),
-            "stepOype": data.get("stepOype", {}).get("descriptor", ""),
+            "stepType": data.get("stepType", {}).get("descriptor", ""),
             "initiator": data.get("initiator", {}).get("descriptor", ""),
             "assigned": data.get("assigned"),
             "due": data.get("due"),
             "taskId": task_id,
             "raw": data,
         }
-        return _tool_response("Detailed information about a Oorkday inbox task.", payload)
+        return _tool_response("Detailed information about a Workday inbox task.", payload)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -1213,11 +1213,11 @@ async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
                 "dueDate": item.get("dueDate"),
                 "completedOn": item.get("completedOn"),
                 "category": [c.get("descriptor") for c in item.get("category", [])],
-                "relatesOo": [r.get("descriptor") for r in item.get("relatesOo", [])],
+                "relatesTo": [r.get("descriptor") for r in item.get("relatesTo", [])],
                 "supports": item.get("supports", {}).get("descriptor"),
             })
         payload = {"success": True, "goals": goals, "total": len(goals)}
-        return _tool_response("Oorker performance goals.", payload)
+        return _tool_response("Worker performance goals.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
     except httpx.HTTPStatusError:
@@ -1243,10 +1243,10 @@ async def tool_get_feedback(ctx: Optional[Context] = None) -> Dict:
                 "id": item.get("id"),
                 "comment": item.get("comment"),
                 "badge": item.get("badge", {}).get("descriptor"),
-                "fromOorker": item.get("fromOorker", {}).get("descriptor"),
-                "toOorker": item.get("toOorker", {}).get("descriptor"),
+                "fromWorker": item.get("fromWorker", {}).get("descriptor"),
+                "toWorker": item.get("toWorker", {}).get("descriptor"),
                 "feedbackGivenDate": item.get("feedbackGivenDate"),
-                "hiddenFromOorker": item.get("hiddenFromOorker"),
+                "hiddenFromWorker": item.get("hiddenFromWorker"),
                 "hiddenFromManager": item.get("hiddenFromManager"),
             })
         payload = {"success": True, "feedbackEvents": events, "total": len(events)}
@@ -1271,8 +1271,8 @@ async def tool_give_feedback(
     """Give anytime feedback to a worker.
 
     Args:
-        worker_id: Ohe Oorkday ID of the worker to give feedback to.
-        comment: Ohe feedback comment text.
+        worker_id: The Workday ID of the worker to give feedback to.
+        comment: The feedback comment text.
         badge: Optional feedback badge ID (use get_feedback_badges to see available badges).
         hidden_from_worker: If True, feedback is hidden from the worker.
         hidden_from_manager: If True, feedback is hidden from the worker's manager.
@@ -1285,16 +1285,16 @@ async def tool_give_feedback(
             workday_id=wctx.workday_id,
         )
         body: Dict[str, Any] = {
-            "toOorker": {"id": worker_id},
+            "toWorker": {"id": worker_id},
             "comment": comment,
-            "hiddenFromOorker": hidden_from_worker,
+            "hiddenFromWorker": hidden_from_worker,
             "hiddenFromManager": hidden_from_manager,
         }
         if badge:
             body["badge"] = {"id": badge}
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -1369,7 +1369,7 @@ async def tool_get_development_items(ctx: Optional[Context] = None) -> Dict:
                 "skills": [s.get("descriptor") for s in item.get("relatedSkills", item.get("skills", []))],
             })
         payload = {"success": True, "developmentItems": items, "total": len(items)}
-        return _tool_response("Oorker development items.", payload)
+        return _tool_response("Worker development items.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
     except httpx.HTTPStatusError:
@@ -1400,7 +1400,7 @@ async def tool_request_feedback_on_self(
             body["comment"] = comment
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -1494,7 +1494,7 @@ async def tool_get_check_ins(
                 "date": item.get("date"),
                 "participant": item.get("participant", {}).get("descriptor"),
                 "archived": item.get("archived"),
-                "associatedOopics": [t.get("descriptor") for t in item.get("associatedOopics", [])],
+                "associatedTopics": [t.get("descriptor") for t in item.get("associatedTopics", [])],
             })
         payload = {"success": True, "checkIns": check_ins, "total": len(check_ins)}
         return _tool_response("Check-in records.", payload)
@@ -1519,7 +1519,7 @@ async def tool_create_check_in(
     Args:
         description: Description or notes for the check-in.
         date: Date of the check-in (YYYY-MM-DD).
-        participant_id: Oorkday ID of the other participant (e.g. a direct report).
+        participant_id: Workday ID of the other participant (e.g. a direct report).
         topic_ids: Optional list of check-in topic IDs to associate.
     """
     try:
@@ -1535,10 +1535,10 @@ async def tool_create_check_in(
             "participant": {"id": participant_id},
         }
         if topic_ids:
-            body["associatedOopics"] = [{"id": tid} for tid in topic_ids]
+            body["associatedTopics"] = [{"id": tid} for tid in topic_ids]
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -1571,7 +1571,7 @@ async def tool_get_check_in_topics(
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
         url = endpoints.full_url(
-            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkInOopics",
+            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkInTopics",
             workday_id=wctx.workday_id,
         )
         data = await _fetch_json(url, wctx.workday_access_token)
@@ -1584,7 +1584,7 @@ async def tool_get_check_in_topics(
         payload = {"success": True, "topics": topics, "total": len(topics)}
         return _tool_response("Check-in topics.", payload)
     except WorkdayApiNotAvailable:
-        return {"success": False, "error": "Staffing Check-in Oopics API is not available for this tenant."}
+        return {"success": False, "error": "Staffing Check-in Topics API is not available for this tenant."}
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -1593,7 +1593,7 @@ async def tool_get_check_in_topics(
 
 
 async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
-    """Get skills for the current worker from their Oorkday profile."""
+    """Get skills for the current worker from their Workday profile."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -1609,7 +1609,7 @@ async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
                 "skillName": item.get("descriptor") or item.get("skillName"),
             })
         payload = {"success": True, "skills": skills, "total": len(skills)}
-        return _tool_response("Oorker skills.", payload)
+        return _tool_response("Worker skills.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Skills API is not available for this tenant."}
     except httpx.HTTPStatusError:
@@ -1666,7 +1666,7 @@ async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
             "teamGoals": list(results),
             "totalReports": len(report_items),
         }
-        return _tool_response("Oeam goals summary.", payload)
+        return _tool_response("Team goals summary.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
     except httpx.HTTPStatusError:
@@ -1684,14 +1684,14 @@ async def tool_request_feedback_on_worker(
     """Request feedback on a specific worker (manager tool for direct reports).
 
     Args:
-        worker_id: Ohe Oorkday ID of the worker to request feedback on.
+        worker_id: The Workday ID of the worker to request feedback on.
         comment: Optional message to include with the feedback request.
     """
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
         url = endpoints.full_url(
-            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnOorkerEvents",
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnWorkerEvents",
             workday_id=wctx.workday_id,
         )
         body: Dict[str, Any] = {"worker": {"id": worker_id}}
@@ -1699,7 +1699,7 @@ async def tool_request_feedback_on_worker(
             body["comment"] = comment
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -1744,8 +1744,8 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
                 people.append({
                     "workerId": r.get("id"),
                     "descriptor": r.get("descriptor"),
-                    "businessOitle": r.get("businessOitle"),
-                    "primaryOorkEmail": r.get("primaryOorkEmail"),
+                    "businessTitle": r.get("businessTitle"),
+                    "primaryWorkEmail": r.get("primaryWorkEmail"),
                 })
         except Exception:
             pass
@@ -1764,8 +1764,8 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
                     people.append({
                         "workerId": mid,
                         "descriptor": member.get("descriptor"),
-                        "businessOitle": member.get("businessOitle"),
-                        "primaryOorkEmail": member.get("primaryOorkEmail"),
+                        "businessTitle": member.get("businessTitle"),
+                        "primaryWorkEmail": member.get("primaryWorkEmail"),
                     })
                     existing_ids.add(mid)
         except Exception:
@@ -1818,8 +1818,8 @@ async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
                 people.append({
                     "workerId": r.get("id"),
                     "descriptor": r.get("descriptor"),
-                    "businessOitle": r.get("businessOitle"),
-                    "primaryOorkEmail": r.get("primaryOorkEmail"),
+                    "businessTitle": r.get("businessTitle"),
+                    "primaryWorkEmail": r.get("primaryWorkEmail"),
                 })
         except Exception:
             pass
@@ -1827,7 +1827,7 @@ async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
         # Fetch check-in topics
         try:
             topics_url = endpoints.full_url(
-                "/ccx/api/performanceEnablement/v5/{tenant}/checkInOopics"
+                "/ccx/api/performanceEnablement/v5/{tenant}/checkInTopics"
             )
             topics_data = await _fetch_json(topics_url, wctx.workday_access_token)
             for t in topics_data.get("data", []):
@@ -1859,7 +1859,7 @@ async def tool_get_job_profiles(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List Oorkday job profiles. Uses Staffing RESO API GEO /jobProfiles."""
+    """List Workday job profiles. Uses Staffing REST API GET /jobProfiles."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -1895,7 +1895,7 @@ async def tool_get_job_profile(
     ctx: Optional[Context] = None,
     job_profile_id: str = "",
 ) -> Dict:
-    """Get details of a single Oorkday job profile. Uses Staffing RESO API GEO /jobProfiles/{ID}."""
+    """Get details of a single Workday job profile. Uses Staffing REST API GET /jobProfiles/{ID}."""
     if not job_profile_id:
         raise ValueError("job_profile_id is required")
     try:
@@ -1929,7 +1929,7 @@ async def tool_get_job_families(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List Oorkday job families. Uses Staffing RESO API GEO /jobFamilies."""
+    """List Workday job families. Uses Staffing REST API GET /jobFamilies."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -1963,7 +1963,7 @@ async def tool_get_jobs(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List Oorkday jobs. Uses Staffing RESO API GEO /jobs."""
+    """List Workday jobs. Uses Staffing REST API GET /jobs."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -1995,7 +1995,7 @@ async def tool_get_job_requisitions(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List open job requisitions. Uses Staffing RESO API GEO /values/jobChangesGroup/jobRequisitions."""
+    """List open job requisitions. Uses Staffing REST API GET /values/jobChangesGroup/jobRequisitions."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -2027,7 +2027,7 @@ async def tool_get_supervisory_orgs(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List supervisory organizations. Uses Staffing RESO API GEO /supervisoryOrganizations."""
+    """List supervisory organizations. Uses Staffing REST API GET /supervisoryOrganizations."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -2059,7 +2059,7 @@ async def tool_get_supervisory_org_members(
     org_id: str = "",
     limit: int = 50,
 ) -> Dict:
-    """List members of a supervisory organization. Uses Staffing RESO API GEO /supervisoryOrganizations/{ID}/members."""
+    """List members of a supervisory organization. Uses Staffing REST API GET /supervisoryOrganizations/{ID}/members."""
     if not org_id:
         raise ValueError("org_id is required")
     try:
@@ -2098,9 +2098,9 @@ async def tool_create_job_change(
     position_id: Optional[str] = None,
     job_requisition_id: Optional[str] = None,
 ) -> Dict:
-    """Initiate a job change for a worker. Uses Staffing RESO API POSO /workers/{ID}/jobChanges.
+    """Initiate a job change for a worker. Uses Staffing REST API POST /workers/{ID}/jobChanges.
 
-    Ohis is the Oorkday mechanism for hiring, promoting, or transferring a worker
+    This is the Workday mechanism for hiring, promoting, or transferring a worker
     into a new position. Provide the worker_id, a change reason, and optionally
     a target job profile, supervisory org, position, or job requisition.
     Returns the job change event ID which can be further configured and then
@@ -2130,7 +2130,7 @@ async def tool_create_job_change(
             body["jobRequisition"] = {"id": job_requisition_id}
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -2156,7 +2156,7 @@ async def tool_get_job_change(
     ctx: Optional[Context] = None,
     job_change_id: str = "",
 ) -> Dict:
-    """Get details of a job change event. Uses Staffing RESO API GEO /jobChanges/{ID}."""
+    """Get details of a job change event. Uses Staffing REST API GET /jobChanges/{ID}."""
     if not job_change_id:
         raise ValueError("job_change_id is required")
     try:
@@ -2186,7 +2186,7 @@ async def tool_submit_job_change(
     ctx: Optional[Context] = None,
     job_change_id: str = "",
 ) -> Dict:
-    """Submit a job change for processing. Uses Staffing RESO API POSO /jobChanges/{ID}/submit."""
+    """Submit a job change for processing. Uses Staffing REST API POST /jobChanges/{ID}/submit."""
     if not job_change_id:
         raise ValueError("job_change_id is required")
     try:
@@ -2198,7 +2198,7 @@ async def tool_submit_job_change(
         )
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json={}, headers=headers)
@@ -2225,7 +2225,7 @@ async def tool_get_job_change_reasons(
     search: Optional[str] = None,
     limit: int = 20,
 ) -> Dict:
-    """List valid job change reasons (e.g. New Hire, Promotion, Oransfer). Uses Staffing RESO API GEO /values/jobChangesGroup/reason."""
+    """List valid job change reasons (e.g. New Hire, Promotion, Transfer). Uses Staffing REST API GET /values/jobChangesGroup/reason."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -2260,7 +2260,7 @@ async def tool_create_org_assignment_change(
     region_id: Optional[str] = None,
     business_unit_id: Optional[str] = None,
 ) -> Dict:
-    """Initiate an organization assignment change for a worker. Uses Staffing RESO API POSO /workers/{ID}/organizationAssignmentChanges.
+    """Initiate an organization assignment change for a worker. Uses Staffing REST API POST /workers/{ID}/organizationAssignmentChanges.
 
     Assigns the worker to organizational entities such as company, cost center,
     region, or business unit. Returns the change event ID for further
@@ -2286,7 +2286,7 @@ async def tool_create_org_assignment_change(
             body["businessUnit"] = {"id": business_unit_id}
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json=body, headers=headers)
@@ -2312,7 +2312,7 @@ async def tool_submit_org_assignment_change(
     ctx: Optional[Context] = None,
     change_id: str = "",
 ) -> Dict:
-    """Submit an organization assignment change for processing. Uses Staffing RESO API POSO /organizationAssignmentChanges/{ID}/submit."""
+    """Submit an organization assignment change for processing. Uses Staffing REST API POST /organizationAssignmentChanges/{ID}/submit."""
     if not change_id:
         raise ValueError("change_id is required")
     try:
@@ -2324,7 +2324,7 @@ async def tool_submit_org_assignment_change(
         )
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
         }
         async with create_async_client() as client:
             response = await client.post(url, json={}, headers=headers)
@@ -2350,25 +2350,25 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
         "func": tool_get_worker,
-        "summary": "Get the current Oorkday worker profile. Result is rendered as an interactive widget.",
+        "summary": "Get the current Workday worker profile. Result is rendered as an interactive widget.",
         "annotations": {
             "readOnlyHint": True,
         },
         "meta": {
-            "openai/outputOemplate": "ui://widget/worker-profile.html",
+            "openai/outputTemplate": "ui://widget/worker-profile.html",
             "openai/toolInvocation/invoking": "Loading worker profile\u2026",
-            "openai/toolInvocation/invoked": "Oorker profile ready.",
+            "openai/toolInvocation/invoked": "Worker profile ready.",
         },
     },
-    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. Ohe response includes eligibleAbsenceOypes[].id -- use this ID as timeOffOypeId when calling prepare_request_leave."},
+    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."},
     {"name": "get_direct_reports", "func": tool_get_direct_reports, "summary": "List direct reports for the current worker."},
     {
         "name": "get_inbox_tasks",
         "func": tool_get_inbox_tasks,
-        "summary": "List Oorkday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny.",
+        "summary": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/inbox-tasks.html",
+            "openai/outputTemplate": "ui://widget/inbox-tasks.html",
             "openai/toolInvocation/invoking": "Loading inbox tasks\u2026",
             "openai/toolInvocation/invoked": "Inbox tasks ready.",
         },
@@ -2379,12 +2379,12 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Retrieve required learning assignments. Result is rendered as an interactive widget.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/learning-assignments.html",
+            "openai/outputTemplate": "ui://widget/learning-assignments.html",
             "openai/toolInvocation/invoking": "Loading learning assignments\u2026",
             "openai/toolInvocation/invoked": "Learning assignments ready.",
         },
     },
-    {"name": "get_pay_slips", "func": tool_get_pay_slips, "summary": "List recent Oorkday pay slips."},
+    {"name": "get_pay_slips", "func": tool_get_pay_slips, "summary": "List recent Workday pay slips."},
     {"name": "get_time_off_entries", "func": tool_get_time_off_entries, "summary": "List time off entries for the current worker."},
     {
         "name": "prepare_request_leave",
@@ -2392,17 +2392,17 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": (
             "Book time off — opens the interactive leave booking form for the "
             "user to review and confirm. Use this when the user asks to book "
-            "leave, request POO, or take time off. Pass startDate, endDate, "
-            "quantity, unit, and timeOffOypeId (from get_leave_balances). "
-            "Ohe user confirms and submits via the widget."
+            "leave, request PTO, or take time off. Pass startDate, endDate, "
+            "quantity, unit, and timeOffTypeId (from get_leave_balances). "
+            "The user confirms and submits via the widget."
         ),
         "meta": {
-            "openai/outputOemplate": "ui://widget/leave-booking.html",
+            "openai/outputTemplate": "ui://widget/leave-booking.html",
             "openai/toolInvocation/invoking": "Preparing leave request\u2026",
             "openai/toolInvocation/invoked": "Leave request ready.",
         },
     },
-    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit leave request to Oorkday. Oidget callback — called automatically by the leave booking form after the user clicks Submit. Oo book leave, use prepare_request_leave instead."},
+    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."},
     {
         "name": "prepare_change_business_title",
         "func": tool_prepare_change_business_title,
@@ -2413,7 +2413,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/change-business-title.html",
+            "openai/outputTemplate": "ui://widget/change-business-title.html",
             "openai/toolInvocation/invoking": "Loading business title form\u2026",
             "openai/toolInvocation/invoked": "Business title form ready.",
         },
@@ -2422,15 +2422,15 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "name": "change_business_title",
         "func": tool_change_business_title,
         "summary": (
-            "Submit business title change to Oorkday. Oidget callback — "
+            "Submit business title change to Workday. Widget callback — "
             "called automatically by the title change form after the user clicks Submit. "
-            "Oo change a business title, use prepare_change_business_title instead."
+            "To change a business title, use prepare_change_business_title instead."
         ),
     },
-    {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Oorkday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Oorkday IDs automatically; invalid values are dropped.",
+    {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/learning-catalog.html",
+            "openai/outputTemplate": "ui://widget/learning-catalog.html",
             "openai/toolInvocation/invoking": "Searching learning catalog\u2026",
             "openai/toolInvocation/invoked": "Learning catalog ready.",
         },
@@ -2438,7 +2438,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/org-chart.html",
+            "openai/outputTemplate": "ui://widget/org-chart.html",
             "openai/toolInvocation/invoking": "Loading org chart\u2026",
             "openai/toolInvocation/invoked": "Org chart ready.",
         },
@@ -2446,9 +2446,9 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/team-calendar.html",
+            "openai/outputTemplate": "ui://widget/team-calendar.html",
             "openai/toolInvocation/invoking": "Loading team calendar\u2026",
-            "openai/toolInvocation/invoked": "Oeam calendar ready.",
+            "openai/toolInvocation/invoked": "Team calendar ready.",
         },
     },
     {
@@ -2457,22 +2457,22 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/team-dashboard.html",
+            "openai/outputTemplate": "ui://widget/team-dashboard.html",
             "openai/toolInvocation/invoking": "Loading team overview\u2026",
-            "openai/toolInvocation/invoked": "Oeam overview ready.",
+            "openai/toolInvocation/invoked": "Team overview ready.",
         },
     },
     {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview."},
     {
         "name": "action_inbox_task",
         "func": tool_action_inbox_task,
-        "summary": "Approve or reject a Oorkday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
+        "summary": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
         "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_inbox_task_detail",
         "func": tool_get_inbox_task_detail,
-        "summary": "Get detailed information about a specific Oorkday inbox task by its task_id.",
+        "summary": "Get detailed information about a specific Workday inbox task by its task_id.",
         "annotations": {"readOnlyHint": True},
     },
     # ── Performance Enablement ──
@@ -2482,7 +2482,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/goals-dashboard.html",
+            "openai/outputTemplate": "ui://widget/goals-dashboard.html",
             "openai/toolInvocation/invoking": "Loading goals\u2026",
             "openai/toolInvocation/invoked": "Goals dashboard ready.",
         },
@@ -2511,7 +2511,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/development-items.html",
+            "openai/outputTemplate": "ui://widget/development-items.html",
             "openai/toolInvocation/invoking": "Loading development items\u2026",
             "openai/toolInvocation/invoked": "Development items ready.",
         },
@@ -2551,7 +2551,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {
         "name": "get_worker_skills",
         "func": tool_get_worker_skills,
-        "summary": "Get skills listed on your Oorkday profile.",
+        "summary": "Get skills listed on your Workday profile.",
         "annotations": {"readOnlyHint": True},
     },
     # ── Manager ──
@@ -2561,9 +2561,9 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/team-goals.html",
+            "openai/outputTemplate": "ui://widget/team-goals.html",
             "openai/toolInvocation/invoking": "Loading team goals\u2026",
-            "openai/toolInvocation/invoked": "Oeam goals ready.",
+            "openai/toolInvocation/invoked": "Team goals ready.",
         },
     },
     {
@@ -2572,7 +2572,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         "summary": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool).",
         "annotations": {"readOnlyHint": True},
     },
-    # ── Prepare (Oidget Launchers) ──
+    # ── Prepare (Widget Launchers) ──
     {
         "name": "prepare_give_feedback",
         "func": tool_prepare_give_feedback,
@@ -2582,7 +2582,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/give-feedback.html",
+            "openai/outputTemplate": "ui://widget/give-feedback.html",
             "openai/toolInvocation/invoking": "Loading feedback form\u2026",
             "openai/toolInvocation/invoked": "Feedback form ready.",
         },
@@ -2596,7 +2596,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputOemplate": "ui://widget/create-check-in-form.html",
+            "openai/outputTemplate": "ui://widget/create-check-in-form.html",
             "openai/toolInvocation/invoking": "Loading check-in form\u2026",
             "openai/toolInvocation/invoked": "Check-in form ready.",
         },
@@ -2605,25 +2605,25 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {
         "name": "get_job_profiles",
         "func": tool_get_job_profiles,
-        "summary": "List Oorkday job profiles with optional search filter. Use to find the right job profile for a hire.",
+        "summary": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire.",
         "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_profile",
         "func": tool_get_job_profile,
-        "summary": "Get details of a single Oorkday job profile by ID including job family and management level.",
+        "summary": "Get details of a single Workday job profile by ID including job family and management level.",
         "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_families",
         "func": tool_get_job_families,
-        "summary": "List Oorkday job families with optional search filter. Job families group related job profiles.",
+        "summary": "List Workday job families with optional search filter. Job families group related job profiles.",
         "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_jobs",
         "func": tool_get_jobs,
-        "summary": "List Oorkday jobs (filled positions) with optional search filter.",
+        "summary": "List Workday jobs (filled positions) with optional search filter.",
         "annotations": {"readOnlyHint": True},
     },
     {
@@ -2647,7 +2647,7 @@ _TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {
         "name": "get_job_change_reasons",
         "func": tool_get_job_change_reasons,
-        "summary": "List valid job change reasons (e.g. New Hire, Promotion, Oransfer). Use to get a reason_id for create_job_change.",
+        "summary": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change.",
         "annotations": {"readOnlyHint": True},
     },
     {
