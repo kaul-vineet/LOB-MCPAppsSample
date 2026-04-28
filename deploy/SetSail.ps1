@@ -351,10 +351,14 @@ Write-Host "  >> Building app package..." -ForegroundColor Cyan
 
 $daFile = "$BuildDir\declarativeAgent.dev.json"
 Set-ItemProperty $daFile -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
-$instructions = (Get-Content "$SrcDir\instruction.txt" -Raw).TrimEnd()
-$da = Get-Content $daFile -Raw | ConvertFrom-Json
+# Always rebuild from source — avoids encoding drift in the build copy
+$envContent    = Get-Content $EnvFile -Raw -Encoding UTF8
+$appSuffix     = ([regex]::Match($envContent, '(?m)^APP_NAME_SUFFIX=(.+)$')).Groups[1].Value.Trim()
+$instructions  = (Get-Content "$SrcDir\instruction.txt" -Raw -Encoding UTF8).TrimEnd()
+$da            = Get-Content "$SrcDir\declarativeAgent.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+$da.name       = $da.name -replace [regex]::Escape('${{APP_NAME_SUFFIX}}'), $appSuffix
 $da.instructions = $instructions
-$da | ConvertTo-Json -Depth 10 | Set-Content $daFile -Encoding UTF8
+[System.IO.File]::WriteAllText($daFile, ($da | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
 
 if (Test-Path $TmpDir) { Remove-Item $TmpDir -Recurse -Force }
 New-Item $TmpDir -ItemType Directory | Out-Null
