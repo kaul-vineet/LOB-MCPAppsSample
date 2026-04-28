@@ -275,26 +275,34 @@ Write-Host "  >> Acquiring MOS3 token..." -ForegroundColor Cyan
 $token = $null
 
 if (Test-Path $TokenCache) {
-    try {
-        $cache = Get-Content $TokenCache -Raw | ConvertFrom-Json
-        $resp  = Invoke-RestMethod -Method Post -Uri "$AuthBase/token" `
-            -ContentType "application/x-www-form-urlencoded" `
-            -Body "client_id=$ClientId&grant_type=refresh_token&refresh_token=$($cache.refresh_token)&scope=$([Uri]::EscapeDataString($Scope))" `
-            -ErrorAction Stop
-        $token = $resp.access_token
-        $cache | Add-Member -Force -NotePropertyName refresh_token -NotePropertyValue $resp.refresh_token
-        $cache | ConvertTo-Json | Set-Content $TokenCache
-        Write-Host "  [ OK        ] Token from cache" -ForegroundColor Green
-    } catch {
-        Write-Host "  [ ..        ] Cached token expired -- falling back to device code" -ForegroundColor Yellow
-        $token = $null
+    $cache = Get-Content $TokenCache -Raw | ConvertFrom-Json
+    if ($cache.refresh_token) {
+        try {
+            $resp  = Invoke-RestMethod -Method Post -Uri "$AuthBase/token" `
+                -ContentType "application/x-www-form-urlencoded" `
+                -Body "client_id=$ClientId&grant_type=refresh_token&refresh_token=$($cache.refresh_token)&scope=$([Uri]::EscapeDataString($Scope))" `
+                -ErrorAction Stop
+            $token = $resp.access_token
+            $cache | Add-Member -Force -NotePropertyName refresh_token -NotePropertyValue $resp.refresh_token
+            $cache | ConvertTo-Json | Set-Content $TokenCache
+            Write-Host "  [ OK        ] Token from cache" -ForegroundColor Green
+        } catch {
+            $errDetail = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction SilentlyContinue
+            $reason = if ($errDetail.error) { $errDetail.error } else { $_.Exception.Message }
+            Write-Host "  [ ..        ] Refresh failed ($reason) -- device code required" -ForegroundColor Yellow
+            $token = $null
+        }
+    } else {
+        Write-Host "  [ ..        ] No refresh token in cache -- device code required" -ForegroundColor Yellow
     }
 }
+
+$DeviceScope = "$Scope offline_access"
 
 if (-not $token) {
     $dcResp = Invoke-RestMethod -Method Post -Uri "$AuthBase/devicecode" `
         -ContentType "application/x-www-form-urlencoded" `
-        -Body "client_id=$ClientId&scope=$([Uri]::EscapeDataString($Scope))"
+        -Body "client_id=$ClientId&scope=$([Uri]::EscapeDataString($DeviceScope))"
 
     Write-Host ""
     Write-Host "  =====================================" -ForegroundColor Yellow
@@ -315,7 +323,7 @@ if (-not $token) {
         try {
             $resp  = Invoke-RestMethod -Method Post -Uri "$AuthBase/token" `
                 -ContentType "application/x-www-form-urlencoded" `
-                -Body "client_id=$ClientId&device_code=$($dcResp.device_code)&grant_type=urn:ietf:params:oauth:grant-type:device_code" `
+                -Body "client_id=$ClientId&device_code=$($dcResp.device_code)&grant_type=urn:ietf:params:oauth:grant-type:device_code&scope=$([Uri]::EscapeDataString($DeviceScope))" `
                 -ErrorAction Stop
             $token = $resp.access_token
             @{ refresh_token = $resp.refresh_token } | ConvertTo-Json | Set-Content $TokenCache
