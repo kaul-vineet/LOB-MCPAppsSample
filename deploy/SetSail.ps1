@@ -369,16 +369,28 @@ Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
 
-# Inline mcp-tools.json into every runtime's mcp_tool_description.
+# Inline mcp-tools.json into each runtime's mcp_tool_description.
 # {file:"mcp-tools.json"} is a Teams Toolkit template token; MOS3 doesn't
-# process it and tries an HTTP fallback that returns 500. Inline instead.
-$mcpTools = Get-Content "$SrcDir\mcp-tools.json" -Raw -Encoding UTF8 | ConvertFrom-Json
-$plugin   = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+# resolve it from the zip — it tries an HTTP fallback and gets 500.
+# Per-runtime filtering: each runtime only carries the tools it handles,
+# keeping schemas small and conforming to MCP spec (name/description/inputSchema only).
+$allToolsByName = @{}
+(Get-Content "$SrcDir\mcp-tools.json" -Raw -Encoding UTF8 | ConvertFrom-Json).tools | ForEach-Object {
+    $clean = [PSCustomObject]@{
+        name        = $_.name
+        description = $_.description
+        inputSchema = $_.inputSchema
+    }
+    $allToolsByName[$_.name] = $clean
+}
+$plugin = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($rt in $plugin.runtimes) {
-    $rt.spec | Add-Member -Force -NotePropertyName 'mcp_tool_description' -NotePropertyValue $mcpTools
+    $rtTools = $rt.run_for_functions | ForEach-Object { $allToolsByName[$_] } | Where-Object { $_ }
+    $desc = [PSCustomObject]@{ tools = @($rtTools) }
+    $rt.spec | Add-Member -Force -NotePropertyName 'mcp_tool_description' -NotePropertyValue $desc
 }
 [System.IO.File]::WriteAllText("$TmpDir\ai-plugin.json",
-    ($plugin | ConvertTo-Json -Depth 30), [System.Text.Encoding]::UTF8)
+    ($plugin | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Add-Type -AssemblyName System.IO.Compression.FileSystem

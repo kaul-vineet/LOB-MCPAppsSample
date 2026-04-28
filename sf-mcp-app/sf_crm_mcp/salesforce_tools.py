@@ -45,7 +45,7 @@ _load_config()
 def _error_result(message: str) -> types.CallToolResult:
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=message)],
-        structuredContent={"error": True, "message": message},
+        isError=True,
     )
 
 
