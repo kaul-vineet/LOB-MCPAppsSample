@@ -487,14 +487,14 @@
   ══════════════════════════════════════ */
   .app-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
   }
   .app-tile {
     display: flex;
-    align-items: center;
-    gap: 13px;
-    padding: 14px 16px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 20px 20px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -502,6 +502,7 @@
     color: var(--text);
     transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
     position: relative;
+    min-height: 130px;
   }
   .app-tile:not(.app-tile-soon):hover {
     border-color: var(--tile-accent);
@@ -510,17 +511,17 @@
   }
   .app-tile-soon { opacity: 0.5; cursor: default; }
   .at-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
     background: var(--tile-accent);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .at-icon img, .at-icon svg { width: 22px; height: 22px; }
+  .at-icon img, .at-icon svg { width: 24px; height: 24px; }
   .at-icon-text { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
   .at-body { flex: 1; min-width: 0; }
-  .at-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .at-system { font-size: 12px; color: var(--text-muted); margin: 2px 0 7px; }
+  .at-name { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .at-system { font-size: 12px; color: var(--text-muted); margin: 3px 0 10px; }
   .at-chips { display: flex; gap: 5px; flex-wrap: wrap; }
   .at-chip { font-size: 10px; font-weight: 400; padding: 2px 6px; border-radius: 3px; background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
   .at-badge {
@@ -549,6 +550,9 @@
   /* ══════════════════════════════════════
      RESPONSIVE
   ══════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .app-grid { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 768px) {
     nav { padding: 0 20px; }
     .nav-links .nav-cta { display: none; }
@@ -558,6 +562,7 @@
     .tech-strip { padding: 14px 20px; gap: 20px; }
     .hero-stats { gap: 24px; padding-top: 24px; }
     .section-header .sh-desc { display: none; }
+    .app-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
