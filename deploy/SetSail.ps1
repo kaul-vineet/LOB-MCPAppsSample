@@ -8,6 +8,7 @@
     .\deploy\SetSail.ps1 -TunnelOnly           # Start (or reattach to) tunnel only
     .\deploy\SetSail.ps1 -SkipGateway          # Tunnel + MOS3 (gateway already running)
     .\deploy\SetSail.ps1 -SkipTunnel           # Gateway + MOS3 only
+    .\deploy\SetSail.ps1 -Stop                 # Stop gateway and tunnel
     .\deploy\SetSail.ps1 -TunnelName gtc-v2    # Named tunnel override
 
 .NOTES
@@ -19,6 +20,7 @@ param(
     [switch]$SkipTunnel,
     [switch]$GatewayOnly,
     [switch]$TunnelOnly,
+    [switch]$Stop,
     [string]$TunnelName  = "gtc-v2",
     [int]$GatewayPort    = 8080
 )
@@ -66,6 +68,37 @@ Write-Host "  Salesforce  ServiceNow  SAP  HubSpot" -ForegroundColor DarkGray
 Write-Host "  Flight  DocuSign  SAPHR  Workday  ..." -ForegroundColor DarkGray
 Write-Host "  =====================================" -ForegroundColor DarkCyan
 Write-Host ""
+
+# ── Stop ─────────────────────────────────────────────────────────────────────
+
+if ($Stop) {
+    Write-Host "  >> Docking the fleet..." -ForegroundColor Cyan
+    Write-Host ""
+
+    $gwPids = (Get-NetTCPConnection -LocalPort $GatewayPort -State Listen -ErrorAction SilentlyContinue).OwningProcess |
+              Select-Object -Unique
+    if ($gwPids) {
+        $gwPids | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+        Write-Host "  [ HELM      ] Gateway stopped (PID $($gwPids -join ', '))" -ForegroundColor Yellow
+    } else {
+        Write-Host "  [ HELM      ] Gateway not running on port $GatewayPort" -ForegroundColor Gray
+    }
+
+    $tunnelProcs = Get-Process -Name "devtunnel" -ErrorAction SilentlyContinue
+    if ($tunnelProcs) {
+        $tunnelProcs | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host "  [ SIGNAL    ] Tunnel stopped ($($tunnelProcs.Count) process(es))" -ForegroundColor Yellow
+    } else {
+        Write-Host "  [ SIGNAL    ] Tunnel not running" -ForegroundColor Gray
+    }
+
+    Write-Host ""
+    Write-Host "  =====================================" -ForegroundColor DarkCyan
+    Write-Host "   FLEET DOCKED -- ALL CLEAR           " -ForegroundColor Yellow
+    Write-Host "  =====================================" -ForegroundColor DarkCyan
+    Write-Host ""
+    exit 0
+}
 
 # ── Pre-flight checks ─────────────────────────────────────────────────────────
 
