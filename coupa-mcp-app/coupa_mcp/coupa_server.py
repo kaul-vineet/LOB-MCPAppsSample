@@ -1,4 +1,4 @@
-﻿"""Coupa Procurement MCP server — bootstrap only. Tools in tools.py, data in client.py."""
+"""Coupa Procurement MCP server — bootstrap only. Tools in tools.py, data in client.py."""
 import structlog
 import uvicorn
 from mcp.server.fastmcp import FastMCP
@@ -6,6 +6,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .coupa_settings import get_settings
 from .coupa_tools import TOOL_SPECS, PROMPT_SPECS
+from shared_mcp.telemetry import wrap_specs
+TOOL_SPECS = wrap_specs(TOOL_SPECS)
 
 log = structlog.get_logger("coupa")
 settings = get_settings()
@@ -31,7 +33,7 @@ for _spec in TOOL_SPECS:
         name=f"coupa__{_spec['name']}",
         description=_spec["summary"],
         meta={"ui": {"resourceUri": WIDGET_URI}},
-    )(_spec["func"])
+    )(_spec["handler"])
 
 for _spec in PROMPT_SPECS:
     mcp.prompt(name=_spec["name"], description=_spec["description"])(_spec["handler"])

@@ -1,10 +1,14 @@
 {
   "servers": {
-    // Click on Start button to fetch tools from your server
-    // Then, click the "ATK: Update Action with MCP" button from CodeLens to select the wanted tools.
-    "sf-crm": {"url": "https://9r6dn63x-3000.inc1.devtunnels.ms/mcp", "type": "http"},
-    "servicenow": {"url": "https://9r6dn63x-3001.inc1.devtunnels.ms/mcp", "type": "http"},
-    "sap": {"url": "https://9r6dn63x-3002.inc1.devtunnels.ms/mcp", "type": "http"},
-    "hubspot": {"url": "https://9r6dn63x-3003.inc1.devtunnels.ms/mcp", "type": "http"}
+    "sf-crm":      {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sf/mcp",      "type": "http"},
+    "servicenow":  {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sn/mcp",      "type": "http"},
+    "sap":         {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/sap/mcp",     "type": "http"},
+    "hubspot":     {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/hs/mcp",      "type": "http"},
+    "flight":      {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/ft/mcp",      "type": "http"},
+    "docusign":    {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/ds/mcp",      "type": "http"},
+    "sap-hr":      {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/saphr/mcp",   "type": "http"},
+    "workday":     {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/workday/mcp", "type": "http"},
+    "coupa":       {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/coupa/mcp",   "type": "http"},
+    "jira":        {"url": "https://1pgd9z7m-8080.inc1.devtunnels.ms/jira/mcp",    "type": "http"}
   }
 }

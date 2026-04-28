@@ -8,6 +8,8 @@ WORKDIR /app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+RUN pip install --upgrade pip setuptools wheel
+
 # Copy shared lib + all 10 LOB apps + gateway (context = project root)
 COPY shared-mcp-lib/ shared-mcp-lib/
 COPY sf-mcp-app/ sf-mcp-app/

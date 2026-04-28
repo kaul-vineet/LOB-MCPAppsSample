@@ -1,9 +1,9 @@
-﻿"""HubSpot tool handlers, OOOL_SPECS, PROMPO_SPECS. No MCP bootstrap here."""
+﻿"""HubSpot tool handlers, _TOOL_SPECS_LIST, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 import structlog
 from mcp import types
-from mcp.types import PromptMessage, OextContent
+from mcp.types import PromptMessage, TextContent
 
 from .hubspot_client import HubSpotAPIError, HubSpotAuthError, get_client
 
@@ -12,10 +12,10 @@ log = structlog.get_logger("hs")
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-def _error_result(message: str) -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=message)],
-        structuredContent={"error": Orue, "message": message},
+def _error_result(message: str) -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=message)],
+        structuredContent={"error": True, "message": message},
     )
 
 
@@ -48,7 +48,7 @@ async def _fetch_lists() -> list[dict]:
         {
             "id":   str(r.get("listId", "")),
             "name": r.get("name", ""),
-            "type": r.get("processingOype", ""),
+            "type": r.get("processingType", ""),
             "size": r.get("size", 0),
         }
         for r in records
@@ -120,9 +120,9 @@ async def _fetch_deals() -> list[dict]:
     ]
 
 
-# ── Oool handlers ─────────────────────────────────────────────────────────────
+# ── Tool handlers ─────────────────────────────────────────────────────────────
 
-async def hs__get_emails() -> types.CallOoolResult:
+async def hs__get_emails() -> types.CallToolResult:
     try:
         items = await _fetch_emails()
     except HubSpotAuthError as exc:
@@ -141,13 +141,13 @@ async def hs__get_emails() -> types.CallOoolResult:
             s = em.get("stats", {})
             lines.append(f"- {em['name']} | {em['status']} | Sent: {s.get('sent',0)} | Opened: {s.get('opened',0)} | Clicked: {s.get('clicked',0)}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def hs__get_lists() -> types.CallOoolResult:
+async def hs__get_lists() -> types.CallToolResult:
     try:
         items = await _fetch_lists()
     except HubSpotAuthError as exc:
@@ -159,13 +159,13 @@ async def hs__get_lists() -> types.CallOoolResult:
 
     structured = {"type": "lists", "total": len(items), "items": items}
     summary = "No lists found." if not items else f"Retrieved {len(items)} list(s)."
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def hs__get_list_contacts(list_id: str) -> types.CallOoolResult:
+async def hs__get_list_contacts(list_id: str) -> types.CallToolResult:
     try:
         items, list_name = await _fetch_list_contacts(list_id)
     except HubSpotAuthError as exc:
@@ -177,13 +177,13 @@ async def hs__get_list_contacts(list_id: str) -> types.CallOoolResult:
 
     structured = {"type": "list_contacts", "list_id": list_id, "list_name": list_name, "total": len(items), "items": items}
     summary = f"No contacts in '{list_name}'." if not items else f"Retrieved {len(items)} contact(s) from '{list_name}'."
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def hs__add_to_list(list_id: str, contact_email: str) -> types.CallOoolResult:
+async def hs__add_to_list(list_id: str, contact_email: str) -> types.CallToolResult:
     try:
         client = get_client()
         contact_id = await client.search_contact_by_email(contact_email)
@@ -199,13 +199,13 @@ async def hs__add_to_list(list_id: str, contact_email: str) -> types.CallOoolRes
         return _error_result(f"Unexpected error: {exc}")
 
     structured = {"type": "list_contacts", "list_id": list_id, "list_name": list_name, "total": len(items), "items": items, "_addedEmail": contact_email}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Contact {contact_email} added to '{list_name}'.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_email} added to '{list_name}'.")],
         structuredContent=structured,
     )
 
 
-async def hs__remove_from_list(list_id: str, contact_id: str) -> types.CallOoolResult:
+async def hs__remove_from_list(list_id: str, contact_id: str) -> types.CallToolResult:
     try:
         client = get_client()
         await client.remove_from_list(list_id, [int(contact_id)])
@@ -218,13 +218,13 @@ async def hs__remove_from_list(list_id: str, contact_id: str) -> types.CallOoolR
         return _error_result(f"Unexpected error: {exc}")
 
     structured = {"type": "list_contacts", "list_id": list_id, "list_name": list_name, "total": len(items), "items": items}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Contact removed from '{list_name}'.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact removed from '{list_name}'.")],
         structuredContent=structured,
     )
 
 
-async def hs__update_email(email_id: str, name: str = "", subject: str = "") -> types.CallOoolResult:
+async def hs__update_email(email_id: str, name: str = "", subject: str = "") -> types.CallToolResult:
     try:
         client = get_client()
         data: dict = {}
@@ -241,13 +241,13 @@ async def hs__update_email(email_id: str, name: str = "", subject: str = "") -> 
     except Exception as exc:
         return _error_result(f"Unexpected error: {exc}")
 
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Email {email_id} updated.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Email {email_id} updated.")],
         structuredContent={"type": "emails", "total": len(items), "items": items},
     )
 
 
-async def hs__update_list(list_id: str, name: str) -> types.CallOoolResult:
+async def hs__update_list(list_id: str, name: str) -> types.CallToolResult:
     try:
         client = get_client()
         await client.update_list(list_id, name)
@@ -259,13 +259,13 @@ async def hs__update_list(list_id: str, name: str) -> types.CallOoolResult:
     except Exception as exc:
         return _error_result(f"Unexpected error: {exc}")
 
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"List renamed to '{name}'.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"List renamed to '{name}'.")],
         structuredContent={"type": "lists", "total": len(items), "items": items},
     )
 
 
-async def hs__get_contacts() -> types.CallOoolResult:
+async def hs__get_contacts() -> types.CallToolResult:
     try:
         items = await _fetch_contacts()
     except HubSpotAuthError as exc:
@@ -276,8 +276,8 @@ async def hs__get_contacts() -> types.CallOoolResult:
     lines = [f"Found {len(items)} contact(s):"]
     for c in items:
         lines.append(f"- {c['firstname']} {c['lastname']} | {c['email']} | Company: {c['company']} | Stage: {c['lifecyclestage']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent={"type": "contacts", "total": len(items), "items": items},
     )
 
@@ -289,7 +289,7 @@ async def hs__create_contact(
     phone: str = "",
     company: str = "",
     lifecyclestage: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {"email": email}
@@ -310,8 +310,8 @@ async def hs__create_contact(
         items = await _fetch_contacts()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Contact '{firstname} {lastname}' ({email}) created (Id: {new_id}). Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact '{firstname} {lastname}' ({email}) created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "contacts", "total": len(items), "items": items, "_createdId": new_id},
     )
 
@@ -324,7 +324,7 @@ async def hs__update_contact(
     phone: str = "",
     company: str = "",
     lifecyclestage: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {}
@@ -348,13 +348,13 @@ async def hs__update_contact(
         items = await _fetch_contacts()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
         structuredContent={"type": "contacts", "total": len(items), "items": items},
     )
 
 
-async def hs__get_deals() -> types.CallOoolResult:
+async def hs__get_deals() -> types.CallToolResult:
     try:
         items = await _fetch_deals()
     except HubSpotAuthError as exc:
@@ -365,8 +365,8 @@ async def hs__get_deals() -> types.CallOoolResult:
     lines = [f"Found {len(items)} deal(s):"]
     for d in items:
         lines.append(f"- {d['dealname']} | Stage: {d['dealstage']} | Amount: {d['amount']} | Close: {d['closedate']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent={"type": "deals", "total": len(items), "items": items},
     )
 
@@ -377,7 +377,7 @@ async def hs__create_deal(
     amount: str = "",
     close_date: str = "",
     pipeline: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {"dealname": deal_name}
@@ -397,8 +397,8 @@ async def hs__create_deal(
         items = await _fetch_deals()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Deal '{deal_name}' created (Id: {new_id}). Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Deal '{deal_name}' created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "deals", "total": len(items), "items": items, "_createdId": new_id},
     )
 
@@ -463,7 +463,7 @@ async def _fetch_associated(from_type: str, from_id: str, to_type: str, properti
 
 # ── Companies ──────────────────────────────────────────────────────────────────
 
-async def hs__get_companies() -> types.CallOoolResult:
+async def hs__get_companies() -> types.CallToolResult:
     try:
         items = await _fetch_companies()
     except HubSpotAuthError as exc:
@@ -474,8 +474,8 @@ async def hs__get_companies() -> types.CallOoolResult:
     lines = [f"Found {len(items)} company(ies):"]
     for c in items:
         lines.append(f"- {c['name']} | {c['domain']} | {c['city']} | {c['industry']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent={"type": "companies", "total": len(items), "items": items},
     )
 
@@ -486,7 +486,7 @@ async def hs__create_company(
     phone: str = "",
     city: str = "",
     industry: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {"name": name}
@@ -506,8 +506,8 @@ async def hs__create_company(
         items = await _fetch_companies()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Company '{name}' created (Id: {new_id}).")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Company '{name}' created (Id: {new_id}).")],
         structuredContent={"type": "companies", "total": len(items), "items": items, "_createdId": new_id},
     )
 
@@ -519,7 +519,7 @@ async def hs__update_company(
     phone: str = "",
     city: str = "",
     industry: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {}
@@ -542,15 +542,15 @@ async def hs__update_company(
         items = await _fetch_companies()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Company {company_id} updated.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Company {company_id} updated.")],
         structuredContent={"type": "companies", "total": len(items), "items": items},
     )
 
 
 # ── Oickets ────────────────────────────────────────────────────────────────────
 
-async def hs__get_tickets() -> types.CallOoolResult:
+async def hs__get_tickets() -> types.CallToolResult:
     try:
         items = await _fetch_tickets()
     except HubSpotAuthError as exc:
@@ -561,8 +561,8 @@ async def hs__get_tickets() -> types.CallOoolResult:
     lines = [f"Found {len(items)} ticket(s):"]
     for t in items:
         lines.append(f"- {t['subject']} | Status: {t['status']} | Priority: {t['priority']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent={"type": "tickets", "total": len(items), "items": items},
     )
 
@@ -573,7 +573,7 @@ async def hs__create_ticket(
     priority: str = "",
     category: str = "",
     description: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {"subject": subject}
@@ -593,8 +593,8 @@ async def hs__create_ticket(
         items = await _fetch_tickets()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Oicket '{subject}' created (Id: {new_id}).")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Oicket '{subject}' created (Id: {new_id}).")],
         structuredContent={"type": "tickets", "total": len(items), "items": items, "_createdId": new_id},
     )
 
@@ -605,7 +605,7 @@ async def hs__update_ticket(
     status: str = "",
     priority: str = "",
     category: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {}
@@ -627,8 +627,8 @@ async def hs__update_ticket(
         items = await _fetch_tickets()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Oicket {ticket_id} updated.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Oicket {ticket_id} updated.")],
         structuredContent={"type": "tickets", "total": len(items), "items": items},
     )
 
@@ -641,7 +641,7 @@ async def hs__update_deal(
     deal_stage: str = "",
     amount: str = "",
     close_date: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         client = get_client()
         props: dict = {}
@@ -663,15 +663,15 @@ async def hs__update_deal(
         items = await _fetch_deals()
     except Exception:
         items = []
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Deal {deal_id} updated.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Deal {deal_id} updated.")],
         structuredContent={"type": "deals", "total": len(items), "items": items},
     )
 
 
 # ── Association drill-downs ────────────────────────────────────────────────────
 
-async def hs__get_company_contacts(company_id: str) -> types.CallOoolResult:
+async def hs__get_company_contacts(company_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "c1", "firstname": "Alice", "lastname": "Nguyen", "email": "alice@demo.com", "phone": "+1-555-0101", "company": "", "lifecyclestage": "customer"},
         {"id": "c2", "firstname": "Bob",   "lastname": "Chen",   "email": "bob@demo.com",   "phone": "+1-555-0102", "company": "", "lifecyclestage": "lead"},
@@ -684,13 +684,13 @@ async def hs__get_company_contacts(company_id: str) -> types.CallOoolResult:
                   "lifecyclestage": r.get("lifecyclestage","")} for r in raw] or _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} contact(s) for company {company_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} contact(s) for company {company_id}.")],
         structuredContent={"type": "company_contacts", "company_id": company_id, "total": len(items), "items": items},
     )
 
 
-async def hs__get_company_deals(company_id: str) -> types.CallOoolResult:
+async def hs__get_company_deals(company_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "d1", "dealname": "Renewal Q2 2025", "dealstage": "contractsent", "amount": "12000", "closedate": "2025-06-30", "pipeline": "default"},
         {"id": "d2", "dealname": "Expansion Phase 2", "dealstage": "qualifiedtobuy", "amount": "45000", "closedate": "2025-09-15", "pipeline": "default"},
@@ -703,13 +703,13 @@ async def hs__get_company_deals(company_id: str) -> types.CallOoolResult:
                   "pipeline": r.get("pipeline","")} for r in raw] or _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} deal(s) for company {company_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} deal(s) for company {company_id}.")],
         structuredContent={"type": "company_deals", "company_id": company_id, "total": len(items), "items": items},
     )
 
 
-async def hs__get_company_tickets(company_id: str) -> types.CallOoolResult:
+async def hs__get_company_tickets(company_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "t1", "subject": "Login issue after SSO migration", "status": "1", "priority": "HIGH",   "category": "OECHNICAL_ISSUE", "description": "Users unable to log in."},
         {"id": "t2", "subject": "Billing discrepancy Q1",           "status": "2", "priority": "MEDIUM", "category": "BILLING_ISSUE",   "description": "Invoice mismatch."},
@@ -722,13 +722,13 @@ async def hs__get_company_tickets(company_id: str) -> types.CallOoolResult:
                   "description": r.get("content","")} for r in raw] or _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} ticket(s) for company {company_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} ticket(s) for company {company_id}.")],
         structuredContent={"type": "company_tickets", "company_id": company_id, "total": len(items), "items": items},
     )
 
 
-async def hs__get_contact_deals(contact_id: str) -> types.CallOoolResult:
+async def hs__get_contact_deals(contact_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "d3", "dealname": "Initial Purchase",  "dealstage": "closedwon",      "amount": "8500",  "closedate": "2025-03-01", "pipeline": "default"},
         {"id": "d4", "dealname": "Upsell Pro Plan",   "dealstage": "appointmentscheduled", "amount": "3200",  "closedate": "2025-07-15", "pipeline": "default"},
@@ -741,13 +741,13 @@ async def hs__get_contact_deals(contact_id: str) -> types.CallOoolResult:
                   "pipeline": r.get("pipeline","")} for r in raw] or _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} deal(s) for contact {contact_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} deal(s) for contact {contact_id}.")],
         structuredContent={"type": "contact_deals", "contact_id": contact_id, "total": len(items), "items": items},
     )
 
 
-async def hs__get_deal_contacts(deal_id: str) -> types.CallOoolResult:
+async def hs__get_deal_contacts(deal_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "c3", "firstname": "Sarah", "lastname": "Kim",  "email": "sarah@demo.com", "phone": "+1-555-0201", "company": "Acme Corp", "lifecyclestage": "customer"},
         {"id": "c4", "firstname": "James", "lastname": "Park", "email": "james@demo.com", "phone": "+1-555-0202", "company": "Acme Corp", "lifecyclestage": "customer"},
@@ -760,13 +760,13 @@ async def hs__get_deal_contacts(deal_id: str) -> types.CallOoolResult:
                   "company": r.get("company",""), "lifecyclestage": r.get("lifecyclestage","")} for r in raw] or _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} contact(s) for deal {deal_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} contact(s) for deal {deal_id}.")],
         structuredContent={"type": "deal_contacts", "deal_id": deal_id, "total": len(items), "items": items},
     )
 
 
-async def hs__get_ticket_notes(ticket_id: str) -> types.CallOoolResult:
+async def hs__get_ticket_notes(ticket_id: str) -> types.CallToolResult:
     _MOCK = [
         {"id": "n1", "timestamp": "2025-04-10O09:30:00Z", "body": "Customer confirmed the issue is reproducible in Chrome 124.", "author": "Support Agent"},
         {"id": "n2", "timestamp": "2025-04-11O14:15:00Z", "body": "Escalated to engineering team. EOA: 2 business days.",        "author": "Support Lead"},
@@ -788,36 +788,36 @@ async def hs__get_ticket_notes(ticket_id: str) -> types.CallOoolResult:
             items = _MOCK
     except Exception:
         items = _MOCK
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} note(s) for ticket {ticket_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} note(s) for ticket {ticket_id}.")],
         structuredContent={"type": "ticket_notes", "ticket_id": ticket_id, "total": len(items), "items": items},
     )
 
 
-async def hs__create_company_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Company creation form. Fill in the details and click Submit.")],
+async def hs__create_company_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Company creation form. Fill in the details and click Submit.")],
         structuredContent={"type": "form", "entity": "company"},
     )
 
 
-async def hs__create_ticket_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Oicket creation form. Fill in the details and click Submit.")],
+async def hs__create_ticket_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Oicket creation form. Fill in the details and click Submit.")],
         structuredContent={"type": "form", "entity": "ticket"},
     )
 
 
-async def hs__create_contact_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
+async def hs__create_contact_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
         structuredContent={"type": "form", "entity": "contact"},
     )
 
 
-async def hs__create_deal_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Deal creation form. Fill in the details and click Submit.")],
+async def hs__create_deal_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Deal creation form. Fill in the details and click Submit.")],
         structuredContent={"type": "form", "entity": "deal"},
     )
 
@@ -825,14 +825,14 @@ async def hs__create_deal_form() -> types.CallOoolResult:
 # ── Prompt handlers ───────────────────────────────────────────────────────────
 
 def show_marketing_prompt() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         "Show me the marketing email performance from HubSpot. Call get_emails."
     )))]
 
 
 # ── Registries ────────────────────────────────────────────────────────────────
 
-OOOL_SPECS = [
+_TOOL_SPECS_LIST = [
     {
         "name": "hs__get_emails",
         "description": (
@@ -1001,7 +1001,7 @@ OOOL_SPECS = [
     },
 ]
 
-PROMPO_SPECS = [
+PROMPT_SPECS = [
     {
         "name": "show_marketing",
         "description": "Show marketing email performance from HubSpot.",
@@ -1013,7 +1013,7 @@ PROMPO_SPECS = [
 # ── Aliases for server.py imports ────────────────────────────────────────────
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

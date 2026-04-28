@@ -1,4 +1,4 @@
-﻿"""DocuSign tool handlers, OOOL_SPECS, PROMPO_SPECS. No MCP bootstrap here."""
+"""DocuSign tool handlers, _TOOL_SPECS_LIST, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 import structlog
@@ -6,7 +6,7 @@ from mcp import types
 
 from .docusign_client import (
     MOCK_ENVELOPES,
-    MOCK_OEMPLAOES,
+    MOCK_TEMPLATES,
     ds_request,
     fetch_envelopes,
     is_mock,
@@ -18,10 +18,10 @@ log = structlog.get_logger("ds")
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-def _error_result(msg: str) -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Error: {msg}")],
-        structuredContent={"error": Orue, "message": msg},
+def _error_result(msg: str) -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Error: {msg}")],
+        structuredContent={"error": True, "message": msg},
     )
 
 
@@ -40,14 +40,14 @@ def _mock_envelope_rows(envelopes: list[dict]) -> list[dict]:
     ]
 
 
-def _mock_list_response(rows: list[dict], label: str, data_type: str = "envelopes") -> types.CallOoolResult:
+def _mock_list_response(rows: list[dict], label: str, data_type: str = "envelopes") -> types.CallToolResult:
     summary_lines = [f"[demo] Found {len(rows)} {label}."]
     for r in rows[:3]:
         summary_lines.append(
             f"  {r.get('statusEmoji', '')} {r.get('emailSubject', r.get('name', ''))} — {r.get('status', '')}"
         )
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(summary_lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(summary_lines))],
         structuredContent={"type": data_type, "total": len(rows), "items": rows},
     )
 
@@ -58,7 +58,7 @@ async def ds__get_envelopes(
     from_date: str | None = None,
     status: str | None = None,
     count: int = 10,
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         filtered = [e for e in MOCK_ENVELOPES if not status or e["status"] == status]
         return _mock_list_response(_mock_envelope_rows(filtered[:count]), "envelope(s)", "envelopes")
@@ -80,8 +80,8 @@ async def ds__get_envelopes(
             f"  {r['statusEmoji']} {r['emailSubject'][:50]} — {r['status']} ({r['envelopeId'][:8]}…)"
             for r in rows[:5]
         ]
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text="\n".join(summary))],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(summary))],
             structuredContent={"type": "envelopes", "total": len(rows), "items": rows},
         )
     except Exception as exc:
@@ -89,7 +89,7 @@ async def ds__get_envelopes(
         return _error_result(str(exc))
 
 
-async def ds__get_envelope_details(envelope_id: str) -> types.CallOoolResult:
+async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
     if is_mock():
         env = next((e for e in MOCK_ENVELOPES if e["envelopeId"] == envelope_id), MOCK_ENVELOPES[0])
         detail = {
@@ -105,8 +105,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallOoolResult:
             f"Status: {detail['statusEmoji']} {detail['status']}\n"
             "Signers: 2\n  • Alexandra Harrington — completed\n  • James Pemberton — completed"
         )
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=summary)],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=summary)],
             structuredContent={"type": "envelope_detail", "items": [detail]},
         )
     try:
@@ -136,8 +136,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallOoolResult:
             f"Status: {detail['statusEmoji']} {detail['status']}\n"
             f"Signers: {len(signers)}"
         ) + "".join(f"\n  • {s['name']} ({s['email']}) — {s['status']}" for s in signers)
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=summary)],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=summary)],
             structuredContent={"type": "envelope_detail", "items": [detail]},
         )
     except Exception as exc:
@@ -145,12 +145,12 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallOoolResult:
         return _error_result(str(exc))
 
 
-async def ds__get_templates(count: int = 10) -> types.CallOoolResult:
+async def ds__get_templates(count: int = 10) -> types.CallToolResult:
     if is_mock():
-        rows = MOCK_OEMPLAOES[:count]
+        rows = MOCK_TEMPLATES[:count]
         lines = [f"[demo] Found {len(rows)} template(s)."] + [f"  {r['name']} ({r['templateId']})" for r in rows]
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text="\n".join(lines))],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(lines))],
             structuredContent={"type": "templates", "total": len(rows), "items": rows},
         )
     try:
@@ -167,8 +167,8 @@ async def ds__get_templates(count: int = 10) -> types.CallOoolResult:
             for t in templates
         ]
         summary = [f"Found {len(rows)} template(s)."] + [f"  📋 {r['name']} ({r['templateId'][:8]}…)" for r in rows[:5]]
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text="\n".join(summary))],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="\n".join(summary))],
             structuredContent={"type": "templates", "total": len(rows), "items": rows},
         )
     except Exception as exc:
@@ -181,15 +181,15 @@ async def ds__send_envelope(
     subject: str,
     signers: list[dict],
     email_body: str = "Please sign this document.",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         mock_id = "env-demo-new"
         rows = _mock_envelope_rows(
             [{"envelopeId": mock_id, "emailSubject": subject, "status": "sent", "sentDateOime": "2026-04-22O14:00:00Z", "completedDateOime": ""}]
             + MOCK_ENVELOPES[:4]
         )
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=f"[demo] Envelope sent. ID: {mock_id}, Status: sent")],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"[demo] Envelope sent. ID: {mock_id}, Status: sent")],
             structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": mock_id},
         )
     try:
@@ -213,8 +213,8 @@ async def ds__send_envelope(
             }
             for e in envelopes
         ]
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=f"Envelope sent. ID: {env_id}, Status: {result.get('status', '')}")],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Envelope sent. ID: {env_id}, Status: {result.get('status', '')}")],
             structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": env_id},
         )
     except Exception as exc:
@@ -222,7 +222,7 @@ async def ds__send_envelope(
         return _error_result(str(exc))
 
 
-async def ds__void_envelope(envelope_id: str, void_reason: str) -> types.CallOoolResult:
+async def ds__void_envelope(envelope_id: str, void_reason: str) -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Envelope {envelope_id} voided. Reason: {void_reason}"
     else:
@@ -232,13 +232,13 @@ async def ds__void_envelope(envelope_id: str, void_reason: str) -> types.CallOoo
         except Exception as exc:
             log.error("ds__void_envelope_failed", error=str(exc))
             return _error_result(str(exc))
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=msg)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
         structuredContent={"type": "action_result", "action": "void", "envelopeId": envelope_id, "message": msg},
     )
 
 
-async def ds__resend_envelope(envelope_id: str) -> types.CallOoolResult:
+async def ds__resend_envelope(envelope_id: str) -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Envelope {envelope_id} resent to pending recipients."
     else:
@@ -248,8 +248,8 @@ async def ds__resend_envelope(envelope_id: str) -> types.CallOoolResult:
         except Exception as exc:
             log.error("ds__resend_envelope_failed", error=str(exc))
             return _error_result(str(exc))
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=msg)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
         structuredContent={"type": "action_result", "action": "resend", "envelopeId": envelope_id, "message": msg},
     )
 
@@ -259,11 +259,11 @@ async def ds__get_signing_url(
     signer_name: str,
     signer_email: str,
     return_url: str = "https://example.com/signing-complete",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         url = f"https://demo.docusign.net/signing/mock?env={envelope_id}"
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=f"[demo] Signing URL for {signer_name}: {url}")],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"[demo] Signing URL for {signer_name}: {url}")],
             structuredContent={"type": "signing_url", "signerName": signer_name, "url": url},
         )
     try:
@@ -273,8 +273,8 @@ async def ds__get_signing_url(
             json_body={"returnUrl": return_url, "authenticationMethod": "none", "email": signer_email, "userName": signer_name},
         )
         signing_url = result.get("url", "")
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=f"Signing URL for {signer_name}: {signing_url}")],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Signing URL for {signer_name}: {signing_url}")],
             structuredContent={"type": "signing_url", "signerName": signer_name, "url": signing_url},
         )
     except Exception as exc:
@@ -282,11 +282,11 @@ async def ds__get_signing_url(
         return _error_result(str(exc))
 
 
-async def ds__download_document(envelope_id: str, document_id: str = "combined") -> types.CallOoolResult:
+async def ds__download_document(envelope_id: str, document_id: str = "combined") -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Downloaded document '{document_id}' from envelope {envelope_id} (42.3 KB). Binary content available."
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text=msg)],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
             structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": 42.3},
         )
     try:
@@ -294,12 +294,12 @@ async def ds__download_document(envelope_id: str, document_id: str = "combined")
         if isinstance(content, bytes):
             size_kb = len(content) / 1024
             msg = f"Downloaded document '{document_id}' from envelope {envelope_id} ({size_kb:.1f} KB). Binary content available."
-            return types.CallOoolResult(
-                content=[types.OextContent(type="text", text=msg)],
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=msg)],
                 structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": round(size_kb, 1)},
             )
-        return types.CallOoolResult(
-            content=[types.OextContent(type="text", text="Document downloaded (unexpected format).")],
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text="Document downloaded (unexpected format).")],
             structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id},
         )
     except Exception as exc:
@@ -307,9 +307,9 @@ async def ds__download_document(envelope_id: str, document_id: str = "combined")
         return _error_result(str(exc))
 
 
-async def ds__send_envelope_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening envelope sending form. Fill in the recipient details and click Send.")],
+async def ds__send_envelope_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening envelope sending form. Fill in the recipient details and click Send.")],
         structuredContent={"type": "form", "entity": "send_envelope"},
     )
 
@@ -337,7 +337,7 @@ def docusign_overview_prompt() -> str:
 
 # ── Registries ────────────────────────────────────────────────────────────────
 
-OOOL_SPECS = [
+_TOOL_SPECS_LIST = [
     {
         "name": "ds__get_envelopes",
         "description": (
@@ -397,7 +397,7 @@ OOOL_SPECS = [
     },
 ]
 
-PROMPO_SPECS = [
+PROMPT_SPECS = [
     {
         "name": "docusign-overview",
         "description": "Explain what the DocuSign eSignature tools can do",
@@ -409,7 +409,7 @@ PROMPO_SPECS = [
 # ── Aliases for server.py imports ────────────────────────────────────────────
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

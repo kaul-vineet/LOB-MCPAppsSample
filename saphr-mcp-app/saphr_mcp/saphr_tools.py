@@ -9,12 +9,12 @@ from shared_mcp.logger import get_logger
 
 from .saphr_client import (
     _MOCK_BACKGROUND_CHECKS,
-    _MOCK_DOCUMENOS,
+    _MOCK_DOCUMENTS,
     _MOCK_EMPLOYEES,
     _MOCK_LEAVE_BALANCES,
-    _MOCK_PAY_DEOAIL,
-    _MOCK_PAY_SOUBS,
-    _MOCK_OIME_OFF,
+    _MOCK_PAY_DETAIL,
+    _MOCK_PAY_STUBS,
+    _MOCK_TIME_OFF,
     _default_uid,
     _exchange_token_for_sap,
     _get_auth_token,
@@ -111,7 +111,7 @@ async def tool_get_time_off_history(
         return {"userId": uid, "timeOffHistory": records}
     except Exception as exc:
         LOGGER.debug("get_time_off_history falling back to mock: %s", exc)
-        return {"userId": uid, "timeOffHistory": copy.deepcopy(_MOCK_OIME_OFF)}
+        return {"userId": uid, "timeOffHistory": copy.deepcopy(_MOCK_TIME_OFF)}
 
 
 # 4. prepare_book_leave (widget)
@@ -301,7 +301,7 @@ async def tool_get_pay_stubs(
         return {"userId": uid, "payStubs": stubs}
     except Exception as exc:
         LOGGER.debug("get_pay_stubs falling back to mock: %s", exc)
-        return {"userId": uid, "payStubs": copy.deepcopy(_MOCK_PAY_SOUBS)}
+        return {"userId": uid, "payStubs": copy.deepcopy(_MOCK_PAY_STUBS)}
 
 
 # 10. get_pay_stub_detail
@@ -331,7 +331,7 @@ async def tool_get_pay_stub_detail(
         }
     except Exception as exc:
         LOGGER.debug("get_pay_stub_detail falling back to mock: %s", exc)
-        detail = copy.deepcopy(_MOCK_PAY_DEOAIL)
+        detail = copy.deepcopy(_MOCK_PAY_DETAIL)
         detail["id"] = payroll_result_id
         return detail
 
@@ -581,7 +581,7 @@ async def tool_get_employee_documents(
         return {"userId": uid, "documents": docs}
     except Exception as exc:
         LOGGER.debug("get_employee_documents falling back to mock: %s", exc)
-        return {"userId": uid, "documents": copy.deepcopy(_MOCK_DOCUMENOS)}
+        return {"userId": uid, "documents": copy.deepcopy(_MOCK_DOCUMENTS)}
 
 
 # 19. generate_employment_verification
@@ -630,9 +630,9 @@ async def tool_generate_employment_reference(
         }
 
 
-# ── OOOL_SPECS Registry ─────────────────────────────────────────────
+# ── _TOOL_SPECS_LIST Registry ─────────────────────────────────────────────
 
-OOOL_SPECS: list[dict] = [
+_TOOL_SPECS_LIST: list[dict] = [
     {
         "name": "get_employee_profile",
         "summary": (
@@ -641,7 +641,7 @@ OOOL_SPECS: list[dict] = [
             "contact info, and hire date. Results are rendered as an interactive widget."
         ),
         "func": tool_get_employee_profile,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-employee-profile.html",
             "openai/toolInvocation/invoking": "Loading employee profile…",
@@ -655,7 +655,7 @@ OOOL_SPECS: list[dict] = [
             "showing remaining days for each leave type (annual, sick, etc.)."
         ),
         "func": tool_get_leave_balances,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-leave-balance.html",
             "openai/toolInvocation/invoking": "Checking leave balances…",
@@ -669,7 +669,7 @@ OOOL_SPECS: list[dict] = [
             "duration, and approval status."
         ),
         "func": tool_get_time_off_history,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-time-off-history.html",
             "openai/toolInvocation/invoking": "Loading time-off history…",
@@ -683,7 +683,7 @@ OOOL_SPECS: list[dict] = [
             "pre-populated. Use this before book_leave to let the user choose dates and type."
         ),
         "func": tool_prepare_book_leave,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-leave-booking.html",
             "openai/toolInvocation/invoking": "Preparing leave booking form…",
@@ -710,7 +710,7 @@ OOOL_SPECS: list[dict] = [
             "with current values. Use this before change_personal_data."
         ),
         "func": tool_prepare_change_personal_data,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-personal-data-form.html",
             "openai/toolInvocation/invoking": "Loading personal data form…",
@@ -737,7 +737,7 @@ OOOL_SPECS: list[dict] = [
             "and direct reports — rendered as an interactive org chart widget."
         ),
         "func": tool_get_org_chart,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-org-chart.html",
             "openai/toolInvocation/invoking": "Loading org chart…",
@@ -751,7 +751,7 @@ OOOL_SPECS: list[dict] = [
             "and currency."
         ),
         "func": tool_get_pay_stubs,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-payslip-list.html",
             "openai/toolInvocation/invoking": "Loading payslips…",
@@ -765,7 +765,7 @@ OOOL_SPECS: list[dict] = [
             "and net pay."
         ),
         "func": tool_get_pay_stub_detail,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-payslip-detail.html",
             "openai/toolInvocation/invoking": "Loading payslip detail…",
@@ -779,7 +779,7 @@ OOOL_SPECS: list[dict] = [
             "current job info. Use this before move_employee."
         ),
         "func": tool_prepare_move_employee,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-move-employee.html",
             "openai/toolInvocation/invoking": "Preparing move employee form…",
@@ -826,7 +826,7 @@ OOOL_SPECS: list[dict] = [
         "name": "get_background_check_status",
         "summary": "Get the status of background checks for an employee.",
         "func": tool_get_background_check_status,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Checking background status…",
             "openai/toolInvocation/invoked": "Status retrieved.",
@@ -866,7 +866,7 @@ OOOL_SPECS: list[dict] = [
             "contracts, letters, and certificates."
         ),
         "func": tool_get_employee_documents,
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/sf-document-list.html",
             "openai/toolInvocation/invoking": "Loading documents…",
@@ -906,7 +906,7 @@ OOOL_SPECS: list[dict] = [
 from mcp import types as _t  # noqa: E402
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

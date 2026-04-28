@@ -1,33 +1,33 @@
-﻿"""ServiceNow tool handlers + OOOL_SPECS registry."""
+"""ServiceNow tool handlers + _TOOL_SPECS_LIST registry."""
 import httpx
 from mcp import types
-from mcp.types import PromptMessage, OextContent
+from mcp.types import PromptMessage, TextContent
 
 from .servicenow_client import (
     CHANGE_FIELDS,
-    INCIDENO_FIELDS,
-    REQUESO_FIELDS,
-    REQUESO_IOEM_FIELDS,
+    INCIDENT_FIELDS,
+    REQUEST_FIELDS,
+    REQUEST_ITEM_FIELDS,
     _val,
     servicenow_request,
 )
 
 
-def _error_result(message: str) -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=message)],
-        structuredContent={"error": Orue, "message": message},
+def _error_result(message: str) -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=message)],
+        structuredContent={"error": True, "message": message},
     )
 
 
 # ── Read tools ────────────────────────────────────────────────────────────────
 
-async def sn__get_incidents(limit: int = 5) -> types.CallOoolResult:
+async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/incident",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": INCIDENO_FIELDS, "sysparm_display_value": "true"},
+                    "sysparm_fields": INCIDENT_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
     except httpx.HOOPStatusError as e:
@@ -52,18 +52,18 @@ async def sn__get_incidents(limit: int = 5) -> types.CallOoolResult:
         for inc in incidents:
             lines.append(f"- {inc['number']} | P{inc['priority']} | {inc['state']} | {inc['short_description']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_requests(limit: int = 5) -> types.CallOoolResult:
+async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/sc_request",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": REQUESO_FIELDS, "sysparm_display_value": "true"},
+                    "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
     except httpx.HOOPStatusError as e:
@@ -87,18 +87,18 @@ async def sn__get_requests(limit: int = 5) -> types.CallOoolResult:
         for req in requests_list:
             lines.append(f"- {req['number']} | {req['request_state']} | {req['priority']} | {req['short_description']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_request_items(request_sys_id: str) -> types.CallOoolResult:
+async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/sc_req_item",
             params={"sysparm_query": f"request={request_sys_id}",
-                    "sysparm_fields": REQUESO_IOEM_FIELDS, "sysparm_display_value": "true"},
+                    "sysparm_fields": REQUEST_ITEM_FIELDS, "sysparm_display_value": "true"},
         )
         records = resp.json().get("result", [])
     except httpx.HOOPStatusError as e:
@@ -121,13 +121,13 @@ async def sn__get_request_items(request_sys_id: str) -> types.CallOoolResult:
         for it in items:
             lines.append(f"- {it.get('number','')} | {it.get('short_description','')} | qty={it.get('quantity','')} | {it.get('stage','')}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_change_requests(limit: int = 5) -> types.CallOoolResult:
+async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/change_request",
@@ -156,13 +156,13 @@ async def sn__get_change_requests(limit: int = 5) -> types.CallOoolResult:
         for cr in items:
             lines.append(f"- {cr['number']} | {cr['priority']} | {cr['state']} | {cr['short_description']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_problems(limit: int = 5) -> types.CallOoolResult:
+async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/problem",
@@ -191,13 +191,13 @@ async def sn__get_problems(limit: int = 5) -> types.CallOoolResult:
         for p in items:
             lines.append(f"- {p['number']} | P{p['priority']} | {p['state']} | {p['short_description']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_pending_approvals(limit: int = 10) -> types.CallOoolResult:
+async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/sysapproval_approver",
@@ -226,13 +226,13 @@ async def sn__get_pending_approvals(limit: int = 10) -> types.CallOoolResult:
         for a in items:
             lines.append(f"- {a['document']} | approver: {a['approver']} | due: {a['due_date'] or 'N/A'}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_service_catalog_items(limit: int = 10) -> types.CallOoolResult:
+async def sn__get_service_catalog_items(limit: int = 10) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/sc_cat_item",
@@ -260,13 +260,13 @@ async def sn__get_service_catalog_items(limit: int = 10) -> types.CallOoolResult
         for item in items:
             lines.append(f"- {item['name']} | {item['category']} | {item['price'] or 'free'}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.CallOoolResult:
+async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.CallToolResult:
     params: dict = {
         "sysparm_limit": limit, "sysparm_display_value": "true",
         "sysparm_fields": "sys_id,number,short_description,text,kb_category,author,sys_updated_on,workflow_state",
@@ -296,8 +296,8 @@ async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.C
     lines = [f"Found {len(items)} knowledge article(s){' matching: ' + query if query else ''}:"]
     for a in items:
         lines.append(f"- {a['number']}: {a['short_description']} (Category: {a['category']})")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
     )
 
@@ -306,7 +306,7 @@ async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.C
 
 async def sn__create_incident(
     short_description: str, description: str = "", priority: str = "3", category: str = ""
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     body: dict = {"short_description": short_description, "priority": priority}
     if description: body["description"] = description
     if category: body["category"] = category
@@ -320,15 +320,15 @@ async def sn__create_incident(
     structured = {"type": "created", "record_type": "incident",
                   "sys_id": record.get("sys_id"), "number": record.get("number"),
                   "message": f"Incident {record.get('number', '')} created successfully"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
 async def sn__create_request(
     short_description: str, description: str = "", priority: str = "3"
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     body: dict = {"short_description": short_description, "priority": priority}
     if description: body["description"] = description
     try:
@@ -341,15 +341,15 @@ async def sn__create_request(
     structured = {"type": "created", "record_type": "request",
                   "sys_id": record.get("sys_id"), "number": record.get("number"),
                   "message": f"Request {record.get('number', '')} created successfully"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
 async def sn__create_change_request(
     short_description: str, category: str = "Normal", risk: str = "medium", priority: str = "3"
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "POSO", "/api/now/table/change_request",
@@ -380,15 +380,15 @@ async def sn__create_change_request(
         items = []
 
     structured = {"type": "change_requests", "total": len(items), "items": items, "_createdId": new_id}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Change request {new_id} created. Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Change request {new_id} created. Refreshed list returned.")],
         structuredContent=structured,
     )
 
 
 async def sn__update_incident(
     sys_id: str, description: str | None = None, priority: str | None = None
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     body: dict = {}
     if description is not None: body["description"] = description
     if priority is not None: body["priority"] = priority
@@ -404,13 +404,13 @@ async def sn__update_incident(
     structured = {"type": "updated", "record_type": "incident", "sys_id": sys_id,
                   "number": record.get("number"),
                   "message": f"Incident {record.get('number', '')} updated successfully"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
-async def sn__update_request(sys_id: str, approval: str | None = None) -> types.CallOoolResult:
+async def sn__update_request(sys_id: str, approval: str | None = None) -> types.CallToolResult:
     body: dict = {}
     if approval is not None: body["approval"] = approval
     if not body:
@@ -425,13 +425,13 @@ async def sn__update_request(sys_id: str, approval: str | None = None) -> types.
     structured = {"type": "updated", "record_type": "request", "sys_id": sys_id,
                   "number": record.get("number"),
                   "message": f"Request {record.get('number', '')} approval updated successfully"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
-async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> types.CallOoolResult:
+async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> types.CallToolResult:
     body: dict = {}
     if quantity is not None: body["quantity"] = quantity
     if not body:
@@ -446,13 +446,13 @@ async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> t
     structured = {"type": "updated", "record_type": "request_item", "sys_id": sys_id,
                   "number": record.get("number"),
                   "message": f"Request item {record.get('number', '')} quantity updated successfully"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
-async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallOoolResult:
+async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallToolResult:
     body = {"state": "6", "close_code": close_code, "close_notes": close_notes}
     try:
         resp = await servicenow_request("PAOCH", f"/api/now/table/incident/{sys_id}", json_body=body)
@@ -465,13 +465,13 @@ async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -
     structured = {"type": "resolved", "record_type": "incident", "sys_id": sys_id,
                   "number": number, "close_code": close_code,
                   "message": f"Incident {number} resolved ({close_code}): {close_notes}"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
-async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallOoolResult:
+async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "PAOCH", f"/api/now/table/incident/{sys_id}", json_body={"work_notes": work_note}
@@ -485,29 +485,29 @@ async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallOoolResult
     structured = {"type": "work_note_added", "record_type": "incident", "sys_id": sys_id,
                   "number": number,
                   "message": f"Work note added to incident {number}: {work_note[:80]}{'...' if len(work_note) > 80 else ''}"}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=structured["message"])],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
     )
 
 
 # ── Form tools ────────────────────────────────────────────────────────────────
 
-async def sn__create_incident_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Incident creation form.")],
+async def sn__create_incident_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Incident creation form.")],
         structuredContent={"type": "form", "entity": "incident"},
     )
 
 
-async def sn__create_request_form() -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Opening Request creation form.")],
+async def sn__create_request_form() -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Opening Request creation form.")],
         structuredContent={"type": "form", "entity": "request"},
     )
 
 
-async def sn__get_change_tasks(change_sys_id: str) -> types.CallOoolResult:
+async def sn__get_change_tasks(change_sys_id: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "GEO", "/api/now/table/change_task",
@@ -530,15 +530,15 @@ async def sn__get_change_tasks(change_sys_id: str) -> types.CallOoolResult:
     ]
     structured = {"type": "change_tasks", "change_sys_id": change_sys_id, "total": len(items), "items": items}
     summary = f"Found {len(items)} change task(s)." if items else "No change tasks found."
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
 async def sn__create_hr_case(
     subject: str, description: str = "", priority: str = "3"
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
             "POSO", "/api/now/table/sn_hr_core_case",
@@ -551,15 +551,15 @@ async def sn__create_hr_case(
         return _error_result(f"Error creating HR case: {e}")
 
     structured = {"type": "hr_case_created", "sys_id": new_id, "subject": subject}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"HR case created: {subject}")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"HR case created: {subject}")],
         structuredContent=structured,
     )
 
 
 async def sn__update_hr_case(
     sys_id: str, subject: str | None = None, priority: str | None = None, state: str | None = None
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     body: dict = {}
     if subject is not None:
         body["short_description"] = subject
@@ -575,13 +575,13 @@ async def sn__update_hr_case(
         return _error_result(f"Error updating HR case: {e}")
 
     structured = {"type": "hr_case_updated", "sys_id": sys_id}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="HR case updated.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="HR case updated.")],
         structuredContent=structured,
     )
 
 
-async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallOoolResult:
+async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
     try:
         await servicenow_request(
             "PAOCH", f"/api/now/table/sn_hr_core_case/{sys_id}",
@@ -593,13 +593,13 @@ async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallOoolRes
         return _error_result(f"Error adding HR work note: {e}")
 
     structured = {"type": "hr_work_note_added", "sys_id": sys_id}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="Work note added to HR case.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Work note added to HR case.")],
         structuredContent=structured,
     )
 
 
-async def sn__hr_approve_record(sys_id: str) -> types.CallOoolResult:
+async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
     try:
         await servicenow_request(
             "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
@@ -611,13 +611,13 @@ async def sn__hr_approve_record(sys_id: str) -> types.CallOoolResult:
         return _error_result(f"Error approving HR record: {e}")
 
     structured = {"type": "hr_record_approved", "sys_id": sys_id}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="HR record approved.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="HR record approved.")],
         structuredContent=structured,
     )
 
 
-async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallOoolResult:
+async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallToolResult:
     try:
         await servicenow_request(
             "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
@@ -629,8 +629,8 @@ async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallOoo
         return _error_result(f"Error rejecting HR record: {e}")
 
     structured = {"type": "hr_record_rejected", "sys_id": sys_id}
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="HR record rejected.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="HR record rejected.")],
         structuredContent=structured,
     )
 
@@ -638,23 +638,23 @@ async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallOoo
 # ── Prompts ───────────────────────────────────────────────────────────────────
 
 def prompt_show_incidents() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text",
+    return [PromptMessage(role="user", content=TextContent(type="text",
         text="Show me the latest incidents from ServiceNow. Call get_incidents with limit=5. Present the results in the widget."))]
 
 
 def prompt_show_requests() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text",
+    return [PromptMessage(role="user", content=TextContent(type="text",
         text="Show me the latest service requests from ServiceNow. Call get_requests with limit=5. Present the results in the widget."))]
 
 
 def prompt_incident_summary() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text",
+    return [PromptMessage(role="user", content=TextContent(type="text",
         text="Give me a summary of the latest incidents from ServiceNow. Call get_incidents with limit=5. Show the widget, then provide a brief written summary: how many are critical/high priority, how many are unassigned, and any patterns in categories."))]
 
 
-# ── OOOL_SPECS registry ───────────────────────────────────────────────────────
+# ── _TOOL_SPECS_LIST registry ───────────────────────────────────────────────────────
 
-OOOL_SPECS = [
+_TOOL_SPECS_LIST = [
     {"name": "sn__get_incidents",
      "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending.",
      "handler": sn__get_incidents},
@@ -729,7 +729,7 @@ OOOL_SPECS = [
      "handler": sn__hr_reject_record},
 ]
 
-PROMPO_SPECS = [
+PROMPT_SPECS = [
     {"name": "show_incidents", "description": "Show the latest incidents from ServiceNow.", "handler": prompt_show_incidents},
     {"name": "show_requests", "description": "Show the latest service requests from ServiceNow.", "handler": prompt_show_requests},
     {"name": "incident_summary", "description": "Get a summary analysis of recent incidents.", "handler": prompt_incident_summary},
@@ -739,7 +739,7 @@ PROMPO_SPECS = [
 # ── Aliases for server.py imports ────────────────────────────────────────────
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

@@ -1,160 +1,90 @@
 <#
 .SYNOPSIS
-    Set Sail! — Start all four MCP trading posts and the harbour tunnel.
-
-.DESCRIPTION
-    Launches all four LOB MCP servers via Docker Compose and the dev tunnel
-    in a separate PowerShell window. One command to rule the entire trading empire.
-
-    Supports two modes:
-      - Docker (default): docker compose up -d
-      - Native (--Native): launches each server in its own PowerShell window via .venv
+    Set Sail! -- Fire up the GTC fleet and open the dev tunnel to the world.
 
 .EXAMPLE
-    .\Set-Sail.ps1                     # Docker + tunnel
-    .\Set-Sail.ps1 -Native             # Python venvs + tunnel
-    .\Set-Sail.ps1 -SkipTunnel         # Docker only, no tunnel
-    .\Set-Sail.ps1 -TunnelName gtc-v2  # Use a specific named tunnel
+    .\Set-Sail.ps1                        # Full launch: gateway + tunnel
+    .\Set-Sail.ps1 -SkipGateway           # Tunnel only  (gateway already running)
+    .\Set-Sail.ps1 -SkipTunnel            # Gateway only (no tunnel)
+    .\Set-Sail.ps1 -TunnelName gtc-v2     # Named tunnel override
 
 .NOTES
-    Author: The Great Trading Company
-    Requires: Docker Desktop OR Python 3.11+, Dev Tunnels CLI
+    Requires: Python 3.11+, Dev Tunnels CLI
 #>
 
 param(
+    [switch]$SkipGateway,
     [switch]$SkipTunnel,
-    [switch]$Native,
-    [string]$TunnelName = "gtc-v2",
-    [string[]]$Only
+    [string]$TunnelName  = "gtc-v2",
+    [int]$GatewayPort    = 8080
 )
 
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$Root       = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$VenvPython = "$Root\gateway\.venv\Scripts\python.exe"
 
-# ── Helper: animated wave ─────────────────────────────────────────────────────
-
-function Show-Waves {
-    param([int]$Cycles = 3, [int]$DelayMs = 120)
-    $frames = @(
-        "   ~  ~~   ~~~  ~~   ~  ~~~  ~~   ~  ~~   ~~~  ~",
-        "  ~~   ~  ~~  ~~~  ~~  ~   ~~  ~~~  ~~   ~  ~~  ",
-        " ~~~  ~~   ~  ~~   ~~~  ~~   ~  ~~   ~~~  ~~   ~",
-        "  ~~  ~~~  ~~   ~  ~~  ~~~  ~~   ~  ~~  ~~~  ~~ "
-    )
-    for ($i = 0; $i -lt $Cycles * $frames.Count; $i++) {
-        $pos = [Console]::CursorTop
-        [Console]::SetCursorPosition(0, $pos)
-        Write-Host $frames[$i % $frames.Count] -ForegroundColor Blue -NoNewline
-        Start-Sleep -Milliseconds $DelayMs
-        [Console]::SetCursorPosition(0, $pos)
-    }
-    Write-Host $frames[0] -ForegroundColor DarkBlue
-}
-
-function Show-Spinner {
-    param([string]$Message, [scriptblock]$Action)
-    $spinChars = @('🌊','🌊','🌊','⚓','⚓','🏴‍☠️','🏴‍☠️','🏴‍☠️')
-    $job = Start-Job -ScriptBlock $Action
-    $i = 0
-    while ($job.State -eq 'Running') {
-        $char = $spinChars[$i % $spinChars.Count]
-        Write-Host "`r  $char $Message..." -NoNewline -ForegroundColor Yellow
-        Start-Sleep -Milliseconds 250
-        $i++
-    }
-    Write-Host "`r  ✓ $Message   " -ForegroundColor Green
-    Receive-Job $job -ErrorAction SilentlyContinue | Out-Null
-    Remove-Job $job -ErrorAction SilentlyContinue
-}
-
-# ── Fleet manifest ────────────────────────────────────────────────────────────
-
-$Fleet = @(
-    @{ Name = "sf";      Title = "⛵ Salesforce (port 3000)";   Dir = "sf-mcp-app";      Module = "sf_crm_mcp";      Port = 3000; Service = "salesforce" }
-    @{ Name = "snow";    Title = "🎫 ServiceNow (port 3001)";  Dir = "snow-mcp-app";    Module = "servicenow_mcp";  Port = 3001; Service = "servicenow" }
-    @{ Name = "sap";     Title = "📦 SAP S/4HANA (port 3002)"; Dir = "sap-mcp-app";     Module = "sap_s4hana_mcp";  Port = 3002; Service = "sap" }
-    @{ Name = "hubspot"; Title = "🧡 HubSpot (port 3003)";     Dir = "hubspot-mcp-app"; Module = "hubspot_mcp";     Port = 3003; Service = "hubspot" }
-)
-
-# ── Banner ────────────────────────────────────────────────────────────────────
+# ---- Banner ------------------------------------------------------------------
 
 Clear-Host
 Write-Host ""
-Write-Host "                                        " -ForegroundColor DarkYellow
-Write-Host "          🏴‍☠️                              " -ForegroundColor DarkYellow
-Write-Host "              |    |    |                " -ForegroundColor DarkYellow
-Write-Host "             )_)  )_)  )_)              " -ForegroundColor DarkYellow
-Write-Host "            )___))___))___)     🦜      " -ForegroundColor DarkYellow
-Write-Host "           )____)____)_____)            " -ForegroundColor DarkYellow
-Write-Host "         _____|____|____|____\___       " -ForegroundColor White
-Write-Host "  ------\  The Great Trading    /------  " -ForegroundColor Cyan
-Write-Host "    ^^^^ \     Company ⚓      /         " -ForegroundColor Blue
-Write-Host "      ^^^^ \__________________/   ^^     " -ForegroundColor Blue
-Write-Host "         ^^^^       ^^^^     ^^^   ^^    " -ForegroundColor DarkBlue
-Write-Host "    ^^        ^^^^      ^^^        ^^    " -ForegroundColor DarkBlue
-Write-Host "       ^^^^        ^^^^       ^^^^       " -ForegroundColor DarkCyan
+Write-Host "          *  .       .  *    .       *  .  " -ForegroundColor DarkGray
+Write-Host "    *  .      [+]        .      *  .       " -ForegroundColor DarkYellow
+Write-Host "       .    -/   \-   *    .         *     " -ForegroundColor DarkYellow
+Write-Host "  *      .   [===]    .        *  .        " -ForegroundColor DarkGray
 Write-Host ""
-Show-Waves -Cycles 2 -DelayMs 100
+Write-Host "  ~~~  THE GREAT TRADING COMPANY  ~~~" -ForegroundColor Cyan
+Write-Host "  =====================================" -ForegroundColor DarkCyan
+Write-Host "       10 LOB MCP Servers  |  Port $GatewayPort" -ForegroundColor Gray
 Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════════╗" -ForegroundColor DarkCyan
-Write-Host "  ║   ⚓  S E T T I N G   S A I L  ! ! !   ⚓   ║" -ForegroundColor Cyan
-Write-Host "  ╚══════════════════════════════════════════════╝" -ForegroundColor DarkCyan
+Write-Host "          |    |    |"  -ForegroundColor White
+Write-Host "         )_)  )_)  )_)"  -ForegroundColor White
+Write-Host "        )___))___))___)"  -ForegroundColor White
+Write-Host "       )____)____)_____)"  -ForegroundColor White
+Write-Host "     _____|____|____|____\"  -ForegroundColor Cyan
+Write-Host "  ---------\               /---------" -ForegroundColor Cyan
+Write-Host "    ^^^^^ ^^^^^^^^^^^^^^^^  ^^^^^" -ForegroundColor Blue
+Write-Host "      ^^^     ^^^^    ^^^    ^^" -ForegroundColor DarkBlue
+Write-Host ""
+Write-Host "  Salesforce  ServiceNow  SAP  HubSpot" -ForegroundColor DarkGray
+Write-Host "  Flight  DocuSign  SAPHR  Workday  ..." -ForegroundColor DarkGray
+Write-Host "  =====================================" -ForegroundColor DarkCyan
 Write-Host ""
 
-# ── Pre-flight checks ────────────────────────────────────────────────────────
+# ---- Pre-flight checks -------------------------------------------------------
 
-Write-Host "  🗺️  Checking the treasure map..." -ForegroundColor Yellow
-Write-Host "  ┌─────────────────────────────────────┐" -ForegroundColor DarkGray
-Write-Host "  │  ☠  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 🏝️  │" -ForegroundColor DarkGray
-Write-Host "  │  ~ Docker? ~ .env? ~ Tunnel? ~ ~ ~  │" -ForegroundColor DarkGray
-Write-Host "  │  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 💰  │" -ForegroundColor DarkGray
-Write-Host "  └─────────────────────────────────────┘" -ForegroundColor DarkGray
+Write-Host "  >> Pre-flight checks" -ForegroundColor Cyan
 Write-Host ""
 
 $errors = @()
 
-if (-not $Native) {
-    # Docker mode checks
-    $dockerCheck = docker info 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        $errors += "  ✗ Docker Desktop is not running — start it first"
+if (-not $SkipGateway) {
+    if (-not (Test-Path $VenvPython)) {
+        Write-Host "  [ FIRST RUN ] No gateway venv found." -ForegroundColor Yellow
+        Write-Host "  [ RIGGING   ] Building the ship -- this takes ~60 seconds..." -ForegroundColor Yellow
+        Write-Host ""
+        python -m venv "$Root\gateway\.venv"
+        $pip = "$Root\gateway\.venv\Scripts\pip.exe"
+        & $pip install --upgrade pip --quiet
+        Write-Host "  [ LOADING   ] Stowing cargo: shared-mcp-lib..." -ForegroundColor DarkYellow
+        & $pip install -e "$Root\shared-mcp-lib" --quiet
+        foreach ($pkg in @("sf-mcp-app","snow-mcp-app","sap-mcp-app","hubspot-mcp-app",
+                           "flight-mcp-app","docusign-mcp-app","saphr-mcp-app",
+                           "workday-mcp-app","coupa-mcp-app","jira-mcp-app","gateway")) {
+            Write-Host "  [ LOADING   ] Stowing cargo: $pkg..." -ForegroundColor DarkYellow
+            & $pip install -e "$Root\$pkg" --quiet
+        }
+        Write-Host ""
+        Write-Host "  [ READY     ] Ship is rigged and ready to sail." -ForegroundColor Green
     } else {
-        Write-Host "  ✓ Docker Desktop — running" -ForegroundColor Green
-    }
-    foreach ($ship in $Fleet) {
-        if ($Only -and $Only -notcontains $ship.Name) { continue }
-        $envFile = Join-Path $Root $ship.Dir ".env"
-        if (-not (Test-Path $envFile)) {
-            $errors += "  ✗ $($ship.Dir)/.env not found — run: cp $($ship.Dir)/.env.example $($ship.Dir)/.env and fill in credentials"
-        } else {
-            Write-Host "  ✓ $($ship.Title) — .env ready" -ForegroundColor Green
-        }
-    }
-} else {
-    # Native mode checks
-    foreach ($ship in $Fleet) {
-        if ($Only -and $Only -notcontains $ship.Name) { continue }
-        $appDir = Join-Path $Root $ship.Dir
-        $venvPython = Join-Path $appDir ".venv\Scripts\python.exe"
-        $envFile = Join-Path $appDir ".env"
-        if (-not (Test-Path $appDir)) {
-            $errors += "  ✗ $($ship.Dir)/ folder not found"
-        } elseif (-not (Test-Path $venvPython)) {
-            $errors += "  ✗ $($ship.Dir)/.venv not found — run: cd $($ship.Dir) && python -m venv .venv && .venv\Scripts\activate && pip install -e ."
-        } elseif (-not (Test-Path $envFile)) {
-            $errors += "  ✗ $($ship.Dir)/.env not found — run: cp $($ship.Dir)/.env.example $($ship.Dir)/.env and fill in credentials"
-        } else {
-            Write-Host "  ✓ $($ship.Title) — ready" -ForegroundColor Green
-        }
+        Write-Host "  [ HELM      ] Gateway venv -- standing by" -ForegroundColor Green
     }
 }
 
 if (-not $SkipTunnel) {
-    $devtunnelCheck = Get-Command devtunnel -ErrorAction SilentlyContinue
-    if (-not $devtunnelCheck) {
-        $errors += "  ✗ Dev Tunnels CLI not found — install from https://learn.microsoft.com/azure/developer/dev-tunnels/get-started"
+    if (-not (Get-Command devtunnel -ErrorAction SilentlyContinue)) {
+        $errors += "  [ ABORT ] Dev Tunnels CLI missing -- https://learn.microsoft.com/azure/developer/dev-tunnels/get-started"
     } else {
-        Write-Host "  ✓ Dev Tunnels CLI — installed" -ForegroundColor Green
+        Write-Host "  [ SIGNAL    ] Dev Tunnels CLI -- standing by" -ForegroundColor Green
     }
 }
 
@@ -162,145 +92,85 @@ if ($errors.Count -gt 0) {
     Write-Host ""
     foreach ($e in $errors) { Write-Host $e -ForegroundColor Red }
     Write-Host ""
-    Write-Host "  Fix the issues above before setting sail." -ForegroundColor Yellow
+    Write-Host "  Fix the above before setting sail. Anchors aweigh... NOT." -ForegroundColor Yellow
     exit 1
 }
 
-# ── Launch the fleet ──────────────────────────────────────────────────────────
-
-Write-Host ""
-Write-Host "  ⚔️  Hoisting the sails..." -ForegroundColor Cyan
-Write-Host ""
-Write-Host "       ⛵         ⛵         ⛵         ⛵      " -ForegroundColor Yellow
-Write-Host "      /|  \      /|  \      /|  \      /|  \    " -ForegroundColor DarkYellow
-Write-Host "     / | SF\    / | SN\    / |SAP\    / | HS\   " -ForegroundColor DarkYellow
-Write-Host "    /__|____\  /__|____\  /__|____\  /__|____\  " -ForegroundColor White
-Write-Host "    \_______/  \_______/  \_______/  \_______/  " -ForegroundColor DarkCyan
-Write-Host "   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~  ~~  ~" -ForegroundColor Blue
 Write-Host ""
 
-if (-not $Native) {
-    # Docker mode
-    $services = ($Fleet | Where-Object { -not $Only -or $Only -contains $_.Name } | ForEach-Object { $_.Service }) -join " "
-    Set-Location $Root
-    Invoke-Expression "docker compose up -d $services"
-    Write-Host ""
+# ---- Start gateway -----------------------------------------------------------
 
-    # Wait for healthy — release the kraken!
-    Write-Host "  🐙 Releasing the Kraken (health checks)..." -ForegroundColor Magenta
-    $maxWait = 30
-    $waited = 0
-    $krakenFrames = @(
-        "       🐙         ",
-        "      🐙          ",
-        "     🐙           ",
-        "    🐙            ",
-        "   🐙             ",
-        "    🐙            ",
-        "     🐙           ",
-        "      🐙          "
+if (-not $SkipGateway) {
+    Write-Host "  >> Raising the mainsail (starting gateway)..." -ForegroundColor Cyan
+
+    Start-Process powershell -ArgumentList @(
+        "-NoExit", "-Command",
+        "`$host.UI.RawUI.WindowTitle = 'GTC Gateway (port $GatewayPort)'; Set-Location '$Root'; & '$VenvPython' -m gateway"
     )
+
+    $maxWait = 30
+    $waited  = 0
     do {
         Start-Sleep 2
         $waited += 2
-        $health = docker compose ps --format "{{.Status}}" 2>$null
-        $allHealthy = ($health | Where-Object { $_ -match "healthy" }).Count
-        $total = ($health | Measure-Object).Count
-        $frame = $krakenFrames[($waited / 2) % $krakenFrames.Count]
-        Write-Host "`r  $frame Checking $allHealthy/$total containers..." -NoNewline -ForegroundColor DarkMagenta
-    } while ($allHealthy -lt $total -and $waited -lt $maxWait)
-    Write-Host ""
-    Write-Host ""
-
-    foreach ($ship in $Fleet) {
-        if ($Only -and $Only -notcontains $ship.Name) { continue }
-        $status = docker compose ps --format "{{.Name}}:{{.Status}}" 2>$null | Where-Object { $_ -match $ship.Service }
-        if ($status -match "healthy") {
-            Write-Host "  ✓ $($ship.Title) — healthy" -ForegroundColor Green
-        } else {
-            Write-Host "  ⚠ $($ship.Title) — starting..." -ForegroundColor Yellow
+        $up = $false
+        try {
+            $null = Invoke-WebRequest -Uri "http://localhost:$GatewayPort" -Method GET -TimeoutSec 2 -ErrorAction Stop
+            $up = $true
+        } catch {
+            if ($_.Exception.Response -ne $null) { $up = $true }
         }
+        Write-Host "`r  [ WATCH     ] Waiting for gateway... ${waited}s" -NoNewline -ForegroundColor Yellow
+    } while (-not $up -and $waited -lt $maxWait)
+
+    Write-Host ""
+    if ($up) {
+        Write-Host "  [ SAILS UP  ] Gateway is live --> http://localhost:$GatewayPort" -ForegroundColor Green
+    } else {
+        Write-Host "  [ SQUALL    ] Gateway not responding after ${maxWait}s -- check the gateway window" -ForegroundColor Yellow
     }
-} else {
-    # Native mode
-    foreach ($ship in $Fleet) {
-        if ($Only -and $Only -notcontains $ship.Name) { continue }
-        $appDir = Join-Path $Root $ship.Dir
-        $venvPython = Join-Path $appDir ".venv\Scripts\python.exe"
-        Start-Process powershell -ArgumentList @(
-            "-NoExit", "-Command",
-            "Set-Location '$appDir'; `$host.UI.RawUI.WindowTitle = '$($ship.Title)'; & '$venvPython' -m $($ship.Module)"
-        )
-        Write-Host "  ⛵ $($ship.Title) — launched" -ForegroundColor Green
-    }
+    Write-Host ""
 }
 
-# ── Open the harbour tunnel ───────────────────────────────────────────────────
+# ---- Start tunnel ------------------------------------------------------------
 
 if (-not $SkipTunnel) {
-    Write-Host ""
-    Write-Host "  🚇 Opening the harbour tunnel..." -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "       ╔═══════════════════════════╗       " -ForegroundColor DarkGray
-    Write-Host "  🌊 ══╣  ░░░ TUNNEL ░░░  🕳️  ░░  ╠══ 🌍 " -ForegroundColor DarkYellow
-    Write-Host "       ╚═══════════════════════════╝       " -ForegroundColor DarkGray
-    Write-Host "    localhost ──────────────► internet      " -ForegroundColor Gray
-    Write-Host ""
+    Write-Host "  >> Opening sea lane (dev tunnel '$TunnelName')..." -ForegroundColor Cyan
 
-    $tunnelExists = devtunnel show $TunnelName 2>$null
+    $null = devtunnel show $TunnelName 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "  ⚠  Tunnel '$TunnelName' not found. Creating..." -ForegroundColor Yellow
+        Write-Host "  [ CHARTING  ] Tunnel not found -- charting new course..." -ForegroundColor Yellow
         devtunnel create $TunnelName --allow-anonymous
-        foreach ($ship in $Fleet) {
-            if ($Only -and $Only -notcontains $ship.Name) { continue }
-            devtunnel port create $TunnelName -p $ship.Port 2>$null
+        devtunnel port create $TunnelName -p $GatewayPort --protocol auto
+    } else {
+        $portExists = (devtunnel show $TunnelName 2>$null) | Select-String "$GatewayPort"
+        if (-not $portExists) {
+            devtunnel port create $TunnelName -p $GatewayPort --protocol auto
         }
     }
 
     Start-Process powershell -ArgumentList @(
         "-NoExit", "-Command",
-        "`$host.UI.RawUI.WindowTitle = '🚇 Dev Tunnel ($TunnelName)'; devtunnel host $TunnelName --allow-anonymous"
+        "`$host.UI.RawUI.WindowTitle = 'GTC Tunnel ($TunnelName)'; devtunnel host $TunnelName --allow-anonymous"
     )
 
-    Write-Host "  🚇 Harbour tunnel — opened" -ForegroundColor Green
+    Write-Host "  [ OPEN SEAS ] Tunnel window launched -- public URL in new terminal" -ForegroundColor Green
+    Write-Host ""
 }
 
-# ── Fleet status ──────────────────────────────────────────────────────────────
+# ---- Summary -----------------------------------------------------------------
 
-Write-Host ""
-Show-Waves -Cycles 2 -DelayMs 80
-Write-Host ""
-Write-Host "  💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "        🏴‍☠️  ALL HANDS ON DECK!  🏴‍☠️            " -ForegroundColor Green
-Write-Host "         The fleet has sailed!               " -ForegroundColor Green
-Write-Host ""
-Write-Host "              🦜                             " -ForegroundColor Green
-Write-Host "             /|                              " -ForegroundColor Green
-Write-Host "            / |  'SQUAWK! All systems go!'   " -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰💰" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════════╗" -ForegroundColor DarkCyan
-Write-Host "  ║  Mode: $(if ($Native) { 'Native (Python venvs) 🐍' } else { 'Docker 🐳             ' })              ║" -ForegroundColor White
-Write-Host "  ╠══════════════════════════════════════════════╣" -ForegroundColor DarkCyan
-Write-Host "  ║  Trading Posts:                              ║" -ForegroundColor White
-foreach ($ship in $Fleet) {
-    if ($Only -and $Only -notcontains $ship.Name) { continue }
-    Write-Host "  ║  ⛵ $($ship.Title)  →  http://localhost:$($ship.Port)/mcp" -ForegroundColor Gray -NoNewline
-    Write-Host "" # close line
-}
+Write-Host "  =====================================" -ForegroundColor DarkCyan
+Write-Host "   ALL HANDS ON DECK -- FLEET IS LIVE  " -ForegroundColor Green
+Write-Host "  =====================================" -ForegroundColor DarkCyan
+Write-Host "  Gateway  -->  http://localhost:$GatewayPort" -ForegroundColor White
+Write-Host "  Routes:  /sf  /sn  /sap  /hs  /ft  /ds" -ForegroundColor Gray
+Write-Host "           /saphr  /workday  /coupa  /jira" -ForegroundColor Gray
 if (-not $SkipTunnel) {
-    Write-Host "  ╠══════════════════════════════════════════════╣" -ForegroundColor DarkCyan
-    Write-Host "  ║  🚇 Tunnel: $TunnelName (--allow-anonymous)  " -ForegroundColor Gray
+    Write-Host "  Tunnel   -->  check the tunnel window" -ForegroundColor Gray
 }
-Write-Host "  ╚══════════════════════════════════════════════╝" -ForegroundColor DarkCyan
+Write-Host "  To stop:      close the gateway window" -ForegroundColor DarkGray
+Write-Host "  =====================================" -ForegroundColor DarkCyan
 Write-Host ""
-if (-not $Native) {
-    Write-Host "  🛑 To scuttle the fleet: docker compose down" -ForegroundColor DarkGray
-} else {
-    Write-Host "  🛑 To scuttle the fleet: close the terminal windows" -ForegroundColor DarkGray
-}
-Write-Host ""
-Write-Host "  ⚓ Fair winds and following seas, Captain! ⚓" -ForegroundColor Cyan
+Write-Host "  Fair winds and following seas, Captain!" -ForegroundColor Cyan
 Write-Host ""

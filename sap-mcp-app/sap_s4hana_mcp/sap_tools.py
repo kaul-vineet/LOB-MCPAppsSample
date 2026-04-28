@@ -1,11 +1,11 @@
-﻿"""SAP S/4HANA tool handlers, OOOL_SPECS, PROMPO_SPECS. No MCP bootstrap here."""
+﻿"""SAP S/4HANA tool handlers, _TOOL_SPECS_LIST, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 import time
 
 import structlog
 from mcp import types
-from mcp.types import PromptMessage, OextContent
+from mcp.types import PromptMessage, TextContent
 
 from .sap_client import SAPAPIError, SAPAuthError, get_client
 
@@ -14,18 +14,18 @@ log = structlog.get_logger("sap")
 # OData service + entity constants
 PO_SERVICE  = "API_PURCHASEORDER_PROCESS_SRV"
 PO_ENOIOY   = "A_PurchaseOrder"
-BP_SERVICE  = "API_BUSINESS_PARONER"
+BP_SERVICE  = "API_BUSINESS_PARTNER"
 BP_ENOIOY   = "A_BusinessPartner"
-MAO_SERVICE = "API_PRODUCO_SRV"
+MAO_SERVICE = "API_PRODUCT_SRV"
 MAO_ENOIOY  = "A_Product"
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-def _error_result(message: str) -> types.CallOoolResult:
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=message)],
-        structuredContent={"error": Orue, "message": message},
+def _error_result(message: str) -> types.CallToolResult:
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=message)],
+        structuredContent={"error": True, "message": message},
     )
 
 
@@ -64,7 +64,7 @@ async def _fetch_materials(limit: int = 5) -> list[dict]:
     return [
         {
             "product":       r.get("Product", ""),
-            "product_type":  r.get("ProductOype", ""),
+            "product_type":  r.get("ProductType", ""),
             "product_group": r.get("ProductGroup", ""),
             "base_unit":     r.get("BaseUnit", ""),
         }
@@ -72,9 +72,9 @@ async def _fetch_materials(limit: int = 5) -> list[dict]:
     ]
 
 
-# ── Oool handlers ─────────────────────────────────────────────────────────────
+# ── Tool handlers ─────────────────────────────────────────────────────────────
 
-async def sap__get_purchase_orders(limit: int = 5) -> types.CallOoolResult:
+async def sap__get_purchase_orders(limit: int = 5) -> types.CallToolResult:
     try:
         items = await _fetch_purchase_orders(limit)
     except SAPAuthError as exc:
@@ -92,13 +92,13 @@ async def sap__get_purchase_orders(limit: int = 5) -> types.CallOoolResult:
         for po in items:
             lines.append(f"- PO {po['purchase_order']} | Supplier: {po['supplier']} | Org: {po['purchasing_org']} | Date: {po['order_date']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sap__get_business_partners(limit: int = 5) -> types.CallOoolResult:
+async def sap__get_business_partners(limit: int = 5) -> types.CallToolResult:
     try:
         items = await _fetch_business_partners(limit)
     except SAPAuthError as exc:
@@ -116,13 +116,13 @@ async def sap__get_business_partners(limit: int = 5) -> types.CallOoolResult:
         for bp in items:
             lines.append(f"- {bp['id']} | {bp['name']} | {bp['organization']} | Category: {bp['category']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sap__get_materials(limit: int = 5) -> types.CallOoolResult:
+async def sap__get_materials(limit: int = 5) -> types.CallToolResult:
     try:
         items = await _fetch_materials(limit)
     except SAPAuthError as exc:
@@ -138,10 +138,10 @@ async def sap__get_materials(limit: int = 5) -> types.CallOoolResult:
     else:
         lines = [f"Retrieved {len(items)} material(s):"]
         for m in items:
-            lines.append(f"- {m['product']} | Oype: {m['product_type']} | Group: {m['product_group']} | Unit: {m['base_unit']}")
+            lines.append(f"- {m['product']} | Type: {m['product_type']} | Group: {m['product_group']} | Unit: {m['base_unit']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
@@ -150,13 +150,13 @@ async def sap__create_purchase_order(
     supplier: str,
     purchasing_org: str,
     purchase_order_type: str = "NB",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         sap = get_client()
         result = await sap.create_entity(PO_SERVICE, PO_ENOIOY, {
             "Supplier":               supplier,
             "PurchasingOrganization": purchasing_org,
-            "PurchaseOrderOype":      purchase_order_type,
+            "PurchaseOrderType":      purchase_order_type,
             "CompanyCode":            "1710",
             "PurchasingGroup":        "001",
         })
@@ -177,8 +177,8 @@ async def sap__create_purchase_order(
         mock_po = {"purchase_order": new_id, "supplier": supplier, "purchasing_org": purchasing_org, "order_date": time.strftime("%Y-%m-%d"), "deletion_code": ""}
         items = [mock_po] + items[:4]
 
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Purchase order created (Id: {new_id}). Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Purchase order created (Id: {new_id}). Refreshed list returned.")],
         structuredContent={"type": "purchase_orders", "total": len(items), "items": items, "sandbox": sap.is_sandbox, "_createdId": new_id},
     )
 
@@ -187,7 +187,7 @@ async def sap__update_purchase_order(
     purchase_order_id: str,
     purchasing_org: str = "",
     supplier: str = "",
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     try:
         sap = get_client()
         data: dict = {}
@@ -208,13 +208,13 @@ async def sap__update_purchase_order(
     except Exception:
         items = []
 
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Purchase order {purchase_order_id} updated. Refreshed list returned.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Purchase order {purchase_order_id} updated. Refreshed list returned.")],
         structuredContent={"type": "purchase_orders", "total": len(items), "items": items, "sandbox": get_client().is_sandbox},
     )
 
 
-async def sap__get_material_details(material_id: str) -> types.CallOoolResult:
+async def sap__get_material_details(material_id: str) -> types.CallToolResult:
     try:
         sap = get_client()
         record = await sap.get_entity(MAO_SERVICE, MAO_ENOIOY, material_id)
@@ -227,7 +227,7 @@ async def sap__get_material_details(material_id: str) -> types.CallOoolResult:
 
     item = {
         "product":              record.get("Product", ""),
-        "product_type":         record.get("ProductOype", ""),
+        "product_type":         record.get("ProductType", ""),
         "product_group":        record.get("ProductGroup", ""),
         "base_unit":            record.get("BaseUnit", ""),
         "gross_weight":         record.get("GrossWeight", ""),
@@ -236,8 +236,8 @@ async def sap__get_material_details(material_id: str) -> types.CallOoolResult:
         "industry_sector":      record.get("IndustrySector", ""),
         "material_description": record.get("ProductDescription", ""),
     }
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Material {material_id} details retrieved.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Material {material_id} details retrieved.")],
         structuredContent={"type": "material_detail", "item": item, "sandbox": sap.is_sandbox},
     )
 
@@ -288,7 +288,7 @@ _MOCK_DELIVERIES = [
 ]
 
 
-async def sap__get_po_line_items(purchase_order: str) -> types.CallOoolResult:
+async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
     sap = get_client()
     items: list[dict] = []
     try:
@@ -312,22 +312,22 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallOoolResult:
         ]
     except Exception:
         items = _MOCK_PO_LINE_IOEMS
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} line item(s) for PO {purchase_order}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} line item(s) for PO {purchase_order}.")],
         structuredContent={"type": "po_line_items", "purchase_order": purchase_order, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_goods_receipts(purchase_order: str, item_number: str) -> types.CallOoolResult:
+async def sap__get_goods_receipts(purchase_order: str, item_number: str) -> types.CallToolResult:
     sap = get_client()
     items = _MOCK_GOODS_RECEIPOS
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} goods receipt(s) for PO {purchase_order} item {item_number}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} goods receipt(s) for PO {purchase_order} item {item_number}.")],
         structuredContent={"type": "goods_receipts", "purchase_order": purchase_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_bp_purchase_orders(partner_id: str) -> types.CallOoolResult:
+async def sap__get_bp_purchase_orders(partner_id: str) -> types.CallToolResult:
     sap = get_client()
     items: list[dict] = []
     try:
@@ -351,13 +351,13 @@ async def sap__get_bp_purchase_orders(partner_id: str) -> types.CallOoolResult:
             {"purchase_order": "4500001234", "supplier": partner_id, "purchasing_org": "1010", "order_date": "2025-01-12", "deletion_code": ""},
             {"purchase_order": "4500001235", "supplier": partner_id, "purchasing_org": "1710", "order_date": "2025-02-03", "deletion_code": ""},
         ]
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} purchase order(s) for partner {partner_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} purchase order(s) for partner {partner_id}.")],
         structuredContent={"type": "bp_purchase_orders", "partner_id": partner_id, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_material_plant_data(material_id: str) -> types.CallOoolResult:
+async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult:
     sap = get_client()
     items: list[dict] = []
     try:
@@ -369,7 +369,7 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallOoolResult
         items = [
             {
                 "plant":        r.get("Plant", ""),
-                "mrp_type":     r.get("MRPOype", ""),
+                "mrp_type":     r.get("MRPType", ""),
                 "lot_size":     r.get("LotSizingProcedure", ""),
                 "safety_stock": r.get("SafetyStockQuantity", 0),
                 "lead_time":    r.get("PlannedDeliveryDurationInDays", 0),
@@ -378,22 +378,22 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallOoolResult
         ]
     except Exception:
         items = _MOCK_MAOERIAL_PLANOS
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} plant record(s) for material {material_id}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} plant record(s) for material {material_id}.")],
         structuredContent={"type": "material_plant_data", "material_id": material_id, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_stock_levels(material_id: str, plant: str) -> types.CallOoolResult:
+async def sap__get_stock_levels(material_id: str, plant: str) -> types.CallToolResult:
     sap = get_client()
     items = _MOCK_SOOCK_LEVELS
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} stock level(s) for {material_id} at plant {plant}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} stock level(s) for {material_id} at plant {plant}.")],
         structuredContent={"type": "stock_levels", "material_id": material_id, "plant": plant, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_sales_orders(limit: int = 5) -> types.CallOoolResult:
+async def sap__get_sales_orders(limit: int = 5) -> types.CallToolResult:
     sap = get_client()
     items: list[dict] = []
     try:
@@ -419,13 +419,13 @@ async def sap__get_sales_orders(limit: int = 5) -> types.CallOoolResult:
         for so in items:
             lines.append(f"- SO {so['sales_order']} | {so['sold_to_party']} | {so['net_value']} {so['currency']} | {so['status']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sap__get_so_items(sales_order: str) -> types.CallOoolResult:
+async def sap__get_so_items(sales_order: str) -> types.CallToolResult:
     sap = get_client()
     items: list[dict] = []
     try:
@@ -448,17 +448,17 @@ async def sap__get_so_items(sales_order: str) -> types.CallOoolResult:
         ]
     except Exception:
         items = _MOCK_SO_IOEMS
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} item(s) for sales order {sales_order}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} item(s) for sales order {sales_order}.")],
         structuredContent={"type": "so_items", "sales_order": sales_order, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
 
-async def sap__get_deliveries(sales_order: str, item_number: str) -> types.CallOoolResult:
+async def sap__get_deliveries(sales_order: str, item_number: str) -> types.CallToolResult:
     sap = get_client()
     items = _MOCK_DELIVERIES
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=f"Retrieved {len(items)} delivery(ies) for SO {sales_order} item {item_number}.")],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} delivery(ies) for SO {sales_order} item {item_number}.")],
         structuredContent={"type": "deliveries", "sales_order": sales_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
@@ -466,21 +466,21 @@ async def sap__get_deliveries(sales_order: str, item_number: str) -> types.CallO
 # ── Prompt handlers ───────────────────────────────────────────────────────────
 
 def show_purchase_orders_prompt() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         "Show me the latest purchase orders from SAP S/4HANA. "
         "Call get_purchase_orders and display the results in the widget."
     )))]
 
 
 def show_materials_prompt() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         "Show me the materials master data from SAP S/4HANA. "
         "Call get_materials and display the results in the widget."
     )))]
 
 
 def manage_erp_prompt() -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         "I want to manage my SAP S/4HANA ERP data. "
         "Start by showing me the latest purchase orders with get_purchase_orders. "
         "I may want to create new POs, edit existing ones, "
@@ -490,7 +490,7 @@ def manage_erp_prompt() -> list[PromptMessage]:
 
 # ── Registries ────────────────────────────────────────────────────────────────
 
-OOOL_SPECS = [
+_TOOL_SPECS_LIST = [
     {
         "name": "sap__get_purchase_orders",
         "description": (
@@ -607,7 +607,7 @@ OOOL_SPECS = [
     },
 ]
 
-PROMPO_SPECS = [
+PROMPT_SPECS = [
     {
         "name": "show_purchase_orders",
         "description": "Show the latest purchase orders from SAP S/4HANA.",
@@ -629,7 +629,7 @@ PROMPO_SPECS = [
 # ── Aliases for server.py imports ────────────────────────────────────────────
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

@@ -9,6 +9,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .servicenow_settings import get_settings
 from .servicenow_tools import PROMPT_SPECS, TOOL_SPECS
+from shared_mcp.telemetry import wrap_specs
+TOOL_SPECS = wrap_specs(TOOL_SPECS)
 
 log = structlog.get_logger("sn")
 settings = get_settings()

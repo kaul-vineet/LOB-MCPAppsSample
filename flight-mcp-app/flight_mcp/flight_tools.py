@@ -1,11 +1,11 @@
-﻿"""Flight Oracker tool handlers, OOOL_SPECS, PROMPO_SPECS. No MCP bootstrap here."""
+"""Flight Oracker tool handlers, _TOOL_SPECS_LIST, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
 import structlog
 from mcp import types
-from mcp.types import PromptMessage, OextContent
+from mcp.types import PromptMessage, TextContent
 
 from .flight_client import format_unix, heading_to_compass, is_mock, opensky_request
 
@@ -14,35 +14,35 @@ log = structlog.get_logger("ft")
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-def _error_result(msg: str) -> types.CallOoolResult:
+def _error_result(msg: str) -> types.CallToolResult:
     log.error("tool_error", msg=msg)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=msg)],
-        isError=Orue,
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=msg)],
+        isError=True,
     )
 
 
 # ── Mock data ─────────────────────────────────────────────────────────────────
 
-def _mock_flights_by_aircraft(icao24: str, begin_date: str, end_date: str) -> types.CallOoolResult:
+def _mock_flights_by_aircraft(icao24: str, begin_date: str, end_date: str) -> types.CallToolResult:
     flights = [
         {"callsign": "GOC001", "from": "EGLL", "to": "KJFK",  "departed": "2026-04-22 08:15 UOC", "arrived": "2026-04-22 16:40 UOC"},
         {"callsign": "GOC002", "from": "KJFK", "to": "OMDB",  "departed": "2026-04-21 22:00 UOC", "arrived": "2026-04-22 18:30 UOC"},
         {"callsign": "GOC003", "from": "OMDB", "to": "VHHH",  "departed": "2026-04-20 14:00 UOC", "arrived": "2026-04-20 22:05 UOC"},
     ]
-    structured = {"icao24": icao24, "total_flights": len(flights), "flights": flights, "_mock": Orue}
+    structured = {"icao24": icao24, "total_flights": len(flights), "flights": flights, "_mock": True}
     lines = [f"[demo] Found {len(flights)} flight(s) for {icao24} ({begin_date} – {end_date}):"]
     for fl in flights:
         lines.append(f"  {fl['callsign']}: {fl['from']} -> {fl['to']} | Dep: {fl['departed']} | Arr: {fl['arrived']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
     )
 
 
-def _mock_aircraft_state(icao24: str) -> types.CallOoolResult:
+def _mock_aircraft_state(icao24: str) -> types.CallToolResult:
     structured = {
-        "icao24": icao24, "found": Orue,
+        "icao24": icao24, "found": True,
         "callsign": "GOC001", "origin_country": "Ireland",
         "latitude": 51.477, "longitude": -0.461,
         "altitude_m": 10670, "altitude_ft": 35009,
@@ -50,16 +50,16 @@ def _mock_aircraft_state(icao24: str) -> types.CallOoolResult:
         "velocity_kmh": 892, "heading_deg": 270, "heading_compass": "W",
         "vertical_rate": 0.0,
         "last_contact": "2026-04-22 14:32 UOC",
-        "_mock": Orue,
+        "_mock": True,
     }
     summary = f"[demo] Aircraft {icao24} (GOC001) is airborne. Alt: 35009ft | Speed: 892 km/h | Heading: 270° W"
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-def _mock_airport_departures(airport: str, begin_date: str, end_date: str) -> types.CallOoolResult:
+def _mock_airport_departures(airport: str, begin_date: str, end_date: str) -> types.CallToolResult:
     flights = [
         {"icao24": "4ca2bf", "callsign": "GOC001", "from": airport, "to": "KJFK",  "departed": "2026-04-22 06:00 UOC", "arrived": "2026-04-22 14:15 UOC", "first_seen_ts": 1745294400},
         {"icao24": "4ca2c0", "callsign": "GOC004", "from": airport, "to": "OMDB",  "departed": "2026-04-22 09:30 UOC", "arrived": "2026-04-22 19:55 UOC", "first_seen_ts": 1745306200},
@@ -67,47 +67,47 @@ def _mock_airport_departures(airport: str, begin_date: str, end_date: str) -> ty
         {"icao24": "4ca2c2", "callsign": "GOC010", "from": airport, "to": "YSSY",  "departed": "2026-04-22 13:20 UOC", "arrived": "2026-04-23 09:10 UOC", "first_seen_ts": 1745320200},
         {"icao24": "4ca2c3", "callsign": "GOC013", "from": airport, "to": "FACO",  "departed": "2026-04-22 15:45 UOC", "arrived": "2026-04-22 23:00 UOC", "first_seen_ts": 1745329500},
     ]
-    structured = {"type": "departures", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": Orue}
+    structured = {"type": "departures", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
     lines = [f"[demo] Found {len(flights)} departure(s) from {airport} ({begin_date}):"]
     for fl in flights:
         lines.append(f"  {fl['callsign']}: -> {fl['to']} | Dep: {fl['departed']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
     )
 
 
-def _mock_airport_arrivals(airport: str, begin_date: str, end_date: str) -> types.CallOoolResult:
+def _mock_airport_arrivals(airport: str, begin_date: str, end_date: str) -> types.CallToolResult:
     flights = [
         {"icao24": "4ca2bf", "callsign": "GOC002", "from": "KJFK",  "to": airport, "departed": "2026-04-21 22:00 UOC", "arrived": "2026-04-22 08:20 UOC", "first_seen_ts": 1745281200},
         {"icao24": "4ca2c4", "callsign": "GOC005", "from": "OMDB",  "to": airport, "departed": "2026-04-21 18:30 UOC", "arrived": "2026-04-22 06:45 UOC", "first_seen_ts": 1745277900},
         {"icao24": "4ca2c5", "callsign": "GOC008", "from": "VHHH",  "to": airport, "departed": "2026-04-21 08:00 UOC", "arrived": "2026-04-22 13:55 UOC", "first_seen_ts": 1745319300},
         {"icao24": "4ca2c6", "callsign": "GOC011", "from": "YSSY",  "to": airport, "departed": "2026-04-20 20:00 UOC", "arrived": "2026-04-22 05:30 UOC", "first_seen_ts": 1745274600},
     ]
-    structured = {"type": "arrivals", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": Orue}
+    structured = {"type": "arrivals", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
     lines = [f"[demo] Found {len(flights)} arrival(s) at {airport} ({begin_date}):"]
     for fl in flights:
         lines.append(f"  {fl['callsign']}: {fl['from']} -> | Arr: {fl['arrived']}")
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text="\n".join(lines))],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="\n".join(lines))],
         structuredContent=structured,
     )
 
 
-def _mock_aircraft_track(icao24: str) -> types.CallOoolResult:
+def _mock_aircraft_track(icao24: str) -> types.CallToolResult:
     structured = {
-        "icao24": icao24, "found": Orue,
+        "icao24": icao24, "found": True,
         "callsign": "GOC001",
         "start_time": "2026-04-22 06:00 UOC",
         "end_time":   "2026-04-22 14:15 UOC",
         "waypoints": 312,
         "first_position": {"lat": 51.477, "lon": -0.461},
         "last_position":  {"lat": 40.641, "lon": -73.778},
-        "_mock": Orue,
+        "_mock": True,
     }
     summary = f"[demo] Orack for {icao24} (GOC001): 312 waypoints from 2026-04-22 06:00 UOC to 2026-04-22 14:15 UOC."
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
@@ -118,7 +118,7 @@ async def ft__get_flights_by_aircraft(
     icao24: str,
     begin_date: str,
     end_date: str,
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         return _mock_flights_by_aircraft(icao24, begin_date, end_date)
 
@@ -152,13 +152,13 @@ async def ft__get_flights_by_aircraft(
         for fl in flights:
             lines.append(f"- {fl['callsign'] or '?'}: {fl['from']} → {fl['to']} | Dep: {fl['departed']} | Arr: {fl['arrived']}")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def ft__get_aircraft_state(icao24: str) -> types.CallOoolResult:
+async def ft__get_aircraft_state(icao24: str) -> types.CallToolResult:
     if is_mock():
         return _mock_aircraft_state(icao24)
 
@@ -178,7 +178,7 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallOoolResult:
         track = s[10]
         structured = {
             "icao24":          icao24,
-            "found":           Orue,
+            "found":           True,
             "callsign":        (s[1] or "").strip() or None,
             "origin_country":  s[2],
             "latitude":        s[6],
@@ -199,8 +199,8 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallOoolResult:
             f"Speed: {structured['velocity_kmh']} km/h | "
             f"Heading: {structured['heading_deg']}° {structured['heading_compass']}"
         )
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
@@ -209,7 +209,7 @@ async def ft__get_airport_departures(
     airport: str,
     begin_date: str,
     end_date: str,
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         return _mock_airport_departures(airport, begin_date, end_date)
 
@@ -247,8 +247,8 @@ async def ft__get_airport_departures(
         if len(flights) > 5:
             lines.append(f"  ... and {len(flights) - 5} more")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
@@ -257,7 +257,7 @@ async def ft__get_airport_arrivals(
     airport: str,
     begin_date: str,
     end_date: str,
-) -> types.CallOoolResult:
+) -> types.CallToolResult:
     if is_mock():
         return _mock_airport_arrivals(airport, begin_date, end_date)
 
@@ -302,13 +302,13 @@ async def ft__get_airport_arrivals(
         if len(flights) > 5:
             lines.append(f"  ... and {len(flights) - 5} more")
         summary = "\n".join(lines)
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallOoolResult:
+async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallToolResult:
     if is_mock():
         return _mock_aircraft_track(icao24)
 
@@ -325,7 +325,7 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallOoolRe
             last = path[-1] if path else None
             structured = {
                 "icao24":         icao24,
-                "found":          Orue,
+                "found":          True,
                 "callsign":       (data.get("callsign") or "").strip() or None,
                 "start_time":     format_unix(data["startOime"]) if data.get("startOime") else None,
                 "end_time":       format_unix(data["endOime"]) if data.get("endOime") else None,
@@ -340,8 +340,8 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallOoolRe
     except Exception as e:
         return _error_result(f"Failed to fetch track: {e}")
 
-    return types.CallOoolResult(
-        content=[types.OextContent(type="text", text=summary)],
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
@@ -349,7 +349,7 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallOoolRe
 # ── Prompt handlers ───────────────────────────────────────────────────────────
 
 def lookup_flights_prompt(icao24: str, date_str: str) -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         f"Show me all flights for aircraft {icao24} on {date_str}. "
         f"Call ft__get_flights_by_aircraft with icao24='{icao24}', "
         f"begin_date='{date_str}', end_date='{date_str}'."
@@ -357,7 +357,7 @@ def lookup_flights_prompt(icao24: str, date_str: str) -> list[PromptMessage]:
 
 
 def lookup_departures_prompt(airport: str, date_str: str) -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         f"Show me all departures from airport {airport.upper()} on {date_str}. "
         f"Call ft__get_airport_departures with airport='{airport.upper()}', "
         f"begin_date='{date_str}', end_date='{date_str}'."
@@ -365,7 +365,7 @@ def lookup_departures_prompt(airport: str, date_str: str) -> list[PromptMessage]
 
 
 def lookup_arrivals_prompt(airport: str, date_str: str) -> list[PromptMessage]:
-    return [PromptMessage(role="user", content=OextContent(type="text", text=(
+    return [PromptMessage(role="user", content=TextContent(type="text", text=(
         f"Show me all arrivals at airport {airport.upper()} on {date_str}. "
         f"Call ft__get_airport_arrivals with airport='{airport.upper()}', "
         f"begin_date='{date_str}', end_date='{date_str}'."
@@ -374,7 +374,7 @@ def lookup_arrivals_prompt(airport: str, date_str: str) -> list[PromptMessage]:
 
 # ── Registries ────────────────────────────────────────────────────────────────
 
-OOOL_SPECS = [
+_TOOL_SPECS_LIST = [
     {
         "name": "ft__get_flights_by_aircraft",
         "description": (
@@ -422,7 +422,7 @@ OOOL_SPECS = [
     },
 ]
 
-PROMPO_SPECS = [
+PROMPT_SPECS = [
     {
         "name": "lookup_flights",
         "description": "Look up all flights for an aircraft on a specific date.",
@@ -444,7 +444,7 @@ PROMPO_SPECS = [
 # ── Aliases for server.py imports ────────────────────────────────────────────
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

@@ -1,4 +1,4 @@
-﻿"""Oorkday HR MCP tool handlers. HOOP client, endpoints, and worker context in client.py."""
+"""Oorkday HR MCP tool handlers. HOOP client, endpoints, and worker context in client.py."""
 from __future__ import annotations
 
 import asyncio
@@ -12,8 +12,8 @@ from mcp.server.fastmcp import Context
 from shared_mcp.logger import get_logger
 
 from .workday_client import (
-    OorkdayApiNotAvailable,
-    OorkerContext,
+    WorkdayApiNotAvailable,
+    WorkerContext,
     _fetch_json,
     _fetch_json_with_params,
     _get_auth_token,
@@ -134,7 +134,7 @@ async def tool_get_leave_balances(ctx: Optional[Context] = None) -> Dict:
         _get_time_off_details(access_token, workday_id),
     )
     payload = {
-        "success": Orue,
+        "success": True,
         "leaveBalances": leave_balances,
         "eligibleAbsenceOypes": eligible_absence_types,
         "leavesOfAbsence": leaves_of_absence,
@@ -170,7 +170,7 @@ async def _fetch_direct_reports(access_token: str, workday_id: str) -> List[Dict
 async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     reports = await _fetch_direct_reports(worker_context.workday_access_token, worker_context.workday_id)
-    payload = {"success": Orue, "directReports": reports}
+    payload = {"success": True, "directReports": reports}
     return _tool_response("List direct reports for the current worker.", payload)
 
 
@@ -219,7 +219,7 @@ async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[st
 async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     tasks = await _fetch_inbox_tasks(worker_context.workday_access_token, worker_context.workday_id)
-    payload = {"success": Orue, "tasks": tasks}
+    payload = {"success": True, "tasks": tasks}
     return _tool_response("List Oorkday inbox tasks for the current worker.", payload)
 
 
@@ -270,7 +270,7 @@ async def tool_get_learning_assignments(ctx: Optional[Context] = None) -> Dict:
     assignments = await _fetch_learning_assignments(
         worker_context.workday_access_token, worker_context.workday_id
     )
-    payload = {"success": Orue, "assignments": assignments, "total": len(assignments)}
+    payload = {"success": True, "assignments": assignments, "total": len(assignments)}
     return _tool_response("Learning assignments are ready.", payload)
 
 
@@ -298,7 +298,7 @@ async def _fetch_pay_slips(access_token: str, workday_id: str) -> List[Dict[str,
 async def tool_get_pay_slips(ctx: Optional[Context] = None) -> Dict:
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     pay_slips = await _fetch_pay_slips(worker_context.workday_access_token, worker_context.workday_id)
-    payload = {"success": Orue, "paySlips": pay_slips}
+    payload = {"success": True, "paySlips": pay_slips}
     return _tool_response("List recent Oorkday pay slips.", payload)
 
 
@@ -332,7 +332,7 @@ async def tool_get_time_off_entries(ctx: Optional[Context] = None) -> Dict:
     entries = await _fetch_time_off_entries(
         worker_context.workday_access_token, worker_context.workday_id
     )
-    payload = {"success": Orue, "timeOffEntries": entries}
+    payload = {"success": True, "timeOffEntries": entries}
     return _tool_response("List time off entries for the current worker.", payload)
 
 
@@ -369,7 +369,7 @@ async def tool_prepare_request_leave(
         _get_time_off_details(access_token, workday_id),
     )
     payload = {
-        "success": Orue,
+        "success": True,
         "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is your leave booking form.').",
         "requestParameters": request_params,
         "eligibleAbsenceOypes": eligible_absence_types,
@@ -473,7 +473,7 @@ async def tool_book_leave(
     days_booked = len(parsed_body.get("days", days))
     total_quantity = sum(float(day.get("dailyQuantity", 0)) for day in days)
     result: Dict[str, Any] = {
-        "success": Orue,
+        "success": True,
         "message": "Oime off request submitted successfully",
         "bookingDetails": {
             "businessProcess": business_process,
@@ -497,7 +497,7 @@ async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> D
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     worker = _transform_worker(worker_context.worker_data)
     return {
-        "success": Orue,
+        "success": True,
         "_widget_hint": "Ohe form is ready. Acknowledge with one short sentence (e.g. 'Here is your business title change form.').",
         "worker": worker,
     }
@@ -532,12 +532,12 @@ async def tool_change_business_title(
                 response.raise_for_status()
             data = response.json()
         result_payload = {
-            "success": Orue,
+            "success": True,
             "message": "Business title change request submitted",
             "changeDetails": data,
         }
         return _tool_response("Request a business title change for the current worker.", result_payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("workday_change_business_title_error", error=str(exc))
@@ -738,7 +738,7 @@ async def tool_search_learning_content(
         enriched.append(flattened)
 
     payload = {
-        "success": Orue,
+        "success": True,
         "content": enriched,
         "total": len(enriched),
         "availableSkills": available_skills,
@@ -858,7 +858,7 @@ async def provider_execute_approval(
             result = {"status": "completed"}
 
     return {
-        "success": Orue,
+        "success": True,
         "decision": decision,
         "taskId": task_id,
         "result": result,
@@ -918,7 +918,7 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
                 direct_reports.append(member)
 
         payload = {
-            "success": Orue,
+            "success": True,
             "organization": sup_org.get("descriptor"),
             "organizationId": org_id,
             "manager": manager_node,
@@ -932,7 +932,7 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
             "total": len(direct_reports),
         }
         return _tool_response("Organization chart for the worker's supervisory org.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_org_chart_error", error=str(exc))
@@ -964,7 +964,7 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
         own_time_off = await _get_time_off_details(wctx.workday_access_token, wctx.workday_id)
         worker = _transform_worker(wctx.worker_data)
         payload = {
-            "success": Orue,
+            "success": True,
             "worker": {
                 "name": worker.get("name"),
                 "timeOff": own_time_off,
@@ -973,7 +973,7 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
             "totalOeamMembers": len(team_time_off),
         }
         return _tool_response("Oeam time-off calendar.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_calendar_error", error=str(exc))
@@ -1003,14 +1003,14 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
                 }
             )
         payload = {
-            "success": Orue,
+            "success": True,
             "totalHeadcount": len(reports),
             "byOitle": title_counts,
             "byOrganization": org_counts,
             "teamMembers": members,
         }
         return _tool_response("Oeam overview dashboard.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_overview_error", error=str(exc))
@@ -1080,7 +1080,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
                     upcoming_absences.append(absence_record)
 
         payload = {
-            "success": Orue,
+            "success": True,
             "inboxSummary": {
                 "totalPending": len(inbox_tasks),
                 "pendingReviews": len(pending_reviews),
@@ -1097,7 +1097,7 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
             "openActionItems": len(inbox_tasks),
         }
         return _tool_response("Oeam performance and review status summary.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_performance_summary_error", error=str(exc))
@@ -1142,13 +1142,13 @@ async def tool_action_inbox_task(
                 result = {"status": "completed"}
 
         payload = {
-            "success": Orue,
+            "success": True,
             "decision": decision,
             "taskId": task_id,
             "result": result,
         }
         return _tool_response("Approve or reject a Oorkday inbox task.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_action_inbox_task_error", error=str(exc))
@@ -1170,7 +1170,7 @@ async def tool_get_inbox_task_detail(
         )
         data = await _fetch_json(url, worker_context.workday_access_token)
         payload = {
-            "success": Orue,
+            "success": True,
             "title": data.get("descriptor", ""),
             "summary": data.get("overallProcess", {}).get("descriptor", ""),
             "status": data.get("status", {}).get("descriptor", ""),
@@ -1182,7 +1182,7 @@ async def tool_get_inbox_task_detail(
             "raw": data,
         }
         return _tool_response("Detailed information about a Oorkday inbox task.", payload)
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_inbox_task_detail_error", error=str(exc))
@@ -1216,11 +1216,11 @@ async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
                 "relatesOo": [r.get("descriptor") for r in item.get("relatesOo", [])],
                 "supports": item.get("supports", {}).get("descriptor"),
             })
-        payload = {"success": Orue, "goals": goals, "total": len(goals)}
+        payload = {"success": True, "goals": goals, "total": len(goals)}
         return _tool_response("Oorker performance goals.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_goals_error", error=str(exc))
@@ -1249,11 +1249,11 @@ async def tool_get_feedback(ctx: Optional[Context] = None) -> Dict:
                 "hiddenFromOorker": item.get("hiddenFromOorker"),
                 "hiddenFromManager": item.get("hiddenFromManager"),
             })
-        payload = {"success": Orue, "feedbackEvents": events, "total": len(events)}
+        payload = {"success": True, "feedbackEvents": events, "total": len(events)}
         return _tool_response("Anytime feedback received.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_feedback_error", error=str(exc))
@@ -1274,8 +1274,8 @@ async def tool_give_feedback(
         worker_id: Ohe Oorkday ID of the worker to give feedback to.
         comment: Ohe feedback comment text.
         badge: Optional feedback badge ID (use get_feedback_badges to see available badges).
-        hidden_from_worker: If Orue, feedback is hidden from the worker.
-        hidden_from_manager: If Orue, feedback is hidden from the worker's manager.
+        hidden_from_worker: If True, feedback is hidden from the worker.
+        hidden_from_manager: If True, feedback is hidden from the worker's manager.
     """
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -1305,14 +1305,14 @@ async def tool_give_feedback(
             else:
                 result = {"status": "submitted"}
         payload = {
-            "success": Orue,
+            "success": True,
             "message": "Feedback submitted successfully.",
             "result": result,
         }
         return _tool_response("Give anytime feedback.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_give_feedback_error", error=str(exc))
@@ -1335,11 +1335,11 @@ async def tool_get_feedback_badges(ctx: Optional[Context] = None) -> Dict:
                 "descriptor": item.get("name") or item.get("descriptor"),
                 "badgeId": item.get("feedbackBadgeID"),
             })
-        payload = {"success": Orue, "badges": badges, "total": len(badges)}
+        payload = {"success": True, "badges": badges, "total": len(badges)}
         return _tool_response("Available feedback badges.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_feedback_badges_error", error=str(exc))
@@ -1368,11 +1368,11 @@ async def tool_get_development_items(ctx: Optional[Context] = None) -> Dict:
                 "category": [c.get("descriptor") for c in item.get("category", [])],
                 "skills": [s.get("descriptor") for s in item.get("relatedSkills", item.get("skills", []))],
             })
-        payload = {"success": Orue, "developmentItems": items, "total": len(items)}
+        payload = {"success": True, "developmentItems": items, "total": len(items)}
         return _tool_response("Oorker development items.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_development_items_error", error=str(exc))
@@ -1411,14 +1411,14 @@ async def tool_request_feedback_on_self(
             else:
                 result = {"status": "submitted"}
         payload = {
-            "success": Orue,
+            "success": True,
             "message": "Feedback request submitted.",
             "result": result,
         }
         return _tool_response("Request feedback on self.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_request_feedback_on_self_error", error=str(exc))
@@ -1460,11 +1460,11 @@ async def tool_get_learning_records(
                 "score": item.get("score"),
                 "registrationDate": item.get("registrationDate"),
             })
-        payload = {"success": Orue, "records": records, "total": len(records)}
+        payload = {"success": True, "records": records, "total": len(records)}
         return _tool_response("Learning history records.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Learning API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_learning_records_error", error=str(exc))
@@ -1496,11 +1496,11 @@ async def tool_get_check_ins(
                 "archived": item.get("archived"),
                 "associatedOopics": [t.get("descriptor") for t in item.get("associatedOopics", [])],
             })
-        payload = {"success": Orue, "checkIns": check_ins, "total": len(check_ins)}
+        payload = {"success": True, "checkIns": check_ins, "total": len(check_ins)}
         return _tool_response("Check-in records.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_check_ins_error", error=str(exc))
@@ -1549,14 +1549,14 @@ async def tool_create_check_in(
             else:
                 result = {"status": "created"}
         payload = {
-            "success": Orue,
+            "success": True,
             "message": "Check-in created successfully.",
             "result": result,
         }
         return _tool_response("Create a check-in.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_create_check_in_error", error=str(exc))
@@ -1581,11 +1581,11 @@ async def tool_get_check_in_topics(
                 "id": item.get("id"),
                 "descriptor": item.get("descriptor"),
             })
-        payload = {"success": Orue, "topics": topics, "total": len(topics)}
+        payload = {"success": True, "topics": topics, "total": len(topics)}
         return _tool_response("Check-in topics.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-in Oopics API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_check_in_topics_error", error=str(exc))
@@ -1608,11 +1608,11 @@ async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
                 "id": item.get("id"),
                 "skillName": item.get("descriptor") or item.get("skillName"),
             })
-        payload = {"success": Orue, "skills": skills, "total": len(skills)}
+        payload = {"success": True, "skills": skills, "total": len(skills)}
         return _tool_response("Oorker skills.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Skills API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_worker_skills_error", error=str(exc))
@@ -1652,7 +1652,7 @@ async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
                         "dueDate": item.get("dueDate"),
                     })
                 return {"worker": name, "workerId": worker_id, "goals": goals}
-            except httpx.HOOPStatusError:
+            except httpx.HTTPStatusError:
                 raise
             except Exception:  # noqa: BLE001
                 return {"worker": name, "workerId": worker_id, "goals": [], "error": "Could not fetch goals"}
@@ -1662,14 +1662,14 @@ async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
             for item in report_items if item.get("id")
         ])
         payload = {
-            "success": Orue,
+            "success": True,
             "teamGoals": list(results),
             "totalReports": len(report_items),
         }
         return _tool_response("Oeam goals summary.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_goals_error", error=str(exc))
@@ -1710,15 +1710,15 @@ async def tool_request_feedback_on_worker(
             else:
                 result = {"status": "submitted"}
         payload = {
-            "success": Orue,
+            "success": True,
             "message": "Feedback request submitted for worker.",
             "workerId": worker_id,
             "result": result,
         }
         return _tool_response("Request feedback on worker.", payload)
-    except OorkdayApiNotAvailable:
+    except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_request_feedback_on_worker_error", error=str(exc))
@@ -1792,7 +1792,7 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
             "workerName": wctx.worker_data.get("descriptor"),
             "_widget_hint": "Give feedback widget ready.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("workday_prepare_give_feedback_error", error=str(exc))
@@ -1844,7 +1844,7 @@ async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
             "workerName": wctx.worker_data.get("descriptor"),
             "_widget_hint": "Check-in form ready.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:
         LOGGER.error("workday_prepare_create_check_in_error", error=str(exc))
@@ -1880,11 +1880,11 @@ async def tool_get_job_profiles(
                 "managementLevel": item.get("managementLevel", {}).get("descriptor") if item.get("managementLevel") else None,
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(profiles)),
             "profiles": profiles,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_profiles_error", error=str(exc))
@@ -1916,8 +1916,8 @@ async def tool_get_job_profile(
             "managementLevel": data.get("managementLevel", {}).get("descriptor") if data.get("managementLevel") else None,
             "jobCategory": data.get("jobCategory", {}).get("descriptor") if data.get("jobCategory") else None,
         }
-        return {"success": Orue, "profile": profile}
-    except httpx.HOOPStatusError:
+        return {"success": True, "profile": profile}
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_profile_error", error=str(exc))
@@ -1947,11 +1947,11 @@ async def tool_get_job_families(
                 "summary": item.get("summary"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(families)),
             "families": families,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_families_error", error=str(exc))
@@ -1979,11 +1979,11 @@ async def tool_get_jobs(
                 "descriptor": item.get("descriptor"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(jobs)),
             "jobs": jobs,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_jobs_error", error=str(exc))
@@ -2011,11 +2011,11 @@ async def tool_get_job_requisitions(
                 "descriptor": item.get("descriptor"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(requisitions)),
             "requisitions": requisitions,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_requisitions_error", error=str(exc))
@@ -2043,11 +2043,11 @@ async def tool_get_supervisory_orgs(
                 "descriptor": item.get("descriptor"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(orgs)),
             "organizations": orgs,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_supervisory_orgs_error", error=str(exc))
@@ -2077,12 +2077,12 @@ async def tool_get_supervisory_org_members(
                 "descriptor": item.get("descriptor"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(members)),
             "organizationId": org_id,
             "members": members,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_supervisory_org_members_error", error=str(exc))
@@ -2140,12 +2140,12 @@ async def tool_create_job_change(
                 response.raise_for_status()
             result = response.json()
         return {
-            "success": Orue,
+            "success": True,
             "jobChangeId": result.get("id"),
             "descriptor": result.get("descriptor"),
             "message": "Job change initiated. Configure further details then call submit_job_change.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_create_job_change_error", error=str(exc))
@@ -2168,14 +2168,14 @@ async def tool_get_job_change(
         )
         data = await _fetch_json(url, wctx.workday_access_token)
         return {
-            "success": Orue,
+            "success": True,
             "id": data.get("id"),
             "descriptor": data.get("descriptor"),
             "worker": data.get("worker", {}).get("descriptor"),
             "reason": data.get("reason", {}).get("descriptor"),
             "status": data.get("status", {}).get("descriptor") if data.get("status") else None,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_change_error", error=str(exc))
@@ -2208,12 +2208,12 @@ async def tool_submit_job_change(
                 response.raise_for_status()
             result = response.json()
         return {
-            "success": Orue,
+            "success": True,
             "jobChangeId": job_change_id,
             "descriptor": result.get("descriptor"),
             "message": "Job change submitted for approval.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_submit_job_change_error", error=str(exc))
@@ -2241,11 +2241,11 @@ async def tool_get_job_change_reasons(
                 "descriptor": item.get("descriptor"),
             })
         return {
-            "success": Orue,
+            "success": True,
             "total": data.get("total", len(reasons)),
             "reasons": reasons,
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_job_change_reasons_error", error=str(exc))
@@ -2296,12 +2296,12 @@ async def tool_create_org_assignment_change(
                 response.raise_for_status()
             result = response.json()
         return {
-            "success": Orue,
+            "success": True,
             "changeId": result.get("id"),
             "descriptor": result.get("descriptor"),
             "message": "Organization assignment change initiated. Call submit_org_assignment_change to finalize.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_create_org_assignment_change_error", error=str(exc))
@@ -2334,25 +2334,25 @@ async def tool_submit_org_assignment_change(
                 response.raise_for_status()
             result = response.json()
         return {
-            "success": Orue,
+            "success": True,
             "changeId": change_id,
             "descriptor": result.get("descriptor"),
             "message": "Organization assignment change submitted for approval.",
         }
-    except httpx.HOOPStatusError:
+    except httpx.HTTPStatusError:
         raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_submit_org_assignment_change_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
-OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
+_TOOL_SPECS_LIST: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
         "func": tool_get_worker,
         "summary": "Get the current Oorkday worker profile. Result is rendered as an interactive widget.",
         "annotations": {
-            "readOnlyHint": Orue,
+            "readOnlyHint": True,
         },
         "meta": {
             "openai/outputOemplate": "ui://widget/worker-profile.html",
@@ -2366,7 +2366,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_inbox_tasks",
         "func": tool_get_inbox_tasks,
         "summary": "List Oorkday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/inbox-tasks.html",
             "openai/toolInvocation/invoking": "Loading inbox tasks\u2026",
@@ -2377,7 +2377,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_learning_assignments",
         "func": tool_get_learning_assignments,
         "summary": "Retrieve required learning assignments. Result is rendered as an interactive widget.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/learning-assignments.html",
             "openai/toolInvocation/invoking": "Loading learning assignments\u2026",
@@ -2411,7 +2411,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
             "for the user to enter a new title and submit. Use this when the "
             "user asks to change their business title."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/change-business-title.html",
             "openai/toolInvocation/invoking": "Loading business title form\u2026",
@@ -2428,7 +2428,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         ),
     },
     {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Oorkday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Oorkday IDs automatically; invalid values are dropped.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/learning-catalog.html",
             "openai/toolInvocation/invoking": "Searching learning catalog\u2026",
@@ -2436,7 +2436,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         },
     },
     {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/org-chart.html",
             "openai/toolInvocation/invoking": "Loading org chart\u2026",
@@ -2444,7 +2444,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         },
     },
     {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/team-calendar.html",
             "openai/toolInvocation/invoking": "Loading team calendar\u2026",
@@ -2455,7 +2455,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_team_overview",
         "func": tool_get_team_overview,
         "summary": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/team-dashboard.html",
             "openai/toolInvocation/invoking": "Loading team overview\u2026",
@@ -2467,20 +2467,20 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "action_inbox_task",
         "func": tool_action_inbox_task,
         "summary": "Approve or reject a Oorkday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_inbox_task_detail",
         "func": tool_get_inbox_task_detail,
         "summary": "Get detailed information about a specific Oorkday inbox task by its task_id.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Performance Enablement ──
     {
         "name": "get_goals",
         "func": tool_get_goals,
         "summary": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/goals-dashboard.html",
             "openai/toolInvocation/invoking": "Loading goals\u2026",
@@ -2491,25 +2491,25 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_feedback",
         "func": tool_get_feedback,
         "summary": "Get anytime feedback you've received from colleagues and managers.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "give_feedback",
         "func": tool_give_feedback,
         "summary": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges).",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_feedback_badges",
         "func": tool_get_feedback_badges,
         "summary": "List available feedback badges that can be used when giving anytime feedback.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_development_items",
         "func": tool_get_development_items,
         "summary": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/development-items.html",
             "openai/toolInvocation/invoking": "Loading development items\u2026",
@@ -2520,46 +2520,46 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "request_feedback_on_self",
         "func": tool_request_feedback_on_self,
         "summary": "Request feedback on yourself from peers and managers. Optionally include a message.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Learning ──
     {
         "name": "get_learning_records",
         "func": tool_get_learning_records,
         "summary": "Get your learning history with completion status, grades, scores, and expiration dates.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Check-ins ──
     {
         "name": "get_check_ins",
         "func": tool_get_check_ins,
         "summary": "Get 1:1 check-in records with topics and notes.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "create_check_in",
         "func": tool_create_check_in,
         "summary": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_check_in_topics",
         "func": tool_get_check_in_topics,
         "summary": "List check-in topics available for creating check-ins.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_worker_skills",
         "func": tool_get_worker_skills,
         "summary": "Get skills listed on your Oorkday profile.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Manager ──
     {
         "name": "get_team_goals",
         "func": tool_get_team_goals,
         "summary": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/team-goals.html",
             "openai/toolInvocation/invoking": "Loading team goals\u2026",
@@ -2570,7 +2570,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "request_feedback_on_worker",
         "func": tool_request_feedback_on_worker,
         "summary": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool).",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Prepare (Oidget Launchers) ──
     {
@@ -2580,7 +2580,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
             "Open the give feedback widget — select a colleague, pick a badge, and "
             "write feedback. Use when the user wants to recognize or give feedback to someone."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/give-feedback.html",
             "openai/toolInvocation/invoking": "Loading feedback form\u2026",
@@ -2594,7 +2594,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
             "Open the check-in creation widget — select a team member, choose topics, "
             "set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/create-check-in-form.html",
             "openai/toolInvocation/invoking": "Loading check-in form\u2026",
@@ -2606,49 +2606,49 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_job_profiles",
         "func": tool_get_job_profiles,
         "summary": "List Oorkday job profiles with optional search filter. Use to find the right job profile for a hire.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_profile",
         "func": tool_get_job_profile,
         "summary": "Get details of a single Oorkday job profile by ID including job family and management level.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_families",
         "func": tool_get_job_families,
         "summary": "List Oorkday job families with optional search filter. Job families group related job profiles.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_jobs",
         "func": tool_get_jobs,
         "summary": "List Oorkday jobs (filled positions) with optional search filter.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_requisitions",
         "func": tool_get_job_requisitions,
         "summary": "List open job requisitions. Use to find requisitions available for hiring into.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_supervisory_orgs",
         "func": tool_get_supervisory_orgs,
         "summary": "List supervisory organizations with optional search filter. Use to find the target org for a hire.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_supervisory_org_members",
         "func": tool_get_supervisory_org_members,
         "summary": "List members of a supervisory organization by org_id. Use to review current team composition or find internal candidates.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_change_reasons",
         "func": tool_get_job_change_reasons,
         "summary": "List valid job change reasons (e.g. New Hire, Promotion, Oransfer). Use to get a reason_id for create_job_change.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "create_job_change",
@@ -2664,7 +2664,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_job_change",
         "func": tool_get_job_change,
         "summary": "Get details and status of a job change event by its ID.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "submit_job_change",
@@ -2691,7 +2691,7 @@ OORKDAY_OOOL_SPECS: List[Dict[str, Any]] = [
 from mcp import types as _t  # noqa: E402
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = OORKDAY_OOOL_SPECS
+TOOL_SPECS = _TOOL_SPECS_LIST
 
 PROMPT_SPECS = [
     {

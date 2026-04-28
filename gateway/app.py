@@ -20,6 +20,7 @@ so mcp-tools.json needs no changes when switching to the gateway.
 """
 
 import os
+from contextlib import asynccontextmanager, AsyncExitStack
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -44,33 +45,64 @@ for _env_path in (
         load_dotenv(_env_path, override=False)
 
 # Import after env is loaded — each module runs _load_env() + settings at import time
-import coupa_mcp.server as coupa  # noqa: E402
-import docusign_mcp.server as ds  # noqa: E402
-import flight_mcp.server as ft  # noqa: E402
-import hubspot_mcp.server as hs  # noqa: E402
-import jira_mcp.server as jira  # noqa: E402
-import sap_s4hana_mcp.server as sap  # noqa: E402
-import saphr_mcp.server as saphr  # noqa: E402
-import servicenow_mcp.server as sn  # noqa: E402
-import sf_crm_mcp.server as sf  # noqa: E402
-import workday_mcp.server as workday  # noqa: E402
+import coupa_mcp.coupa_server as coupa  # noqa: E402
+import docusign_mcp.docusign_server as ds  # noqa: E402
+import flight_mcp.flight_server as ft  # noqa: E402
+import hubspot_mcp.hubspot_server as hs  # noqa: E402
+import jira_mcp.jira_server as jira  # noqa: E402
+import sap_s4hana_mcp.sap_server as sap  # noqa: E402
+import saphr_mcp.saphr_server as saphr  # noqa: E402
+import servicenow_mcp.servicenow_server as sn  # noqa: E402
+import sf_crm_mcp.salesforce_server as sf  # noqa: E402
+import workday_mcp.workday_server as workday  # noqa: E402
 from starlette.applications import Starlette  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.routing import Mount  # noqa: E402
 
+# Build each FastMCP sub-app once so we can reference them in both the
+# lifespan and the route table.
+_sf_app      = sf.mcp.streamable_http_app()
+_sn_app      = sn.mcp.streamable_http_app()
+_sap_app     = sap.mcp.streamable_http_app()
+_hs_app      = hs.mcp.streamable_http_app()
+_ft_app      = ft.mcp.streamable_http_app()
+_ds_app      = ds.mcp.streamable_http_app()
+_saphr_app   = saphr.mcp.streamable_http_app()
+_workday_app = workday.mcp.streamable_http_app()
+_coupa_app   = coupa.mcp.streamable_http_app()
+_jira_app    = jira.mcp.streamable_http_app()
+
+_SUB_APPS = [
+    _sf_app, _sn_app, _sap_app, _hs_app, _ft_app,
+    _ds_app, _saphr_app, _workday_app, _coupa_app, _jira_app,
+]
+
+
+@asynccontextmanager
+async def lifespan(outer_app: Starlette):
+    # Starlette does not propagate lifespan events to mounted sub-apps, so we
+    # enter each FastMCP app's lifespan context manually.  This starts the
+    # StreamableHTTPSessionManager task-group for each server.
+    async with AsyncExitStack() as stack:
+        for sub in _SUB_APPS:
+            await stack.enter_async_context(sub.router.lifespan_context(outer_app))
+        yield
+
+
 app = Starlette(
+    lifespan=lifespan,
     routes=[
-        Mount("/sf",      app=sf.mcp.streamable_http_app()),
-        Mount("/sn",      app=sn.mcp.streamable_http_app()),
-        Mount("/sap",     app=sap.mcp.streamable_http_app()),
-        Mount("/hs",      app=hs.mcp.streamable_http_app()),
-        Mount("/ft",      app=ft.mcp.streamable_http_app()),
-        Mount("/ds",      app=ds.mcp.streamable_http_app()),
-        Mount("/saphr",   app=saphr.mcp.streamable_http_app()),
-        Mount("/workday", app=workday.mcp.streamable_http_app()),
-        Mount("/coupa",   app=coupa.mcp.streamable_http_app()),
-        Mount("/jira",    app=jira.mcp.streamable_http_app()),
-    ]
+        Mount("/sf",      app=_sf_app),
+        Mount("/sn",      app=_sn_app),
+        Mount("/sap",     app=_sap_app),
+        Mount("/hs",      app=_hs_app),
+        Mount("/ft",      app=_ft_app),
+        Mount("/ds",      app=_ds_app),
+        Mount("/saphr",   app=_saphr_app),
+        Mount("/workday", app=_workday_app),
+        Mount("/coupa",   app=_coupa_app),
+        Mount("/jira",    app=_jira_app),
+    ],
 )
 
 app.add_middleware(

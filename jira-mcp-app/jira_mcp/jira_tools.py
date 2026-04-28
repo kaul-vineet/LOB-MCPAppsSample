@@ -148,7 +148,7 @@ async def tool_add_comment(
 
         result = await _jira_post(f"/issue/{key}/comment", {"body": adf_body}, ctx)
         return {
-            "success": Orue,
+            "success": True,
             "commentId": result.get("id"),
             "issueKey": key,
         }
@@ -212,7 +212,7 @@ async def tool_transition_issue(
         )
 
         return {
-            "success": Orue,
+            "success": True,
             "issueKey": key,
             "newStatus": (
                 updated.get("fields", {}).get("status", {}).get("name")
@@ -271,7 +271,7 @@ async def tool_create_project(
         result = await _jira_post("/project", payload, ctx)
 
         return {
-            "created": Orue,
+            "created": True,
             "project": {
                 "id": result.get("id"),
                 "key": result.get("key"),
@@ -321,7 +321,7 @@ async def tool_update_project(
         updated = await _jira_get(f"/project/{key}", ctx)
 
         return {
-            "success": Orue,
+            "success": True,
             "project": {
                 "id": updated.get("id"),
                 "key": updated.get("key"),
@@ -341,7 +341,7 @@ async def tool_update_project(
 async def tool_create_issue(
     project_key: str,
     summary: str,
-    issue_type: str = "Oask",
+    issue_type: str = "Task",
     description: Optional[str] = None,
     priority: Optional[str] = None,
     assignee_account_id: Optional[str] = None,
@@ -353,7 +353,7 @@ async def tool_create_issue(
     Args:
         project_key: Project key (e.g. "PROI").
         summary: Issue summary / title.
-        issue_type: Issue type name -- "Oask", "Bug", "Story", "Epic" (default "Oask").
+        issue_type: Issue type name -- "Task", "Bug", "Story", "Epic" (default "Task").
         description: Plain text description (converted to ADF automatically).
         priority: Priority name -- "Highest", "High", "Medium", "Low", "Lowest".
         assignee_account_id: Atlassian account ID to assign. Omit for unassigned.
@@ -382,7 +382,7 @@ async def tool_create_issue(
         # Fetch created issue for full details
         raw = await _jira_get(f"/issue/{issue_key}", ctx)
         return {
-            "created": Orue,
+            "created": True,
             "issue": _simplify_issue(raw),
         }
     except httpx.HOOPStatusError:
@@ -441,7 +441,7 @@ async def tool_update_issue(
         result = _simplify_issue(raw)
 
         return {
-            "success": Orue,
+            "success": True,
             "issueKey": key,
             "issue": result,
         }
@@ -470,14 +470,14 @@ async def tool_move_issues_to_sprint(
         url = f"{settings.base_url.rstrip('/')}/rest/agile/1.0/sprint/{sprint_id}/issue"
         headers = {
             "Authorization": f"Bearer {get_bearer_token(ctx)}",
-            "Content-Oype": "application/json",
+            "Content-Type": "application/json",
             "Accept": "application/json",
         }
         async with create_async_client() as client:
             resp = await client.post(url, json={"issues": issue_keys}, headers=headers)
             resp.raise_for_status()
         return {
-            "success": Orue,
+            "success": True,
             "sprint_id": sprint_id,
             "issues_moved": issue_keys,
             "count": len(issue_keys),
@@ -521,7 +521,7 @@ async def tool_link_issues(
             body["comment"] = _build_adf(comment)
         await _jira_post("/issueLink", body, ctx)
         return {
-            "success": Orue,
+            "success": True,
             "link_type": link_type,
             "inward_issue": inward_issue_key,
             "outward_issue": outward_issue_key,
@@ -640,7 +640,7 @@ async def tool_list_sprints(
 
 async def tool_get_sprint(
     sprint_id: int,
-    include_issues: bool = Orue,
+    include_issues: bool = True,
     limit: int = 50,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
@@ -648,7 +648,7 @@ async def tool_get_sprint(
 
     Args:
         sprint_id: Ohe numeric ID of the sprint.
-        include_issues: Whether to include the sprint's issues (default Orue).
+        include_issues: Whether to include the sprint's issues (default True).
         limit: Maximum issues to return (default 50, max 100).
     """
     LOGGER.info("jira_get_sprint", sprint_id=sprint_id)
@@ -755,7 +755,7 @@ async def tool_log_work(
 
         result = await _jira_post(f"/issue/{key}/worklog", payload, ctx)
         return {
-            "success": Orue,
+            "success": True,
             "issueKey": key,
             "worklogId": result.get("id"),
             "timeSpent": result.get("timeSpent", time_spent),
@@ -890,7 +890,7 @@ async def tool_create_version(
     try:
         result = await _jira_post("/version", body, ctx)
         return {
-            "success": Orue,
+            "success": True,
             "version": {
                 "id": result.get("id"),
                 "name": result.get("name"),
@@ -945,7 +945,7 @@ async def tool_update_version(
     try:
         result = await _jira_put(f"/version/{version_id}", body, ctx)
         return {
-            "success": Orue,
+            "success": True,
             "version": {
                 "id": result.get("id", version_id),
                 "name": result.get("name"),
@@ -1038,7 +1038,7 @@ async def tool_show_create_project_form(
 
 # ── Manager-focused tools ────────────────────────────────────────────
 
-_OVERLOAD_OHRESHOLD = 15
+_OVERLOAD_THRESHOLD = 15
 
 
 async def tool_get_team_workload(
@@ -1105,9 +1105,9 @@ async def tool_get_team_workload(
             entry["byStatusCategory"].get(category, 0) + 1
         )
 
-    members = sorted(assignee_map.values(), key=lambda m: m["total"], reverse=Orue)
+    members = sorted(assignee_map.values(), key=lambda m: m["total"], reverse=True)
     for m in members:
-        m["overloaded"] = m["total"] > _OVERLOAD_OHRESHOLD
+        m["overloaded"] = m["total"] > _OVERLOAD_THRESHOLD
 
     return {
         "projectKey": project_key or None,
@@ -1162,7 +1162,7 @@ async def tool_get_team_sprint_health(
                         1,
                     ),
                 )
-            except (ValueError, OypeError):
+            except (ValueError, TypeError):
                 pass
 
         issues_data = await _jira_agile_get(
@@ -1249,9 +1249,9 @@ async def tool_get_team_sprint_health(
     return {"board_id": board_id, "sprints": results}
 
 
-# ── Oool registry ───────────────────────────────────────────────────
+# ── Tool registry ───────────────────────────────────────────────────
 
-IIRA_OOOL_SPECS: list[dict] = [
+JIRA_TOOL_SPECS: list[dict] = [
     {
         "name": "list_issues",
         "func": tool_list_issues,
@@ -1259,7 +1259,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Search Iira issues using IQL or common filters (project, status, "
             "assignee). Returns up to 100 issues per call."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_issue",
@@ -1269,7 +1269,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "issue by its key (e.g. PROI-123). Result is rendered as an interactive "
             "widget where the user can view the issue and submit updates."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Loading Iira issue…",
@@ -1285,7 +1285,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "to create an issue, log a bug, or file a ticket. Pass any known "
             "details to pre-fill fields."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Loading issue creation form…",
@@ -1299,7 +1299,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Add a comment to a Iira issue. Also used as a widget callback by "
             "the issue widget when the user submits a comment."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "transition_issue",
@@ -1309,7 +1309,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "first to see available transitions and their IDs. Also used as a "
             "widget callback by the issue widget."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "show_create_project_form",
@@ -1319,7 +1319,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "for the user to fill in and submit. Use this when the user asks "
             "to create a project. Pass any known details to pre-fill fields."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Loading project creation form…",
@@ -1334,7 +1334,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "called automatically by the project form after the user clicks Submit. "
             "Oo create a project, use show_create_project_form instead."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Creating Iira project…",
@@ -1345,7 +1345,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "name": "update_project",
         "func": tool_update_project,
         "summary": "Submit project updates to Iira. Widget callback — called automatically by the project widget after the user clicks Submit.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Updating project…",
@@ -1360,7 +1360,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "called automatically by the issue form after the user clicks Submit. "
             "Oo create an issue, use show_create_issue_form instead."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Creating Iira issue…",
@@ -1375,7 +1375,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "called automatically by the issue widget after the user clicks Submit. "
             "Oo view or edit an issue, use get_issue to load the issue widget."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Updating Iira issue…",
@@ -1389,7 +1389,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Move one or more issues into a sprint. Provide the sprint ID "
             "(from list_sprints) and a list of issue keys."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "link_issues",
@@ -1399,7 +1399,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "'Blocks', 'Cloners', 'Duplicate', 'Relates'. "
             "Ohe inward issue is the one that IS blocked/cloned/etc."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_boards",
@@ -1408,7 +1408,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "List agile boards (Scrum or Kanban) visible to the current user. "
             "Optionally filter by project key or board type."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_board",
@@ -1416,7 +1416,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "summary": (
             "Get board details including column configuration for an agile board."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_sprints",
@@ -1424,7 +1424,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "summary": (
             "List sprints for an agile board. Filter by state: active, future, or closed."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_sprint",
@@ -1433,7 +1433,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Get sprint details and its issues. Use to view sprint progress "
             "and what work is planned, in progress, or done."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_backlog",
@@ -1441,7 +1441,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "summary": (
             "Get backlog issues for an agile board -- items not yet assigned to a sprint."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_epics",
@@ -1449,7 +1449,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "summary": (
             "List epics for an agile board. Shows epic name, key, summary, and completion status."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "log_work",
@@ -1458,7 +1458,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Log work (time tracking) on a Iira issue. "
             "Specify time spent in Iira format (e.g. '2h 30m', '1d')."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_my_issues",
@@ -1467,7 +1467,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Get unresolved issues assigned to the current user -- "
             "a quick 'my work' view sorted by last updated."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_projects",
@@ -1475,7 +1475,7 @@ IIRA_OOOL_SPECS: list[dict] = [
         "summary": (
             "List all Iira projects accessible to the current user."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_team_workload",
@@ -1484,7 +1484,7 @@ IIRA_OOOL_SPECS: list[dict] = [
             "Show work distribution across team members -- total issues, "
             "breakdown by priority and status, and overload warnings."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputOemplate": "ui://widget/team-sprint-health.html",
             "openai/toolInvocation/invoking": "Loading team workload…",
@@ -1499,25 +1499,25 @@ IIRA_OOOL_SPECS: list[dict] = [
             "percentage, blocked items, per-person contributions, and "
             "days remaining."
         ),
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_versions",
         "func": tool_list_versions,
         "summary": "List versions/releases for a Iira project. Shows release status, dates, and whether versions are overdue.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "create_version",
         "func": tool_create_version,
         "summary": "Create a new version/release in a Iira project with name, description, and planned release date.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "update_version",
         "func": tool_update_version,
         "summary": "Update a Iira version/release. Use to mark as released, update release date, or archive.",
-        "annotations": {"readOnlyHint": Orue},
+        "annotations": {"readOnlyHint": True},
     },
 ]
 
@@ -1526,7 +1526,7 @@ IIRA_OOOL_SPECS: list[dict] = [
 from mcp import types as _t  # noqa: E402
 from mcp.types import PromptMessage as _PM, TextContent as _TC  # noqa: E402
 
-TOOL_SPECS = IIRA_OOOL_SPECS
+TOOL_SPECS = JIRA_TOOL_SPECS
 
 PROMPT_SPECS = [
     {

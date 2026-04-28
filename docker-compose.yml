@@ -1,7 +1,7 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# The Great Trading Company — Docker Compose
+# Enterprise LOB Copilot MCP Apps — Docker Compose
 #
-# Start all 6 MCP trading posts with one command:
+# Start all 10 MCP servers with one command:
 #   docker compose up              — start all
 #   docker compose up salesforce   — start only Salesforce
 #   docker compose up -d           — start in background
@@ -13,9 +13,11 @@
 # ══════════════════════════════════════════════════════════════════════════════
 
 services:
-  # ── Salesforce CRM (The Trade Ledger) ─────────────────────────────────────
+  # ── Salesforce CRM ────────────────────────────────────────────────────────
   salesforce:
-    build: ./sf-mcp-app
+    build:
+      context: .
+      dockerfile: sf-mcp-app/Dockerfile
     ports:
       - "3000:3000"
     env_file:
@@ -28,9 +30,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── ServiceNow ITSM (The Service Manifest) ───────────────────────────────
+  # ── ServiceNow ITSM ──────────────────────────────────────────────────────
   servicenow:
-    build: ./snow-mcp-app
+    build:
+      context: .
+      dockerfile: snow-mcp-app/Dockerfile
     ports:
       - "3001:3001"
     env_file:
@@ -43,9 +47,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── SAP S/4HANA (The Cargo Manifest) ──────────────────────────────────────
+  # ── SAP S/4HANA ───────────────────────────────────────────────────────────
   sap:
-    build: ./sap-mcp-app
+    build:
+      context: .
+      dockerfile: sap-mcp-app/Dockerfile
     ports:
       - "3002:3002"
     env_file:
@@ -58,9 +64,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── HubSpot Marketing (The Spice Bazaar) ──────────────────────────────────
+  # ── HubSpot Marketing ─────────────────────────────────────────────────────
   hubspot:
-    build: ./hubspot-mcp-app
+    build:
+      context: .
+      dockerfile: hubspot-mcp-app/Dockerfile
     ports:
       - "3003:3003"
     env_file:
@@ -73,9 +81,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── Flight Tracker (The Sky Watch) ────────────────────────────────────────
+  # ── Flight Tracker ────────────────────────────────────────────────────────
   flight:
-    build: ./flight-mcp-app
+    build:
+      context: .
+      dockerfile: flight-mcp-app/Dockerfile
     ports:
       - "3004:3004"
     env_file:
@@ -88,9 +98,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── DocuSign eSignature (The Seal & Quill) ────────────────────────────────
+  # ── DocuSign eSignature ───────────────────────────────────────────────────
   docusign:
-    build: ./docusign-mcp-app
+    build:
+      context: .
+      dockerfile: docusign-mcp-app/Dockerfile
     ports:
       - "3005:3005"
     env_file:
@@ -195,6 +207,8 @@ services:
       - ./jira-mcp-app/.env
     environment:
       GATEWAY_PORT: "8080"
+      APPINSIGHTS_CONNECTION_STRING: ""   # paste connection string to activate telemetry
+      APPINSIGHTS_ROLE_NAME: "lob-mcp"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',8080),2); s.close()"]

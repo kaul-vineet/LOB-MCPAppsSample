@@ -17,4 +17,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-coupa-mcp = "coupa_mcp.server:main"
+coupa-mcp = "coupa_mcp.coupa_server:main"

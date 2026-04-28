@@ -1,4 +1,4 @@
-# ⚓ The Great Trading Company — LOB MCP Apps
+# Enterprise LOB Copilot MCP Apps
 
 <p align="center">
   <em>Ten enterprise LOB systems, one M365 Copilot agent, interactive React widgets with side-by-side support</em>
@@ -19,7 +19,7 @@
 
 | | |
 |---|---|
-| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — 10 enterprise systems, 190 tools, 6 React widgets in one agent |
+| **Subtitle** | A multi-LOB MCP Apps platform for M365 Copilot — 10 enterprise systems, 225 tools, 6 React widgets in one agent |
 | **Author** | Vineet Kaul, PM Architect – Agentic AI, Microsoft |
 | **Date** | April 2026 |
 | **Stack** | Python · FastMCP 1.26 · React 19 · Fluent UI v9 · Vite · @modelcontextprotocol/ext-apps · Docker · Dev Tunnels · M365 Agents Toolkit · Azure Container Apps |
@@ -38,7 +38,7 @@
 
 ---
 
-> **TL;DR** — Ten Python MCP servers (Salesforce CRM · ServiceNow ITSM · SAP S/4HANA · HubSpot Marketing · Flight Tracker · DocuSign eSignature · SAP SuccessFactors HR · Workday HCM · Coupa Procurement · Jira Projects) with React + Fluent UI widgets, running behind a single ASGI gateway (port 8080) or via Docker Compose, orchestrated by one M365 Copilot declarative agent with 190 tools across 10 runtimes. All new LOBs (and Flight/DocuSign) ship with **mock mode** — fully functional without credentials. Deploy to Azure Container Apps with one Bicep file.
+> **TL;DR** — Ten Python MCP servers (Salesforce CRM · ServiceNow ITSM · SAP S/4HANA · HubSpot Marketing · Flight Tracker · DocuSign eSignature · SAP SuccessFactors HR · Workday HCM · Coupa Procurement · Jira Projects) with React + Fluent UI widgets, running behind a single ASGI gateway (port 8080) or via Docker Compose, orchestrated by one M365 Copilot declarative agent with 225 tools across 10 runtimes. All new LOBs (and Flight/DocuSign) ship with **mock mode** — fully functional without credentials. Deploy to Azure Container Apps with one Bicep file.
 
 ---
 
@@ -60,6 +60,8 @@
 - [Skills System](#skills-system)
 - [Tools Reference](#tools-reference)
 - [Widget Architecture](#widget-architecture)
+- [Logs & Monitoring](#logs--monitoring)
+- [Telemetry — App Insights](#telemetry--app-insights)
 - [Critical Troubleshooting](#critical-troubleshooting)
 - [References](#references)
 
@@ -88,8 +90,8 @@ Our MCP servers are **MCP Apps** — they return structured data that M365 Copil
 │        └───────────────────────────┬──────────────────────────────┘  │
 │                                    ▼                                  │
 │         ┌─────────────────────────────────────────────────┐          │
-│         │    The Great Trading Company (Declarative Agent) │          │
-│         │         190 tools · 10 runtimes                 │          │
+│         │      Enterprise LOB Copilot (Declarative Agent) │          │
+│         │         225 tools · 10 runtimes                 │          │
 │         └──┬──┬──┬──┬──┬──┬──┬──┬──┬──────────────────────┘          │
 └────────────┼──┼──┼──┼──┼──┼──┼──┼──┼──────────────────────────────┘
              │  │  │  │  │  │  │  │  │
@@ -110,17 +112,17 @@ Our MCP servers are **MCP Apps** — they return structured data that M365 Copil
 
 | # | LOB | Port | Tools | Widget | Mock Mode |
 |---|-----|------|-------|--------|-----------|
-| 1 | 🏛️ Salesforce CRM | 3000 | 25 | ✅ React + Fluent UI | — |
-| 2 | 🎫 ServiceNow ITSM | 3001 | 18 | ✅ React + Fluent UI | — |
-| 3 | 📦 SAP S/4HANA | 3002 | 6 | ✅ React + Fluent UI | sandbox default |
-| 4 | 🧡 HubSpot Marketing | 3003 | 14 | ✅ React + Fluent UI | — |
+| 1 | 🏛️ Salesforce CRM | 3000 | 31 | ✅ React + Fluent UI | — |
+| 2 | 🎫 ServiceNow ITSM | 3001 | 24 | ✅ React + Fluent UI | — |
+| 3 | 📦 SAP S/4HANA | 3002 | 14 | ✅ React + Fluent UI | sandbox default |
+| 4 | 🧡 HubSpot Marketing | 3003 | 29 | ✅ React + Fluent UI | — |
 | 5 | ✈️ Flight Tracker | 3004 | 5 | ✅ React + Fluent UI | ✅ auto if no creds |
 | 6 | ✒️ DocuSign eSignature | 3005 | 9 | ✅ React + Fluent UI | ✅ auto if no creds |
 | 7 | 👤 SAP SuccessFactors HR | 3006 | 20 | ⬜ pending | ✅ auto if no creds |
 | 8 | 💼 Workday HCM | 3007 | 46 | ⬜ pending | ✅ auto if no creds |
 | 9 | 🛒 Coupa Procurement | 3008 | 21 | ⬜ pending | ✅ always (COUPA_MOCK=true) |
 | 10 | 📋 Jira Projects | 3009 | 26 | ⬜ pending | ✅ auto if no creds |
-| | **Gateway** | **8080** | **190** | | |
+| | **Gateway** | **8080** | **225** | | |
 
 ---
 
@@ -133,72 +135,73 @@ lob-mcp-apps/
 ├── check_meta.py              ← static analysis: tool/manifest alignment
 ├── regen_manifests.py         ← regenerate mcp-tools.json + ai-plugin.json
 │
-├── shared-mcp-lib/            # Shared auth/HTTP/logging/settings helpers
+├── shared-mcp-lib/            # Shared auth/HTTP/logging/telemetry/settings helpers
 │   └── shared_mcp/
 │       ├── auth.py            # get_bearer_token(ctx) — OAuth Bearer extraction
 │       ├── http.py            # create_async_client() — httpx factory
 │       ├── logger.py          # get_logger() — structlog wrapper
-│       └── settings.py        # Dataclass loaders for saphr/workday/coupa/jira
+│       ├── settings.py        # Dataclass loaders for saphr/workday/coupa/jira
+│       └── telemetry.py       # track_tool() decorator + wrap_specs() — App Insights
 │
 ├── sf-mcp-app/                # Salesforce CRM (port 3000)
 │   ├── sf_crm_mcp/
-│   │   ├── server.py          # 25 tools — Leads, Opps, Accounts, Contacts,
-│   │   │                      #   Cases, Tasks, Pipeline, Campaigns, Approvals
-│   │   ├── salesforce.py      # OAuth2 + REST client (query/create/update/delete)
-│   │   └── web/widget.html    # React + SLDS widget
+│   │   ├── salesforce_server.py  # 31 tools — Leads, Opps, Accounts, Contacts,
+│   │   │                         #   Cases, Tasks, Pipeline, Campaigns, Approvals
+│   │   ├── salesforce.py         # OAuth2 + REST client (query/create/update/delete)
+│   │   └── web/widget.html       # React + SLDS widget
 │   └── .env.example
 │
 ├── snow-mcp-app/              # ServiceNow ITSM (port 3001)
 │   ├── servicenow_mcp/
-│   │   ├── server.py          # 18 tools — Incidents, Requests, Change Requests,
-│   │   │                      #   Problems, Approvals, Service Catalog, KB
+│   │   ├── servicenow_server.py  # 24 tools — Incidents, Requests, Change Requests,
+│   │   │                         #   Problems, Approvals, Service Catalog, KB
 │   │   └── web/widget.html
 │   └── .env.example
 │
 ├── sap-mcp-app/               # SAP S/4HANA (port 3002)
 │   ├── sap_s4hana_mcp/
-│   │   ├── server.py          # 6 tools — POs, Business Partners, Materials
+│   │   ├── sap_server.py         # 14 tools — POs, Business Partners, Materials
 │   │   ├── sap_client.py
 │   │   └── web/widget.html
 │   └── .env.example
 │
 ├── hubspot-mcp-app/           # HubSpot Marketing (port 3003)
 │   ├── hubspot_mcp/
-│   │   ├── server.py          # 14 tools — Emails, Lists, Contacts, Campaigns
+│   │   ├── hubspot_server.py     # 29 tools — Emails, Lists, Contacts, Campaigns
 │   │   ├── hubspot_client.py
 │   │   └── web/widget.html
 │   └── .env.example
 │
 ├── flight-mcp-app/            # Flight Tracker (port 3004) — mock-ready
 │   ├── flight_mcp/
-│   │   ├── server.py          # 5 tools — departures, arrivals, state, track
+│   │   ├── flight_server.py      # 5 tools — departures, arrivals, state, track
 │   │   └── web/widget.html
 │   └── .env.example
 │
 ├── docusign-mcp-app/          # DocuSign eSignature (port 3005) — mock-ready
 │   ├── docusign_mcp/
-│   │   ├── server.py          # 9 tools — envelopes, templates, send, void, sign
+│   │   ├── docusign_server.py    # 9 tools — envelopes, templates, send, void, sign
 │   │   └── web/widget.html
 │   └── .env.example
 │
 ├── saphr-mcp-app/             # SAP SuccessFactors HR (port 3006) — mock-ready
 │   ├── saphr_mcp/
-│   │   └── server.py          # 20 tools — employees, leave, time, performance
+│   │   └── saphr_server.py       # 20 tools — employees, leave, time, performance
 │   └── .env.example
 │
 ├── workday-mcp-app/           # Workday HCM (port 3007) — mock-ready
 │   ├── workday_mcp/
-│   │   └── server.py          # 46 tools — workers, skills, learning, org
+│   │   └── workday_server.py     # 46 tools — workers, skills, learning, org
 │   └── .env.example
 │
 ├── coupa-mcp-app/             # Coupa Procurement (port 3008) — mock-ready
 │   ├── coupa_mcp/
-│   │   └── server.py          # 21 tools — requisitions, POs, suppliers, invoices
+│   │   └── coupa_server.py       # 21 tools — requisitions, POs, suppliers, invoices
 │   └── .env.example
 │
 ├── jira-mcp-app/              # Jira Projects (port 3009) — mock-ready
 │   ├── jira_mcp/
-│   │   └── server.py          # 26 tools — issues, sprints, boards, projects
+│   │   └── jira_server.py        # 26 tools — issues, sprints, boards, projects
 │   └── .env.example
 │
 ├── gateway/                   # ASGI gateway — all 10 LOBs on port 8080
@@ -217,11 +220,11 @@ lob-mcp-apps/
 │   ├── src/shared/            # McpBridge, FluentWrapper, Toast, ErrorBoundary
 │   └── build.mjs              # Vite single-file build → ../web/widget.html
 │
-├── lob-agent/                 # "The Great Trading Company" Teams agent
+├── lob-agent/                 # Enterprise LOB Copilot declarative agent
 │   ├── appPackage/
 │   │   ├── declarativeAgent.json
 │   │   ├── manifest.json
-│   │   ├── ai-plugin.json     # 190 functions, 10 runtimes
+│   │   ├── ai-plugin.json     # 225 functions, 10 runtimes
 │   │   ├── mcp-tools.json     # Tool schemas with _meta + widget URIs
 │   │   └── instruction.txt
 │   └── skills/                # Per-LOB scenario prompts
@@ -508,7 +511,7 @@ python check_meta.py --verbose    # full per-tool report
 | Plugin registration | Every manifest tool appears in `ai-plugin.json` |
 | Server drift | Tools in `server.py` match `mcp-tools.json` |
 
-> The four new LOBs (saphr, workday, coupa, jira) use programmatic tool registration (`mcp.tool(...)()` loop pattern). Check 3 will warn "no `@mcp.tool` decorators found" for these — this is expected. Checks 1 and 2 still pass and verify all 190 tools are correctly manifested.
+> The four new LOBs (saphr, workday, coupa, jira) use programmatic tool registration (`mcp.tool(...)()` loop pattern). Check 3 will warn "no `@mcp.tool` decorators found" for these — this is expected. Checks 1 and 2 still pass and verify all 225 tools are correctly manifested.
 
 ---
 
@@ -546,7 +549,7 @@ Run after adding or renaming tools, then re-provision the agent.
 
 ## Tools Reference
 
-### 🏛️ Salesforce CRM — 25 tools (port 3000)
+### 🏛️ Salesforce CRM — 31 tools (port 3000)
 
 | Tool | Description |
 |---|---|
@@ -572,11 +575,16 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sf__get_pipeline_dashboard` | Opportunity pipeline by stage (count + amount) |
 | `sf__get_campaigns` | Latest 5 campaigns |
 | `sf__get_pending_approvals` | Pending ProcessInstance workitems |
-| `sf__create_lead_form` | Open lead creation form widget |
-| `sf__create_account_form` | Open account creation form widget |
-| `sf__create_contact_form` | Open contact creation form widget |
+| `sf__get_products` | Product catalog |
+| `sf__get_price_books` | Price books |
+| `sf__get_quotes` | Recent quotes |
+| `sf__create_quote` | Create quote from opportunity |
+| `sf__get_contracts` | Active contracts |
+| `sf__get_activities_timeline` | Activity history for a record |
 
-### 🎫 ServiceNow ITSM — 18 tools (port 3001)
+> Full list: see `sf_crm_mcp/salesforce_server.py` → `TOOL_SPECS`
+
+### 🎫 ServiceNow ITSM — 24 tools (port 3001)
 
 | Tool | Description |
 |---|---|
@@ -598,8 +606,16 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sn__get_knowledge_articles` | Knowledge base search |
 | `sn__create_incident_form` | Open incident creation form widget |
 | `sn__create_request_form` | Open request creation form widget |
+| `sn__approve_request` | Approve a pending approval |
+| `sn__reject_request` | Reject a pending approval |
+| `sn__get_user_profile` | User profile lookup |
+| `sn__get_cmdb_ci` | Configuration item from CMDB |
+| `sn__get_sla_details` | SLA metrics for an incident |
+| `sn__update_change_request` | Update change request |
 
-### 📦 SAP S/4HANA — 6 tools (port 3002)
+> Full list: see `servicenow_mcp/servicenow_server.py` → `TOOL_SPECS`
+
+### 📦 SAP S/4HANA — 14 tools (port 3002)
 
 | Tool | Description |
 |---|---|
@@ -609,8 +625,16 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sap__create_purchase_order` | Create PO (mock ID in sandbox) |
 | `sap__update_purchase_order` | Update PO |
 | `sap__get_material_details` | Material detail by ID |
+| `sap__get_sales_orders` | Sales orders list |
+| `sap__get_invoices` | Accounts payable invoices |
+| `sap__get_goods_receipts` | Goods receipts for a PO |
+| `sap__get_cost_centers` | Cost center master data |
+| `sap__get_gl_accounts` | G/L account master data |
+| `sap__get_profit_centers` | Profit center list |
+| `sap__approve_purchase_order` | Approve / reject a PO workflow |
+| `sap__get_stock_overview` | Material stock levels |
 
-### 🧡 HubSpot Marketing — 14 tools (port 3003)
+### 🧡 HubSpot Marketing — 29 tools (port 3003)
 
 | Tool | Description |
 |---|---|
@@ -628,6 +652,23 @@ Run after adding or renaming tools, then re-provision the agent.
 | `hs__create_deal` | Create deal |
 | `hs__get_companies` | Recent companies |
 | `hs__create_company` | Create company |
+| `hs__get_campaigns` | Marketing campaigns |
+| `hs__get_campaign_metrics` | Opens, clicks, conversions per campaign |
+| `hs__clone_email` | Clone a marketing email |
+| `hs__send_test_email` | Send test email to an address |
+| `hs__get_forms` | Landing page forms |
+| `hs__get_form_submissions` | Form submission entries |
+| `hs__get_workflows` | Active automation workflows |
+| `hs__enroll_in_workflow` | Enroll a contact in a workflow |
+| `hs__get_tickets` | Support tickets |
+| `hs__create_ticket` | Create support ticket |
+| `hs__update_ticket` | Update ticket status/owner |
+| `hs__get_owners` | HubSpot users / owners |
+| `hs__get_pipelines` | Deal pipelines |
+| `hs__update_deal` | Update deal stage/amount |
+| `hs__delete_contact` | Delete a contact |
+
+> Full list: see `hubspot_mcp/hubspot_server.py` → `TOOL_SPECS`
 
 ### ✈️ Flight Tracker — 5 tools (port 3004)
 
@@ -711,6 +752,8 @@ Output: `widgets/dist/{lob}.html` → copied to `{lob}-mcp-app/{pkg}/web/widget.
 
 ## Logs & Monitoring
 
+### Container logs (stdout)
+
 ```bash
 # Gateway mode
 docker compose --profile gateway logs -f gateway
@@ -727,6 +770,103 @@ docker compose logs -f workday      # :3007
 docker compose logs -f coupa        # :3008
 docker compose logs -f jira         # :3009
 ```
+
+For structured telemetry — tool latencies, success rates, and record counts by LOB — see the [Telemetry — App Insights](#telemetry--app-insights) section below.
+
+---
+
+## Telemetry — App Insights
+
+Every tool call is automatically instrumented via `shared_mcp/telemetry.py`. Each invocation fires a `dependency` event to Azure Application Insights — without blocking the tool response.
+
+### What is captured per tool call
+
+| Field | Description |
+|---|---|
+| `name` | Tool name (e.g. `sf__get_leads`) |
+| `target` | LOB label (e.g. `salesforce-crm`) |
+| `duration` | Wall-clock time in milliseconds |
+| `success` | `true` / `false` |
+| `resultType` | Value of `structuredContent.type` (e.g. `leads`, `incidents`) |
+| `recordCount` | Value of `structuredContent.total` |
+| `error` | Error message if the tool threw or returned an error |
+| `cloud_RoleName` | Deployment name (env var) — useful in multi-agent environments |
+| `cloud_RoleInstance` | Derived from the tool name prefix (sf, sn, sap, hs, ft, ds, saphr, wday, coupa, jira) |
+
+### Setup
+
+**Step 1 — Get your App Insights connection string**
+
+Azure Portal → Application Insights resource → Overview → **Connection String** (copy the full string).
+
+**Step 2 — Add to each `.env` file (or gateway environment)**
+
+```env
+APPINSIGHTS_CONNECTION_STRING=InstrumentationKey=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx;IngestionEndpoint=https://eastus.in.applicationinsights.azure.com/
+APPINSIGHTS_ROLE_NAME=lob-mcp
+```
+
+Leave `APPINSIGHTS_CONNECTION_STRING` blank (or omit it) to disable telemetry entirely — zero overhead, no HTTP calls made.
+
+**Step 3 — In `docker-compose.yml` gateway block (already wired)**
+
+```yaml
+environment:
+  GATEWAY_PORT: "8080"
+  APPINSIGHTS_CONNECTION_STRING: ""   # paste connection string to activate
+  APPINSIGHTS_ROLE_NAME: "lob-mcp"
+```
+
+### Viewing telemetry in App Insights
+
+**Transactions view** — App Insights → Transaction Search → filter by `dependency`
+
+**KQL — all tool calls in the last hour**
+
+```kql
+dependencies
+| where timestamp > ago(1h)
+| where type == "MCP Tool"
+| project timestamp, name, target, duration, success, resultCode
+| order by timestamp desc
+```
+
+**KQL — slowest tools**
+
+```kql
+dependencies
+| where type == "MCP Tool"
+| summarize avg(duration), percentile(duration, 95), count() by name
+| order by avg_duration desc
+```
+
+**KQL — failure rate by LOB**
+
+```kql
+dependencies
+| where type == "MCP Tool"
+| summarize total=count(), failures=countif(success == false) by target
+| extend failure_pct = round(100.0 * failures / total, 1)
+| order by failure_pct desc
+```
+
+**KQL — record volume trend (e.g. leads returned)**
+
+```kql
+dependencies
+| where type == "MCP Tool" and name startswith "sf__"
+| extend recordCount = toint(customDimensions["resultCount"])
+| summarize total_records=sum(recordCount) by bin(timestamp, 1h)
+| render timechart
+```
+
+### Application Map
+
+With `cloud_RoleInstance` set per LOB prefix, App Insights **Application Map** automatically draws one node per LOB showing call rates and failure percentages. Navigate to Application Insights → Application Map.
+
+### Multi-agent environments
+
+If the same MCP servers are shared across multiple agents, set a distinct `APPINSIGHTS_ROLE_NAME` per deployment (e.g. `lob-mcp-prod`, `lob-mcp-uat`). Query by `cloud_RoleName` to isolate traffic per agent.
 
 ---
 
