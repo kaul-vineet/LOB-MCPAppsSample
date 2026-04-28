@@ -478,6 +478,55 @@
   .card-snhr:not(.card-disabled):hover  { box-shadow: 0 12px 32px rgba(26,188,156,0.15); border-color: #A0DDD5; }
 
   /* ══════════════════════════════════════
+     APP TILES
+  ══════════════════════════════════════ */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+  }
+  .app-tile {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    position: relative;
+  }
+  .app-tile:not(.app-tile-soon):hover {
+    border-color: var(--tile-accent);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
+  }
+  .app-tile-soon { opacity: 0.5; cursor: default; }
+  .at-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--tile-accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .at-icon img, .at-icon svg { width: 22px; height: 22px; }
+  .at-icon-text { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .at-body { flex: 1; min-width: 0; }
+  .at-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .at-system { font-size: 11px; color: var(--text-muted); margin: 2px 0 7px; }
+  .at-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .at-chip { font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 3px; background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .at-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px;
+  }
+  .at-badge.live { background: #DFF6DD; color: #107C10; border: 1px solid #92C79E; }
+  .at-badge.soon { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* ══════════════════════════════════════
      FOOTER
   ══════════════════════════════════════ */
   footer {
@@ -604,145 +653,122 @@
 <!-- ══ LIVE WIDGETS ══ -->
 <div class="section" id="live">
   <div class="section-header">
-    <h2>Live Widgets</h2>
+    <h2>Enterprise Systems</h2>
     <span class="sh-tag live">Interactive</span>
-    <span class="sh-desc">7 test harnesses · mock data · no setup needed</span>
+    <span class="sh-desc">11 systems · 7 live · 4 coming soon</span>
   </div>
 
-  <div class="card-grid">
+  <div class="app-grid">
 
-    <a class="card card-sf" href="sf-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-sf"></div>
-        <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://api.iconify.design/simple-icons:salesforce.svg?color=white" alt="Salesforce">
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="sf-widget-test.html" style="--tile-accent:#0176D3">
+      <div class="at-icon"><img src="https://api.iconify.design/simple-icons:salesforce.svg?color=white" alt="SF"></div>
+      <div class="at-body">
+        <div class="at-name">Salesforce CRM</div>
+        <div class="at-system">Lightning SLDS</div>
+        <div class="at-chips"><span class="at-chip">15 tools</span><span class="at-chip">CRUD</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Lightning SLDS</div>
-        <div class="card-title">Salesforce CRM</div>
-        <div class="card-desc">Leads, opportunities, contacts with inline editing, pipeline stage updates, and drill-down detail views.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3000</span>
-          <span class="chip">15 tools</span>
-          <span class="chip">CRUD</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-snow" href="snow-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-snow"></div>
-        <div class="card-thumb-fade"></div>
-        <svg class="card-logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17V7l10 10V7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="snow-widget-test.html" style="--tile-accent:#293E40">
+      <div class="at-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17V7l10 10V7" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="at-body">
+        <div class="at-name">ServiceNow ITSM</div>
+        <div class="at-system">Now Design</div>
+        <div class="at-chips"><span class="at-chip">13 tools</span><span class="at-chip">CRUD</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Now Design</div>
-        <div class="card-title">ServiceNow ITSM</div>
-        <div class="card-desc">Incidents by priority, service requests with expandable request items, P1–P4 color coding and SLA tracking.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3001</span>
-          <span class="chip">13 tools</span>
-          <span class="chip">CRUD</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-sap" href="sap-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-sap"></div>
-        <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/sap/ffffff" alt="SAP">
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="sap-widget-test.html" style="--tile-accent:#0070F2">
+      <div class="at-icon"><img src="https://cdn.simpleicons.org/sap/ffffff" alt="SAP"></div>
+      <div class="at-body">
+        <div class="at-name">SAP S/4HANA</div>
+        <div class="at-system">Fiori Design</div>
+        <div class="at-chips"><span class="at-chip">10 tools</span><span class="at-chip">Drill-down</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Fiori Design</div>
-        <div class="card-title">SAP S/4HANA</div>
-        <div class="card-desc">POs → Line Items → Goods Receipts, Business Partners, Materials with 3-level drill-down and Fiori Object Page.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3002</span>
-          <span class="chip">10 tools</span>
-          <span class="chip">Drill-down</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-hs" href="hs-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-hs"></div>
-        <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://cdn.simpleicons.org/hubspot/ffffff" alt="HubSpot">
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="hs-widget-test.html" style="--tile-accent:#FF7A59">
+      <div class="at-icon"><img src="https://cdn.simpleicons.org/hubspot/ffffff" alt="HubSpot"></div>
+      <div class="at-body">
+        <div class="at-name">HubSpot CRM</div>
+        <div class="at-system">HubSpot Canvas</div>
+        <div class="at-chips"><span class="at-chip">20 tools</span><span class="at-chip">3-panel</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">HubSpot Canvas</div>
-        <div class="card-title">HubSpot CRM</div>
-        <div class="card-desc">Companies → Contacts + Deals + Tickets (3-panel expand), deal contacts, ticket notes — full CRM association drill-down.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3003</span>
-          <span class="chip">20 tools</span>
-          <span class="chip">3-panel</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-ft" href="flight-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-ft"></div>
-        <div class="card-thumb-fade"></div>
-        <svg class="card-logo-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="flight-widget-test.html" style="--tile-accent:#00A6ED">
+      <div class="at-icon"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
+      <div class="at-body">
+        <div class="at-name">Flight Tracker</div>
+        <div class="at-system">Aviation / OpenSky</div>
+        <div class="at-chips"><span class="at-chip">5 tools</span><span class="at-chip">Live data</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Aviation</div>
-        <div class="card-title">Flight Tracker</div>
-        <div class="card-desc">Live aircraft tracking via OpenSky Network — flight history, departures, arrivals, state vectors and waypoint tracks.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3004</span>
-          <span class="chip">5 tools</span>
-          <span class="chip">OpenSky API</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-ds" href="docusign-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-ds"></div>
-        <div class="card-thumb-fade"></div>
-        <img class="card-logo-icon" src="https://api.iconify.design/simple-icons:docusign.svg?color=white" alt="DocuSign">
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="docusign-widget-test.html" style="--tile-accent:#4C00FF">
+      <div class="at-icon"><img src="https://api.iconify.design/simple-icons:docusign.svg?color=white" alt="DocuSign"></div>
+      <div class="at-body">
+        <div class="at-name">DocuSign eSignature</div>
+        <div class="at-system">Pipeline</div>
+        <div class="at-chips"><span class="at-chip">9 tools</span><span class="at-chip">JWT Auth</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Pipeline</div>
-        <div class="card-title">DocuSign eSignature</div>
-        <div class="card-desc">Envelope pipeline with inline recipient drill-down, template library and Send from Template with prefill.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3005</span>
-          <span class="chip">9 tools</span>
-          <span class="chip">JWT Auth</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
 
-    <a class="card card-snhr" href="snow-hr-widget-test.html">
-      <div class="card-thumb">
-        <div class="card-thumb-bg thumb-snhr"></div>
-        <div class="card-thumb-fade"></div>
-        <svg class="card-logo-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        <span class="card-status status-live">Live</span>
+    <a class="app-tile" href="snow-hr-widget-test.html" style="--tile-accent:#1B7A6E">
+      <div class="at-icon"><svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+      <div class="at-body">
+        <div class="at-name">ServiceNow HR</div>
+        <div class="at-system">Now HR</div>
+        <div class="at-chips"><span class="at-chip">10 tools</span><span class="at-chip">HR Workflows</span></div>
       </div>
-      <div class="card-body">
-        <div class="card-system">Now HR</div>
-        <div class="card-title">ServiceNow HR</div>
-        <div class="card-desc">HR case management, leave requests, employee profiles, payslip access and multi-step approvals workflow.</div>
-        <div class="card-chips">
-          <span class="chip chip-port">:3001</span>
-          <span class="chip">10 tools</span>
-          <span class="chip">HR Workflows</span>
-        </div>
-      </div>
+      <span class="at-badge live">Live</span>
     </a>
+
+    <div class="app-tile app-tile-soon" style="--tile-accent:#0070F2">
+      <div class="at-icon"><img src="https://cdn.simpleicons.org/sap/ffffff" alt="SAP HR"></div>
+      <div class="at-body">
+        <div class="at-name">SAP SuccessFactors</div>
+        <div class="at-system">HXM</div>
+        <div class="at-chips"><span class="at-chip">HR · Payroll</span></div>
+      </div>
+      <span class="at-badge soon">Soon</span>
+    </div>
+
+    <div class="app-tile app-tile-soon" style="--tile-accent:#F4A623">
+      <div class="at-icon"><span class="at-icon-text">WD</span></div>
+      <div class="at-body">
+        <div class="at-name">Workday HCM</div>
+        <div class="at-system">Workday Canvas</div>
+        <div class="at-chips"><span class="at-chip">HCM · Payroll</span></div>
+      </div>
+      <span class="at-badge soon">Soon</span>
+    </div>
+
+    <div class="app-tile app-tile-soon" style="--tile-accent:#E86000">
+      <div class="at-icon"><span class="at-icon-text">C</span></div>
+      <div class="at-body">
+        <div class="at-name">Coupa Procurement</div>
+        <div class="at-system">Coupa Design</div>
+        <div class="at-chips"><span class="at-chip">Procurement</span></div>
+      </div>
+      <span class="at-badge soon">Soon</span>
+    </div>
+
+    <div class="app-tile app-tile-soon" style="--tile-accent:#0052CC">
+      <div class="at-icon"><img src="https://cdn.simpleicons.org/jira/ffffff" alt="Jira"></div>
+      <div class="at-body">
+        <div class="at-name">Jira</div>
+        <div class="at-system">Atlassian Design</div>
+        <div class="at-chips"><span class="at-chip">Agile · Sprints</span></div>
+      </div>
+      <span class="at-badge soon">Soon</span>
+    </div>
 
   </div>
 </div>
