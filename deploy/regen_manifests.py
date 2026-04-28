@@ -51,18 +51,29 @@ def title_case(name: str) -> str:
     return bare.replace("_", " ").capitalize()
 
 
+def clean_schema(schema: dict) -> dict:
+    """Strip Pydantic artifacts not in the MCP spec inputSchema format."""
+    s = {k: v for k, v in schema.items() if k != "title"}
+    if "properties" in s:
+        s["properties"] = {
+            pname: {pk: pv for pk, pv in prop.items() if pk != "title"}
+            for pname, prop in s["properties"].items()
+        }
+    return s
+
+
 def build_entries(server_mod):
     tools = server_mod.mcp._tool_manager._tools
     entries, functions = [], []
     for tool_name, tool in tools.items():
         schema = dict(tool.parameters) if tool.parameters else {
-            "properties": {}, "title": f"{tool_name}Arguments", "type": "object"
+            "properties": {}, "type": "object"
         }
         schema.setdefault("required", [])
         entry = {
             "name": tool_name,
             "description": tool.description or "",
-            "inputSchema": schema,
+            "inputSchema": clean_schema(schema),
             "title": title_case(tool_name),
         }
         if tool.meta:

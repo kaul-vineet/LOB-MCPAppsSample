@@ -376,10 +376,35 @@ Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
 # keeping schemas small and conforming to MCP spec (name/description/inputSchema only).
 $allToolsByName = @{}
 (Get-Content "$SrcDir\mcp-tools.json" -Raw -Encoding UTF8 | ConvertFrom-Json).tools | ForEach-Object {
+    # Strip 'title' from inputSchema: the top-level title (Pydantic class name,
+    # e.g. "sf__get_leadsArguments") is not in the MCP spec and Copilot's
+    # schema parser rejects it. Property-level titles are also stripped.
+    # All other fields (type, properties, required, additionalProperties…) are kept.
+    $rawSchema   = $_.inputSchema
+    $cleanSchema = [PSCustomObject]@{}
+    foreach ($topField in $rawSchema.PSObject.Properties) {
+        if ($topField.Name -eq 'title') { continue }
+        if ($topField.Name -eq 'properties' -and $topField.Value -ne $null) {
+            $cleanProps = [PSCustomObject]@{}
+            foreach ($propName in $topField.Value.PSObject.Properties.Name) {
+                $srcProp   = $topField.Value.$propName
+                $cleanProp = [PSCustomObject]@{}
+                foreach ($pf in $srcProp.PSObject.Properties) {
+                    if ($pf.Name -ne 'title') {
+                        $cleanProp | Add-Member -NotePropertyName $pf.Name -NotePropertyValue $pf.Value
+                    }
+                }
+                $cleanProps | Add-Member -NotePropertyName $propName -NotePropertyValue $cleanProp
+            }
+            $cleanSchema | Add-Member -NotePropertyName 'properties' -NotePropertyValue $cleanProps
+        } else {
+            $cleanSchema | Add-Member -NotePropertyName $topField.Name -NotePropertyValue $topField.Value
+        }
+    }
     $clean = [PSCustomObject]@{
         name        = $_.name
         description = $_.description
-        inputSchema = $_.inputSchema
+        inputSchema = $cleanSchema
     }
     $allToolsByName[$_.name] = $clean
 }
