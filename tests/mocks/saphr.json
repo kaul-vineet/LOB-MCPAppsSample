@@ -1,0 +1,63 @@
+{
+  "dataTypes": {
+    "employees": {
+      "type": "employees",
+      "total": 5,
+      "items": [
+        {"employee_id": "10000001", "first_name": "Alice", "last_name": "Johnson", "job_title": "Senior Software Engineer", "department": "Engineering", "location": "Seattle", "manager_id": "10000010", "manager_name": "Sarah Jones", "hire_date": "2021-03-15", "employment_status": "Active"},
+        {"employee_id": "10000002", "first_name": "Bob", "last_name": "Martinez", "job_title": "Product Manager", "department": "Product", "location": "San Francisco", "manager_id": "10000011", "manager_name": "David Kim", "hire_date": "2020-07-01", "employment_status": "Active"},
+        {"employee_id": "10000003", "first_name": "Carol", "last_name": "Chen", "job_title": "UX Designer", "department": "Design", "location": "New York", "manager_id": "10000012", "manager_name": "Mike Torres", "hire_date": "2022-01-10", "employment_status": "Active"},
+        {"employee_id": "10000004", "first_name": "David", "last_name": "Patel", "job_title": "Finance Analyst", "department": "Finance", "location": "Chicago", "manager_id": "10000013", "manager_name": "Priya Sharma", "hire_date": "2019-09-05", "employment_status": "Active"},
+        {"employee_id": "10000005", "first_name": "Emma", "last_name": "Wilson", "job_title": "HR Business Partner", "department": "Human Resources", "location": "Boston", "manager_id": "10000014", "manager_name": "Jennifer Lee", "hire_date": "2023-02-20", "employment_status": "Active"}
+      ]
+    },
+    "leave_balances": {
+      "type": "leave_balances",
+      "employee_id": "10000001",
+      "employee_name": "Alice Johnson",
+      "balances": [
+        {"leave_type": "Annual Leave", "entitlement": 20, "taken": 8, "pending": 2, "remaining": 10, "unit": "days"},
+        {"leave_type": "Sick Leave", "entitlement": 10, "taken": 1, "pending": 0, "remaining": 9, "unit": "days"},
+        {"leave_type": "Parental Leave", "entitlement": 90, "taken": 0, "pending": 0, "remaining": 90, "unit": "days"},
+        {"leave_type": "Unpaid Leave", "entitlement": 30, "taken": 0, "pending": 0, "remaining": 30, "unit": "days"}
+      ]
+    },
+    "pay_stubs": {
+      "type": "pay_stubs",
+      "employee_id": "10000001",
+      "employee_name": "Alice Johnson",
+      "items": [
+        {"period": "2026-03", "pay_date": "2026-03-31", "gross_pay": 9583.33, "net_pay": 6812.50, "currency": "USD", "deductions": {"federal_tax": 1725.00, "state_tax": 575.00, "social_security": 594.17, "medicare": 139.00, "health_insurance": 237.50, "401k": 500.00}},
+        {"period": "2026-02", "pay_date": "2026-02-28", "gross_pay": 9583.33, "net_pay": 6812.50, "currency": "USD", "deductions": {"federal_tax": 1725.00, "state_tax": 575.00, "social_security": 594.17, "medicare": 139.00, "health_insurance": 237.50, "401k": 500.00}},
+        {"period": "2026-01", "pay_date": "2026-01-31", "gross_pay": 9583.33, "net_pay": 6812.50, "currency": "USD", "deductions": {"federal_tax": 1725.00, "state_tax": 575.00, "social_security": 594.17, "medicare": 139.00, "health_insurance": 237.50, "401k": 500.00}}
+      ]
+    },
+    "positions": {
+      "type": "positions",
+      "total": 4,
+      "items": [
+        {"position_id": "P001", "title": "Senior Software Engineer", "department": "Engineering", "location": "Seattle", "status": "Occupied", "employee_id": "10000001", "employee_name": "Alice Johnson"},
+        {"position_id": "P002", "title": "Product Manager", "department": "Product", "location": "San Francisco", "status": "Occupied", "employee_id": "10000002", "employee_name": "Bob Martinez"},
+        {"position_id": "P003", "title": "Lead UX Designer", "department": "Design", "location": "New York", "status": "Vacant", "employee_id": null, "employee_name": null},
+        {"position_id": "P004", "title": "Senior Finance Analyst", "department": "Finance", "location": "Chicago", "status": "Vacant", "employee_id": null, "employee_name": null}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "get_employee_profile": {
+      "type": "employees",
+      "total": 1,
+      "items": "USE_EMPLOYEE_BY_ID"
+    },
+    "get_leave_balance": {
+      "type": "leave_balances",
+      "items": "USE_LEAVE_BALANCES"
+    },
+    "get_pay_stub": {
+      "type": "pay_stubs",
+      "items": "USE_PAY_STUBS"
+    },
+    "update_employee": {"success": true},
+    "request_leave": {"success": true, "leave_request_id": "LR-2026-001"}
+  }
+}

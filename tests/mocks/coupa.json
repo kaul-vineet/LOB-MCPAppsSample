@@ -1,0 +1,71 @@
+{
+  "dataTypes": {
+    "purchase_orders": {
+      "type": "purchase_orders",
+      "total": 5,
+      "items": [
+        {"id": "PO-2026-0042", "status": "issued", "supplier_name": "Domestic US Supplier 1", "total": 45000.00, "currency": "USD", "created_date": "2026-04-10", "delivery_date": "2026-05-15", "ordered_by": "Alice Johnson"},
+        {"id": "PO-2026-0043", "status": "issued", "supplier_name": "Berlin Manufacturing GmbH", "total": 112500.00, "currency": "EUR", "created_date": "2026-04-12", "delivery_date": "2026-05-20", "ordered_by": "Bob Martinez"},
+        {"id": "PO-2026-0044", "status": "received", "supplier_name": "Pacific Logistics Ltd", "total": 8750.00, "currency": "USD", "created_date": "2026-03-28", "delivery_date": "2026-04-18", "ordered_by": "Carol Chen"},
+        {"id": "PO-2026-0045", "status": "pending_approval", "supplier_name": "Acme Retail Corp", "total": 23000.00, "currency": "USD", "created_date": "2026-04-22", "delivery_date": "2026-05-30", "ordered_by": "David Patel"},
+        {"id": "PO-2026-0046", "status": "cancelled", "supplier_name": "Universal Parts Co.", "total": 5200.00, "currency": "GBP", "created_date": "2026-04-05", "delivery_date": null, "ordered_by": "Emma Wilson"}
+      ]
+    },
+    "invoices": {
+      "type": "invoices",
+      "total": 5,
+      "items": [
+        {"id": "INV-2026-1101", "po_id": "PO-2026-0044", "supplier_name": "Pacific Logistics Ltd", "amount": 8750.00, "currency": "USD", "status": "approved", "invoice_date": "2026-04-19", "due_date": "2026-05-19", "payment_term": "Net 30"},
+        {"id": "INV-2026-1102", "po_id": "PO-2026-0042", "supplier_name": "Domestic US Supplier 1", "amount": 22500.00, "currency": "USD", "status": "pending_approval", "invoice_date": "2026-04-24", "due_date": "2026-05-24", "payment_term": "Net 30"},
+        {"id": "INV-2026-1103", "po_id": "PO-2026-0043", "supplier_name": "Berlin Manufacturing GmbH", "amount": 56250.00, "currency": "EUR", "status": "pending_approval", "invoice_date": "2026-04-25", "due_date": "2026-05-25", "payment_term": "Net 30"},
+        {"id": "INV-2026-1104", "po_id": null, "supplier_name": "Office Supplies Inc", "amount": 1250.00, "currency": "USD", "status": "on_hold", "invoice_date": "2026-04-20", "due_date": "2026-05-20", "payment_term": "Net 30"},
+        {"id": "INV-2026-1105", "po_id": "PO-2026-0041", "supplier_name": "Tech Hardware Co.", "amount": 3800.00, "currency": "USD", "status": "paid", "invoice_date": "2026-04-01", "due_date": "2026-05-01", "payment_term": "Net 30"}
+      ]
+    },
+    "requisitions": {
+      "type": "requisitions",
+      "total": 4,
+      "items": [
+        {"id": "REQ-2026-0201", "status": "approved", "title": "Cloud infrastructure expansion — Q2", "total": 48000.00, "currency": "USD", "submitted_by": "Alice Johnson", "submitted_date": "2026-04-08", "approved_by": "Sarah Jones", "approved_date": "2026-04-10"},
+        {"id": "REQ-2026-0202", "status": "pending_approval", "title": "Marketing event materials and printing", "total": 7500.00, "currency": "USD", "submitted_by": "Bob Martinez", "submitted_date": "2026-04-20", "approved_by": null, "approved_date": null},
+        {"id": "REQ-2026-0203", "status": "approved", "title": "Office ergonomic equipment — 10 desks", "total": 22000.00, "currency": "USD", "submitted_by": "Emma Wilson", "submitted_date": "2026-04-15", "approved_by": "Jennifer Lee", "approved_date": "2026-04-17"},
+        {"id": "REQ-2026-0204", "status": "draft", "title": "Annual software license renewals", "total": 135000.00, "currency": "USD", "submitted_by": "David Patel", "submitted_date": null, "approved_by": null, "approved_date": null}
+      ]
+    },
+    "suppliers": {
+      "type": "suppliers",
+      "total": 5,
+      "items": [
+        {"id": "SUP-001", "name": "Domestic US Supplier 1", "status": "active", "country": "US", "category": "Raw Materials", "payment_term": "Net 30", "spend_ytd": 145000.00, "currency": "USD"},
+        {"id": "SUP-002", "name": "Berlin Manufacturing GmbH", "status": "active", "country": "DE", "category": "Manufacturing", "payment_term": "Net 30", "spend_ytd": 225000.00, "currency": "EUR"},
+        {"id": "SUP-003", "name": "Pacific Logistics Ltd", "status": "active", "country": "SG", "category": "Logistics", "payment_term": "Net 30", "spend_ytd": 87500.00, "currency": "USD"},
+        {"id": "SUP-004", "name": "Acme Retail Corp", "status": "active", "country": "US", "category": "Office Supplies", "payment_term": "Net 15", "spend_ytd": 23000.00, "currency": "USD"},
+        {"id": "SUP-005", "name": "Tech Hardware Co.", "status": "under_review", "country": "US", "category": "IT Hardware", "payment_term": "Net 45", "spend_ytd": 3800.00, "currency": "USD"}
+      ]
+    },
+    "catalog_items": {
+      "type": "catalog_items",
+      "total": 5,
+      "items": [
+        {"id": "CAT-001", "name": "Dell XPS 15 Laptop", "supplier_name": "Tech Hardware Co.", "unit_price": 1800.00, "currency": "USD", "category": "IT Hardware", "sku": "DELL-XPS15-2026", "lead_time_days": 7},
+        {"id": "CAT-002", "name": "Ergonomic Office Chair", "supplier_name": "Acme Retail Corp", "unit_price": 450.00, "currency": "USD", "category": "Facilities", "sku": "ERGO-CHAIR-PRO", "lead_time_days": 14},
+        {"id": "CAT-003", "name": "Microsoft 365 Business Premium (annual)", "supplier_name": "Tech Hardware Co.", "unit_price": 264.00, "currency": "USD", "category": "Software", "sku": "MS365-BP-ANNUAL", "lead_time_days": 1},
+        {"id": "CAT-004", "name": "USB-C Docking Station", "supplier_name": "Tech Hardware Co.", "unit_price": 180.00, "currency": "USD", "category": "IT Hardware", "sku": "DOCK-USBC-PRO", "lead_time_days": 5},
+        {"id": "CAT-005", "name": "Standing Desk (motorised)", "supplier_name": "Acme Retail Corp", "unit_price": 720.00, "currency": "USD", "category": "Facilities", "sku": "DESK-STAND-MOT", "lead_time_days": 21}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "create_requisition": {"_createdId": "REQ-2026-0205", "type": "requisitions", "total": 5, "items": "USE_CURRENT_PLUS_NEW"},
+    "approve_invoice": {"success": true, "invoice_id": "USE_INVOICE_ID", "new_status": "approved"},
+    "reject_invoice": {"success": true, "invoice_id": "USE_INVOICE_ID", "new_status": "rejected"},
+    "approve_requisition": {"success": true, "requisition_id": "USE_REQUISITION_ID", "new_status": "approved"},
+    "get_goods_receipts": {
+      "type": "goods_receipts",
+      "po_id": "PO-2026-0044",
+      "items": [
+        {"id": "GR-2026-001", "received_date": "2026-04-18", "quantity": 100, "unit": "EA", "received_by": "Carol Chen", "status": "accepted"}
+      ]
+    }
+  }
+}

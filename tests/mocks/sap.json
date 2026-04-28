@@ -3,55 +3,121 @@
     "purchase_orders": {
       "type": "purchase_orders",
       "total": 5,
-      "sandbox": true,
       "items": [
-        {"purchase_order": "4500000001", "supplier": "Domestic US Supplier 1", "purchasing_org": "17", "order_date": "2026-03-15", "deletion_code": false},
-        {"purchase_order": "4500000002", "supplier": "Domestic US Supplier 2", "purchasing_org": "17", "order_date": "2026-03-20", "deletion_code": false},
-        {"purchase_order": "4500000003", "supplier": "Domestic DE Supplier 1", "purchasing_org": "10", "order_date": "2026-04-01", "deletion_code": true},
-        {"purchase_order": "4500000004", "supplier": "Domestic US Supplier 3", "purchasing_org": "17", "order_date": "2026-04-05", "deletion_code": false},
-        {"purchase_order": "4500000005", "supplier": "International Supplier 1", "purchasing_org": "10", "order_date": "2026-04-10", "deletion_code": false}
+        {"purchase_order": "4500000101", "supplier": "Domestic US Supplier 1", "purchasing_org": "1010", "order_date": "2026-03-15", "deletion_code": false},
+        {"purchase_order": "4500000102", "supplier": "Berlin Manufacturing GmbH", "purchasing_org": "1710", "order_date": "2026-03-22", "deletion_code": false},
+        {"purchase_order": "4500000103", "supplier": "Shanghai Parts Co.", "purchasing_org": "1010", "order_date": "2026-04-01", "deletion_code": true},
+        {"purchase_order": "4500000104", "supplier": "Midwest Components LLC", "purchasing_org": "1010", "order_date": "2026-04-08", "deletion_code": false},
+        {"purchase_order": "4500000105", "supplier": "Pacific Logistics Ltd", "purchasing_org": "1710", "order_date": "2026-04-12", "deletion_code": false}
       ]
     },
     "business_partners": {
       "type": "business_partners",
       "total": 5,
-      "sandbox": true,
       "items": [
-        {"id": "BP001", "name": "Domestic US Supplier 1", "category": "1", "organization": "Global Trade Inc."},
-        {"id": "BP002", "name": "Domestic US Supplier 2", "category": "1", "organization": "Pacific Logistics"},
-        {"id": "BP003", "name": "Domestic DE Supplier 1", "category": "2", "organization": "Berlin Manufacturing GmbH"},
-        {"id": "BP004", "name": "International Supplier 1", "category": "1", "organization": "Shanghai Parts Co."},
-        {"id": "BP005", "name": "Domestic US Supplier 3", "category": "1", "organization": "Midwest Components LLC"}
+        {"id": "1000001", "name": "Domestic US Supplier 1", "category": "1", "organization": "Global Trade Inc."},
+        {"id": "1000002", "name": "Berlin Manufacturing GmbH", "category": "1", "organization": "DACH Region"},
+        {"id": "1000003", "name": "Acme Retail Corp", "category": "2", "organization": "North America"},
+        {"id": "1000004", "name": "Pacific Logistics Ltd", "category": "1", "organization": "APAC Region"},
+        {"id": "1000005", "name": "Universal Parts Co.", "category": "3", "organization": "Global"}
       ]
     },
     "materials": {
       "type": "materials",
       "total": 5,
-      "sandbox": true,
       "items": [
-        {"product": "TG11", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
-        {"product": "TG12", "product_type": "HALB", "product_group": "A001", "base_unit": "EA"},
-        {"product": "TG13", "product_type": "ROH", "product_group": "B002", "base_unit": "KG"},
-        {"product": "TG14", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
-        {"product": "TG15", "product_type": "ROH", "product_group": "C003", "base_unit": "L"}
+        {"product": "MAT-10001", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
+        {"product": "MAT-10002", "product_type": "HALB", "product_group": "A001", "base_unit": "EA"},
+        {"product": "MAT-10003", "product_type": "ROH", "product_group": "B002", "base_unit": "KG"},
+        {"product": "MAT-10004", "product_type": "FERT", "product_group": "A001", "base_unit": "EA"},
+        {"product": "MAT-10005", "product_type": "ROH", "product_group": "C003", "base_unit": "L"}
+      ]
+    },
+    "sales_orders": {
+      "type": "sales_orders",
+      "total": 5,
+      "items": [
+        {"sales_order": "4700010001", "sold_to_party": "CUST-001", "order_date": "2025-01-10", "net_value": 12500.00, "currency": "USD", "status": "Open"},
+        {"sales_order": "4700010002", "sold_to_party": "CUST-042", "order_date": "2025-01-15", "net_value": 8750.50, "currency": "EUR", "status": "Completed"},
+        {"sales_order": "4700010003", "sold_to_party": "CUST-017", "order_date": "2025-01-22", "net_value": 34100.00, "currency": "USD", "status": "In Progress"},
+        {"sales_order": "4700010004", "sold_to_party": "CUST-005", "order_date": "2025-02-01", "net_value": 2200.00, "currency": "GBP", "status": "Open"},
+        {"sales_order": "4700010005", "sold_to_party": "CUST-033", "order_date": "2025-02-08", "net_value": 7890.00, "currency": "USD", "status": "Delivered"}
       ]
     }
   },
   "callToolResponses": {
     "get_material_details": {
       "type": "material_detail",
-      "product": "TG11",
+      "product": "MAT-10001",
       "product_type": "FERT",
       "product_group": "A001",
       "base_unit": "EA",
-      "gross_weight": 2.500,
-      "net_weight": 2.100,
+      "gross_weight": 2.5,
+      "net_weight": 2.1,
       "weight_unit": "KG",
       "division": "10",
-      "product_description": "Finished Trading Good 11"
+      "product_description": "High-precision finished component for industrial assembly"
     },
-    "create_purchase_order": { "type": "purchase_orders", "total": 6, "sandbox": true, "items": "USE_CURRENT_PLUS_NEW" },
-    "update_purchase_order": { "type": "purchase_orders", "total": 5, "sandbox": true, "items": "USE_CURRENT_WITH_UPDATE" },
-    "get_materials": { "type": "materials", "total": 5, "sandbox": true, "items": "USE_CURRENT" }
+    "get_po_line_items": {
+      "type": "po_line_items",
+      "purchase_order": "4500000101",
+      "items": [
+        {"item_number": "00010", "material": "MAT-10001", "description": "Finished Trading Good A", "quantity": 100, "unit": "EA", "net_price": 45.00, "currency": "USD", "delivery_date": "2026-05-15"},
+        {"item_number": "00020", "material": "MAT-10003", "description": "Raw Material B", "quantity": 250, "unit": "KG", "net_price": 12.50, "currency": "USD", "delivery_date": "2026-05-20"},
+        {"item_number": "00030", "material": "MAT-10005", "description": "Chemical Compound C", "quantity": 50, "unit": "L", "net_price": 89.00, "currency": "EUR", "delivery_date": "2026-06-01"}
+      ]
+    },
+    "get_bp_purchase_orders": {
+      "type": "bp_purchase_orders",
+      "partner_id": "1000001",
+      "items": [
+        {"purchase_order": "4500000101", "supplier": "Domestic US Supplier 1", "purchasing_org": "1010", "order_date": "2026-03-15", "deletion_code": false},
+        {"purchase_order": "4500000104", "supplier": "Midwest Components LLC", "purchasing_org": "1010", "order_date": "2026-04-08", "deletion_code": false}
+      ]
+    },
+    "get_goods_receipts": {
+      "type": "goods_receipts",
+      "purchase_order": "4500000101",
+      "item_number": "00010",
+      "items": [
+        {"gr_document": "5000001234", "posting_date": "2026-04-20", "quantity": 60, "unit": "EA", "delivery_note": "DN-88210"},
+        {"gr_document": "5000001289", "posting_date": "2026-04-28", "quantity": 40, "unit": "EA", "delivery_note": "DN-88471"}
+      ]
+    },
+    "get_material_plant_data": {
+      "type": "material_plant_data",
+      "material_id": "MAT-10001",
+      "items": [
+        {"plant": "1010", "mrp_type": "PD", "lot_size": "EX", "safety_stock": 10, "lead_time": 5},
+        {"plant": "1710", "mrp_type": "VB", "lot_size": "HB", "safety_stock": 5, "lead_time": 3},
+        {"plant": "2000", "mrp_type": "ND", "lot_size": "FX", "safety_stock": 0, "lead_time": 7}
+      ]
+    },
+    "get_stock_levels": {
+      "type": "stock_levels",
+      "material_id": "MAT-10001",
+      "plant": "1010",
+      "items": [
+        {"storage_location": "0001", "unrestricted": 120, "quality_inspection": 5, "blocked": 0, "in_transit": 10, "unit": "EA"},
+        {"storage_location": "0002", "unrestricted": 45, "quality_inspection": 0, "blocked": 2, "in_transit": 0, "unit": "EA"}
+      ]
+    },
+    "get_so_items": {
+      "type": "so_items",
+      "sales_order": "4700010001",
+      "items": [
+        {"item_number": "000010", "material": "MAT-10001", "description": "Finished Trading Good A", "quantity": 2, "unit": "EA", "net_price": 5000.00, "currency": "USD"},
+        {"item_number": "000020", "material": "INST-SVC", "description": "Installation Service", "quantity": 1, "unit": "AU", "net_price": 2500.00, "currency": "USD"},
+        {"item_number": "000030", "material": "SUPPORT-1Y", "description": "Annual Support 12 Month", "quantity": 1, "unit": "AU", "net_price": 5000.00, "currency": "USD"}
+      ]
+    },
+    "get_deliveries": {
+      "type": "deliveries",
+      "sales_order": "4700010001",
+      "item_number": "000010",
+      "items": [
+        {"delivery": "80000001", "actual_gi_date": "2025-01-28", "delivery_quantity": 2, "unit": "EA", "delivery_status": "Delivered"}
+      ]
+    }
   }
 }

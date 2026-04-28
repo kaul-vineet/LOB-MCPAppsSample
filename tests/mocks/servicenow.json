@@ -3,38 +3,97 @@
     "incidents": {
       "type": "incidents",
       "total": 5,
-      "items": [
-        {"sys_id": "a1b2c3d4e5f6", "number": "INC0010001", "short_description": "Email not working", "description": "Cannot send or receive emails since this morning", "state": "New", "priority": "2", "assigned_to": "Beth Anglin", "sys_created_on": "2026-04-10 08:30:00"},
-        {"sys_id": "b2c3d4e5f6g7", "number": "INC0010002", "short_description": "VPN connection drops", "description": "VPN disconnects every 15 minutes", "state": "In Progress", "priority": "3", "assigned_to": "David Loo", "sys_created_on": "2026-04-09 14:15:00"},
-        {"sys_id": "c3d4e5f6g7h8", "number": "INC0010003", "short_description": "Printer offline", "description": "3rd floor printer shows offline status", "state": "On Hold", "priority": "4", "assigned_to": "Fred Luddy", "sys_created_on": "2026-04-08 11:00:00"},
-        {"sys_id": "d4e5f6g7h8i9", "number": "INC0010004", "short_description": "SSO login failure", "description": "Users cannot authenticate via SSO", "state": "New", "priority": "1", "assigned_to": "Beth Anglin", "sys_created_on": "2026-04-10 09:45:00"},
-        {"sys_id": "e5f6g7h8i9j0", "number": "INC0010005", "short_description": "Slow network performance", "description": "Building A experiencing 50% packet loss", "state": "In Progress", "priority": "2", "assigned_to": "Charlie Whitherspoon", "sys_created_on": "2026-04-07 16:30:00"}
+      "incidents": [
+        {"sys_id": "inc001", "number": "INC0001234", "short_description": "Email not working for marketing team", "state": "New", "priority": "2", "assigned_to": "John Smith", "sys_created_on": "2026-04-22", "sla_due": "2026-04-26", "made_sla": null},
+        {"sys_id": "inc002", "number": "INC0001235", "short_description": "VPN connection dropping every 30 minutes", "state": "In Progress", "priority": "1", "assigned_to": "Sarah Jones", "sys_created_on": "2026-04-21", "sla_due": "2026-04-23", "made_sla": false},
+        {"sys_id": "inc003", "number": "INC0001236", "short_description": "Printer offline on 3rd floor", "state": "On Hold", "priority": "3", "assigned_to": "Mike Chen", "sys_created_on": "2026-04-20", "sla_due": "2026-04-28", "made_sla": null},
+        {"sys_id": "inc004", "number": "INC0001237", "short_description": "Cannot access SharePoint after update", "state": "Resolved", "priority": "2", "assigned_to": "Ana Rivera", "sys_created_on": "2026-04-19", "sla_due": "2026-04-22", "made_sla": true},
+        {"sys_id": "inc005", "number": "INC0001238", "short_description": "Teams audio muffled in meeting rooms", "state": "New", "priority": "4", "assigned_to": "", "sys_created_on": "2026-04-18", "sla_due": null, "made_sla": null}
       ]
     },
     "requests": {
       "type": "requests",
+      "total": 4,
+      "requests": [
+        {"sys_id": "req001", "number": "REQ0000567", "short_description": "New laptop for onboarding — Tom Baker", "request_state": "In Progress", "priority": "3", "approval": "approved", "sys_created_on": "2026-04-20", "sla_due": "2026-04-27", "made_sla": null},
+        {"sys_id": "req002", "number": "REQ0000568", "short_description": "Adobe Creative Cloud license renewal", "request_state": "New", "priority": "3", "approval": "requested", "sys_created_on": "2026-04-19", "sla_due": "2026-04-24", "made_sla": false},
+        {"sys_id": "req003", "number": "REQ0000569", "short_description": "Access to Salesforce sandbox environment", "request_state": "On Hold", "priority": "4", "approval": "not requested", "sys_created_on": "2026-04-18", "sla_due": "2026-04-30", "made_sla": null},
+        {"sys_id": "req004", "number": "REQ0000570", "short_description": "Standing desk for finance department", "request_state": "Closed", "priority": "4", "approval": "approved", "sys_created_on": "2026-04-15", "sla_due": "2026-04-22", "made_sla": true}
+      ]
+    },
+    "change_requests": {
+      "type": "change_requests",
+      "total": 4,
+      "items": [
+        {"sys_id": "chg001", "number": "CHG0001234", "short_description": "Upgrade production database to PostgreSQL 15", "state": "New", "priority": "3", "risk": "medium", "category": "Normal", "assigned_to": "Sarah Jones", "sys_created_on": "2026-04-20"},
+        {"sys_id": "chg002", "number": "CHG0001235", "short_description": "Emergency patch: CVE-2026-1234 on web servers", "state": "In Progress", "priority": "1", "risk": "high", "category": "Emergency", "assigned_to": "DevOps Team", "sys_created_on": "2026-04-21"},
+        {"sys_id": "chg003", "number": "CHG0001236", "short_description": "Migrate file share to OneDrive for Business", "state": "On Hold", "priority": "3", "risk": "low", "category": "Standard", "assigned_to": "Mike Chen", "sys_created_on": "2026-04-18"},
+        {"sys_id": "chg004", "number": "CHG0001237", "short_description": "Deploy new MFA policy for all admin accounts", "state": "Closed", "priority": "2", "risk": "medium", "category": "Normal", "assigned_to": "Ana Rivera", "sys_created_on": "2026-04-15"}
+      ]
+    },
+    "problems": {
+      "type": "problems",
+      "total": 3,
+      "items": [
+        {"sys_id": "prb001", "number": "PRB0000456", "short_description": "Intermittent database connection timeouts affecting CRM", "state": "In Progress", "priority": "2", "assigned_to": "Sarah Jones", "sys_created_on": "2026-04-15"},
+        {"sys_id": "prb002", "number": "PRB0000457", "short_description": "Memory leak in web application causing daily restarts", "state": "New", "priority": "1", "assigned_to": "Dev Team", "sys_created_on": "2026-04-10"},
+        {"sys_id": "prb003", "number": "PRB0000458", "short_description": "Slow search performance on knowledge base portal", "state": "On Hold", "priority": "3", "assigned_to": "Mike Chen", "sys_created_on": "2026-04-05"}
+      ]
+    },
+    "knowledge_articles": {
+      "type": "knowledge_articles",
+      "total": 4,
+      "items": [
+        {"sys_id": "kb001", "number": "KB0000001", "short_description": "How to reset VPN credentials and reconnect", "category": "Network", "author": "IT Operations", "updated_on": "2026-03-15", "state": "published"},
+        {"sys_id": "kb002", "number": "KB0000002", "short_description": "Setting up MFA on Microsoft 365 accounts", "category": "Security", "author": "Security Team", "updated_on": "2026-03-20", "state": "published"},
+        {"sys_id": "kb003", "number": "KB0000003", "short_description": "Printer troubleshooting guide — Windows 10 / 11", "category": "Hardware", "author": "Desktop Support", "updated_on": "2026-02-28", "state": "published"},
+        {"sys_id": "kb004", "number": "KB0000004", "short_description": "SharePoint permissions — requesting and granting", "category": "Software", "author": "IT Operations", "updated_on": "2026-04-01", "state": "published"}
+      ]
+    },
+    "service_catalog": {
+      "type": "service_catalog",
       "total": 5,
       "items": [
-        {"sys_id": "r1s2t3u4v5w6", "number": "REQ0020001", "short_description": "New laptop request", "request_state": "Approved", "priority": "3", "approval": "approved", "sys_created_on": "2026-04-09 10:00:00"},
-        {"sys_id": "s2t3u4v5w6x7", "number": "REQ0020002", "short_description": "Software license — Adobe CC", "request_state": "Open", "priority": "4", "approval": "not requested", "sys_created_on": "2026-04-08 13:30:00"},
-        {"sys_id": "t3u4v5w6x7y8", "number": "REQ0020003", "short_description": "Access to DevOps environment", "request_state": "Open", "priority": "2", "approval": "requested", "sys_created_on": "2026-04-10 07:00:00"},
-        {"sys_id": "u4v5w6x7y8z9", "number": "REQ0020004", "short_description": "Monitor replacement", "request_state": "Closed Complete", "priority": "4", "approval": "approved", "sys_created_on": "2026-04-05 09:15:00"},
-        {"sys_id": "v5w6x7y8z9a0", "number": "REQ0020005", "short_description": "VPN token reset", "request_state": "Open", "priority": "3", "approval": "not requested", "sys_created_on": "2026-04-10 11:30:00"}
+        {"sys_id": "cat001", "name": "New Laptop Request", "short_description": "Request a new or replacement laptop", "category": "Hardware", "price": "$1,200"},
+        {"sys_id": "cat002", "name": "Software License Request", "short_description": "Request a software license or renewal", "category": "Software", "price": "$0"},
+        {"sys_id": "cat003", "name": "VPN Access Request", "short_description": "Get VPN access for remote work", "category": "Network", "price": "$0"},
+        {"sys_id": "cat004", "name": "Mobile Device Management", "short_description": "Enroll a mobile device in MDM", "category": "Security", "price": "$0"},
+        {"sys_id": "cat005", "name": "Standing Desk Setup", "short_description": "Request ergonomic desk equipment", "category": "Facilities", "price": "$450"}
+      ]
+    },
+    "approvals": {
+      "type": "approvals",
+      "total": 3,
+      "items": [
+        {"sys_id": "apr001", "approver": "Jane Smith", "document": "CHG0001234", "state": "requested", "due_date": "2026-04-30", "created_on": "2026-04-22"},
+        {"sys_id": "apr002", "approver": "Bob Johnson", "document": "REQ0000568", "state": "requested", "due_date": "2026-04-28", "created_on": "2026-04-21"},
+        {"sys_id": "apr003", "approver": "Alice Wang", "document": "CHG0001235", "state": "not requested", "due_date": "", "created_on": "2026-04-21"}
       ]
     }
   },
   "callToolResponses": {
     "get_request_items": {
-      "type": "request_items",
       "items": [
-        {"sys_id": "ri001", "short_description": "MacBook Pro 16\"", "quantity": 1, "stage": "Delivery", "price": 2499.00, "cat_item": "Laptop"},
-        {"sys_id": "ri002", "short_description": "USB-C Hub", "quantity": 1, "stage": "Fulfillment", "price": 79.99, "cat_item": "Accessories"}
+        {"sys_id": "ri001", "short_description": "Dell XPS 15 Laptop", "quantity": 1, "stage": "Ordered", "price": "$1,200", "cat_item": "Laptop", "state": "open"},
+        {"sys_id": "ri002", "short_description": "USB-C Docking Station", "quantity": 1, "stage": "Fulfillment", "price": "$120", "cat_item": "Hardware", "state": "open"},
+        {"sys_id": "ri003", "short_description": "27-inch External Monitor", "quantity": 2, "stage": "Delivery", "price": "$350", "cat_item": "Hardware", "state": "open"}
       ]
     },
-    "create_incident": { "type": "incidents", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
-    "create_request": { "type": "requests", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
-    "update_incident": { "type": "incidents", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
-    "update_request": { "type": "requests", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
-    "update_request_item": { "type": "request_items", "items": "USE_CURRENT_WITH_UPDATE" }
+    "get_change_tasks": {
+      "items": [
+        {"sys_id": "ctask001", "number": "CTASK0001001", "short_description": "Pre-change backup of production DB", "state": "In Progress", "assigned_to": "DB Team", "planned_start": "2026-04-28 08:00", "planned_end": "2026-04-28 10:00"},
+        {"sys_id": "ctask002", "number": "CTASK0001002", "short_description": "Apply database upgrade scripts", "state": "New", "assigned_to": "DB Team", "planned_start": "2026-04-28 10:00", "planned_end": "2026-04-28 12:00"},
+        {"sys_id": "ctask003", "number": "CTASK0001003", "short_description": "Post-upgrade smoke tests and validation", "state": "New", "assigned_to": "QA Team", "planned_start": "2026-04-28 12:00", "planned_end": "2026-04-28 14:00"}
+      ]
+    },
+    "create_incident": {"type": "incidents", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "create_request": {"type": "requests", "total": 5, "items": "USE_CURRENT_PLUS_NEW"},
+    "create_change_request": {"type": "change_requests", "total": 5, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_incident": {"type": "incidents", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "update_request": {"type": "requests", "total": 4, "items": "USE_CURRENT_WITH_UPDATE"},
+    "update_change_request": {"type": "change_requests", "total": 4, "items": "USE_CURRENT_WITH_UPDATE"},
+    "update_request_item": {"type": "request_items", "items": "USE_CURRENT_WITH_UPDATE"},
+    "approve_record": {"success": true},
+    "reject_record": {"success": true}
   }
 }

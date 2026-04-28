@@ -1,0 +1,82 @@
+{
+  "dataTypes": {
+    "flights_by_aircraft": {
+      "icao24": "a4ec24",
+      "total_flights": 5,
+      "flights": [
+        {"callsign": "UAL289", "from": "KEWR", "to": "EGLL", "departed": "2026-04-25 14:22 UTC", "arrived": "2026-04-26 02:48 UTC"},
+        {"callsign": "UAL290", "from": "EGLL", "to": "KEWR", "departed": "2026-04-26 08:15 UTC", "arrived": "2026-04-26 11:42 UTC"},
+        {"callsign": "UAL1123", "from": "KEWR", "to": "KDFW", "departed": "2026-04-27 06:30 UTC", "arrived": "2026-04-27 09:15 UTC"},
+        {"callsign": "UAL2201", "from": "KDFW", "to": "KLAX", "departed": "2026-04-27 11:05 UTC", "arrived": "2026-04-27 12:50 UTC"},
+        {"callsign": "UAL289", "from": "KLAX", "to": "EGLL", "departed": "2026-04-28 22:10 UTC", "arrived": "2026-04-29 16:55 UTC"}
+      ]
+    },
+    "aircraft_state_airborne": {
+      "icao24": "a4ec24",
+      "found": true,
+      "callsign": "UAL289",
+      "origin_country": "United States",
+      "latitude": 51.4775,
+      "longitude": -0.4614,
+      "altitude_m": 10668,
+      "altitude_ft": 35000,
+      "on_ground": false,
+      "velocity_kmh": 889,
+      "heading_deg": 285,
+      "heading_compass": "WNW",
+      "vertical_rate": 0.0,
+      "last_contact": "2026-04-26 02:30 UTC"
+    },
+    "aircraft_state_ground": {
+      "icao24": "a4ec24",
+      "found": true,
+      "callsign": "UAL289",
+      "origin_country": "United States",
+      "latitude": 51.4775,
+      "longitude": -0.4614,
+      "altitude_m": 25,
+      "altitude_ft": 82,
+      "on_ground": true,
+      "velocity_kmh": 0,
+      "heading_deg": 90,
+      "heading_compass": "E",
+      "vertical_rate": 0.0,
+      "last_contact": "2026-04-26 03:15 UTC"
+    },
+    "departures": {
+      "type": "departures",
+      "airport": "EGLL",
+      "total_flights": 5,
+      "flights": [
+        {"icao24": "a4ec24", "callsign": "UAL289", "from": "EGLL", "to": "KEWR", "departed": "2026-04-26 08:15 UTC", "arrived": null, "first_seen_ts": 1745654100},
+        {"icao24": "407692", "callsign": "BAW101", "from": "EGLL", "to": "KJFK", "departed": "2026-04-26 09:30 UTC", "arrived": null, "first_seen_ts": 1745658600},
+        {"icao24": "3c6442", "callsign": "DLH900", "from": "EGLL", "to": "EDDF", "departed": "2026-04-26 10:05 UTC", "arrived": "2026-04-26 12:40 UTC", "first_seen_ts": 1745660700},
+        {"icao24": "3950c8", "callsign": "AFR1680", "from": "EGLL", "to": "LFPG", "departed": "2026-04-26 10:45 UTC", "arrived": "2026-04-26 12:10 UTC", "first_seen_ts": 1745663100},
+        {"icao24": "480b9e", "callsign": "EZY8452", "from": "EGLL", "to": "LEMD", "departed": "2026-04-26 11:20 UTC", "arrived": null, "first_seen_ts": 1745665200}
+      ]
+    },
+    "arrivals": {
+      "type": "arrivals",
+      "airport": "EGLL",
+      "total_flights": 5,
+      "flights": [
+        {"icao24": "a4ec24", "callsign": "UAL289", "from": "KEWR", "to": "EGLL", "departed": "2026-04-25 14:22 UTC", "arrived": "2026-04-26 02:48 UTC", "first_seen_ts": 1745631880},
+        {"icao24": "407692", "callsign": "BAW100", "from": "KJFK", "to": "EGLL", "departed": "2026-04-25 18:00 UTC", "arrived": "2026-04-26 05:45 UTC", "first_seen_ts": 1745642700},
+        {"icao24": "3c6442", "callsign": "DLH901", "from": "EDDF", "to": "EGLL", "departed": "2026-04-26 06:10 UTC", "arrived": "2026-04-26 07:30 UTC", "first_seen_ts": 1745645400},
+        {"icao24": "3950c8", "callsign": "AFR1681", "from": "LFPG", "to": "EGLL", "departed": "2026-04-26 07:25 UTC", "arrived": "2026-04-26 08:10 UTC", "first_seen_ts": 1745647800},
+        {"icao24": "480b9e", "callsign": "EZY9101", "from": "LEMD", "to": "EGLL", "departed": "2026-04-26 07:50 UTC", "arrived": "2026-04-26 10:15 UTC", "first_seen_ts": 1745650200}
+      ]
+    },
+    "aircraft_track": {
+      "icao24": "a4ec24",
+      "found": true,
+      "callsign": "UAL289",
+      "start_time": "2026-04-25 14:22 UTC",
+      "end_time": "2026-04-26 02:48 UTC",
+      "waypoints": 847,
+      "first_position": {"lat": 40.6895, "lon": -74.1745},
+      "last_position": {"lat": 51.4775, "lon": -0.4614}
+    }
+  },
+  "callToolResponses": {}
+}

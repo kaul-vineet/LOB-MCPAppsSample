@@ -1,0 +1,64 @@
+{
+  "dataTypes": {
+    "workers": {
+      "type": "workers",
+      "total": 5,
+      "items": [
+        {"worker_id": "WD-0001", "first_name": "Alice", "last_name": "Johnson", "job_title": "Senior Software Engineer", "business_title": "Sr. Engineer — Platform", "department": "Technology", "cost_center": "CC-ENG-001", "location": "Seattle", "manager_id": "WD-0010", "manager_name": "Sarah Jones", "hire_date": "2021-03-15", "worker_type": "Employee", "employment_status": "Active"},
+        {"worker_id": "WD-0002", "first_name": "Bob", "last_name": "Martinez", "job_title": "Product Manager II", "business_title": "Product Manager — Platform", "department": "Product Management", "cost_center": "CC-PM-001", "location": "San Francisco", "manager_id": "WD-0011", "manager_name": "David Kim", "hire_date": "2020-07-01", "worker_type": "Employee", "employment_status": "Active"},
+        {"worker_id": "WD-0003", "first_name": "Carol", "last_name": "Chen", "job_title": "UX Designer III", "business_title": "Senior UX Designer", "department": "Design", "cost_center": "CC-DES-001", "location": "New York", "manager_id": "WD-0012", "manager_name": "Mike Torres", "hire_date": "2022-01-10", "worker_type": "Employee", "employment_status": "Active"},
+        {"worker_id": "WD-0004", "first_name": "David", "last_name": "Patel", "job_title": "Financial Analyst II", "business_title": "Finance Analyst — APAC", "department": "Finance", "cost_center": "CC-FIN-001", "location": "Chicago", "manager_id": "WD-0013", "manager_name": "Priya Sharma", "hire_date": "2019-09-05", "worker_type": "Employee", "employment_status": "Active"},
+        {"worker_id": "WD-0005", "first_name": "Emma", "last_name": "Wilson", "job_title": "HRBP", "business_title": "HR Business Partner", "department": "Human Resources", "cost_center": "CC-HR-001", "location": "Boston", "manager_id": "WD-0014", "manager_name": "Jennifer Lee", "hire_date": "2023-02-20", "worker_type": "Employee", "employment_status": "Active"}
+      ]
+    },
+    "leave_requests": {
+      "type": "leave_requests",
+      "worker_id": "WD-0001",
+      "worker_name": "Alice Johnson",
+      "items": [
+        {"request_id": "LV-2026-001", "leave_type": "Vacation", "start_date": "2026-05-26", "end_date": "2026-05-30", "days": 5, "status": "Approved", "approved_by": "Sarah Jones", "submitted_date": "2026-04-20"},
+        {"request_id": "LV-2026-002", "leave_type": "Sick", "start_date": "2026-03-12", "end_date": "2026-03-13", "days": 2, "status": "Approved", "approved_by": "Sarah Jones", "submitted_date": "2026-03-12"}
+      ]
+    },
+    "pay_slips": {
+      "type": "pay_slips",
+      "worker_id": "WD-0001",
+      "worker_name": "Alice Johnson",
+      "items": [
+        {"period_end": "2026-03-31", "pay_date": "2026-04-02", "gross": 9583.33, "net": 6812.50, "currency": "USD", "status": "Paid"},
+        {"period_end": "2026-02-28", "pay_date": "2026-03-03", "gross": 9583.33, "net": 6812.50, "currency": "USD", "status": "Paid"},
+        {"period_end": "2026-01-31", "pay_date": "2026-02-03", "gross": 9583.33, "net": 6812.50, "currency": "USD", "status": "Paid"}
+      ]
+    },
+    "goals": {
+      "type": "goals",
+      "worker_id": "WD-0001",
+      "worker_name": "Alice Johnson",
+      "review_period": "2026 H1",
+      "items": [
+        {"goal_id": "G001", "title": "Complete MCP Gateway v2 migration", "status": "In Progress", "progress": 75, "due_date": "2026-05-31", "category": "Technical"},
+        {"goal_id": "G002", "title": "Lead widget accessibility audit", "status": "Not Started", "progress": 0, "due_date": "2026-06-30", "category": "Quality"},
+        {"goal_id": "G003", "title": "Mentor two junior engineers", "status": "In Progress", "progress": 50, "due_date": "2026-06-30", "category": "Leadership"}
+      ]
+    },
+    "inbox_tasks": {
+      "type": "inbox_tasks",
+      "worker_id": "WD-0001",
+      "total": 3,
+      "items": [
+        {"task_id": "IT001", "subject": "Review and acknowledge updated Acceptable Use Policy", "type": "Acknowledgement", "due_date": "2026-05-01", "status": "Action Required"},
+        {"task_id": "IT002", "subject": "Complete Q1 2026 Performance Self-Assessment", "type": "Performance Review", "due_date": "2026-04-30", "status": "Action Required"},
+        {"task_id": "IT003", "subject": "Annual Benefits Enrollment — confirm elections", "type": "Benefits", "due_date": "2026-05-15", "status": "Action Required"}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "get_worker": {"type": "workers", "total": 1, "items": "USE_WORKER_BY_ID"},
+    "get_leave_requests": {"type": "leave_requests", "items": "USE_LEAVE_REQUESTS"},
+    "get_pay_slips": {"type": "pay_slips", "items": "USE_PAY_SLIPS"},
+    "submit_leave_request": {"success": true, "request_id": "LV-2026-003", "status": "Submitted"},
+    "cancel_leave_request": {"success": true},
+    "update_goal": {"success": true},
+    "complete_inbox_task": {"success": true}
+  }
+}

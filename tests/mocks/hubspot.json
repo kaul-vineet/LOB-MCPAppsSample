@@ -4,40 +4,91 @@
       "type": "emails",
       "total": 5,
       "items": [
-        {"id": "em001", "name": "Spring Sale Announcement", "subject": "🌸 Spring Sale — 30% Off Everything", "status": "PUBLISHED", "stats": {"sent": 12500, "delivered": 12200, "opened": 4880, "clicked": 1220, "bounced": 300, "unsubscribed": 45}},
-        {"id": "em002", "name": "Product Launch Newsletter", "subject": "Introducing Our Latest Innovation", "status": "PUBLISHED", "stats": {"sent": 8900, "delivered": 8700, "opened": 3480, "clicked": 870, "bounced": 200, "unsubscribed": 22}},
-        {"id": "em003", "name": "Customer Survey Q2", "subject": "We'd love your feedback", "status": "DRAFT", "stats": {"sent": 0, "delivered": 0, "opened": 0, "clicked": 0, "bounced": 0, "unsubscribed": 0}},
-        {"id": "em004", "name": "Holiday Special Offer", "subject": "🎄 Holiday deals just for you", "status": "PUBLISHED", "stats": {"sent": 15000, "delivered": 14700, "opened": 7350, "clicked": 2205, "bounced": 300, "unsubscribed": 60}},
-        {"id": "em005", "name": "Welcome Series — Day 1", "subject": "Welcome aboard! Here's what's next", "status": "PUBLISHED", "stats": {"sent": 3200, "delivered": 3150, "opened": 2205, "clicked": 945, "bounced": 50, "unsubscribed": 5}}
+        {"id": "12345", "name": "Spring Sale 2025", "subject": "Don't miss our Spring Sale!", "status": "PUBLISHED", "stats": {"sent": 15420, "delivered": 15100, "opened": 6340, "clicked": 892, "bounced": 320, "unsubscribed": 45}},
+        {"id": "12346", "name": "Monthly Newsletter Mar", "subject": "March Newsletter — What's New", "status": "PUBLISHED", "stats": {"sent": 22800, "delivered": 22350, "opened": 8940, "clicked": 1560, "bounced": 450, "unsubscribed": 72}},
+        {"id": "12347", "name": "Product Launch Webinar", "subject": "Join our Product Launch Event!", "status": "PUBLISHED", "stats": {"sent": 8500, "delivered": 8320, "opened": 4160, "clicked": 1248, "bounced": 180, "unsubscribed": 18}},
+        {"id": "12348", "name": "Customer Survey Q1", "subject": "We'd love your feedback!", "status": "DRAFT", "stats": {"sent": 0, "delivered": 0, "opened": 0, "clicked": 0, "bounced": 0, "unsubscribed": 0}},
+        {"id": "12349", "name": "Summer Preview Campaign", "subject": "Summer is coming — sneak peek!", "status": "DRAFT", "stats": {"sent": 0, "delivered": 0, "opened": 0, "clicked": 0, "bounced": 0, "unsubscribed": 0}}
+      ]
+    },
+    "lists": {
+      "type": "lists",
+      "total": 4,
+      "items": [
+        {"id": "101", "name": "Newsletter Subscribers", "type": "DYNAMIC", "size": 2450},
+        {"id": "102", "name": "Spring Campaign 2025", "type": "MANUAL", "size": 340},
+        {"id": "103", "name": "VIP Customers", "type": "MANUAL", "size": 89},
+        {"id": "104", "name": "Event Attendees — Q1", "type": "MANUAL", "size": 156}
+      ]
+    },
+    "contacts": {
+      "type": "contacts",
+      "total": 5,
+      "items": [
+        {"id": "601", "firstname": "Alice", "lastname": "Fontaine", "email": "alice.fontaine@acme.com", "phone": "+1-555-1001", "company": "Acme Corp", "jobtitle": "VP Sales", "lifecyclestage": "customer"},
+        {"id": "602", "firstname": "Bruno", "lastname": "Marchetti", "email": "b.marchetti@techstart.io", "phone": "+1-555-1002", "company": "TechStart", "jobtitle": "CTO", "lifecyclestage": "lead"},
+        {"id": "603", "firstname": "Claire", "lastname": "Dupont", "email": "c.dupont@globaltrade.eu", "phone": "+33-1-2345-6789", "company": "GlobalTrade", "jobtitle": "Procurement Manager", "lifecyclestage": "opportunity"},
+        {"id": "604", "firstname": "David", "lastname": "Okafor", "email": "d.okafor@bluewave.ng", "phone": "+234-802-000-1234", "company": "BlueWave Ltd", "jobtitle": "CEO", "lifecyclestage": "marketing qualified lead"},
+        {"id": "605", "firstname": "Elena", "lastname": "Sorokina", "email": "e.sorokina@nordicparts.fi", "phone": "+358-40-123-4567", "company": "Nordic Parts OY", "jobtitle": "Supply Chain Analyst", "lifecyclestage": "subscriber"}
+      ]
+    },
+    "companies": {
+      "type": "companies",
+      "total": 5,
+      "items": [
+        {"id": "801", "name": "Acme Corp", "domain": "acme.com", "phone": "+1-555-2001", "city": "New York", "industry": "Manufacturing"},
+        {"id": "802", "name": "TechStart", "domain": "techstart.io", "phone": "+1-555-2002", "city": "San Francisco", "industry": "Technology"},
+        {"id": "803", "name": "GlobalTrade", "domain": "globaltrade.eu", "phone": "+49-89-1234-5678", "city": "Berlin", "industry": "Retail"},
+        {"id": "804", "name": "BlueWave Ltd", "domain": "bluewave.ng", "phone": "+234-1-234-5678", "city": "Lagos", "industry": "Finance"},
+        {"id": "805", "name": "Nordic Parts OY", "domain": "nordicparts.fi", "phone": "+358-9-123-4567", "city": "Helsinki", "industry": "Manufacturing"}
+      ]
+    },
+    "deals": {
+      "type": "deals",
+      "total": 5,
+      "items": [
+        {"id": "901", "dealname": "Acme Corp — Enterprise License", "amount": 84000, "dealstage": "presentationscheduled", "closedate": "2026-06-30", "pipeline": "Default Pipeline"},
+        {"id": "902", "dealname": "TechStart — Starter Pack", "amount": 12000, "dealstage": "qualifiedtobuy", "closedate": "2026-05-15", "pipeline": "Default Pipeline"},
+        {"id": "903", "dealname": "GlobalTrade — Annual Contract", "amount": 156000, "dealstage": "closedwon", "closedate": "2026-03-31", "pipeline": "Default Pipeline"},
+        {"id": "904", "dealname": "BlueWave — Pilot Program", "amount": 5000, "dealstage": "appointmentscheduled", "closedate": "2026-07-01", "pipeline": "Default Pipeline"},
+        {"id": "905", "dealname": "Nordic Parts — Renewal", "amount": 42000, "dealstage": "closedlost", "closedate": "2026-04-01", "pipeline": "Default Pipeline"}
+      ]
+    },
+    "tickets": {
+      "type": "tickets",
+      "total": 5,
+      "items": [
+        {"id": "1001", "subject": "Login issue after SSO migration", "status": "new", "priority": "HIGH", "category": "Technical", "description": "Users are unable to log in after the SSO migration completed on April 20. Affects ~30 accounts in the EU region."},
+        {"id": "1002", "subject": "Invoice discrepancy — March billing", "status": "waiting on contact", "priority": "MEDIUM", "category": "Billing", "description": "Customer reports a $240 overcharge on their March invoice. Awaiting documentation from their finance team."},
+        {"id": "1003", "subject": "Feature request: bulk export", "status": "waiting on us", "priority": "LOW", "category": "Feature Request", "description": "Customer would like to bulk export contact data as CSV. Currently requires API access."},
+        {"id": "1004", "subject": "Widget not loading in Safari", "status": "new", "priority": "HIGH", "category": "Technical", "description": "Safari 17+ users see a blank widget. Reproducible on macOS Sequoia. Chrome and Firefox unaffected."},
+        {"id": "1005", "subject": "Onboarding call scheduling", "status": "closed", "priority": "LOW", "category": "General", "description": "New customer onboarding completed. Follow-up scheduled for Q3."}
       ]
     }
   },
   "callToolResponses": {
-    "get_lists": {
-      "type": "lists",
-      "total": 4,
-      "items": [
-        {"id": "lst001", "name": "Spring Campaign Subscribers", "type": "MANUAL", "size": 3200},
-        {"id": "lst002", "name": "Product Launch Waitlist", "type": "DYNAMIC", "size": 1580},
-        {"id": "lst003", "name": "VIP Customers", "type": "MANUAL", "size": 450},
-        {"id": "lst004", "name": "Newsletter Opt-ins", "type": "DYNAMIC", "size": 8900}
-      ]
-    },
     "get_list_contacts": {
-      "type": "contacts",
-      "list_id": "lst001",
-      "list_name": "Spring Campaign Subscribers",
+      "type": "list_contacts",
+      "list_id": "102",
+      "list_name": "Spring Campaign 2025",
       "total": 3,
       "items": [
-        {"id": "ct001", "firstname": "Maria", "lastname": "Johnson", "email": "maria.j@example.com", "phone": "(555) 123-4567", "company": "TechCorp", "lifecyclestage": "customer"},
-        {"id": "ct002", "firstname": "James", "lastname": "Wilson", "email": "jwilson@example.com", "phone": "(555) 234-5678", "company": "DataFlow Inc.", "lifecyclestage": "lead"},
-        {"id": "ct003", "firstname": "Sarah", "lastname": "Chen", "email": "s.chen@example.com", "phone": "(555) 345-6789", "company": "CloudBase", "lifecyclestage": "subscriber"}
+        {"id": "501", "firstname": "Sarah", "lastname": "Chen", "email": "sarah.chen@example.com", "phone": "+1-555-0101", "company": "Acme Corp", "lifecyclestage": "lead"},
+        {"id": "502", "firstname": "James", "lastname": "Wilson", "email": "j.wilson@example.com", "phone": "+1-555-0102", "company": "TechStart", "lifecyclestage": "subscriber"},
+        {"id": "503", "firstname": "Maria", "lastname": "Garcia", "email": "m.garcia@example.com", "phone": "+1-555-0103", "company": "GlobalTrade", "lifecyclestage": "opportunity"}
       ]
     },
-    "update_email": { "type": "emails", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
-    "update_list": { "type": "lists", "total": 4, "items": "USE_CURRENT_WITH_UPDATE" },
-    "add_to_list": { "type": "contacts", "total": 4, "items": "USE_CURRENT_PLUS_NEW" },
-    "remove_from_list": { "type": "contacts", "total": 2, "items": "USE_CURRENT_MINUS_REMOVED" },
-    "get_emails": { "type": "emails", "total": 5, "items": "USE_CURRENT" }
+    "update_email": {"type": "emails", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "update_list": {"type": "lists", "total": 4, "items": "USE_CURRENT_WITH_UPDATE"},
+    "add_to_list": {"type": "list_contacts", "total": 4, "items": "USE_CURRENT_PLUS_NEW"},
+    "remove_from_list": {"type": "list_contacts", "total": 2, "items": "USE_CURRENT_MINUS_REMOVED"},
+    "create_contact": {"_createdId": "606", "type": "contacts", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_contact": {"type": "contacts", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_company": {"_createdId": "806", "type": "companies", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_company": {"type": "companies", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_deal": {"_createdId": "906", "type": "deals", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_deal": {"type": "deals", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_ticket": {"_createdId": "1006", "type": "tickets", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_ticket": {"type": "tickets", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"}
   }
 }

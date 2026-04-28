@@ -1,0 +1,68 @@
+{
+  "dataTypes": {
+    "issues": {
+      "type": "issues",
+      "total": 6,
+      "items": [
+        {"id": "10101", "key": "GTC-101", "summary": "API gateway rate limiting causes 429 errors under load", "issuetype": "Bug", "status": "In Progress", "priority": "High", "assignee": "Sarah Jones", "reporter": "DevOps Team", "created": "2026-04-20", "updated": "2026-04-25", "story_points": 5},
+        {"id": "10102", "key": "GTC-102", "summary": "Add Workday HCM leave balance to HR Copilot widget", "issuetype": "Story", "status": "To Do", "priority": "Medium", "assignee": "Mike Chen", "reporter": "Product Owner", "created": "2026-04-21", "updated": "2026-04-21", "story_points": 8},
+        {"id": "10103", "key": "GTC-103", "summary": "MCP gateway health check endpoint", "issuetype": "Task", "status": "Done", "priority": "Medium", "assignee": "Ana Rivera", "reporter": "Tech Lead", "created": "2026-04-15", "updated": "2026-04-22", "story_points": 3},
+        {"id": "10104", "key": "GTC-104", "summary": "Coupa invoice widget dark mode rendering issue", "issuetype": "Bug", "status": "Open", "priority": "Low", "assignee": null, "reporter": "QA Team", "created": "2026-04-23", "updated": "2026-04-23", "story_points": null},
+        {"id": "10105", "key": "GTC-105", "summary": "Implement SAP S/4HANA goods receipt drill-down", "issuetype": "Story", "status": "In Progress", "priority": "High", "assignee": "John Smith", "reporter": "Product Owner", "created": "2026-04-18", "updated": "2026-04-26", "story_points": 13},
+        {"id": "10106", "key": "GTC-106", "summary": "Teams Copilot agent provisioning automation", "issuetype": "Epic", "status": "In Progress", "priority": "Critical", "assignee": "Sarah Jones", "reporter": "CTO", "created": "2026-04-10", "updated": "2026-04-28", "story_points": null}
+      ]
+    },
+    "sprints": {
+      "type": "sprints",
+      "total": 3,
+      "items": [
+        {"id": "sp001", "name": "Sprint 12 — Apr 21–May 4", "state": "active", "start_date": "2026-04-21", "end_date": "2026-05-04", "goal": "Complete MCP gateway v2 and Copilot agent provisioning"},
+        {"id": "sp002", "name": "Sprint 11 — Apr 7–20", "state": "closed", "start_date": "2026-04-07", "end_date": "2026-04-20", "goal": "SAP S/4HANA widget drill-down and DocuSign templates"},
+        {"id": "sp003", "name": "Sprint 13 — May 5–18", "state": "future", "start_date": "2026-05-05", "end_date": "2026-05-18", "goal": null}
+      ]
+    },
+    "projects": {
+      "type": "projects",
+      "total": 3,
+      "items": [
+        {"id": "10001", "key": "GTC", "name": "Great Trading Company LOB Apps", "projectTypeKey": "software", "lead": "Sarah Jones", "issue_count": 48},
+        {"id": "10002", "key": "INFRA", "name": "Infrastructure & DevOps", "projectTypeKey": "software", "lead": "DevOps Team", "issue_count": 22},
+        {"id": "10003", "key": "UX", "name": "Widget UX Design", "projectTypeKey": "software", "lead": "Mike Chen", "issue_count": 15}
+      ]
+    },
+    "epics": {
+      "type": "epics",
+      "total": 4,
+      "items": [
+        {"id": "10106", "key": "GTC-106", "summary": "Teams Copilot agent provisioning automation", "status": "In Progress", "priority": "Critical"},
+        {"id": "10050", "key": "GTC-50", "summary": "MCP Gateway v2 — single port architecture", "status": "Done", "priority": "High"},
+        {"id": "10060", "key": "GTC-60", "summary": "Widget dark mode support across all 10 MCP apps", "status": "In Progress", "priority": "Medium"},
+        {"id": "10070", "key": "GTC-70", "summary": "SAP S/4HANA multi-level drill-down", "status": "In Progress", "priority": "High"}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "create_issue": {"_createdId": "GTC-107", "type": "issues", "total": 7, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_issue": {"type": "issues", "total": 6, "items": "USE_CURRENT_WITH_UPDATE"},
+    "get_sprint_issues": {
+      "type": "issues",
+      "sprint_id": "sp001",
+      "total": 4,
+      "items": [
+        {"id": "10101", "key": "GTC-101", "summary": "API gateway rate limiting causes 429 errors under load", "issuetype": "Bug", "status": "In Progress", "priority": "High", "assignee": "Sarah Jones", "story_points": 5},
+        {"id": "10102", "key": "GTC-102", "summary": "Add Workday HCM leave balance to HR Copilot widget", "issuetype": "Story", "status": "To Do", "priority": "Medium", "assignee": "Mike Chen", "story_points": 8},
+        {"id": "10105", "key": "GTC-105", "summary": "Implement SAP S/4HANA goods receipt drill-down", "issuetype": "Story", "status": "In Progress", "priority": "High", "assignee": "John Smith", "story_points": 13},
+        {"id": "10106", "key": "GTC-106", "summary": "Teams Copilot agent provisioning automation", "issuetype": "Epic", "status": "In Progress", "priority": "Critical", "assignee": "Sarah Jones", "story_points": null}
+      ]
+    },
+    "get_epic_issues": {
+      "type": "issues",
+      "epic_key": "GTC-106",
+      "total": 2,
+      "items": [
+        {"id": "10101", "key": "GTC-101", "summary": "API gateway rate limiting causes 429 errors under load", "issuetype": "Bug", "status": "In Progress", "priority": "High", "story_points": 5},
+        {"id": "10102", "key": "GTC-102", "summary": "Add Workday HCM leave balance to HR Copilot widget", "issuetype": "Story", "status": "To Do", "priority": "Medium", "story_points": 8}
+      ]
+    }
+  }
+}

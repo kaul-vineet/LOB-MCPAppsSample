@@ -1,0 +1,61 @@
+{
+  "dataTypes": {
+    "envelopes": {
+      "type": "envelopes",
+      "data": [
+        {"envelopeId": "e1a2b3c4-0001-0001-0001-111111111111", "emailSubject": "NDA — Acme Corp Partnership", "status": "completed", "statusEmoji": "✅", "sentDateTime": "2026-04-20T09:00:00Z", "completedDateTime": "2026-04-21T14:30:00Z", "recipientCount": 2},
+        {"envelopeId": "e1a2b3c4-0002-0002-0002-222222222222", "emailSubject": "SaaS Subscription Agreement — TechStart", "status": "sent", "statusEmoji": "📤", "sentDateTime": "2026-04-22T11:15:00Z", "recipientCount": 1},
+        {"envelopeId": "e1a2b3c4-0003-0003-0003-333333333333", "emailSubject": "Employment Contract — Q2 Hire", "status": "delivered", "statusEmoji": "📬", "sentDateTime": "2026-04-23T08:45:00Z", "recipientCount": 1},
+        {"envelopeId": "e1a2b3c4-0004-0004-0004-444444444444", "emailSubject": "Vendor MSA — GlobalTrade EU", "status": "declined", "statusEmoji": "❌", "sentDateTime": "2026-04-18T15:00:00Z", "recipientCount": 3},
+        {"envelopeId": "e1a2b3c4-0005-0005-0005-555555555555", "emailSubject": "Insurance Renewal — BlueWave", "status": "voided", "statusEmoji": "🚫", "sentDateTime": "2026-04-15T10:00:00Z", "recipientCount": 1},
+        {"envelopeId": "e1a2b3c4-0006-0006-0006-666666666666", "emailSubject": "Software License — Nordic Parts OY", "status": "created", "statusEmoji": "📝", "sentDateTime": "2026-04-26T07:00:00Z", "recipientCount": 2}
+      ]
+    },
+    "templates": {
+      "type": "templates",
+      "data": [
+        {"templateId": "tpl-001-nda", "name": "Standard NDA", "description": "Mutual Non-Disclosure Agreement — for partner and vendor onboarding.", "lastModified": "2026-01-15", "folderName": "Legal"},
+        {"templateId": "tpl-002-saas", "name": "SaaS Subscription Agreement", "description": "Enterprise SaaS license and subscription terms, 12 months.", "lastModified": "2026-02-20", "folderName": "Sales"},
+        {"templateId": "tpl-003-emp", "name": "Employment Offer Letter", "description": "Standard employment offer with compensation, benefits, start date.", "lastModified": "2026-03-01", "folderName": "HR"},
+        {"templateId": "tpl-004-vendor", "name": "Vendor Master Services Agreement", "description": "MSA for external vendors and service providers.", "lastModified": "2026-03-28", "folderName": "Procurement"}
+      ]
+    }
+  },
+  "callToolResponses": {
+    "get_envelope_details": {
+      "e1a2b3c4-0001-0001-0001-111111111111": {
+        "type": "envelope_detail",
+        "data": {
+          "envelopeId": "e1a2b3c4-0001-0001-0001-111111111111",
+          "emailSubject": "NDA — Acme Corp Partnership",
+          "status": "completed",
+          "statusEmoji": "✅",
+          "sentDateTime": "2026-04-20T09:00:00Z",
+          "completedDateTime": "2026-04-21T14:30:00Z",
+          "signers": [
+            {"name": "Alice Fontaine", "email": "alice.fontaine@acme.com", "status": "completed", "signedDateTime": "2026-04-21T12:15:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
+            {"name": "James Parker", "email": "j.parker@gtc.example", "status": "completed", "signedDateTime": "2026-04-21T14:30:00Z", "deliveredDateTime": "2026-04-21T12:20:00Z"}
+          ]
+        }
+      },
+      "e1a2b3c4-0002-0002-0002-222222222222": {
+        "type": "envelope_detail",
+        "data": {
+          "envelopeId": "e1a2b3c4-0002-0002-0002-222222222222",
+          "emailSubject": "SaaS Subscription Agreement — TechStart",
+          "status": "sent",
+          "statusEmoji": "📤",
+          "sentDateTime": "2026-04-22T11:15:00Z",
+          "signers": [
+            {"name": "Bruno Marchetti", "email": "b.marchetti@techstart.io", "status": "sent", "signedDateTime": null, "deliveredDateTime": "2026-04-22T11:20:00Z"}
+          ]
+        }
+      }
+    },
+    "send_envelope": {
+      "_createdId": "new-envelope-001",
+      "status": "sent",
+      "message": "Envelope sent successfully"
+    }
+  }
+}

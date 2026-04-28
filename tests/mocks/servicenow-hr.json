@@ -1,0 +1,49 @@
+{
+  "dataTypes": {
+    "hr_cases": {
+      "type": "hr_cases",
+      "total": 4,
+      "items": [
+        {"sys_id": "hrc001", "number": "HRC0001001", "opened_for": "Alice Johnson", "hr_service": "Leave Management", "subject": "Maternity leave request — 3 months", "description": "Requesting parental leave starting June 1, 2026", "state": "Open", "priority": "3", "sys_created_on": "2026-04-20"},
+        {"sys_id": "hrc002", "number": "HRC0001002", "opened_for": "Bob Martinez", "hr_service": "Payroll", "subject": "Missing overtime pay for March", "description": "Overtime hours not reflected in March payslip", "state": "In Progress", "priority": "2", "sys_created_on": "2026-04-18"},
+        {"sys_id": "hrc003", "number": "HRC0001003", "opened_for": "Carol Chen", "hr_service": "Benefits", "subject": "Health insurance enrollment update", "description": "Adding spouse and child to health plan", "state": "Open", "priority": "3", "sys_created_on": "2026-04-15"},
+        {"sys_id": "hrc004", "number": "HRC0001004", "opened_for": "David Patel", "hr_service": "Offboarding", "subject": "Final paycheck and clearance documents", "description": "Last working day April 30. Need clearance kit.", "state": "Resolved", "priority": "2", "sys_created_on": "2026-04-10"}
+      ]
+    },
+    "hr_services": {
+      "type": "hr_services",
+      "total": 5,
+      "items": [
+        {"sys_id": "hrs001", "name": "Leave Management", "category": "Time Off", "short_description": "Request, track, and manage employee leave entitlements"},
+        {"sys_id": "hrs002", "name": "Payroll Enquiry", "category": "Payroll", "short_description": "Resolve payroll discrepancies and enquiries"},
+        {"sys_id": "hrs003", "name": "Benefits Enrollment", "category": "Benefits", "short_description": "Enroll or update employee health, dental, and vision plans"},
+        {"sys_id": "hrs004", "name": "Onboarding", "category": "Lifecycle", "short_description": "New employee onboarding tasks and checklist management"},
+        {"sys_id": "hrs005", "name": "Offboarding", "category": "Lifecycle", "short_description": "Employee exit process, clearance, and final documentation"}
+      ]
+    },
+    "hr_approvals": {
+      "type": "hr_approvals",
+      "total": 3,
+      "items": [
+        {"sys_id": "hra001", "approver": "Jennifer Lee", "document": "HRC0001001", "state": "requested", "due_date": "2026-04-30"},
+        {"sys_id": "hra002", "approver": "Mark Thompson", "document": "HRC0001003", "state": "requested", "due_date": "2026-04-28"},
+        {"sys_id": "hra003", "approver": "Susan Clark", "document": "HRC0001002", "state": "requested", "due_date": "2026-04-27"}
+      ]
+    },
+    "employees": [
+      {"id": "emp001", "name": "Alice Johnson"},
+      {"id": "emp002", "name": "Bob Martinez"},
+      {"id": "emp003", "name": "Carol Chen"},
+      {"id": "emp004", "name": "David Patel"},
+      {"id": "emp005", "name": "Emma Wilson"}
+    ]
+  },
+  "callToolResponses": {
+    "create_hr_case": {"type": "hr_cases", "total": 5, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_hr_case": {"success": true},
+    "hr_approve_record": {"success": true},
+    "hr_reject_record": {"success": true},
+    "add_hr_work_note": {"success": true},
+    "get_users": {"items": "USE_EMPLOYEES_LIST"}
+  }
+}

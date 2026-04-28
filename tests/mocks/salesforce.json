@@ -1,32 +1,170 @@
 {
   "dataTypes": {
+    "accounts": {
+      "type": "accounts",
+      "total": 5,
+      "items": [
+        {"id": "001000000001", "name": "TechFlow Inc", "industry": "Technology", "billing_city": "San Francisco", "phone": "(415) 555-0101", "website": "techflow.com", "type": "Customer", "number_of_employees": 320},
+        {"id": "001000000002", "name": "DataBridge Corp", "industry": "Technology", "billing_city": "New York", "phone": "(212) 555-0202", "website": "databridge.io", "type": "Customer", "number_of_employees": 85},
+        {"id": "001000000003", "name": "Summit Analytics", "industry": "Finance", "billing_city": "Chicago", "phone": "(312) 555-0303", "website": "summit-analytics.com", "type": "Partner", "number_of_employees": 210},
+        {"id": "001000000004", "name": "MediCare Solutions", "industry": "Healthcare", "billing_city": "Boston", "phone": "(617) 555-0404", "website": "medicare-sol.com", "type": "Prospect", "number_of_employees": 1500},
+        {"id": "001000000005", "name": "Quantum Dynamics", "industry": "Manufacturing", "billing_city": "Seattle", "phone": "(206) 555-0505", "website": "qdynamics.com", "type": "Customer", "number_of_employees": 640}
+      ]
+    },
     "leads": {
       "type": "leads",
       "total": 5,
       "items": [
-        {"id": "00QgK0000080pE2UAI", "first_name": "Phyllis", "last_name": "Cotton", "company": "Abbott Insurance", "email": "pcotton@abbottins.net", "phone": "(703) 757-1000", "status": "Open - Not Contacted", "lead_source": "Web"},
-        {"id": "00QgK0000080pE3UAI", "first_name": "Jeff", "last_name": "Glimpse", "company": "Jackson Controls", "email": "jeffg@jackson.com", "phone": "886-2-25474189", "status": "Open - Not Contacted", "lead_source": "Phone Inquiry"},
-        {"id": "00QgK0000080pE4UAI", "first_name": "Mike", "last_name": "Braund", "company": "Metropolitan Health", "email": "mikeb@metro.com", "phone": "(410) 381-2334", "status": "Open - Not Contacted", "lead_source": "Purchased List"},
-        {"id": "00QgK0000080pE5UAI", "first_name": "Patricia", "last_name": "Feager", "company": "International Shipping Co.", "email": "patricia_feager@is.com", "phone": "(336) 777-1970", "status": "Working - Contacted", "lead_source": "Partner Referral"},
-        {"id": "00QgK0000080pE1UAI", "first_name": "Bertha", "last_name": "Boxer", "company": "Farmers Coop. of Florida", "email": "bertha@fcof.net", "phone": "(850) 644-4200", "status": "Working - Contacted", "lead_source": "Web"}
+        {"id": "00Q000000001", "first_name": "Sarah", "last_name": "Chen", "company": "TechFlow Inc", "email": "sarah.chen@techflow.com", "phone": "(415) 555-0101", "status": "Open - Not Contacted", "lead_source": "Web"},
+        {"id": "00Q000000002", "first_name": "Marcus", "last_name": "Rivera", "company": "DataBridge Corp", "email": "m.rivera@databridge.io", "phone": "(212) 555-0202", "status": "Working - Contacted", "lead_source": "Partner Referral"},
+        {"id": "00Q000000003", "first_name": "Aisha", "last_name": "Patel", "company": "CloudNine Solutions", "email": "aisha@cloudnine.dev", "phone": "(650) 555-0303", "status": "Open - Not Contacted", "lead_source": "Phone Inquiry"},
+        {"id": "00Q000000004", "first_name": "James", "last_name": "O'Brien", "company": "Summit Analytics", "email": "jobrien@summit-analytics.com", "phone": "(312) 555-0404", "status": "Closed - Converted", "lead_source": "Web", "is_converted": true, "converted_account_name": "Summit Analytics", "converted_contact_name": "Priya Sharma", "converted_opportunity_name": "Summit Analytics Dashboard"},
+        {"id": "00Q000000005", "first_name": "Lin", "last_name": "Wei", "company": "Quantum Dynamics", "email": "lin.wei@qdynamics.com", "phone": "(408) 555-0505", "status": "Working - Contacted", "lead_source": "Purchased List"}
+      ]
+    },
+    "contacts": {
+      "type": "contacts",
+      "total": 5,
+      "items": [
+        {"id": "003000000001", "first_name": "Elena", "last_name": "Vasquez", "email": "e.vasquez@techflow.com", "phone": "(415) 555-1101", "title": "VP Engineering", "account_name": "TechFlow Inc", "account_id": "001000000001"},
+        {"id": "003000000002", "first_name": "David", "last_name": "Kim", "email": "d.kim@databridge.io", "phone": "(212) 555-1202", "title": "CTO", "account_name": "DataBridge Corp", "account_id": "001000000002"},
+        {"id": "003000000003", "first_name": "Priya", "last_name": "Sharma", "email": "p.sharma@summit-a.com", "phone": "(312) 555-1303", "title": "CFO", "account_name": "Summit Analytics", "account_id": "001000000003"},
+        {"id": "003000000004", "first_name": "Tom", "last_name": "Nguyen", "email": "t.nguyen@medicare-sol.com", "phone": "(617) 555-1404", "title": "Director IT", "account_name": "MediCare Solutions", "account_id": "001000000004"},
+        {"id": "003000000005", "first_name": "Fatima", "last_name": "Al-Rashid", "email": "f.rashid@qdynamics.com", "phone": "(206) 555-1505", "title": "Procurement Mgr", "account_name": "Quantum Dynamics", "account_id": "001000000005"}
       ]
     },
     "opportunities": {
       "type": "opportunities",
       "total": 5,
       "items": [
-        {"id": "006gK000001ABC1", "name": "Grand Hotels SLA", "account": "Grand Hotels & Resorts Ltd", "stage": "Negotiation/Review", "amount": 210000, "close_date": "2026-05-15", "probability": 75},
-        {"id": "006gK000001ABC2", "name": "United Oil Installations", "account": "United Oil & Gas Corp.", "stage": "Closed Won", "amount": 440000, "close_date": "2026-03-01", "probability": 100},
-        {"id": "006gK000001ABC3", "name": "Edge Emergency Generators", "account": "Edge Communications", "stage": "Prospecting", "amount": 75000, "close_date": "2026-06-30", "probability": 10},
-        {"id": "006gK000001ABC4", "name": "Burlington Textile Weaving", "account": "Burlington Textiles Corp", "stage": "Needs Analysis", "amount": 325000, "close_date": "2026-07-15", "probability": 25},
-        {"id": "006gK000001ABC5", "name": "Pyramid Emergency Generators", "account": "Pyramid Construction Inc.", "stage": "Id. Decision Makers", "amount": 100000, "close_date": "2026-08-01", "probability": 60}
+        {"id": "006000000001", "name": "TechFlow Enterprise License", "account_name": "TechFlow Inc", "account_id": "001000000001", "stage": "Proposal/Price Quote", "amount": 125000, "close_date": "2026-05-15", "probability": 60},
+        {"id": "006000000002", "name": "DataBridge Platform Migration", "account_name": "DataBridge Corp", "account_id": "001000000002", "stage": "Negotiation/Review", "amount": 340000, "close_date": "2026-04-30", "probability": 75},
+        {"id": "006000000003", "name": "CloudNine Starter Package", "account_name": "CloudNine", "account_id": "", "stage": "Prospecting", "amount": 28000, "close_date": "2026-07-01", "probability": 15},
+        {"id": "006000000004", "name": "Summit Analytics Dashboard", "account_name": "Summit Analytics", "account_id": "001000000003", "stage": "Closed Won", "amount": 89000, "close_date": "2026-03-10", "probability": 100},
+        {"id": "006000000005", "name": "Quantum Research Grant Tool", "account_name": "Quantum Dynamics", "account_id": "001000000005", "stage": "Needs Analysis", "amount": 210000, "close_date": "2026-06-20", "probability": 30}
+      ]
+    },
+    "cases": {
+      "type": "cases",
+      "total": 5,
+      "items": [
+        {"id": "500000000001", "case_number": "CS-10041", "subject": "API integration failure on data sync", "status": "Open", "priority": "High", "account_name": "TechFlow Inc", "created_date": "2026-04-18"},
+        {"id": "500000000002", "case_number": "CS-10042", "subject": "License seat count discrepancy", "status": "Working", "priority": "Medium", "account_name": "DataBridge Corp", "created_date": "2026-04-17"},
+        {"id": "500000000003", "case_number": "CS-10043", "subject": "SSO configuration not persisting", "status": "Escalated", "priority": "Critical", "account_name": "Summit Analytics", "created_date": "2026-04-15"},
+        {"id": "500000000004", "case_number": "CS-10044", "subject": "Report export timeout for large data", "status": "New", "priority": "Low", "account_name": "MediCare Solutions", "created_date": "2026-04-20"},
+        {"id": "500000000005", "case_number": "CS-10045", "subject": "Mobile app crashes on iOS 17.4", "status": "Closed", "priority": "High", "account_name": "Quantum Dynamics", "created_date": "2026-04-10"}
+      ]
+    },
+    "tasks": {
+      "type": "tasks",
+      "total": 5,
+      "items": [
+        {"id": "00T000000001", "subject": "Follow up with Sarah Chen re: TechFlow demo", "status": "Not Started", "priority": "High", "activity_date": "2026-04-28", "what_name": "TechFlow Enterprise License"},
+        {"id": "00T000000002", "subject": "Prepare proposal for DataBridge migration", "status": "In Progress", "priority": "High", "activity_date": "2026-04-26", "what_name": "DataBridge Platform Migration"},
+        {"id": "00T000000003", "subject": "Schedule onboarding call with Summit Analytics", "status": "Not Started", "priority": "Normal", "activity_date": "2026-05-02", "what_name": "Summit Analytics Dashboard"},
+        {"id": "00T000000004", "subject": "Send pricing sheet to MediCare IT team", "status": "Completed", "priority": "Normal", "activity_date": "2026-04-22", "what_name": null},
+        {"id": "00T000000005", "subject": "Review Quantum Dynamics contract terms", "status": "Not Started", "priority": "High", "activity_date": "2026-04-30", "what_name": "Quantum Research Grant Tool"}
+      ]
+    },
+    "campaigns": {
+      "type": "campaigns",
+      "total": 4,
+      "items": [
+        {"id": "701000000001", "name": "Q2 Enterprise Outreach 2026", "status": "Active", "type": "Email", "start_date": "2026-04-01", "end_date": "2026-06-30", "number_of_leads": 142},
+        {"id": "701000000002", "name": "Spring Partner Summit 2026", "status": "Active", "type": "Event", "start_date": "2026-05-15", "end_date": "2026-05-16", "number_of_leads": 38},
+        {"id": "701000000003", "name": "Healthcare Vertical Campaign", "status": "Planning", "type": "Web", "start_date": "2026-05-01", "end_date": "2026-07-31", "number_of_leads": 0},
+        {"id": "701000000004", "name": "2025 End-of-Year Winback", "status": "Completed", "type": "Phone", "start_date": "2025-11-01", "end_date": "2025-12-31", "number_of_leads": 89}
+      ]
+    },
+    "approvals": {
+      "type": "approvals",
+      "total": 3,
+      "items": [
+        {"id": "APR000000001", "target_name": "DataBridge Platform Migration ($340K)", "target_type": "Opportunity", "submitted_by": "Raj Patel", "status": "Pending", "created_date": "2026-04-24"},
+        {"id": "APR000000002", "target_name": "Contract Discount — TechFlow Inc 15%", "target_type": "Account", "submitted_by": "Sarah Chen", "status": "Pending", "created_date": "2026-04-23"},
+        {"id": "APR000000003", "target_name": "Quantum Dynamics Credit Note $12,000", "target_type": "Case", "submitted_by": "David Kim", "status": "Pending", "created_date": "2026-04-22"}
+      ]
+    },
+    "sales_dashboard": {
+      "type": "sales_dashboard",
+      "closed_won_this_month": 414000,
+      "closed_lost_this_month": 95000,
+      "pipeline_by_stage": [
+        {"stage": "Prospecting", "count": 8, "amount": 280000},
+        {"stage": "Qualification", "count": 5, "amount": 420000},
+        {"stage": "Needs Analysis", "count": 4, "amount": 750000},
+        {"stage": "Proposal/Price Quote", "count": 3, "amount": 560000},
+        {"stage": "Negotiation/Review", "count": 2, "amount": 340000},
+        {"stage": "Closed Won", "count": 6, "amount": 1200000},
+        {"stage": "Closed Lost", "count": 3, "amount": 190000}
+      ],
+      "top_accounts": [
+        {"id": "001000000006", "name": "Acme Global Corp", "amount": 480000},
+        {"id": "001000000007", "name": "NextGen Pharma Ltd", "amount": 340000},
+        {"id": "001000000002", "name": "DataBridge Corp", "amount": 340000},
+        {"id": "001000000001", "name": "TechFlow Inc", "amount": 214000},
+        {"id": "001000000005", "name": "Quantum Dynamics", "amount": 210000}
+      ]
+    },
+    "support_dashboard": {
+      "type": "support_dashboard",
+      "total_open": 47,
+      "opened_this_month": 18,
+      "by_status": [
+        {"status": "New", "count": 12},
+        {"status": "Open", "count": 15},
+        {"status": "Working", "count": 9},
+        {"status": "Escalated", "count": 6},
+        {"status": "Closed", "count": 85}
+      ],
+      "by_priority": [
+        {"priority": "Critical", "count": 3},
+        {"priority": "High", "count": 11},
+        {"priority": "Medium", "count": 18},
+        {"priority": "Low", "count": 15}
       ]
     }
   },
   "callToolResponses": {
-    "create_lead": { "_createdId": "00QgK000NEW001", "type": "leads", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
-    "update_lead": { "type": "leads", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" },
-    "create_opportunity": { "_createdId": "006gK000NEW001", "type": "opportunities", "total": 6, "items": "USE_CURRENT_PLUS_NEW" },
-    "update_opportunity": { "type": "opportunities", "total": 5, "items": "USE_CURRENT_WITH_UPDATE" }
+    "get_account_contacts": {
+      "001000000001": {"items": [
+        {"id": "003000000001", "first_name": "Elena", "last_name": "Vasquez", "email": "e.vasquez@techflow.com", "phone": "(415) 555-1101", "title": "VP Engineering"},
+        {"id": "003000000011", "first_name": "Mark", "last_name": "Torres", "email": "m.torres@techflow.com", "phone": "(415) 555-1102", "title": "Account Manager"}
+      ]},
+      "001000000002": {"items": [
+        {"id": "003000000002", "first_name": "David", "last_name": "Kim", "email": "d.kim@databridge.io", "phone": "(212) 555-1202", "title": "CTO"}
+      ]}
+    },
+    "get_case_comments": {
+      "500000000001": {"items": [
+        {"id": "cc001", "body": "Investigated — issue is on the OAuth token refresh path. Escalating to Tier 2.", "created_by_name": "Support Agent Raj", "created_date": "2026-04-19"},
+        {"id": "cc002", "body": "Customer confirmed issue started after API version upgrade to v58.0.", "created_by_name": "Support Agent Priya", "created_date": "2026-04-20"}
+      ]},
+      "500000000003": {"items": [
+        {"id": "cc004", "body": "Reproduced locally. Root cause: SSO metadata not persisted on restart. Fix in v4.2.1.", "created_by_name": "Support Engineer Lin", "created_date": "2026-04-16"},
+        {"id": "cc005", "body": "Hotfix deployed to production. Please verify with customer.", "created_by_name": "Support Engineer Lin", "created_date": "2026-04-21"}
+      ]}
+    },
+    "get_campaign_leads": {
+      "701000000001": {"items": [
+        {"id": "00Q000000011", "first_name": "Anna", "last_name": "Brooks", "company": "Horizon Tech", "email": "a.brooks@horizontech.com", "status": "Working - Contacted"},
+        {"id": "00Q000000012", "first_name": "Carlos", "last_name": "Mendez", "company": "BlueSky Systems", "email": "c.mendez@bluesky.com", "status": "Open - Not Contacted"}
+      ]}
+    },
+    "create_lead": {"_createdId": "00QgK000NEW001", "type": "leads", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_lead": {"type": "leads", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_account": {"_createdId": "001000NEW001", "type": "accounts", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_account": {"type": "accounts", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_contact": {"_createdId": "003000NEW001", "type": "contacts", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_contact": {"type": "contacts", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_opportunity": {"_createdId": "006000NEW001", "type": "opportunities", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_opportunity": {"type": "opportunities", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_case": {"_createdId": "500000NEW001", "type": "cases", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_case": {"type": "cases", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "create_task": {"_createdId": "00T000NEW001", "type": "tasks", "total": 6, "items": "USE_CURRENT_PLUS_NEW"},
+    "update_task": {"type": "tasks", "total": 5, "items": "USE_CURRENT_WITH_UPDATE"},
+    "add_case_comment": {"success": true},
+    "approve_record": {"success": true},
+    "reject_record": {"success": true}
   }
 }
