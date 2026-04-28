@@ -4,17 +4,21 @@
 
 .EXAMPLE
     .\Set-Sail.ps1                        # Full launch: gateway + tunnel
+    .\Set-Sail.ps1 -Provision             # Full launch + push agent package to MOS3
     .\Set-Sail.ps1 -SkipGateway           # Tunnel only  (gateway already running)
     .\Set-Sail.ps1 -SkipTunnel            # Gateway only (no tunnel)
     .\Set-Sail.ps1 -TunnelName gtc-v2     # Named tunnel override
 
 .NOTES
     Requires: Python 3.11+, Dev Tunnels CLI
+    -Provision: also patches ai-plugin.dev.json if the tunnel URL changed, then
+                uploads the agent package to MOS3 via deploy\Provision-Agent.ps1
 #>
 
 param(
     [switch]$SkipGateway,
     [switch]$SkipTunnel,
+    [switch]$Provision,
     [string]$TunnelName  = "gtc-v2",
     [int]$GatewayPort    = 8080
 )
@@ -158,6 +162,40 @@ if (-not $SkipTunnel) {
     Write-Host ""
 }
 
+# ---- Provision (optional) ----------------------------------------------------
+
+if ($Provision) {
+    Write-Host "  >> Patching tunnel URL and provisioning agent..." -ForegroundColor Cyan
+    Write-Host ""
+
+    $pluginPath = "$Root\lob-agent\appPackage\build\ai-plugin.dev.json"
+
+    if (-not $SkipTunnel -and (Test-Path $pluginPath)) {
+        $tunnelInfo = (devtunnel show $TunnelName 2>$null) | Out-String
+        if ($tunnelInfo -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
+            $currentBase = "https://$($Matches[1])"
+            $pluginRaw   = Get-Content $pluginPath -Raw
+            if ($pluginRaw -match '"url"\s*:\s*"(https://[^"]+devtunnels\.ms)') {
+                $existingBase = $Matches[1]
+                if ($existingBase -ne $currentBase) {
+                    Write-Host "  [ CHART     ] Tunnel URL changed -- patching ai-plugin.dev.json" -ForegroundColor Yellow
+                    Write-Host "                OLD: $existingBase" -ForegroundColor DarkGray
+                    Write-Host "                NEW: $currentBase" -ForegroundColor DarkGray
+                    $pluginRaw = $pluginRaw -replace [regex]::Escape($existingBase), $currentBase
+                    [System.IO.File]::WriteAllText($pluginPath, $pluginRaw, [System.Text.Encoding]::UTF8)
+                } else {
+                    Write-Host "  [ CHART     ] Tunnel URL unchanged ($currentBase)" -ForegroundColor Green
+                }
+            }
+        } else {
+            Write-Host "  [ CHART     ] Could not read tunnel URL from devtunnel show -- skipping patch" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
+
+    & "$Root\deploy\Provision-Agent.ps1"
+}
+
 # ---- Summary -----------------------------------------------------------------
 
 Write-Host "  =====================================" -ForegroundColor DarkCyan
@@ -168,6 +206,9 @@ Write-Host "  Routes:  /sf  /sn  /sap  /hs  /ft  /ds" -ForegroundColor Gray
 Write-Host "           /saphr  /workday  /coupa  /jira" -ForegroundColor Gray
 if (-not $SkipTunnel) {
     Write-Host "  Tunnel   -->  check the tunnel window" -ForegroundColor Gray
+}
+if ($Provision) {
+    Write-Host "  MOS3     -->  agent package pushed" -ForegroundColor Gray
 }
 Write-Host "  To stop:      close the gateway window" -ForegroundColor DarkGray
 Write-Host "  =====================================" -ForegroundColor DarkCyan
