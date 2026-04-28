@@ -8,7 +8,6 @@
     .\deploy\SetSail.ps1 -TunnelOnly           # Start (or reattach to) tunnel only
     .\deploy\SetSail.ps1 -SkipGateway          # Tunnel + MOS3 (gateway already running)
     .\deploy\SetSail.ps1 -SkipTunnel           # Gateway + MOS3 only
-    .\deploy\SetSail.ps1 -Stop                 # Stop gateway and tunnel
     .\deploy\SetSail.ps1 -TunnelName gtc-v2    # Named tunnel override
 
 .NOTES
@@ -20,7 +19,6 @@ param(
     [switch]$SkipTunnel,
     [switch]$GatewayOnly,
     [switch]$TunnelOnly,
-    [switch]$Stop,
     [string]$TunnelName  = "gtc-v2",
     [int]$GatewayPort    = 8080
 )
@@ -68,37 +66,6 @@ Write-Host "  Salesforce  ServiceNow  SAP  HubSpot" -ForegroundColor DarkGray
 Write-Host "  Flight  DocuSign  SAPHR  Workday  ..." -ForegroundColor DarkGray
 Write-Host "  =====================================" -ForegroundColor DarkCyan
 Write-Host ""
-
-# ── Stop ─────────────────────────────────────────────────────────────────────
-
-if ($Stop) {
-    Write-Host "  >> Docking the fleet..." -ForegroundColor Cyan
-    Write-Host ""
-
-    $gwPids = (Get-NetTCPConnection -LocalPort $GatewayPort -State Listen -ErrorAction SilentlyContinue).OwningProcess |
-              Select-Object -Unique
-    if ($gwPids) {
-        $gwPids | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
-        Write-Host "  [ HELM      ] Gateway stopped (PID $($gwPids -join ', '))" -ForegroundColor Yellow
-    } else {
-        Write-Host "  [ HELM      ] Gateway not running on port $GatewayPort" -ForegroundColor Gray
-    }
-
-    $tunnelProcs = Get-Process -Name "devtunnel" -ErrorAction SilentlyContinue
-    if ($tunnelProcs) {
-        $tunnelProcs | Stop-Process -Force -ErrorAction SilentlyContinue
-        Write-Host "  [ SIGNAL    ] Tunnel stopped ($($tunnelProcs.Count) process(es))" -ForegroundColor Yellow
-    } else {
-        Write-Host "  [ SIGNAL    ] Tunnel not running" -ForegroundColor Gray
-    }
-
-    Write-Host ""
-    Write-Host "  =====================================" -ForegroundColor DarkCyan
-    Write-Host "   FLEET DOCKED -- ALL CLEAR           " -ForegroundColor Yellow
-    Write-Host "  =====================================" -ForegroundColor DarkCyan
-    Write-Host ""
-    exit 0
-}
 
 # ── Pre-flight checks ─────────────────────────────────────────────────────────
 
@@ -151,48 +118,42 @@ Write-Host ""
 # ── Start gateway ─────────────────────────────────────────────────────────────
 
 if (-not $SkipGateway -and -not $TunnelOnly) {
+    $gwPids = (Get-NetTCPConnection -LocalPort $GatewayPort -State Listen -ErrorAction SilentlyContinue).OwningProcess | Select-Object -Unique
+    if ($gwPids) {
+        $gwPids | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+        Write-Host "  [ HELM      ] Stopped existing gateway on port $GatewayPort" -ForegroundColor Yellow
+        Start-Sleep 1
+    }
+
+    Write-Host "  >> Raising the mainsail (starting gateway)..." -ForegroundColor Cyan
+
+    Start-Process powershell -ArgumentList @(
+        "-NoExit", "-Command",
+        "`$host.UI.RawUI.WindowTitle = 'GTC Gateway (port $GatewayPort)'; Set-Location '$Root'; & '$VenvPython' -m gateway"
+    )
+
+    $maxWait = 30
+    $waited  = 0
     $gatewayUp = $false
-    try {
-        $null = Invoke-WebRequest -Uri "http://localhost:$GatewayPort" -Method GET -TimeoutSec 2 -ErrorAction Stop
-        $gatewayUp = $true
-    } catch {
-        if ($_.Exception.Response -ne $null) { $gatewayUp = $true }
-    }
-
-    if ($gatewayUp) {
-        Write-Host "  [ HELM      ] Gateway already running --> http://localhost:$GatewayPort" -ForegroundColor Green
-        Write-Host ""
-    } else {
-        Write-Host "  >> Raising the mainsail (starting gateway)..." -ForegroundColor Cyan
-
-        Start-Process powershell -ArgumentList @(
-            "-NoExit", "-Command",
-            "`$host.UI.RawUI.WindowTitle = 'GTC Gateway (port $GatewayPort)'; Set-Location '$Root'; & '$VenvPython' -m gateway"
-        )
-
-        $maxWait = 30
-        $waited  = 0
-        do {
-            Start-Sleep 2
-            $waited += 2
-            $gatewayUp = $false
-            try {
-                $null = Invoke-WebRequest -Uri "http://localhost:$GatewayPort" -Method GET -TimeoutSec 2 -ErrorAction Stop
-                $gatewayUp = $true
-            } catch {
-                if ($_.Exception.Response -ne $null) { $gatewayUp = $true }
-            }
-            Write-Host "`r  [ WATCH     ] Waiting for gateway... ${waited}s" -NoNewline -ForegroundColor Yellow
-        } while (-not $gatewayUp -and $waited -lt $maxWait)
-
-        Write-Host ""
-        if ($gatewayUp) {
-            Write-Host "  [ SAILS UP  ] Gateway is live --> http://localhost:$GatewayPort" -ForegroundColor Green
-        } else {
-            Write-Host "  [ SQUALL    ] Gateway not responding after ${maxWait}s -- check the gateway window" -ForegroundColor Yellow
+    do {
+        Start-Sleep 2
+        $waited += 2
+        try {
+            $null = Invoke-WebRequest -Uri "http://localhost:$GatewayPort" -Method GET -TimeoutSec 2 -ErrorAction Stop
+            $gatewayUp = $true
+        } catch {
+            if ($_.Exception.Response -ne $null) { $gatewayUp = $true }
         }
-        Write-Host ""
+        Write-Host "`r  [ WATCH     ] Waiting for gateway... ${waited}s" -NoNewline -ForegroundColor Yellow
+    } while (-not $gatewayUp -and $waited -lt $maxWait)
+
+    Write-Host ""
+    if ($gatewayUp) {
+        Write-Host "  [ SAILS UP  ] Gateway is live --> http://localhost:$GatewayPort" -ForegroundColor Green
+    } else {
+        Write-Host "  [ SQUALL    ] Gateway not responding after ${maxWait}s -- check the gateway window" -ForegroundColor Yellow
     }
+    Write-Host ""
 }
 
 if ($GatewayOnly) {
@@ -209,48 +170,49 @@ if ($GatewayOnly) {
 $tunnelUrl = $null
 
 if (-not $SkipTunnel) {
-    $existingInfo = (devtunnel show $TunnelName 2>$null) | Out-String
-    if ($existingInfo -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
-        $tunnelUrl = "https://$($Matches[1])"
-        Write-Host "  [ SIGNAL    ] Tunnel already hosting --> $tunnelUrl" -ForegroundColor Green
-        Write-Host ""
-    } else {
-        Write-Host "  >> Opening sea lane (dev tunnel '$TunnelName')..." -ForegroundColor Cyan
-
-        if ($LASTEXITCODE -ne 0 -or -not ($existingInfo -match 'Tunnel ID')) {
-            Write-Host "  [ CHARTING  ] Tunnel not found -- charting new course..." -ForegroundColor Yellow
-            devtunnel create $TunnelName --allow-anonymous
-            devtunnel port create $TunnelName -p $GatewayPort --protocol auto
-        } else {
-            $portExists = $existingInfo | Select-String "$GatewayPort"
-            if (-not $portExists) {
-                devtunnel port create $TunnelName -p $GatewayPort --protocol auto
-            }
-        }
-
-        Start-Process powershell -ArgumentList @(
-            "-NoExit", "-Command",
-            "`$host.UI.RawUI.WindowTitle = 'GTC Tunnel ($TunnelName)'; devtunnel host $TunnelName --allow-anonymous"
-        )
-
-        Write-Host "  [ WATCH     ] Waiting for tunnel to register..." -NoNewline -ForegroundColor Yellow
-        for ($i = 0; $i -lt 12; $i++) {
-            Start-Sleep 3
-            $info = (devtunnel show $TunnelName 2>$null) | Out-String
-            if ($info -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
-                $tunnelUrl = "https://$($Matches[1])"
-                break
-            }
-            Write-Host "." -NoNewline -ForegroundColor Yellow
-        }
-        Write-Host ""
-        if ($tunnelUrl) {
-            Write-Host "  [ OPEN SEAS ] Tunnel live --> $tunnelUrl" -ForegroundColor Green
-        } else {
-            Write-Host "  [ OPEN SEAS ] Tunnel window launched (URL not yet visible)" -ForegroundColor Yellow
-        }
-        Write-Host ""
+    $tunnelProcs = Get-Process -Name "devtunnel" -ErrorAction SilentlyContinue
+    if ($tunnelProcs) {
+        $tunnelProcs | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host "  [ SIGNAL    ] Stopped existing tunnel" -ForegroundColor Yellow
+        Start-Sleep 2
     }
+
+    Write-Host "  >> Opening sea lane (dev tunnel '$TunnelName')..." -ForegroundColor Cyan
+
+    $existingInfo = (devtunnel show $TunnelName 2>$null) | Out-String
+    if ($LASTEXITCODE -ne 0 -or -not ($existingInfo -match 'Tunnel ID')) {
+        Write-Host "  [ CHARTING  ] Tunnel not found -- charting new course..." -ForegroundColor Yellow
+        devtunnel create $TunnelName --allow-anonymous
+        devtunnel port create $TunnelName -p $GatewayPort --protocol auto
+    } else {
+        $portExists = $existingInfo | Select-String "$GatewayPort"
+        if (-not $portExists) {
+            devtunnel port create $TunnelName -p $GatewayPort --protocol auto
+        }
+    }
+
+    Start-Process powershell -ArgumentList @(
+        "-NoExit", "-Command",
+        "`$host.UI.RawUI.WindowTitle = 'GTC Tunnel ($TunnelName)'; devtunnel host $TunnelName --allow-anonymous"
+    )
+
+    Write-Host "  [ WATCH     ] Waiting for tunnel to register..." -NoNewline -ForegroundColor Yellow
+    for ($i = 0; $i -lt 12; $i++) {
+        Start-Sleep 3
+        $info = (devtunnel show $TunnelName 2>$null) | Out-String
+        if ($info -match 'https://(\S+-\d+\.\S+devtunnels\.ms)') {
+            $tunnelUrl = "https://$($Matches[1])"
+            break
+        }
+        Write-Host "." -NoNewline -ForegroundColor Yellow
+    }
+    Write-Host ""
+    if ($tunnelUrl) {
+        Write-Host "  [ OPEN SEAS ] Tunnel live --> $tunnelUrl" -ForegroundColor Green
+    } else {
+        Write-Host "  [ OPEN SEAS ] Tunnel window launched (URL not yet visible)" -ForegroundColor Yellow
+    }
+    Write-Host ""
 }
 
 if ($TunnelOnly) {
