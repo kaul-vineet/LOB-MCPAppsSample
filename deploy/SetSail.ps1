@@ -215,6 +215,15 @@ if (-not $SkipTunnel -and (Test-Path $pluginPath)) {
     Write-Host ""
 }
 
+# ── Sync tool names into manifests ───────────────────────────────────────────
+
+Write-Host "  >> Syncing tool names into manifests..." -ForegroundColor Cyan
+& $VenvPython "$Root\deploy\regen_manifests.py"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  [ WARN      ] regen_manifests.py exited with errors -- continuing" -ForegroundColor Yellow
+}
+Write-Host ""
+
 # ── Acquire MOS3 token ────────────────────────────────────────────────────────
 
 Write-Host "  >> Acquiring MOS3 token..." -ForegroundColor Cyan
