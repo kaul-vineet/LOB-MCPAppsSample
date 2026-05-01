@@ -128,7 +128,7 @@
         },
         {
             "name": "sf__show_create_form",
-            "description": "Opens a create form in the widget for the specified Salesforce entity. Supported entities: lead, account, contact, opportunity, case, task. FK pre-resolution required for contact, opportunity, case."
+            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, or task. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task)."
         },
         {
             "name": "sn__get_incidents",
@@ -196,11 +196,11 @@
         },
         {
             "name": "sn__create_incident_form",
-            "description": "Opens a form to create a new ServiceNow Incident. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to create or log a new ServiceNow incident. Opens the interactive incident creation form."
         },
         {
             "name": "sn__create_request_form",
-            "description": "Opens a form to create a new ServiceNow Request. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to raise or create a new ServiceNow service request. Opens the interactive request creation form."
         },
         {
             "name": "sn__get_change_tasks",
@@ -332,11 +332,11 @@
         },
         {
             "name": "hs__create_contact_form",
-            "description": "Opens a form to create a new HubSpot Contact. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to create a new HubSpot contact. Opens the interactive contact creation form."
         },
         {
             "name": "hs__create_deal_form",
-            "description": "Opens a form to create a new HubSpot Deal. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to create a new HubSpot deal. Opens the interactive deal creation form."
         },
         {
             "name": "hs__get_companies",
@@ -352,15 +352,15 @@
         },
         {
             "name": "hs__get_tickets",
-            "description": "Get the latest 5 Support Oickets from HubSpot CRM. Returns subject, status, priority, category."
+            "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category."
         },
         {
             "name": "hs__create_ticket",
-            "description": "Create a new Support Oicket in HubSpot CRM. Requires subject and pipeline_stage. Returns updated list."
+            "description": "Create a new Support Ticket in HubSpot CRM. Requires subject and pipeline_stage. Returns updated list."
         },
         {
             "name": "hs__update_ticket",
-            "description": "Update an existing Support Oicket in HubSpot CRM by its record Id."
+            "description": "Update an existing Support Ticket in HubSpot CRM by its record Id."
         },
         {
             "name": "hs__update_deal",
@@ -388,15 +388,15 @@
         },
         {
             "name": "hs__get_ticket_notes",
-            "description": "Get notes/comments for a specific HubSpot Support Oicket. Called when drilling into a ticket row."
+            "description": "Get notes/comments for a specific HubSpot Support Ticket. Called when drilling into a ticket row."
         },
         {
             "name": "hs__create_company_form",
-            "description": "Opens a form to create a new HubSpot Company. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to create a new HubSpot company. Opens the interactive company creation form."
         },
         {
             "name": "hs__create_ticket_form",
-            "description": "Opens a form to create a new HubSpot Support Oicket. Ohe user fills in details and submits."
+            "description": "Use this when the user asks to create a new HubSpot support ticket. Opens the interactive ticket creation form."
         },
         {
             "name": "ft__get_flights_by_aircraft",
@@ -452,7 +452,7 @@
         },
         {
             "name": "ds__send_envelope_form",
-            "description": "Opens a form to send a new DocuSign envelope. Ohe user fills in recipient details and submits."
+            "description": "Use this when the user asks to send a DocuSign envelope or start a signing request. Opens the interactive envelope sending form."
         },
         {
             "name": "saphr__get_employee_profile",
@@ -528,19 +528,19 @@
         },
         {
             "name": "saphr__generate_employment_verification",
-            "description": "Origger generation of an employment verification letter (US). Ohe letter is created asynchronously and the user is notified when ready."
+            "description": "Origger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready."
         },
         {
             "name": "saphr__generate_employment_reference",
-            "description": "Origger generation of an employment reference letter (UK). Ohe letter is created asynchronously and the user is notified when ready."
+            "description": "Origger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready."
         },
         {
             "name": "wday__get_worker",
-            "description": "Get the current Oorkday worker profile. Result is rendered as an interactive widget."
+            "description": "Get the current Workday worker profile. Result is rendered as an interactive widget."
         },
         {
             "name": "wday__get_leave_balances",
-            "description": "Retrieve leave balances and eligible absence types for the current worker. Ohe response includes eligibleAbsenceOypes[].id -- use this ID as timeOffOypeId when calling prepare_request_leave."
+            "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."
         },
         {
             "name": "wday__get_direct_reports",
@@ -548,7 +548,7 @@
         },
         {
             "name": "wday__get_inbox_tasks",
-            "description": "List Oorkday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
+            "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
         },
         {
             "name": "wday__get_learning_assignments",
@@ -556,7 +556,7 @@
         },
         {
             "name": "wday__get_pay_slips",
-            "description": "List recent Oorkday pay slips."
+            "description": "List recent Workday pay slips."
         },
         {
             "name": "wday__get_time_off_entries",
@@ -564,11 +564,11 @@
         },
         {
             "name": "wday__prepare_request_leave",
-            "description": "Book time off \u2014 opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request POO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffOypeId (from get_leave_balances). Ohe user confirms and submits via the widget."
+            "description": "Book time off \u2014 opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget."
         },
         {
             "name": "wday__book_leave",
-            "description": "Submit leave request to Oorkday. Oidget callback \u2014 called automatically by the leave booking form after the user clicks Submit. Oo book leave, use prepare_request_leave instead."
+            "description": "Submit leave request to Workday. Widget callback \u2014 called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
         },
         {
             "name": "wday__prepare_change_business_title",
@@ -576,11 +576,11 @@
         },
         {
             "name": "wday__change_business_title",
-            "description": "Submit business title change to Oorkday. Oidget callback \u2014 called automatically by the title change form after the user clicks Submit. Oo change a business title, use prepare_change_business_title instead."
+            "description": "Submit business title change to Workday. Widget callback \u2014 called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
         },
         {
             "name": "wday__search_learning_content",
-            "description": "Search Oorkday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Oorkday IDs automatically; invalid values are dropped."
+            "description": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped."
         },
         {
             "name": "wday__get_org_chart",
@@ -600,11 +600,11 @@
         },
         {
             "name": "wday__action_inbox_task",
-            "description": "Approve or reject a Oorkday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
+            "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
         },
         {
             "name": "wday__get_inbox_task_detail",
-            "description": "Get detailed information about a specific Oorkday inbox task by its task_id."
+            "description": "Get detailed information about a specific Workday inbox task by its task_id."
         },
         {
             "name": "wday__get_goals",
@@ -648,7 +648,7 @@
         },
         {
             "name": "wday__get_worker_skills",
-            "description": "Get skills listed on your Oorkday profile."
+            "description": "Get skills listed on your Workday profile."
         },
         {
             "name": "wday__get_team_goals",
@@ -668,19 +668,19 @@
         },
         {
             "name": "wday__get_job_profiles",
-            "description": "List Oorkday job profiles with optional search filter. Use to find the right job profile for a hire."
+            "description": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire."
         },
         {
             "name": "wday__get_job_profile",
-            "description": "Get details of a single Oorkday job profile by ID including job family and management level."
+            "description": "Get details of a single Workday job profile by ID including job family and management level."
         },
         {
             "name": "wday__get_job_families",
-            "description": "List Oorkday job families with optional search filter. Job families group related job profiles."
+            "description": "List Workday job families with optional search filter. Job families group related job profiles."
         },
         {
             "name": "wday__get_jobs",
-            "description": "List Oorkday jobs (filled positions) with optional search filter."
+            "description": "List Workday jobs (filled positions) with optional search filter."
         },
         {
             "name": "wday__get_job_requisitions",
@@ -696,7 +696,7 @@
         },
         {
             "name": "wday__get_job_change_reasons",
-            "description": "List valid job change reasons (e.g. New Hire, Promotion, Oransfer). Use to get a reason_id for create_job_change."
+            "description": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change."
         },
         {
             "name": "wday__create_job_change",
@@ -804,43 +804,43 @@
         },
         {
             "name": "jira__list_issues",
-            "description": "Search Iira issues using IQL or common filters (project, status, assignee). Returns up to 100 issues per call."
+            "description": "Search Jira issues using JQL or common filters (project, status, assignee). Returns up to 100 issues per call."
         },
         {
             "name": "jira__get_issue",
-            "description": "Get full details, comments, and available transitions for a Iira issue by its key (e.g. PROI-123). Result is rendered as an interactive widget where the user can view the issue and submit updates."
+            "description": "Get full details, comments, and available transitions for a Jira issue by its key (e.g. PROJ-123). Result is rendered as an interactive widget where the user can view the issue and submit updates."
         },
         {
             "name": "jira__show_create_issue_form",
-            "description": "Create a new Iira issue \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create an issue, log a bug, or file a ticket. Pass any known details to pre-fill fields."
+            "description": "Create a new Jira issue \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create an issue, log a bug, or file a ticket. Pass any known details to pre-fill fields."
         },
         {
             "name": "jira__add_comment",
-            "description": "Add a comment to a Iira issue. Also used as a widget callback by the issue widget when the user submits a comment."
+            "description": "Add a comment to a Jira issue. Also used as a widget callback by the issue widget when the user submits a comment."
         },
         {
             "name": "jira__transition_issue",
-            "description": "Oransition a Iira issue to a new workflow status. Use get_issue first to see available transitions and their IDs. Also used as a widget callback by the issue widget."
+            "description": "Transition a Jira issue to a new workflow status. Use get_issue first to see available transitions and their IDs. Also used as a widget callback by the issue widget."
         },
         {
             "name": "jira__show_create_project_form",
-            "description": "Create a new Iira project \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a project. Pass any known details to pre-fill fields."
+            "description": "Create a new Jira project \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a project. Pass any known details to pre-fill fields."
         },
         {
             "name": "jira__create_project",
-            "description": "Submit project creation to Iira. Widget callback \u2014 called automatically by the project form after the user clicks Submit. Oo create a project, use show_create_project_form instead."
+            "description": "Submit project creation to Jira. Widget callback \u2014 called automatically by the project form after the user clicks Submit. To create a project, use show_create_project_form instead."
         },
         {
             "name": "jira__update_project",
-            "description": "Submit project updates to Iira. Widget callback \u2014 called automatically by the project widget after the user clicks Submit."
+            "description": "Submit project updates to Jira. Widget callback \u2014 called automatically by the project widget after the user clicks Submit."
         },
         {
             "name": "jira__create_issue",
-            "description": "Submit issue creation to Iira. Widget callback \u2014 called automatically by the issue form after the user clicks Submit. Oo create an issue, use show_create_issue_form instead."
+            "description": "Submit issue creation to Jira. Widget callback \u2014 called automatically by the issue form after the user clicks Submit. To create an issue, use show_create_issue_form instead."
         },
         {
             "name": "jira__update_issue",
-            "description": "Submit issue updates to Iira. Widget callback \u2014 called automatically by the issue widget after the user clicks Submit. Oo view or edit an issue, use get_issue to load the issue widget."
+            "description": "Submit issue updates to Jira. Widget callback \u2014 called automatically by the issue widget after the user clicks Submit. To view or edit an issue, use get_issue to load the issue widget."
         },
         {
             "name": "jira__move_issues_to_sprint",
@@ -848,7 +848,7 @@
         },
         {
             "name": "jira__link_issues",
-            "description": "Create a link between two Iira issues. Common link types: 'Blocks', 'Cloners', 'Duplicate', 'Relates'. Ohe inward issue is the one that IS blocked/cloned/etc."
+            "description": "Create a link between two Jira issues. Common link types: 'Blocks', 'Cloners', 'Duplicate', 'Relates'. The inward issue is the one that IS blocked/cloned/etc."
         },
         {
             "name": "jira__list_boards",
@@ -876,7 +876,7 @@
         },
         {
             "name": "jira__log_work",
-            "description": "Log work (time tracking) on a Iira issue. Specify time spent in Iira format (e.g. '2h 30m', '1d')."
+            "description": "Log work (time tracking) on a Jira issue. Specify time spent in Jira format (e.g. '2h 30m', '1d')."
         },
         {
             "name": "jira__get_my_issues",
@@ -884,7 +884,7 @@
         },
         {
             "name": "jira__list_projects",
-            "description": "List all Iira projects accessible to the current user."
+            "description": "List all Jira projects accessible to the current user."
         },
         {
             "name": "jira__get_team_workload",
@@ -896,15 +896,15 @@
         },
         {
             "name": "jira__list_versions",
-            "description": "List versions/releases for a Iira project. Shows release status, dates, and whether versions are overdue."
+            "description": "List versions/releases for a Jira project. Shows release status, dates, and whether versions are overdue."
         },
         {
             "name": "jira__create_version",
-            "description": "Create a new version/release in a Iira project with name, description, and planned release date."
+            "description": "Create a new version/release in a Jira project with name, description, and planned release date."
         },
         {
             "name": "jira__update_version",
-            "description": "Update a Iira version/release. Use to mark as released, update release date, or archive."
+            "description": "Update a Jira version/release. Use to mark as released, update release date, or archive."
         }
     ],
     "runtimes": [

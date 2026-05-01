@@ -45,7 +45,7 @@ names = set(z.namelist())
 for f in ["manifest.json", "declarativeAgent.json", "ai-plugin.json",
           "color.png", "outline.png"]:
     check(f"contains {f}", f in names)
-check("no mcp-tools.json in zip (MOS3 can't resolve file: token)",
+check("no mcp-tools.json in zip (served via gateway at /mcp-tools.json)",
       "mcp-tools.json" not in names)
 
 # ── 2. ai-plugin.json schema ──────────────────────────────────────────────────
@@ -62,34 +62,28 @@ check("10 runtimes", len(plugin.get("runtimes", [])) == 10,
       str(len(plugin.get("runtimes", []))))
 
 all_rff: set = set()
-total_mtd_tools = 0
-title_violations = []
-missing_schema = []
+file_ref_violations = []
+tunnel_url = None
 
 for rt in plugin.get("runtimes", []):
     rff = rt.get("run_for_functions", [])
     all_rff.update(rff)
     mtd = rt.get("spec", {}).get("mcp_tool_description", {})
-    tools = mtd.get("tools", [])
-    total_mtd_tools += len(tools)
-    for t in tools:
-        schema = t.get("inputSchema", {})
-        if "title" in schema:
-            title_violations.append(t["name"])
-        if not schema:
-            missing_schema.append(t["name"])
+    url = rt.get("spec", {}).get("url", "")
+    if "devtunnels.ms" in url and not tunnel_url:
+        tunnel_url = url.rsplit("/", 2)[0]
+    # Must be a file reference, not inlined tools
+    if "tools" in mtd:
+        file_ref_violations.append(rt.get("spec", {}).get("url", "?"))
+    elif "file" not in mtd:
+        file_ref_violations.append(rt.get("spec", {}).get("url", "?") + " (no mcp_tool_description)")
 
 check("all functions covered by run_for_functions",
       len(all_rff) == len(plugin.get("functions", [])),
       f"{len(all_rff)} vs {len(plugin.get('functions', []))}")
-check("mcp_tool_description present on all runtimes",
-      total_mtd_tools == 225, f"{total_mtd_tools} tools inlined")
-check("no 'title' in inputSchema top-level (Copilot schema parser fix)",
-      len(title_violations) == 0,
-      f"{len(title_violations)} violations" if title_violations else "")
-check("all tools have inputSchema",
-      len(missing_schema) == 0,
-      f"missing: {missing_schema[:3]}" if missing_schema else "")
+check("all runtimes use file reference (not inlined) for widget rendering",
+      len(file_ref_violations) == 0,
+      f"violations: {file_ref_violations[:3]}" if file_ref_violations else "")
 
 # ── 3. declarativeAgent.json ──────────────────────────────────────────────────
 
@@ -110,17 +104,19 @@ check("actions references ai-plugin.json",
 print()
 print("4. Live MCP server health (via tunnel)")
 
-tunnel_url = None
-for rt in plugin.get("runtimes", []):
-    url = rt.get("spec", {}).get("url", "")
-    if "devtunnels.ms" in url:
-        tunnel_url = url.rsplit("/", 2)[0]
-        break
-
+# tunnel_url already extracted during runtime loop above
 if not tunnel_url:
     print(f"  {WARN}  No devtunnel URL found in ai-plugin.json — skipping live tests")
 else:
     print(f"  {INFO}  Tunnel base: {tunnel_url}")
+    # Verify gateway serves mcp-tools.json (required for file reference widget rendering)
+    try:
+        r = httpx.get(f"{tunnel_url}/mcp-tools.json", timeout=8)
+        tools_ok = r.status_code == 200 and "tools" in r.text
+        check("/mcp-tools.json accessible via tunnel (widget rendering)", tools_ok,
+              f"HTTP {r.status_code}" if not tools_ok else f"{len(r.json().get('tools', []))} tools")
+    except Exception as exc:
+        check("/mcp-tools.json accessible via tunnel", False, str(exc)[:80])
     routes = [
         ("sf",      "sf__get_leads"),
         ("sn",      "sn__get_incidents"),

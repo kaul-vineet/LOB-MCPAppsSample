@@ -392,7 +392,7 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "ds__send_envelope_form",
-        "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
+        "description": "Use this when the user asks to send a DocuSign envelope or start a signing request. Opens the interactive envelope sending form.",
         "handler": ds__send_envelope_form,
     },
 ]

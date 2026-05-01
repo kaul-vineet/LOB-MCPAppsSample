@@ -369,53 +369,9 @@ Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
 
-# Inline mcp-tools.json into each runtime's mcp_tool_description.
-# {file:"mcp-tools.json"} is a Teams Toolkit template token; MOS3 doesn't
-# resolve it from the zip — it tries an HTTP fallback and gets 500.
-# Per-runtime filtering: each runtime only carries the tools it handles,
-# keeping schemas small and conforming to MCP spec (name/description/inputSchema only).
-$allToolsByName = @{}
-(Get-Content "$SrcDir\mcp-tools.json" -Raw -Encoding UTF8 | ConvertFrom-Json).tools | ForEach-Object {
-    # Strip 'title' from inputSchema: the top-level title (Pydantic class name,
-    # e.g. "sf__get_leadsArguments") is not in the MCP spec and Copilot's
-    # schema parser rejects it. Property-level titles are also stripped.
-    # All other fields (type, properties, required, additionalProperties…) are kept.
-    $rawSchema   = $_.inputSchema
-    $cleanSchema = [PSCustomObject]@{}
-    foreach ($topField in $rawSchema.PSObject.Properties) {
-        if ($topField.Name -eq 'title') { continue }
-        if ($topField.Name -eq 'properties' -and $topField.Value -ne $null) {
-            $cleanProps = [PSCustomObject]@{}
-            foreach ($propName in $topField.Value.PSObject.Properties.Name) {
-                $srcProp   = $topField.Value.$propName
-                $cleanProp = [PSCustomObject]@{}
-                foreach ($pf in $srcProp.PSObject.Properties) {
-                    if ($pf.Name -ne 'title') {
-                        $cleanProp | Add-Member -NotePropertyName $pf.Name -NotePropertyValue $pf.Value
-                    }
-                }
-                $cleanProps | Add-Member -NotePropertyName $propName -NotePropertyValue $cleanProp
-            }
-            $cleanSchema | Add-Member -NotePropertyName 'properties' -NotePropertyValue $cleanProps
-        } else {
-            $cleanSchema | Add-Member -NotePropertyName $topField.Name -NotePropertyValue $topField.Value
-        }
-    }
-    $clean = [PSCustomObject]@{
-        name        = $_.name
-        description = $_.description
-        inputSchema = $cleanSchema
-    }
-    $allToolsByName[$_.name] = $clean
-}
-$plugin = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
-foreach ($rt in $plugin.runtimes) {
-    $rtTools = $rt.run_for_functions | ForEach-Object { $allToolsByName[$_] } | Where-Object { $_ }
-    $desc = [PSCustomObject]@{ tools = @($rtTools) }
-    $rt.spec | Add-Member -Force -NotePropertyName 'mcp_tool_description' -NotePropertyValue $desc
-}
-[System.IO.File]::WriteAllText("$TmpDir\ai-plugin.json",
-    ($plugin | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
+# ai-plugin.json uses {file:"<tunnel>/mcp-tools.json"} — gateway serves mcp-tools.json
+# at GET /mcp-tools.json so MOS3 validation can fetch it. No inlining needed.
+Copy-Item "$BuildDir\ai-plugin.dev.json" "$TmpDir\ai-plugin.json"
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -426,30 +382,61 @@ $sizeKB = [math]::Round((Get-Item $ZipPath).Length / 1KB, 1)
 Write-Host "  [ OK        ] Zip built: $sizeKB KB  |  Instructions: $($instructions.Length) chars" -ForegroundColor Green
 Write-Host ""
 
-# ── Upload to MOS3 ────────────────────────────────────────────────────────────
+# ── Upload to MOS3 (with retry on 5xx/timeout) ───────────────────────────────
 
 Write-Host "  >> Uploading to MOS3..." -ForegroundColor Cyan
 
 Add-Type -AssemblyName System.Net.Http
-$httpClient = [System.Net.Http.HttpClient]::new()
-$httpClient.Timeout = [System.TimeSpan]::FromSeconds(120)
-$httpClient.DefaultRequestHeaders.Authorization =
-    [System.Net.Http.Headers.AuthenticationHeaderValue]::new("Bearer", $token)
+$zipBytes = [System.IO.File]::ReadAllBytes($ZipPath)
 
-$zipBytes   = [System.IO.File]::ReadAllBytes($ZipPath)
-$zipContent = [System.Net.Http.ByteArrayContent]::new($zipBytes)
-$zipContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new("application/zip")
-$multipart  = [System.Net.Http.MultipartFormDataContent]::new()
-$multipart.Add($zipContent, "package", "appPackage.zip")
+$uploadResp   = $null
+$uploadOk     = $false
+$maxAttempts  = 3
 
-$response     = $httpClient.PostAsync("$MOS3Url/builder/v1/users/packages", $multipart).GetAwaiter().GetResult()
-$responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+    if ($attempt -gt 1) {
+        $wait = 15 * ($attempt - 1)
+        Write-Host "  [ ..        ] Retry $attempt/$maxAttempts (waiting ${wait}s)..." -ForegroundColor Yellow
+        Start-Sleep $wait
+    }
 
-if (-not $response.IsSuccessStatusCode) {
-    throw "MOS3 upload failed [$([int]$response.StatusCode)]: $responseBody"
+    $httpClient = [System.Net.Http.HttpClient]::new()
+    $httpClient.Timeout = [System.TimeSpan]::FromSeconds(180)
+    $httpClient.DefaultRequestHeaders.Authorization =
+        [System.Net.Http.Headers.AuthenticationHeaderValue]::new("Bearer", $token)
+
+    $zipContent = [System.Net.Http.ByteArrayContent]::new($zipBytes)
+    $zipContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new("application/zip")
+    $multipart  = [System.Net.Http.MultipartFormDataContent]::new()
+    $multipart.Add($zipContent, "package", "appPackage.zip")
+
+    try {
+        $response     = $httpClient.PostAsync("$MOS3Url/builder/v1/users/packages", $multipart).GetAwaiter().GetResult()
+        $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        $httpClient.Dispose()
+
+        if ($response.IsSuccessStatusCode) {
+            $uploadResp = $responseBody | ConvertFrom-Json
+            $uploadOk   = $true
+            break
+        }
+        $statusCode = [int]$response.StatusCode
+        if ($statusCode -ge 500 -and $attempt -lt $maxAttempts) {
+            Write-Host "  [ SQUALL    ] MOS3 returned $statusCode -- will retry" -ForegroundColor Yellow
+        } else {
+            throw "MOS3 upload failed [$statusCode]: $responseBody"
+        }
+    } catch [System.Threading.Tasks.TaskCanceledException] {
+        $httpClient.Dispose()
+        if ($attempt -lt $maxAttempts) {
+            Write-Host "  [ SQUALL    ] MOS3 request timed out -- will retry" -ForegroundColor Yellow
+        } else {
+            throw "MOS3 upload timed out after $maxAttempts attempts."
+        }
+    }
 }
 
-$uploadResp = $responseBody | ConvertFrom-Json
+if (-not $uploadOk) { throw "MOS3 upload failed after $maxAttempts attempts." }
 Write-Host "  [ OK        ] Uploaded" -ForegroundColor Green
 
 if ($uploadResp.operationId -or ($uploadResp.statusId -and -not $uploadResp.titlePreview)) {

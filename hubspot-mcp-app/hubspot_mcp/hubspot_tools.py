@@ -916,12 +916,12 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__create_contact_form",
-        "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits.",
+        "description": "Use this when the user asks to create a new HubSpot contact. Opens the interactive contact creation form.",
         "handler": hs__create_contact_form,
     },
     {
         "name": "hs__create_deal_form",
-        "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits.",
+        "description": "Use this when the user asks to create a new HubSpot deal. Opens the interactive deal creation form.",
         "handler": hs__create_deal_form,
     },
     {
@@ -991,12 +991,12 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__create_company_form",
-        "description": "Opens a form to create a new HubSpot Company. The user fills in details and submits.",
+        "description": "Use this when the user asks to create a new HubSpot company. Opens the interactive company creation form.",
         "handler": hs__create_company_form,
     },
     {
         "name": "hs__create_ticket_form",
-        "description": "Opens a form to create a new HubSpot Support Ticket. The user fills in details and submits.",
+        "description": "Use this when the user asks to create a new HubSpot support ticket. Opens the interactive ticket creation form.",
         "handler": hs__create_ticket_form,
     },
 ]

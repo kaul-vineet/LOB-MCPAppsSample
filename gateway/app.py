@@ -19,11 +19,15 @@ Widget resourceUris use the ui:// scheme and are runtime-independent,
 so mcp-tools.json needs no changes when switching to the gateway.
 """
 
+import json
 import os
+import time
 from contextlib import asynccontextmanager, AsyncExitStack
 from pathlib import Path
 
 from dotenv import load_dotenv
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 # Pre-load all LOB .env files before importing server modules.
 # Server modules call _load_env() at import time; because override=False,
@@ -57,7 +61,52 @@ import sf_crm_mcp.salesforce_server as sf  # noqa: E402
 import workday_mcp.workday_server as workday  # noqa: E402
 from starlette.applications import Starlette  # noqa: E402
 from starlette.middleware.cors import CORSMiddleware  # noqa: E402
-from starlette.routing import Mount  # noqa: E402
+from starlette.responses import FileResponse, Response  # noqa: E402
+from starlette.routing import Mount, Route  # noqa: E402
+
+
+class MCPRequestLogger(BaseHTTPMiddleware):
+    """Log every MCP request from non-localhost IPs to help diagnose Copilot issues."""
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        is_remote  = client_ip not in ("127.0.0.1", "::1", "localhost")
+        path       = request.url.path
+        method     = request.method
+        t0         = time.monotonic()
+
+        # For remote POSTs capture the JSON body (tool calls, initialize, etc.)
+        body_preview = ""
+        if is_remote and method == "POST":
+            try:
+                raw  = await request.body()
+                obj  = json.loads(raw)
+                rpc  = obj.get("method", "?")
+                rid  = obj.get("id", "-")
+                params = obj.get("params", {})
+                tool = params.get("name", "") if rpc == "tools/call" else ""
+                body_preview = f"  rpc={rpc} id={rid}" + (f" tool={tool}" if tool else "")
+                # Rebuild body stream for the actual handler
+                async def _body():
+                    return raw
+                request._body = raw
+            except Exception:
+                pass
+
+        response = await call_next(request)
+        elapsed  = int((time.monotonic() - t0) * 1000)
+
+        if is_remote:
+            sid = request.headers.get("mcp-session-id", "")[:8]
+            print(
+                f"\033[96m[COPILOT]\033[0m {method} {path}"
+                f"  sid={sid or '-'}"
+                f"  → {response.status_code}  ({elapsed}ms)"
+                + body_preview,
+                flush=True,
+            )
+
+        return response
 
 # Build each FastMCP sub-app once so we can reference them in both the
 # lifespan and the route table.
@@ -89,9 +138,20 @@ async def lifespan(outer_app: Starlette):
         yield
 
 
+_TOOLS_PATH = _ROOT / "lob-agent" / "appPackage" / "mcp-tools.json"
+
+
+async def _serve_mcp_tools(request: Request) -> Response:
+    """Serve mcp-tools.json so MOS3 validation and Copilot can fetch it via the tunnel URL."""
+    if not _TOOLS_PATH.exists():
+        return Response("mcp-tools.json not found", status_code=404)
+    return FileResponse(str(_TOOLS_PATH), media_type="application/json")
+
+
 app = Starlette(
     lifespan=lifespan,
     routes=[
+        Route("/mcp-tools.json", _serve_mcp_tools),
         Mount("/sf",      app=_sf_app),
         Mount("/sn",      app=_sn_app),
         Mount("/sap",     app=_sap_app),
@@ -105,6 +165,7 @@ app = Starlette(
     ],
 )
 
+app.add_middleware(MCPRequestLogger)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),

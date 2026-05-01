@@ -51,12 +51,25 @@ def title_case(name: str) -> str:
     return bare.replace("_", " ").capitalize()
 
 
+def _simplify_prop(prop: dict) -> dict:
+    """Flatten Pydantic v2 Optional[X] anyOf patterns to plain {type: X}."""
+    if "anyOf" in prop:
+        types = prop["anyOf"]
+        non_null = [t for t in types if t.get("type") != "null"]
+        if len(types) == 2 and len(non_null) == 1:
+            result = {k: v for k, v in non_null[0].items()}
+            if "default" in prop and prop["default"] is not None:
+                result["default"] = prop["default"]
+            return {k: v for k, v in result.items() if k != "title"}
+    return {k: v for k, v in prop.items() if k != "title"}
+
+
 def clean_schema(schema: dict) -> dict:
     """Strip Pydantic artifacts not in the MCP spec inputSchema format."""
     s = {k: v for k, v in schema.items() if k != "title"}
     if "properties" in s:
         s["properties"] = {
-            pname: {pk: pv for pk, pv in prop.items() if pk != "title"}
+            pname: _simplify_prop(prop)
             for pname, prop in s["properties"].items()
         }
     return s
@@ -112,6 +125,7 @@ for plugin_path in [
             "auth": {"type": "None"},
         }
         base["spec"]["url"] = TUNNEL_BASE + rt["path"]
+        base["spec"]["mcp_tool_description"] = {"file": TUNNEL_BASE + "/mcp-tools.json"}
         base["run_for_functions"] = [f["name"] for f in rt["functions"]]
         new_runtimes.append(base)
     plugin["runtimes"] = new_runtimes

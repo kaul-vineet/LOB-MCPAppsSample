@@ -23,6 +23,10 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const lastHeight = useRef(0);
+  // Tracks in-flight widget-initiated callTool calls — ontoolresult must not
+  // overwrite toolData while the widget itself is awaiting a server response,
+  // otherwise a tool with _meta.ui.resourceUri re-renders the whole widget.
+  const widgetCallDepth = useRef(0);
 
   // Use the official ext-apps React hook for connection lifecycle
   const { app, isConnected, error } = useApp({
@@ -30,7 +34,7 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     capabilities: {},
     onAppCreated: (app: App) => {
       app.ontoolresult = (result) => {
-        if (result?.structuredContent) {
+        if (widgetCallDepth.current === 0 && result?.structuredContent) {
           setToolData(result.structuredContent);
         }
       };
@@ -119,6 +123,7 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
   // callTool with single retry on failure
   const callToolOnce = useCallback(async (name: string, args?: Record<string, any>): Promise<any> => {
     if (app && isConnected) {
+      widgetCallDepth.current += 1;
       try {
         const result = await app.callServerTool({ name, arguments: args || {} });
         if (result.isError) {
@@ -129,6 +134,8 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
         return result.structuredContent || result;
       } catch {
         // SDK path unavailable (test harness, no real server) — fall through to postMessage
+      } finally {
+        widgetCallDepth.current -= 1;
       }
     }
     // Test-mode / postMessage fallback: send ui/callTool to parent, await JSON-RPC response

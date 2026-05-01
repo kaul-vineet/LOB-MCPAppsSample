@@ -28,6 +28,14 @@ const SLDS_DARK = {
 };
 function slds(theme: 'light' | 'dark') { return theme === 'dark' ? SLDS_DARK : SLDS_LIGHT; }
 
+function timeAgo(iso: string): string {
+  const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 5)  return 'just now';
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+  return `${Math.floor(secs / 3600)}h ago`;
+}
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const LEAD_STATUSES = ['Open - Not Contacted', 'Working - Contacted', 'Closed - Converted', 'Closed - Not Converted'];
 const LEAD_SOURCES  = ['Web', 'Phone Inquiry', 'Partner Referral', 'Purchased List', 'Other'];
@@ -202,9 +210,11 @@ function DashBar({ label, value, max, color, theme }: { label: string; value: nu
 }
 
 // ── Shared header + table wrapper ──────────────────────────────────────────
-function ViewHeader({ icon, title, count, brand, onNew, newLabel, theme }: {
+function ViewHeader({ icon, title, count, brand, onNew, newLabel, theme, cacheInfo, onRefresh, refreshing }: {
   icon: string; title: string; count: number; brand: string;
   onNew?: () => void; newLabel?: string; theme: 'light' | 'dark';
+  cacheInfo?: { hit: boolean; cached_at: string };
+  onRefresh?: () => void; refreshing?: boolean;
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: brand }}>
@@ -214,6 +224,18 @@ function ViewHeader({ icon, title, count, brand, onNew, newLabel, theme }: {
         <Badge appearance="filled" size="small" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px' }}>
           {count} record{count !== 1 ? 's' : ''}
         </Badge>
+        {cacheInfo && (
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {cacheInfo.hit ? `cached ${timeAgo(cacheInfo.cached_at)}` : `live ${timeAgo(cacheInfo.cached_at)}`}
+            {onRefresh && (
+              <button onClick={onRefresh} disabled={refreshing}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: refreshing ? 'wait' : 'pointer', fontSize: '13px', padding: '0 2px', lineHeight: 1 }}
+                title="Force refresh from Salesforce">
+                {refreshing ? '…' : '↻'}
+              </button>
+            )}
+          </span>
+        )}
       </div>
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
         {onNew && (
@@ -269,10 +291,12 @@ function InlineFormRow({ colSpan, title, fields, onSave, onCancel, saving, theme
 // ────────────────────────────────────────────────────────────────────────────
 // ── AccountsView ───────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function AccountsView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function AccountsView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -286,7 +310,17 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
   const [loadingChildren, setLoadingChildren] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ name: '', industry: '', phone: '', website: '', type: '', billing_city: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_accounts', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
+  };
 
   const doSearch = async () => {
     setFiltering(true);
@@ -341,7 +375,7 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Account" theme={theme} />
+      <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Account" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -424,10 +458,12 @@ function AccountsView({ items: initItems, callTool, toast, theme }: { items: any
 // ────────────────────────────────────────────────────────────────────────────
 // ── LeadsView ──────────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -438,7 +474,17 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', company: '', email: '', phone: '', status: '', lead_source: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_leads', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
+  };
 
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
@@ -464,9 +510,10 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
   const handleConvert = async (leadId: string, leadName: string) => {
     setConverting(leadId);
     try {
-      await callTool('sf__convert_lead', { lead_id: leadId });
-      toast(`✓ ${leadName} converted to Account/Contact`);
-      setLocalItems(p => p.filter(x => x.id !== leadId));
+      const res = await callTool('sf__convert_lead', { lead_id: leadId });
+      const conv = res?._convert || {};
+      toast(`✓ ${leadName} converted${conv.accountId ? ' → Account created' : ''}${conv.opportunityId ? ' + Opportunity' : ''}`);
+      if (res?.items) { setLocalItems(res.items); setCacheInfo(res._cache); }
     } catch (e: any) { toast(e.message || 'Convert failed', 'error'); }
     finally { setConverting(null); }
   };
@@ -486,7 +533,7 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Lead" theme={theme} />
+      <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Lead" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       {!creating && <FilterBar placeholder="Search by name or company…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -549,10 +596,12 @@ function LeadsView({ items: initItems, callTool, toast, theme }: { items: any[];
 // ────────────────────────────────────────────────────────────────────────────
 // ── ContactsView ───────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function ContactsView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function ContactsView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -564,7 +613,17 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
   const [loadingChild, setLoadingChild] = useState<string | null>(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', title: '', account_name: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_contacts', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
+  };
 
   const doSearch = async () => {
     if (!filterName.trim()) { setLocalItems(initItems); return; }
@@ -611,7 +670,7 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="👥" title="Contacts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Contact" theme={theme} />
+      <ViewHeader icon="👥" title="Contacts" count={localItems.length} brand={t.danger} onNew={openCreate} newLabel="New Contact" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -664,12 +723,12 @@ function ContactsView({ items: initItems, callTool, toast, theme }: { items: any
 // ────────────────────────────────────────────────────────────────────────────
 // ── OpportunitiesView ──────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function OpportunitiesView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -679,12 +738,16 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
   const [loadingChild, setLoadingChild] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', account_name: '', stage: '', amount: '', close_date: '', probability: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
 
-  const doSearch = async () => {
-    setFiltering(true);
-    try { const res = await callTool('sf__get_opportunities', { name: filterName }); setLocalItems(res?.items || []); }
-    finally { setFiltering(false); }
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_opportunities', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
   };
 
   const openEdit = (o: any) => { setCreating(false); setEditingId(o.id); setForm({ name: o.name || '', account_name: o.account_name || '', stage: o.stage || '', amount: o.amount != null ? String(o.amount) : '', close_date: o.close_date || '', probability: o.probability != null ? String(o.probability) : '' }); };
@@ -695,8 +758,10 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
     setSaving(true);
     try {
       const args = { ...form, amount: form.amount ? parseFloat(form.amount) : null, probability: form.probability ? parseInt(form.probability) : null };
-      if (creating) { await callTool('sf__create_opportunity', args); toast('✓ Opportunity created'); }
-      else { await callTool('sf__update_opportunity', { opportunity_id: editingId, ...args }); toast('✓ Opportunity updated'); setLastSavedId(editingId); }
+      let res: any;
+      if (creating) { res = await callTool('sf__create_opportunity', args); toast('✓ Opportunity created'); }
+      else { res = await callTool('sf__update_opportunity', { opportunity_id: editingId, ...args }); toast('✓ Opportunity updated'); setLastSavedId(editingId); }
+      if (res?.items) { setLocalItems(res.items); setCacheInfo(res._cache); }
       cancel();
     } catch (e: any) { toast(e.message || 'Failed', 'error'); }
     finally { setSaving(false); }
@@ -726,8 +791,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Opportunity" theme={theme} />
-      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
+      <ViewHeader icon="💰" title="Opportunities" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Opportunity" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -780,7 +844,7 @@ function OpportunitiesView({ items: initItems, callTool, toast, theme }: { items
 // ────────────────────────────────────────────────────────────────────────────
 // ── CasesView ──────────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function CasesView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function CasesView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
@@ -793,9 +857,21 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [childComments, setChildComments] = useState<Record<string, any[]>>({});
   const [loadingChild, setLoadingChild] = useState<string | null>(null);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [form, setForm] = useState({ subject: '', status: '', priority: '', account_name: '', description: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_cases', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
+  };
 
   const doSearch = async () => {
     setFiltering(true);
@@ -839,7 +915,7 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="New Case" theme={theme} />
+      <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="New Case" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -899,10 +975,12 @@ function CasesView({ items: initItems, callTool, toast, theme }: { items: any[];
 // ────────────────────────────────────────────────────────────────────────────
 // ── TasksView ──────────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function TasksView({ items: initItems, callTool, toast, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark' }) {
+function TasksView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -911,7 +989,17 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [form, setForm] = useState({ subject: '', status: '', priority: '', activity_date: '', description: '' });
 
-  useEffect(() => setLocalItems(initItems), [initItems]);
+  useEffect(() => { setLocalItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_tasks', { refresh: true });
+      setLocalItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
+    finally { setRefreshing(false); }
+  };
 
   const doSearch = async () => {
     setFiltering(true);
@@ -946,7 +1034,7 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="New Task" theme={theme} />
+      <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="New Task" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -980,12 +1068,27 @@ function TasksView({ items: initItems, callTool, toast, theme }: { items: any[];
 // ────────────────────────────────────────────────────────────────────────────
 // ── CampaignsView ──────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function CampaignsView({ items, callTool, theme }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; theme: 'light' | 'dark' }) {
+function CampaignsView({ items: initItems, callTool, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
+  const [items, setItems] = useState(initItems);
+  const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
+  const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [childLeads, setChildLeads] = useState<Record<string, any[]>>({});
   const [loadingChild, setLoadingChild] = useState<string | null>(null);
+
+  useEffect(() => { setItems(initItems); setCacheInfo(initCacheInfo); }, [initItems]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await callTool('sf__get_campaigns', { refresh: true });
+      setItems(res?.items || []);
+      setCacheInfo(res?._cache);
+    } catch { /* silent */ }
+    finally { setRefreshing(false); }
+  };
 
   const toggleExpand = async (id: string) => {
     if (expandedId === id) { setExpandedId(null); return; }
@@ -999,7 +1102,7 @@ function CampaignsView({ items, callTool, theme }: { items: any[]; callTool: (n:
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <ViewHeader icon="📣" title="Campaigns" count={items.length} brand="#6B5B95" theme={theme} />
+      <ViewHeader icon="📣" title="Campaigns" count={items.length} brand="#6B5B95" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -1466,16 +1569,17 @@ export function SalesforceApp() {
   // ── List views ──
   const ld = data as SfListData;
   const items = ld.items || [];
+  const cache = (ld as any)._cache as { hit: boolean; cached_at: string } | undefined;
 
   return (
     <div className={styles.shell} style={shellStyle}>
-      {ld.type === 'accounts'     && <AccountsView     items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'leads'        && <LeadsView        items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'contacts'     && <ContactsView     items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'opportunities'&& <OpportunitiesView items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'cases'        && <CasesView        items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'tasks'        && <TasksView        items={items} callTool={callTool} toast={toast} theme={theme} />}
-      {ld.type === 'campaigns'    && <CampaignsView    items={items} callTool={callTool} theme={theme} />}
+      {ld.type === 'accounts'     && <AccountsView     items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'leads'        && <LeadsView        items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'contacts'     && <ContactsView     items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'opportunities'&& <OpportunitiesView items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'cases'        && <CasesView        items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'tasks'        && <TasksView        items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'campaigns'    && <CampaignsView    items={items} callTool={callTool} theme={theme} cacheInfo={cache} />}
       {ld.type === 'approvals'    && <ApprovalsView    items={items} theme={theme} />}
     </div>
   );

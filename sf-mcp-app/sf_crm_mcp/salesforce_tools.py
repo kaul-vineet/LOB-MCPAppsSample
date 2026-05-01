@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import copy
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import structlog
+from cachetools import TTLCache
 from mcp import types
 from mcp.types import PromptMessage, TextContent
 
@@ -38,6 +40,52 @@ def _get_schema(entity_type: str) -> dict:
 
 
 _load_config()
+
+
+# ── TTL cache (90 s, invalidated on write) ────────────────────────────────────
+
+_ENTITY_CACHE: dict[str, TTLCache] = {
+    "leads":         TTLCache(maxsize=2, ttl=90),
+    "opportunities": TTLCache(maxsize=2, ttl=90),
+    "accounts":      TTLCache(maxsize=2, ttl=90),
+    "contacts":      TTLCache(maxsize=2, ttl=90),
+    "cases":         TTLCache(maxsize=2, ttl=90),
+    "tasks":         TTLCache(maxsize=2, ttl=90),
+    "campaigns":     TTLCache(maxsize=2, ttl=90),
+}
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _time_ago(iso: str) -> str:
+    try:
+        dt = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        secs = int((datetime.now(timezone.utc) - dt).total_seconds())
+        if secs < 5:    return "just now"
+        if secs < 60:   return f"{secs}s ago"
+        if secs < 3600: return f"{secs // 60}m ago"
+        return f"{secs // 3600}h ago"
+    except Exception:
+        return iso
+
+
+def _cache_get(entity: str) -> tuple[list | None, str | None]:
+    entry = _ENTITY_CACHE[entity].get("v")
+    if entry:
+        return entry["items"], entry["at"]
+    return None, None
+
+
+def _cache_set(entity: str, items: list) -> str:
+    at = _now_iso()
+    _ENTITY_CACHE[entity]["v"] = {"items": items, "at": at}
+    return at
+
+
+def _cache_invalidate(entity: str) -> None:
+    _ENTITY_CACHE[entity].pop("v", None)
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
@@ -82,15 +130,18 @@ async def _fetch_entity(entity_type: str) -> list[dict]:
     return [_flatten_record(r, all_cols) for r in records]
 
 
-def _list_summary(entity_label: str, items: list[dict], entity_type: str) -> str:
+def _list_summary(entity_label: str, items: list[dict], entity_type: str,
+                  cache_hit: bool = False, cached_at: str = "") -> str:
     if not items:
         return f"No {entity_label} found."
     cols = _get_schema(entity_type).get("columns", [])
-    lines = [f"Retrieved {len(items)} {entity_label}:"]
-    for item in items:
-        parts = [str(item.get(c.get("key", c["apiName"]), "")) for c in cols[:4] if c["apiName"] != "Id"]
-        lines.append(f"- {' | '.join(p for p in parts if p)}")
-    return "\n".join(lines)
+    names = []
+    for item in items[:3]:
+        parts = [str(item.get(c.get("key", c["apiName"]), "")) for c in cols[:2] if c["apiName"] != "Id"]
+        names.append(" / ".join(p for p in parts if p))
+    more = f" (+{len(items) - 3} more)" if len(items) > 3 else ""
+    source = f"from cache ({_time_ago(cached_at)}) — use ↻ in widget to refresh" if cache_hit else "retrieved"
+    return f"{len(items)} {entity_label} {source} — {', '.join(names)}{more}. Widget below ↓"
 
 
 async def _fetch_leads()         -> list[dict]: return await _fetch_entity("Lead")
@@ -103,8 +154,19 @@ async def _fetch_tasks()         -> list[dict]: return await _fetch_entity("Task
 
 # ── Tool handlers ─────────────────────────────────────────────────────────────
 
-async def sf__get_leads(campaign_id: str = "", name: str = "") -> types.CallToolResult:
-    log.info("sf__get_leads", campaign_id=campaign_id, name=name)
+async def sf__get_leads(campaign_id: str = "", name: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_leads", campaign_id=campaign_id, name=name, refresh=refresh)
+    use_cache = not campaign_id and not name and not refresh
+    cache_hit, cached_at = False, _now_iso()
+    if use_cache:
+        cached_items, stored_at = _cache_get("leads")
+        if cached_items is not None:
+            log.info("sf__get_leads_cache_hit")
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("lead(s)", cached_items, "Lead", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "leads", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Lead"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         cfg = _get_schema("Lead")
         columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
@@ -128,9 +190,12 @@ async def sf__get_leads(campaign_id: str = "", name: str = "") -> types.CallTool
     except Exception as exc:
         return _error_result(f"Unexpected error fetching leads: {exc}")
     log.info("sf__get_leads_done", count=len(items))
+    if use_cache:
+        cached_at = _cache_set("leads", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("lead(s)", items, "Lead"))],
-        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
+        structuredContent={"type": "leads", "total": len(items), "items": items,
+                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -153,11 +218,14 @@ async def sf__create_lead(
         return _error_result(f"Failed to create lead: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating lead: {exc}")
+    _cache_invalidate("leads")
     try: items = await _fetch_leads()
     except Exception: items = []
+    cached_at = _cache_set("leads", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "leads", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Lead")},
+        structuredContent={"type": "leads", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -183,11 +251,14 @@ async def sf__update_lead(
         return _error_result(f"Failed to update lead: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating lead: {exc}")
+    _cache_invalidate("leads")
     try: items = await _fetch_leads()
     except Exception: items = []
+    cached_at = _cache_set("leads", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead {lead_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
+        structuredContent={"type": "leads", "total": len(items), "items": items,
+                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -222,8 +293,17 @@ async def sf__get_lead(lead_id: str) -> types.CallToolResult:
     )
 
 
-async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str = "") -> types.CallToolResult:
-    log.info("sf__get_opportunities", account_id=account_id, name=name, stage=stage)
+async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_opportunities", account_id=account_id, name=name, stage=stage, refresh=refresh)
+    use_cache = not account_id and not name and not stage and not refresh
+    if use_cache:
+        cached_items, stored_at = _cache_get("opportunities")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("opportunity(ies)", cached_items, "Opportunity", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "opportunities", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Opportunity"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         cfg = _get_schema("Opportunity")
         columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
@@ -247,9 +327,11 @@ async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching opportunities: {exc}")
+    cached_at = _cache_set("opportunities", items) if use_cache else _now_iso()
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("opportunity(ies)", items, "Opportunity"))],
-        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_schema": _get_schema("Opportunity")},
+        structuredContent={"type": "opportunities", "total": len(items), "items": items,
+                           "_schema": _get_schema("Opportunity"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -268,11 +350,14 @@ async def sf__create_opportunity(
         return _error_result(f"Failed to create opportunity: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating opportunity: {exc}")
+    _cache_invalidate("opportunities")
     try: items = await _fetch_opportunities()
     except Exception: items = []
+    cached_at = _cache_set("opportunities", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Opportunity created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Opportunity")},
+        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Opportunity"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -296,16 +381,28 @@ async def sf__update_opportunity(
         return _error_result(f"Failed to update opportunity: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating opportunity: {exc}")
+    _cache_invalidate("opportunities")
     try: items = await _fetch_opportunities()
     except Exception: items = []
+    cached_at = _cache_set("opportunities", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Opportunity {opportunity_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "opportunities", "total": len(items), "items": items, "_schema": _get_schema("Opportunity")},
+        structuredContent={"type": "opportunities", "total": len(items), "items": items,
+                           "_schema": _get_schema("Opportunity"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
-async def sf__get_accounts(name: str = "", industry: str = "") -> types.CallToolResult:
-    log.info("sf__get_accounts", name=name, industry=industry)
+async def sf__get_accounts(name: str = "", industry: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_accounts", name=name, industry=industry, refresh=refresh)
+    use_cache = not name and not industry and not refresh
+    if use_cache:
+        cached_items, stored_at = _cache_get("accounts")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("account(s)", cached_items, "Account", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "accounts", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Account"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         if name or industry:
             cfg = _get_schema("Account")
@@ -322,9 +419,11 @@ async def sf__get_accounts(name: str = "", industry: str = "") -> types.CallTool
         return _error_result(f"Salesforce authentication failed: {exc}")
     except Exception as exc:
         return _error_result(f"Failed to fetch accounts: {exc}")
+    cached_at = _cache_set("accounts", items) if use_cache else _now_iso()
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("account(s)", items, "Account"))],
-        structuredContent={"type": "accounts", "total": len(items), "items": items, "_schema": _get_schema("Account")},
+        structuredContent={"type": "accounts", "total": len(items), "items": items,
+                           "_schema": _get_schema("Account"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -347,11 +446,14 @@ async def sf__create_account(
         return _error_result(f"Failed to create account: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating account: {exc}")
+    _cache_invalidate("accounts")
     try: items = await _fetch_accounts()
     except Exception: items = []
+    cached_at = _cache_set("accounts", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Account '{name}' created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "accounts", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Account")},
+        structuredContent={"type": "accounts", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Account"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -376,16 +478,28 @@ async def sf__update_account(
         return _error_result(f"Failed to update account: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating account: {exc}")
+    _cache_invalidate("accounts")
     try: items = await _fetch_accounts()
     except Exception: items = []
+    cached_at = _cache_set("accounts", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Account {account_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "accounts", "total": len(items), "items": items, "_schema": _get_schema("Account")},
+        structuredContent={"type": "accounts", "total": len(items), "items": items,
+                           "_schema": _get_schema("Account"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
-async def sf__get_contacts(account_id: str = "", name: str = "") -> types.CallToolResult:
-    log.info("sf__get_contacts", account_id=account_id, name=name)
+async def sf__get_contacts(account_id: str = "", name: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_contacts", account_id=account_id, name=name, refresh=refresh)
+    use_cache = not account_id and not name and not refresh
+    if use_cache:
+        cached_items, stored_at = _cache_get("contacts")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("contact(s)", cached_items, "Contact", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "contacts", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Contact"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         cfg = _get_schema("Contact")
         columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
@@ -405,9 +519,11 @@ async def sf__get_contacts(account_id: str = "", name: str = "") -> types.CallTo
         return _error_result(f"Salesforce authentication failed: {exc}")
     except Exception as exc:
         return _error_result(f"Failed to fetch contacts: {exc}")
+    cached_at = _cache_set("contacts", items) if use_cache else _now_iso()
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("contact(s)", items, "Contact"))],
-        structuredContent={"type": "contacts", "total": len(items), "items": items, "_schema": _get_schema("Contact")},
+        structuredContent={"type": "contacts", "total": len(items), "items": items,
+                           "_schema": _get_schema("Contact"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -430,11 +546,14 @@ async def sf__create_contact(
         return _error_result(f"Failed to create contact: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating contact: {exc}")
+    _cache_invalidate("contacts")
     try: items = await _fetch_contacts()
     except Exception: items = []
+    cached_at = _cache_set("contacts", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact '{first_name} {last_name}' created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "contacts", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Contact")},
+        structuredContent={"type": "contacts", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Contact"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -459,16 +578,28 @@ async def sf__update_contact(
         return _error_result(f"Failed to update contact: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating contact: {exc}")
+    _cache_invalidate("contacts")
     try: items = await _fetch_contacts()
     except Exception: items = []
+    cached_at = _cache_set("contacts", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "contacts", "total": len(items), "items": items, "_schema": _get_schema("Contact")},
+        structuredContent={"type": "contacts", "total": len(items), "items": items,
+                           "_schema": _get_schema("Contact"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
-async def sf__get_cases(account_id: str = "", subject: str = "") -> types.CallToolResult:
-    log.info("sf__get_cases", account_id=account_id, subject=subject)
+async def sf__get_cases(account_id: str = "", subject: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_cases", account_id=account_id, subject=subject, refresh=refresh)
+    use_cache = not account_id and not subject and not refresh
+    if use_cache:
+        cached_items, stored_at = _cache_get("cases")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("case(s)", cached_items, "Case", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "cases", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Case"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         cfg = _get_schema("Case")
         columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
@@ -489,9 +620,11 @@ async def sf__get_cases(account_id: str = "", subject: str = "") -> types.CallTo
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching cases: {exc}")
+    cached_at = _cache_set("cases", items) if use_cache else _now_iso()
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("case(s)", items, "Case"))],
-        structuredContent={"type": "cases", "total": len(items), "items": items, "_schema": _get_schema("Case")},
+        structuredContent={"type": "cases", "total": len(items), "items": items,
+                           "_schema": _get_schema("Case"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -511,11 +644,14 @@ async def sf__create_case(
         return _error_result(f"Failed to create case: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating case: {exc}")
+    _cache_invalidate("cases")
     try: items = await _fetch_cases()
     except Exception: items = []
+    cached_at = _cache_set("cases", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Case created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "cases", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Case")},
+        structuredContent={"type": "cases", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Case"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -534,11 +670,14 @@ async def sf__update_case(case_id: str, status: str = "", resolution: str = "") 
         return _error_result(f"Failed to update case: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating case: {exc}")
+    _cache_invalidate("cases")
     try: items = await _fetch_cases()
     except Exception: items = []
+    cached_at = _cache_set("cases", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Case {case_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "cases", "total": len(items), "items": items, "_schema": _get_schema("Case")},
+        structuredContent={"type": "cases", "total": len(items), "items": items,
+                           "_schema": _get_schema("Case"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -595,8 +734,17 @@ async def sf__get_case_comments(case_id: str) -> types.CallToolResult:
     )
 
 
-async def sf__get_tasks(subject: str = "") -> types.CallToolResult:
-    log.info("sf__get_tasks", subject=subject)
+async def sf__get_tasks(subject: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_tasks", subject=subject, refresh=refresh)
+    use_cache = not subject and not refresh
+    if use_cache:
+        cached_items, stored_at = _cache_get("tasks")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("task(s)", cached_items, "Task", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "tasks", "total": len(cached_items), "items": cached_items,
+                                   "_schema": _get_schema("Task"), "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         if subject:
             cfg = _get_schema("Task")
@@ -613,9 +761,11 @@ async def sf__get_tasks(subject: str = "") -> types.CallToolResult:
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching tasks: {exc}")
+    cached_at = _cache_set("tasks", items) if use_cache else _now_iso()
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=_list_summary("task(s)", items, "Task"))],
-        structuredContent={"type": "tasks", "total": len(items), "items": items, "_schema": _get_schema("Task")},
+        structuredContent={"type": "tasks", "total": len(items), "items": items,
+                           "_schema": _get_schema("Task"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -636,11 +786,14 @@ async def sf__create_task(
         return _error_result(f"Failed to create task: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error creating task: {exc}")
+    _cache_invalidate("tasks")
     try: items = await _fetch_tasks()
     except Exception: items = []
+    cached_at = _cache_set("tasks", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Task created (Id: {new_id}). Refreshed list returned.")],
-        structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id, "_schema": _get_schema("Task")},
+        structuredContent={"type": "tasks", "total": len(items), "items": items, "_createdId": new_id,
+                           "_schema": _get_schema("Task"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -665,11 +818,14 @@ async def sf__update_task(
         return _error_result(f"Failed to update task: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error updating task: {exc}")
+    _cache_invalidate("tasks")
     try: items = await _fetch_tasks()
     except Exception: items = []
+    cached_at = _cache_set("tasks", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Task {task_id} updated. Refreshed list returned.")],
-        structuredContent={"type": "tasks", "total": len(items), "items": items, "_schema": _get_schema("Task")},
+        structuredContent={"type": "tasks", "total": len(items), "items": items,
+                           "_schema": _get_schema("Task"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -712,11 +868,14 @@ async def sf__delete_lead(lead_id: str) -> types.CallToolResult:
         return _error_result(f"Failed to delete lead: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error deleting lead: {exc}")
+    _cache_invalidate("leads")
     try: items = await _fetch_leads()
     except Exception: items = []
+    cached_at = _cache_set("leads", items)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Lead {lead_id} deleted. Refreshed list returned.")],
-        structuredContent={"type": "leads", "total": len(items), "items": items, "_schema": _get_schema("Lead")},
+        structuredContent={"type": "leads", "total": len(items), "items": items,
+                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -740,11 +899,16 @@ async def sf__convert_lead(
         return _error_result(f"Failed to convert lead: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error converting lead: {exc}")
-    summary = (f"Lead {lead_id} converted.\n  Account:     {account_id or 'existing'}\n"
-               f"  Contact:     {contact_id or 'existing'}\n  Opportunity: {opp_id or 'not created'}")
+    _cache_invalidate("leads")
+    try: items = await _fetch_leads()
+    except Exception: items = []
+    cached_at = _cache_set("leads", items)
+    summary = f"Lead converted. Account: {account_id or 'existing'}, Contact: {contact_id or 'existing'}, Opportunity: {opp_id or 'not created'}. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
-        structuredContent={"type": "lead_convert", "leadId": lead_id, "accountId": account_id, "contactId": contact_id, "opportunityId": opp_id},
+        structuredContent={"type": "leads", "total": len(items), "items": items,
+                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at},
+                           "_convertedId": lead_id, "_convert": {"accountId": account_id, "contactId": contact_id, "opportunityId": opp_id}},
     )
 
 
@@ -771,12 +935,20 @@ async def sf__get_pipeline_dashboard() -> types.CallToolResult:
     summary = "\n".join(lines) if stages else "No open opportunities."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
-        structuredContent={"type": "pipeline_dashboard", "total_amount": total_amount, "stages": stages},
+        structuredContent={"type": "sales_dashboard", "total_amount": total_amount, "stages": stages},
     )
 
 
-async def sf__get_campaigns() -> types.CallToolResult:
-    log.info("sf__get_campaigns")
+async def sf__get_campaigns(refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_campaigns", refresh=refresh)
+    if not refresh:
+        cached_items, stored_at = _cache_get("campaigns")
+        if cached_items is not None:
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=_list_summary("campaign(s)", cached_items, "Campaign", cache_hit=True, cached_at=stored_at))],
+                structuredContent={"type": "campaigns", "total": len(cached_items), "items": cached_items,
+                                   "_cache": {"hit": True, "cached_at": stored_at}},
+            )
     try:
         sf = get_client()
         records = await sf.query(
@@ -795,7 +967,7 @@ async def sf__get_campaigns() -> types.CallToolResult:
          "end_date": r.get("EndDate") or "", "num_leads": r.get("NumberOfLeads") or 0}
         for r in records
     ]
-    structured = {"type": "campaigns", "total": len(items), "items": items}
+    cached_at = _cache_set("campaigns", items)
     if not items:
         summary = "No campaigns found."
     else:
@@ -805,7 +977,8 @@ async def sf__get_campaigns() -> types.CallToolResult:
         summary = "\n".join(lines)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
-        structuredContent=structured,
+        structuredContent={"type": "campaigns", "total": len(items), "items": items,
+                           "_cache": {"hit": False, "cached_at": cached_at}},
     )
 
 
@@ -971,7 +1144,7 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__get_entity_config",     "description": "Get the current display configuration for a Salesforce entity. entity_type: Lead, Opportunity, Account, Contact, Case, or Task.", "handler": sf__get_entity_config},
     {"name": "sf__update_entity_config",  "description": "Update the display configuration for a Salesforce entity. Pass entity_type and a JSON patch string. Changes take effect immediately and are saved to disk.", "handler": sf__update_entity_config},
     {"name": "sf__reset_entity_config",   "description": "Reset a Salesforce entity configuration to factory defaults. Pass entity_type='all' to reset every entity at once.", "handler": sf__reset_entity_config},
-    {"name": "sf__show_create_form",      "description": "Opens a create form in the widget for the specified Salesforce entity. Supported entities: lead, account, contact, opportunity, case, task. FK pre-resolution required for contact, opportunity, case.", "handler": sf__show_create_form},
+    {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, or task. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task).", "handler": sf__show_create_form},
 ]
 
 PROMPT_SPECS = [
