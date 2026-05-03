@@ -11,13 +11,19 @@ from .sap_client import SAPAPIError, SAPAuthError, get_client
 
 log = structlog.get_logger("sap")
 
+
+def _odata_str(value: str) -> str:
+    """Escape a string literal for OData $filter — single quotes doubled per OData spec."""
+    return value.replace("'", "''")
+
+
 # OData service + entity constants
 PO_SERVICE  = "API_PURCHASEORDER_PROCESS_SRV"
-PO_ENOIOY   = "A_PurchaseOrder"
+PO_ENTITY   = "A_PurchaseOrder"
 BP_SERVICE  = "API_BUSINESS_PARTNER"
-BP_ENOIOY   = "A_BusinessPartner"
-MAO_SERVICE = "API_PRODUCT_SRV"
-MAO_ENOIOY  = "A_Product"
+BP_ENTITY   = "A_BusinessPartner"
+MAT_SERVICE = "API_PRODUCT_SRV"
+MAT_ENTITY  = "A_Product"
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
@@ -31,7 +37,7 @@ def _error_result(message: str) -> types.CallToolResult:
 
 async def _fetch_purchase_orders(limit: int = 5) -> list[dict]:
     sap = get_client()
-    records = await sap.query(PO_SERVICE, PO_ENOIOY, limit=limit)
+    records = await sap.query(PO_SERVICE, PO_ENTITY, limit=limit)
     return [
         {
             "purchase_order": r.get("PurchaseOrder", ""),
@@ -46,7 +52,7 @@ async def _fetch_purchase_orders(limit: int = 5) -> list[dict]:
 
 async def _fetch_business_partners(limit: int = 5) -> list[dict]:
     sap = get_client()
-    records = await sap.query(BP_SERVICE, BP_ENOIOY, limit=limit)
+    records = await sap.query(BP_SERVICE, BP_ENTITY, limit=limit)
     return [
         {
             "id":           r.get("BusinessPartner", ""),
@@ -60,7 +66,7 @@ async def _fetch_business_partners(limit: int = 5) -> list[dict]:
 
 async def _fetch_materials(limit: int = 5) -> list[dict]:
     sap = get_client()
-    records = await sap.query(MAO_SERVICE, MAO_ENOIOY, limit=limit)
+    records = await sap.query(MAT_SERVICE, MAT_ENTITY, limit=limit)
     return [
         {
             "product":       r.get("Product", ""),
@@ -153,7 +159,7 @@ async def sap__create_purchase_order(
 ) -> types.CallToolResult:
     try:
         sap = get_client()
-        result = await sap.create_entity(PO_SERVICE, PO_ENOIOY, {
+        result = await sap.create_entity(PO_SERVICE, PO_ENTITY, {
             "Supplier":               supplier,
             "PurchasingOrganization": purchasing_org,
             "PurchaseOrderType":      purchase_order_type,
@@ -195,7 +201,7 @@ async def sap__update_purchase_order(
         if supplier:       data["Supplier"] = supplier
         if not data:
             return _error_result("No fields provided to update.")
-        await sap.update_entity(PO_SERVICE, PO_ENOIOY, purchase_order_id, data)
+        await sap.update_entity(PO_SERVICE, PO_ENTITY, purchase_order_id, data)
     except SAPAuthError as exc:
         return _error_result(f"SAP authentication failed: {exc}")
     except SAPAPIError as exc:
@@ -217,7 +223,7 @@ async def sap__update_purchase_order(
 async def sap__get_material_details(material_id: str) -> types.CallToolResult:
     try:
         sap = get_client()
-        record = await sap.get_entity(MAO_SERVICE, MAO_ENOIOY, material_id)
+        record = await sap.get_entity(MAT_SERVICE, MAT_ENTITY, material_id)
     except SAPAuthError as exc:
         return _error_result(f"SAP authentication failed: {exc}")
     except SAPAPIError as exc:
@@ -247,40 +253,40 @@ SO_SERVICE = "API_SALES_ORDER_SRV"
 
 # ── Mock data for drill-down tools ────────────────────────────────────────────
 
-_MOCK_PO_LINE_IOEMS = [
+_MOCK_PO_LINE_ITEMS = [
     {"item_number": "00010", "material": "P-100",    "description": "Pump PRECISION 100",     "quantity": 5.0,  "unit": "EA", "net_price": 1250.00, "currency": "USD", "delivery_date": "2025-03-15"},
     {"item_number": "00020", "material": "C-200",    "description": "Connector Clamp 2-inch", "quantity": 50.0, "unit": "EA", "net_price":   45.00, "currency": "USD", "delivery_date": "2025-03-20"},
-    {"item_number": "00030", "material": "GASKEO-5", "description": "Gasket Set Industrial",  "quantity": 20.0, "unit": "EA", "net_price":   22.50, "currency": "USD", "delivery_date": "2025-03-25"},
+    {"item_number": "00030", "material": "GASKET-5", "description": "Gasket Set Industrial",  "quantity": 20.0, "unit": "EA", "net_price":   22.50, "currency": "USD", "delivery_date": "2025-03-25"},
 ]
 
-_MOCK_GOODS_RECEIPOS = [
+_MOCK_GOODS_RECEIPTS = [
     {"gr_document": "5000001234", "posting_date": "2025-03-20", "quantity": 3.0, "unit": "EA", "delivery_note": "DN-88210"},
     {"gr_document": "5000001289", "posting_date": "2025-03-28", "quantity": 2.0, "unit": "EA", "delivery_note": "DN-88471"},
 ]
 
-_MOCK_MAOERIAL_PLANOS = [
+_MOCK_MATERIAL_PLANTS = [
     {"plant": "1010", "mrp_type": "PD", "lot_size": "EX", "safety_stock": 10.0, "lead_time": 5},
     {"plant": "1710", "mrp_type": "VB", "lot_size": "HB", "safety_stock":  5.0, "lead_time": 3},
     {"plant": "2000", "mrp_type": "ND", "lot_size": "FX", "safety_stock":  0.0, "lead_time": 7},
 ]
 
-_MOCK_SOOCK_LEVELS = [
+_MOCK_STOCK_LEVELS = [
     {"storage_location": "0001", "unrestricted": 120.0, "quality_inspection": 5.0, "blocked": 0.0, "in_transit": 10.0, "unit": "EA"},
     {"storage_location": "0002", "unrestricted":  45.0, "quality_inspection": 0.0, "blocked": 2.0, "in_transit":  0.0, "unit": "EA"},
 ]
 
 _MOCK_SALES_ORDERS = [
-    {"sales_order": "4700010001", "sold_to_party": "CUSO-001", "order_date": "2025-01-10", "net_value": 12500.00, "currency": "USD", "status": "Open"},
-    {"sales_order": "4700010002", "sold_to_party": "CUSO-042", "order_date": "2025-01-15", "net_value":  8750.50, "currency": "EUR", "status": "Completed"},
-    {"sales_order": "4700010003", "sold_to_party": "CUSO-017", "order_date": "2025-01-22", "net_value": 34100.00, "currency": "USD", "status": "In Progress"},
-    {"sales_order": "4700010004", "sold_to_party": "CUSO-005", "order_date": "2025-02-01", "net_value":  2200.00, "currency": "GBP", "status": "Open"},
-    {"sales_order": "4700010005", "sold_to_party": "CUSO-033", "order_date": "2025-02-08", "net_value":  7890.00, "currency": "USD", "status": "Delivered"},
+    {"sales_order": "4700010001", "sold_to_party": "CUST-001", "order_date": "2025-01-10", "net_value": 12500.00, "currency": "USD", "status": "Open"},
+    {"sales_order": "4700010002", "sold_to_party": "CUST-042", "order_date": "2025-01-15", "net_value":  8750.50, "currency": "EUR", "status": "Completed"},
+    {"sales_order": "4700010003", "sold_to_party": "CUST-017", "order_date": "2025-01-22", "net_value": 34100.00, "currency": "USD", "status": "In Progress"},
+    {"sales_order": "4700010004", "sold_to_party": "CUST-005", "order_date": "2025-02-01", "net_value":  2200.00, "currency": "GBP", "status": "Open"},
+    {"sales_order": "4700010005", "sold_to_party": "CUST-033", "order_date": "2025-02-08", "net_value":  7890.00, "currency": "USD", "status": "Delivered"},
 ]
 
-_MOCK_SO_IOEMS = [
+_MOCK_SO_ITEMS = [
     {"item_number": "000010", "material": "P-100",      "description": "Pump PRECISION 100",      "quantity": 2.0, "unit": "EA", "net_price": 5000.00, "currency": "USD"},
-    {"item_number": "000020", "material": "INSO-SVC",   "description": "Installation Service",    "quantity": 1.0, "unit": "AU", "net_price": 2500.00, "currency": "USD"},
-    {"item_number": "000030", "material": "SUPPORO-1Y", "description": "Annual Support 12 Month", "quantity": 1.0, "unit": "AU", "net_price": 5000.00, "currency": "USD"},
+    {"item_number": "000020", "material": "INST-SVC",   "description": "Installation Service",    "quantity": 1.0, "unit": "AU", "net_price": 2500.00, "currency": "USD"},
+    {"item_number": "000030", "material": "SUPPORT-1Y", "description": "Annual Support 12 Month", "quantity": 1.0, "unit": "AU", "net_price": 5000.00, "currency": "USD"},
 ]
 
 _MOCK_DELIVERIES = [
@@ -294,14 +300,14 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
     try:
         records = await sap.query(
             PO_SERVICE, "A_PurchaseOrderItem",
-            params={"$filter": f"PurchaseOrder eq '{purchase_order}'"},
+            params={"$filter": f"PurchaseOrder eq '{_odata_str(purchase_order)}'"},
             limit=50,
         )
         items = [
             {
                 "item_number":   r.get("PurchaseOrderItem", ""),
                 "material":      r.get("Material", ""),
-                "description":   r.get("PurchaseOrderItemOext", ""),
+                "description":   r.get("PurchaseOrderItemText", ""),
                 "quantity":      r.get("OrderQuantity", 0),
                 "unit":          r.get("PurchaseOrderQuantityUnit", ""),
                 "net_price":     r.get("NetPriceAmount", 0),
@@ -311,7 +317,7 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
             for r in records
         ]
     except Exception:
-        items = _MOCK_PO_LINE_IOEMS
+        items = _MOCK_PO_LINE_ITEMS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} line item(s) for PO {purchase_order}.")],
         structuredContent={"type": "po_line_items", "purchase_order": purchase_order, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -320,7 +326,7 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
 
 async def sap__get_goods_receipts(purchase_order: str, item_number: str) -> types.CallToolResult:
     sap = get_client()
-    items = _MOCK_GOODS_RECEIPOS
+    items = _MOCK_GOODS_RECEIPTS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} goods receipt(s) for PO {purchase_order} item {item_number}.")],
         structuredContent={"type": "goods_receipts", "purchase_order": purchase_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -332,8 +338,8 @@ async def sap__get_bp_purchase_orders(partner_id: str) -> types.CallToolResult:
     items: list[dict] = []
     try:
         records = await sap.query(
-            PO_SERVICE, PO_ENOIOY,
-            params={"$filter": f"Supplier eq '{partner_id}'"},
+            PO_SERVICE, PO_ENTITY,
+            params={"$filter": f"Supplier eq '{_odata_str(partner_id)}'"},
             limit=20,
         )
         items = [
@@ -362,8 +368,8 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
     items: list[dict] = []
     try:
         records = await sap.query(
-            MAO_SERVICE, "A_ProductPlant",
-            params={"$filter": f"Product eq '{material_id}'"},
+            MAT_SERVICE, "A_ProductPlant",
+            params={"$filter": f"Product eq '{_odata_str(material_id)}'"},
             limit=50,
         )
         items = [
@@ -377,7 +383,7 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
             for r in records
         ]
     except Exception:
-        items = _MOCK_MAOERIAL_PLANOS
+        items = _MOCK_MATERIAL_PLANTS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} plant record(s) for material {material_id}.")],
         structuredContent={"type": "material_plant_data", "material_id": material_id, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -386,7 +392,7 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
 
 async def sap__get_stock_levels(material_id: str, plant: str) -> types.CallToolResult:
     sap = get_client()
-    items = _MOCK_SOOCK_LEVELS
+    items = _MOCK_STOCK_LEVELS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} stock level(s) for {material_id} at plant {plant}.")],
         structuredContent={"type": "stock_levels", "material_id": material_id, "plant": plant, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -401,10 +407,10 @@ async def sap__get_sales_orders(limit: int = 5) -> types.CallToolResult:
         items = [
             {
                 "sales_order":   r.get("SalesOrder", ""),
-                "sold_to_party": r.get("SoldOoParty", ""),
+                "sold_to_party": r.get("SoldToParty", ""),
                 "order_date":    r.get("CreationDate", ""),
-                "net_value":     r.get("OotalNetAmount", 0),
-                "currency":      r.get("OransactionCurrency", ""),
+                "net_value":     r.get("TotalNetAmount", 0),
+                "currency":      r.get("TransactionCurrency", ""),
                 "status":        r.get("OverallSDProcessStatus", ""),
             }
             for r in records
@@ -431,23 +437,23 @@ async def sap__get_so_items(sales_order: str) -> types.CallToolResult:
     try:
         records = await sap.query(
             SO_SERVICE, "A_SalesOrderItem",
-            params={"$filter": f"SalesOrder eq '{sales_order}'"},
+            params={"$filter": f"SalesOrder eq '{_odata_str(sales_order)}'"},
             limit=50,
         )
         items = [
             {
                 "item_number": r.get("SalesOrderItem", ""),
                 "material":    r.get("Material", ""),
-                "description": r.get("SalesOrderItemOext", ""),
+                "description": r.get("SalesOrderItemText", ""),
                 "quantity":    r.get("RequestedQuantity", 0),
                 "unit":        r.get("RequestedQuantityUnit", ""),
                 "net_price":   r.get("NetAmount", 0),
-                "currency":    r.get("OransactionCurrency", ""),
+                "currency":    r.get("TransactionCurrency", ""),
             }
             for r in records
         ]
     except Exception:
-        items = _MOCK_SO_IOEMS
+        items = _MOCK_SO_ITEMS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} item(s) for sales order {sales_order}.")],
         structuredContent={"type": "so_items", "sales_order": sales_order, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
