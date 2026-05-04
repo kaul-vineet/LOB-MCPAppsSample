@@ -54,13 +54,7 @@ async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
         for r in records
     ]
     structured = {"type": "incidents", "total": len(incidents), "incidents": incidents}
-    if not incidents:
-        summary = "No incidents found."
-    else:
-        lines = [f"Found {len(incidents)} incident(s):"]
-        for inc in incidents:
-            lines.append(f"- {inc['number']} | P{inc['priority']} | {inc['state']} | {inc['short_description']}")
-        summary = "\n".join(lines)
+    summary = "No incidents found." if not incidents else f"{len(incidents)} incident(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -89,13 +83,7 @@ async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
         for r in records
     ]
     structured = {"type": "requests", "total": len(requests_list), "requests": requests_list}
-    if not requests_list:
-        summary = "No requests found."
-    else:
-        lines = [f"Found {len(requests_list)} request(s):"]
-        for req in requests_list:
-            lines.append(f"- {req['number']} | {req['request_state']} | {req['priority']} | {req['short_description']}")
-        summary = "\n".join(lines)
+    summary = "No requests found." if not requests_list else f"{len(requests_list)} request(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -123,13 +111,7 @@ async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
     ]
     structured = {"type": "request_items", "request_sys_id": request_sys_id,
                   "total": len(items), "items": items}
-    if not items:
-        summary = f"No request items found for request {request_sys_id}."
-    else:
-        lines = [f"Found {len(items)} request item(s):"]
-        for it in items:
-            lines.append(f"- {it.get('number','')} | {it.get('short_description','')} | qty={it.get('quantity','')} | {it.get('stage','')}")
-        summary = "\n".join(lines)
+    summary = f"No request items found for request {request_sys_id}." if not items else f"{len(items)} request item(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -158,13 +140,7 @@ async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
         for r in records
     ]
     structured = {"type": "change_requests", "total": len(items), "items": items}
-    if not items:
-        summary = "No change requests found."
-    else:
-        lines = [f"Found {len(items)} change request(s):"]
-        for cr in items:
-            lines.append(f"- {cr['number']} | {cr['priority']} | {cr['state']} | {cr['short_description']}")
-        summary = "\n".join(lines)
+    summary = "No change requests found." if not items else f"{len(items)} change request(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -193,13 +169,7 @@ async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
         for r in records
     ]
     structured = {"type": "problems", "total": len(items), "items": items}
-    if not items:
-        summary = "No problems found."
-    else:
-        lines = [f"Found {len(items)} problem(s):"]
-        for p in items:
-            lines.append(f"- {p['number']} | P{p['priority']} | {p['state']} | {p['short_description']}")
-        summary = "\n".join(lines)
+    summary = "No problems found." if not items else f"{len(items)} problem(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -228,13 +198,7 @@ async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
         for r in records
     ]
     structured = {"type": "approvals", "total": len(items), "items": items}
-    if not items:
-        summary = "No pending approvals."
-    else:
-        lines = [f"Found {len(items)} pending approval(s):"]
-        for a in items:
-            lines.append(f"- {a['document']} | approver: {a['approver']} | due: {a['due_date'] or 'N/A'}")
-        summary = "\n".join(lines)
+    summary = "No pending approvals." if not items else f"{len(items)} pending approval(s). Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -262,13 +226,7 @@ async def sn__get_service_catalog_items(limit: int = 10) -> types.CallToolResult
         for r in records
     ]
     structured = {"type": "service_catalog", "total": len(items), "items": items}
-    if not items:
-        summary = "No catalog items found."
-    else:
-        lines = [f"Found {len(items)} catalog item(s):"]
-        for item in items:
-            lines.append(f"- {item['name']} | {item['category']} | {item['price'] or 'free'}")
-        summary = "\n".join(lines)
+    summary = "No catalog items found." if not items else f"{len(items)} catalog item(s) retrieved. Widget below ↓"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -303,11 +261,9 @@ async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.C
         for r in records
     ]
     structured = {"type": "knowledge_articles", "total": len(items), "items": items}
-    lines = [f"Found {len(items)} knowledge article(s){' matching: ' + query if query else ''}:"]
-    for a in items:
-        lines.append(f"- {a['number']}: {a['short_description']} (Category: {a['category']})")
+    summary = "No knowledge articles found." if not items else f"{len(items)} knowledge article(s) retrieved. Widget below ↓"
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 

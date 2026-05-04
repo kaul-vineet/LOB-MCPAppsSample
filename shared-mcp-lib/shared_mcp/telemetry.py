@@ -4,11 +4,14 @@ from __future__ import annotations
 import asyncio
 import functools
 import json
+import logging
 import os
 import time
 from datetime import datetime, timezone
 
 import httpx
+
+_log = logging.getLogger("shared_mcp.telemetry")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 _CONN_STR  = os.getenv("APPINSIGHTS_CONNECTION_STRING", "")
@@ -94,13 +97,15 @@ def _payload(
 async def _ship(data: list[dict]) -> None:
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            await client.post(
+            resp = await client.post(
                 _ENDPOINT,
                 content=json.dumps(data),
                 headers={"Content-Type": "application/json"},
             )
-    except Exception:
-        pass  # never let telemetry break tool execution
+            if resp.status_code not in (200, 202):
+                _log.debug("telemetry_dropped status=%d", resp.status_code)
+    except Exception as exc:
+        _log.debug("telemetry_send_error %s: %s", type(exc).__name__, exc)
 
 
 # ── Decorator ─────────────────────────────────────────────────────────────────

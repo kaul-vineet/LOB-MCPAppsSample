@@ -176,7 +176,8 @@ async def sap__create_purchase_order(
 
     try:
         items = await _fetch_purchase_orders()
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__create_purchase_order_list_refresh_failed", error=str(exc))
         items = []
 
     if sap.is_sandbox:
@@ -211,7 +212,8 @@ async def sap__update_purchase_order(
 
     try:
         items = await _fetch_purchase_orders()
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__update_purchase_order_list_refresh_failed", error=str(exc))
         items = []
 
     return types.CallToolResult(
@@ -316,7 +318,8 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
             }
             for r in records
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__get_po_line_items_api_failed_using_mock", error=str(exc))
         items = _MOCK_PO_LINE_ITEMS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} line item(s) for PO {purchase_order}.")],
@@ -352,7 +355,8 @@ async def sap__get_bp_purchase_orders(partner_id: str) -> types.CallToolResult:
             }
             for r in records
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__get_bp_purchase_orders_api_failed_using_mock", error=str(exc))
         items = [
             {"purchase_order": "4500001234", "supplier": partner_id, "purchasing_org": "1010", "order_date": "2025-01-12", "deletion_code": ""},
             {"purchase_order": "4500001235", "supplier": partner_id, "purchasing_org": "1710", "order_date": "2025-02-03", "deletion_code": ""},
@@ -382,7 +386,8 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
             }
             for r in records
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__get_material_plant_data_api_failed_using_mock", error=str(exc))
         items = _MOCK_MATERIAL_PLANTS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} plant record(s) for material {material_id}.")],
@@ -415,7 +420,8 @@ async def sap__get_sales_orders(limit: int = 5) -> types.CallToolResult:
             }
             for r in records
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__get_sales_orders_api_failed_using_mock", error=str(exc))
         items = _MOCK_SALES_ORDERS[:limit]
     structured = {"type": "sales_orders", "total": len(items), "items": items, "sandbox": sap.is_sandbox}
     if not items:
@@ -452,7 +458,8 @@ async def sap__get_so_items(sales_order: str) -> types.CallToolResult:
             }
             for r in records
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sap__get_so_items_api_failed_using_mock", error=str(exc))
         items = _MOCK_SO_ITEMS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} item(s) for sales order {sales_order}.")],

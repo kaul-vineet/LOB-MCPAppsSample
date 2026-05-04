@@ -16,6 +16,12 @@ from .salesforce_client import SalesforceAPIError, SalesforceAuthError, get_clie
 
 log = structlog.get_logger("sf")
 
+
+def _sq(value: str) -> str:
+    """Escape a string literal for SOQL — single quotes and backslashes only."""
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
+
 # ── Entity config ─────────────────────────────────────────────────────────────
 
 _CONFIG_PATH  = Path(__file__).parent / "config" / "entities.json"
@@ -178,7 +184,7 @@ async def sf__get_leads(campaign_id: str = "", name: str = "", refresh: bool = F
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         elif name:
             soql = (f"SELECT {', '.join(api_names)} FROM Lead "
-                    f"WHERE FirstName LIKE '%{name}%' OR LastName LIKE '%{name}%' OR Company LIKE '%{name}%' "
+                    f"WHERE FirstName LIKE '%{_sq(name)}%' OR LastName LIKE '%{_sq(name)}%' OR Company LIKE '%{_sq(name)}%' "
                     f"ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
@@ -314,8 +320,8 @@ async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         elif name or stage:
             clauses = []
-            if name:  clauses.append(f"Name LIKE '%{name}%'")
-            if stage: clauses.append(f"StageName = '{stage}'")
+            if name:  clauses.append(f"Name LIKE '%{_sq(name)}%'")
+            if stage: clauses.append(f"StageName = '{_sq(stage)}'")
             soql = (f"SELECT {', '.join(api_names)} FROM Opportunity "
                     f"WHERE {' AND '.join(clauses)} ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
@@ -409,8 +415,8 @@ async def sf__get_accounts(name: str = "", industry: str = "", refresh: bool = F
             columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
             api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             clauses = []
-            if name:     clauses.append(f"Name LIKE '%{name}%'")
-            if industry: clauses.append(f"Industry = '{industry}'")
+            if name:     clauses.append(f"Name LIKE '%{_sq(name)}%'")
+            if industry: clauses.append(f"Industry = '{_sq(industry)}'")
             soql = f"SELECT {', '.join(api_names)} FROM Account WHERE {' AND '.join(clauses)} ORDER BY CreatedDate DESC LIMIT 20"
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
@@ -510,7 +516,7 @@ async def sf__get_contacts(account_id: str = "", name: str = "", refresh: bool =
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         elif name:
             soql = (f"SELECT {', '.join(api_names)} FROM Contact "
-                    f"WHERE FirstName LIKE '%{name}%' OR LastName LIKE '%{name}%' "
+                    f"WHERE FirstName LIKE '%{_sq(name)}%' OR LastName LIKE '%{_sq(name)}%' "
                     f"ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
@@ -610,7 +616,7 @@ async def sf__get_cases(account_id: str = "", subject: str = "", refresh: bool =
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         elif subject:
             soql = (f"SELECT {', '.join(api_names)} FROM Case "
-                    f"WHERE Subject LIKE '%{subject}%' ORDER BY CreatedDate DESC LIMIT 20")
+                    f"WHERE Subject LIKE '%{_sq(subject)}%' ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
             items = await _fetch_cases()
@@ -751,7 +757,7 @@ async def sf__get_tasks(subject: str = "", refresh: bool = False) -> types.CallT
             columns = cfg.get("columns", []) + cfg.get("hiddenColumns", [])
             api_names = ["Id"] + [c["apiName"] for c in columns if c["apiName"] != "Id"]
             soql = (f"SELECT {', '.join(api_names)} FROM Task "
-                    f"WHERE Subject LIKE '%{subject}%' ORDER BY CreatedDate DESC LIMIT 20")
+                    f"WHERE Subject LIKE '%{_sq(subject)}%' ORDER BY CreatedDate DESC LIMIT 20")
             sf = get_client(); records = await sf.query(soql); items = [_flatten_record(r, columns) for r in records]
         else:
             items = await _fetch_tasks()
