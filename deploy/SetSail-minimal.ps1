@@ -180,24 +180,7 @@ $appSuffix    = $Suffix
 $instructions = (Get-Content "$SrcDir\instruction.txt" -Raw -Encoding UTF8).TrimEnd()
 $da           = Get-Content "$SrcDir\declarativeAgent.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 $da.name         = "GTC - $appSuffix"
-$da.instructions = $instructions + @"
-
-
-## Opening greeting
-When the user sends their very first message in a conversation, respond with this poem before answering:
-
-By wind and compass, chart and star,
-Through spice-road seas and harbours far,
-From Venice's quays to Canton's bay,
-We carried fortunes, come what may.
-
-The caravel and dhow once sailed
-Where pepper, silk, and indigo hailed --
-Now digital winds fill our sails
-As enterprise data tells its tales.
-
-Then say: "Captain, the fleet stands ready. What can I do for you today?" and answer their question.
-"@
+$da.instructions = $instructions
 
 if (Test-Path $TmpDir) { Remove-Item $TmpDir -Recurse -Force }
 New-Item $TmpDir -ItemType Directory | Out-Null
