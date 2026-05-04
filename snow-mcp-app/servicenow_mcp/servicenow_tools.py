@@ -353,6 +353,33 @@ async def sn__create_change_request(
     )
 
 
+async def sn__update_change_request(
+    sys_id: str, short_description: str | None = None, category: str | None = None,
+    risk: str | None = None, priority: str | None = None
+) -> types.CallToolResult:
+    body: dict = {}
+    if short_description is not None: body["short_description"] = short_description
+    if category is not None: body["category"] = category
+    if risk is not None: body["risk"] = risk
+    if priority is not None: body["priority"] = priority
+    if not body:
+        return _error_result("No fields to update. Provide short_description, category, risk, or priority.")
+    try:
+        resp = await servicenow_request("PATCH", f"/api/now/table/change_request/{sys_id}", json_body=body)
+        record = resp.json().get("result", {})
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"Failed to update change request: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error updating change request: {e}")
+    structured = {"type": "updated", "record_type": "change_request", "sys_id": sys_id,
+                  "number": _val(record.get("number")),
+                  "message": f"Change request {_val(record.get('number', ''))} updated successfully"}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=structured["message"])],
+        structuredContent=structured,
+    )
+
+
 async def sn__update_incident(
     sys_id: str, description: str | None = None, priority: str | None = None
 ) -> types.CallToolResult:
@@ -655,6 +682,9 @@ _TOOL_SPECS_LIST = [
     {"name": "sn__create_change_request",
      "description": "Create a new Change Request in ServiceNow. Required: short_description. Optional: category, risk, priority.",
      "handler": sn__create_change_request},
+    {"name": "sn__update_change_request",
+     "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Optional editable fields: short_description, category, risk, priority.",
+     "handler": sn__update_change_request},
     {"name": "sn__update_incident",
      "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
      "handler": sn__update_incident},
