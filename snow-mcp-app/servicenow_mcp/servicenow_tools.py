@@ -29,6 +29,41 @@ def _sn_escape(value: str) -> str:
     return value.replace("^", "").replace("=", "")
 
 
+# ── Internal list helpers (used by write tools to return refreshed views) ─────
+
+async def _fetch_incidents(limit: int = 5) -> list:
+    resp = await servicenow_request(
+        "GET", "/api/now/table/incident",
+        params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": INCIDENT_FIELDS, "sysparm_display_value": "true"},
+    )
+    return [
+        {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+         "short_description": _val(r.get("short_description")),
+         "description": _val(r.get("description", "")),
+         "state": _val(r.get("state")), "priority": _val(r.get("priority")),
+         "assigned_to": _val(r.get("assigned_to")) or None,
+         "sys_created_on": _val(r.get("sys_created_on"))}
+        for r in resp.json().get("result", [])
+    ]
+
+
+async def _fetch_requests(limit: int = 5) -> list:
+    resp = await servicenow_request(
+        "GET", "/api/now/table/sc_request",
+        params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
+    )
+    return [
+        {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+         "short_description": _val(r.get("short_description")),
+         "description": _val(r.get("description", "")),
+         "request_state": _val(r.get("request_state")), "priority": _val(r.get("priority")),
+         "approval": _val(r.get("approval")), "sys_created_on": _val(r.get("sys_created_on"))}
+        for r in resp.json().get("result", [])
+    ]
+
+
 # ── Read tools ────────────────────────────────────────────────────────────────
 
 async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
@@ -283,11 +318,16 @@ async def sn__create_incident(
         return _error_result(f"Failed to create incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating incident: {e}")
-    structured = {"type": "created", "record_type": "incident",
-                  "sys_id": record.get("sys_id"), "number": record.get("number"),
-                  "message": f"Incident {record.get('number', '')} created successfully"}
+    number = _val(record.get("number", ""))
+    try:
+        incidents = await _fetch_incidents()
+    except Exception as exc:
+        log.warning("sn__create_incident_refresh_failed", error=str(exc))
+        incidents = []
+    structured = {"type": "incidents", "total": len(incidents), "incidents": incidents,
+                  "_createdId": record.get("sys_id")}
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
+        content=[types.TextContent(type="text", text=f"Incident {number} created. Refreshed list returned.")],
         structuredContent=structured,
     )
 
@@ -304,11 +344,16 @@ async def sn__create_request(
         return _error_result(f"Failed to create request: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating request: {e}")
-    structured = {"type": "created", "record_type": "request",
-                  "sys_id": record.get("sys_id"), "number": record.get("number"),
-                  "message": f"Request {record.get('number', '')} created successfully"}
+    number = _val(record.get("number", ""))
+    try:
+        requests_list = await _fetch_requests()
+    except Exception as exc:
+        log.warning("sn__create_request_refresh_failed", error=str(exc))
+        requests_list = []
+    structured = {"type": "requests", "total": len(requests_list), "requests": requests_list,
+                  "_createdId": record.get("sys_id")}
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
+        content=[types.TextContent(type="text", text=f"Request {number} created. Refreshed list returned.")],
         structuredContent=structured,
     )
 
@@ -371,11 +416,25 @@ async def sn__update_change_request(
         return _error_result(f"Failed to update change request: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating change request: {e}")
-    structured = {"type": "updated", "record_type": "change_request", "sys_id": sys_id,
-                  "number": _val(record.get("number")),
-                  "message": f"Change request {_val(record.get('number', ''))} updated successfully"}
+    number = _val(record.get("number", ""))
+    try:
+        refresh_resp = await servicenow_request(
+            "GET", "/api/now/table/change_request",
+            params={"sysparm_limit": 5, "sysparm_query": "ORDERBYDESCsys_created_on",
+                    "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
+        )
+        items = [
+            {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+             "short_description": _val(r.get("short_description")), "state": _val(r.get("state")),
+             "priority": _val(r.get("priority")), "risk": _val(r.get("risk"))}
+            for r in refresh_resp.json().get("result", [])
+        ]
+    except Exception as exc:
+        log.warning("sn__update_change_request_refresh_failed", error=str(exc))
+        items = []
+    structured = {"type": "change_requests", "total": len(items), "items": items, "_updatedId": sys_id}
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
+        content=[types.TextContent(type="text", text=f"Change request {number} updated. Refreshed list returned.")],
         structuredContent=structured,
     )
 
@@ -395,11 +454,16 @@ async def sn__update_incident(
         return _error_result(f"Failed to update incident: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating incident: {e}")
-    structured = {"type": "updated", "record_type": "incident", "sys_id": sys_id,
-                  "number": record.get("number"),
-                  "message": f"Incident {record.get('number', '')} updated successfully"}
+    number = _val(record.get("number", ""))
+    try:
+        incidents = await _fetch_incidents()
+    except Exception as exc:
+        log.warning("sn__update_incident_refresh_failed", error=str(exc))
+        incidents = []
+    structured = {"type": "incidents", "total": len(incidents), "incidents": incidents,
+                  "_updatedId": sys_id}
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
+        content=[types.TextContent(type="text", text=f"Incident {number} updated. Refreshed list returned.")],
         structuredContent=structured,
     )
 
@@ -416,11 +480,16 @@ async def sn__update_request(sys_id: str, approval: str | None = None) -> types.
         return _error_result(f"Failed to update request: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating request: {e}")
-    structured = {"type": "updated", "record_type": "request", "sys_id": sys_id,
-                  "number": record.get("number"),
-                  "message": f"Request {record.get('number', '')} approval updated successfully"}
+    number = _val(record.get("number", ""))
+    try:
+        requests_list = await _fetch_requests()
+    except Exception as exc:
+        log.warning("sn__update_request_refresh_failed", error=str(exc))
+        requests_list = []
+    structured = {"type": "requests", "total": len(requests_list), "requests": requests_list,
+                  "_updatedId": sys_id}
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
+        content=[types.TextContent(type="text", text=f"Request {number} approval updated. Refreshed list returned.")],
         structuredContent=structured,
     )
 
