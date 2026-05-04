@@ -182,7 +182,19 @@ $da           = Get-Content "$SrcDir\declarativeAgent.json" -Raw -Encoding UTF8 
 $da.name         = "GTC - $appSuffix"
 $da.instructions = $instructions
 
-$welcomePoem = "By wind and compass, chart and star,`nThrough spice-road seas and harbours far,`nFrom Venice's quays to Canton's bay,`nWe carried fortunes, come what may.`n`nThe caravel and dhow once sailed`nWhere pepper, silk, and indigo hailed —`nNow digital winds fill our sails`nAs enterprise data tells its tales.`n`nCaptain, the fleet stands ready. What can I do for you today?"
+$welcomePoem = @"
+By wind and compass, chart and star,
+Through spice-road seas and harbours far,
+From Venice's quays to Canton's bay,
+We carried fortunes, come what may.
+
+The caravel and dhow once sailed
+Where pepper, silk, and indigo hailed --
+Now digital winds fill our sails
+As enterprise data tells its tales.
+
+Captain, the fleet stands ready. What can I do for you today?
+"@
 
 if (Test-Path $TmpDir) { Remove-Item $TmpDir -Recurse -Force }
 New-Item $TmpDir -ItemType Directory | Out-Null
