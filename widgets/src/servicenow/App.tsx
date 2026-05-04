@@ -239,13 +239,6 @@ const useStyles = makeStyles({
     gap: '8px',
     justifyContent: 'flex-end',
   },
-  filterBar: {
-    display: 'flex',
-    gap: '6px',
-    alignItems: 'center',
-    padding: '8px 12px',
-    borderBottom: '1px solid transparent',
-  },
   empty: {
     padding: '16px',
     textAlign: 'center' as const,
@@ -291,41 +284,6 @@ function FormSelect({ label, value, options, labels, onChange, theme }: {
   );
 }
 
-// ── Filter Bar ─────────────────────────────────────────────────────────────
-function FilterBar({ value, onChange, onSearch, placeholder, theme }: {
-  value: string;
-  onChange: (v: string) => void;
-  onSearch?: () => void;
-  placeholder?: string;
-  theme: 'light' | 'dark';
-}) {
-  const t = now(theme);
-  const styles = useStyles();
-  return (
-    <div className={styles.filterBar} style={{ borderBottomColor: t.border, background: t.headerBg }}>
-      <Input
-        size="small"
-        value={value}
-        onChange={(_, d) => onChange(d.value)}
-        onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
-        placeholder={placeholder || 'Filter…'}
-        style={{ flex: 1, maxWidth: '260px' }}
-      />
-      {onSearch && (
-        <button
-          onClick={onSearch}
-          style={{
-            padding: '4px 12px', borderRadius: '4px',
-            border: `1px solid ${t.border}`, background: '#293E40',
-            color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          Search
-        </button>
-      )}
-    </div>
-  );
-}
 
 // ── Now Footer ──────────────────────────────────────────────────────────────
 function NowFooter({ theme }: { theme: 'light' | 'dark' }) {
@@ -456,7 +414,6 @@ function IncidentsView({ items, callTool, toast, theme }: {
 }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -467,13 +424,6 @@ function IncidentsView({ items, callTool, toast, theme }: {
   const [form, setForm] = useState({
     short_description: '', description: '', priority: '3', state: 'New', category: 'inquiry',
   });
-
-  const filteredItems = items.filter(inc =>
-    !filter ||
-    inc.number?.toLowerCase().includes(filter.toLowerCase()) ||
-    inc.short_description?.toLowerCase().includes(filter.toLowerCase()) ||
-    inc.assigned_to?.toLowerCase().includes(filter.toLowerCase())
-  );
 
   const openEdit = (inc: Incident) => {
     setCreating(false);
@@ -623,7 +573,6 @@ function IncidentsView({ items, callTool, toast, theme }: {
         </div>
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number, description, assignee…" theme={theme} />
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -639,21 +588,21 @@ function IncidentsView({ items, callTool, toast, theme }: {
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New Incident')}
-          {filteredItems.length === 0 && !creating && (
+          {items.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={colSpan} className={styles.empty}>
-                <Text>{filter ? 'No matching incidents.' : 'No incidents found.'}</Text>
+                <Text>No incidents found.</Text>
               </TableCell>
             </TableRow>
           )}
-          {filteredItems.map((inc, idx) => (
+          {items.map((inc, idx) => (
             <React.Fragment key={inc.sys_id}>
               <TableRow
                 className="snow-row"
                 onClick={() => toggleWorkNotes(inc.sys_id)}
                 style={{
                   cursor: 'pointer',
-                  borderBottom: idx === filteredItems.length - 1 && expandedId !== inc.sys_id ? 'none' : `1px solid ${t.border}`,
+                  borderBottom: idx === items.length - 1 && expandedId !== inc.sys_id ? 'none' : `1px solid ${t.border}`,
                   background: expandedId === inc.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
                   ...(lastSavedId === inc.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}
@@ -740,7 +689,6 @@ function RequestsView({ items, callTool, toast, theme }: {
 }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reqItems, setReqItems] = useState<Record<string, RequestItem[]>>({});
   const [loadingItems, setLoadingItems] = useState<string | null>(null);
@@ -751,12 +699,6 @@ function RequestsView({ items, callTool, toast, theme }: {
   const [form, setForm] = useState({
     short_description: '', description: '', priority: '3', approval: 'not requested',
   });
-
-  const filteredItems = items.filter(req =>
-    !filter ||
-    req.number?.toLowerCase().includes(filter.toLowerCase()) ||
-    req.short_description?.toLowerCase().includes(filter.toLowerCase())
-  );
 
   const toggleExpand = async (req: ServiceRequest) => {
     if (expandedId === req.sys_id) { setExpandedId(null); return; }
@@ -895,7 +837,6 @@ function RequestsView({ items, callTool, toast, theme }: {
         </div>
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -910,21 +851,21 @@ function RequestsView({ items, callTool, toast, theme }: {
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New Request')}
-          {filteredItems.length === 0 && !creating && (
+          {items.length === 0 && !creating && (
             <TableRow>
               <TableCell colSpan={colSpan} className={styles.empty}>
-                <Text>{filter ? 'No matching requests.' : 'No requests found.'}</Text>
+                <Text>No requests found.</Text>
               </TableCell>
             </TableRow>
           )}
-          {filteredItems.map((req, idx) => (
+          {items.map((req, idx) => (
             <React.Fragment key={req.sys_id}>
               <TableRow
                 className="snow-row"
                 onClick={() => toggleExpand(req)}
                 style={{
                   cursor: 'pointer',
-                  borderBottom: idx === filteredItems.length - 1 && expandedId !== req.sys_id ? 'none' : `1px solid ${t.border}`,
+                  borderBottom: idx === items.length - 1 && expandedId !== req.sys_id ? 'none' : `1px solid ${t.border}`,
                   background: expandedId === req.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
                   ...(lastSavedId === req.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}
@@ -1034,7 +975,6 @@ function ChangesView({ items, callTool, toast, theme }: {
 }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -1043,12 +983,6 @@ function ChangesView({ items, callTool, toast, theme }: {
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [form, setForm] = useState({ short_description: '', category: 'Normal', risk: 'medium', priority: '3' });
-
-  const filteredItems = items.filter(c =>
-    !filter ||
-    c.number?.toLowerCase().includes(filter.toLowerCase()) ||
-    c.short_description?.toLowerCase().includes(filter.toLowerCase())
-  );
 
   const openCreate = () => { setEditingId(null); setCreating(true); setForm({ short_description: '', category: 'Normal', risk: 'medium', priority: '3' }); };
   const openEdit = (cr: ChangeRequest) => { setCreating(false); setEditingId(cr.sys_id); setForm({ short_description: cr.short_description || '', category: cr.category || 'Normal', risk: cr.risk || 'medium', priority: String(cr.priority).charAt(0) || '3' }); };
@@ -1138,7 +1072,6 @@ function ChangesView({ items, callTool, toast, theme }: {
         </div>
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
 
       {creating && (
         <div style={{ padding: '14px 16px', borderLeft: '3px solid #81B5A1', background: theme === 'dark' ? '#1A2E25' : '#F4F5F7', borderBottom: `1px solid ${t.border}` }}>
@@ -1176,16 +1109,16 @@ function ChangesView({ items, callTool, toast, theme }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredItems.length === 0 && (
-            <TableRow><TableCell colSpan={8} className={styles.empty}><Text>{filter ? 'No matching change requests.' : 'No change requests found.'}</Text></TableCell></TableRow>
+          {items.length === 0 && (
+            <TableRow><TableCell colSpan={8} className={styles.empty}><Text>No change requests found.</Text></TableCell></TableRow>
           )}
-          {filteredItems.map((cr, idx) => (
+          {items.map((cr, idx) => (
             <React.Fragment key={cr.sys_id}>
               <TableRow className="snow-row"
                 onClick={() => toggleExpand(cr.sys_id)}
                 style={{
                   cursor: 'pointer',
-                  borderBottom: idx === filteredItems.length - 1 && expandedId !== cr.sys_id ? 'none' : `1px solid ${t.border}`,
+                  borderBottom: idx === items.length - 1 && expandedId !== cr.sys_id ? 'none' : `1px solid ${t.border}`,
                   background: expandedId === cr.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
                   ...(lastSavedId === cr.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}>
@@ -1254,14 +1187,6 @@ function ChangesView({ items, callTool, toast, theme }: {
 function ProblemsView({ items, theme }: { items: Problem[]; theme: 'light' | 'dark' }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
-
-  const filteredItems = items.filter(p =>
-    !filter ||
-    p.number?.toLowerCase().includes(filter.toLowerCase()) ||
-    p.short_description?.toLowerCase().includes(filter.toLowerCase())
-  );
-
   const cellStyle: React.CSSProperties = {
     padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
     textOverflow: 'ellipsis', maxWidth: '200px', verticalAlign: 'middle',
@@ -1285,7 +1210,6 @@ function ProblemsView({ items, theme }: { items: Problem[]; theme: 'light' | 'da
         <ExpandButton />
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number or description…" theme={theme} />
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -1298,12 +1222,12 @@ function ProblemsView({ items, theme }: { items: Problem[]; theme: 'light' | 'da
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredItems.length === 0 && (
-            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching problems.' : 'No problems found.'}</Text></TableCell></TableRow>
+          {items.length === 0 && (
+            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>No problems found.</Text></TableCell></TableRow>
           )}
-          {filteredItems.map((p, idx) => (
+          {items.map((p, idx) => (
             <TableRow key={p.sys_id} className="snow-row"
-              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              style={{ borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}` }}>
               <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{p.number}</span></TableCell>
               <TableCell style={{ ...cellStyle, maxWidth: '240px' }}>{p.short_description || '—'}</TableCell>
               <TableCell style={cellStyle}><PriorityPill priority={p.priority} theme={theme} /></TableCell>
@@ -1323,15 +1247,6 @@ function ProblemsView({ items, theme }: { items: Problem[]; theme: 'light' | 'da
 function KnowledgeView({ items, theme }: { items: KnowledgeArticle[]; theme: 'light' | 'dark' }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
-
-  const filteredItems = items.filter(a =>
-    !filter ||
-    a.number?.toLowerCase().includes(filter.toLowerCase()) ||
-    a.short_description?.toLowerCase().includes(filter.toLowerCase()) ||
-    a.category?.toLowerCase().includes(filter.toLowerCase())
-  );
-
   const cellStyle: React.CSSProperties = {
     padding: '6px 10px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden',
     textOverflow: 'ellipsis', maxWidth: '200px', verticalAlign: 'middle',
@@ -1355,7 +1270,6 @@ function KnowledgeView({ items, theme }: { items: KnowledgeArticle[]; theme: 'li
         <ExpandButton />
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number, title, or category…" theme={theme} />
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -1368,12 +1282,12 @@ function KnowledgeView({ items, theme }: { items: KnowledgeArticle[]; theme: 'li
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredItems.length === 0 && (
-            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching articles.' : 'No knowledge articles found.'}</Text></TableCell></TableRow>
+          {items.length === 0 && (
+            <TableRow><TableCell colSpan={5} className={styles.empty}><Text>No knowledge articles found.</Text></TableCell></TableRow>
           )}
-          {filteredItems.map((a, idx) => (
+          {items.map((a, idx) => (
             <TableRow key={a.sys_id} className="snow-row"
-              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              style={{ borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}` }}>
               <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>{a.number}</span></TableCell>
               <TableCell style={{ ...cellStyle, maxWidth: '260px' }}>{a.short_description || '—'}</TableCell>
               <TableCell style={cellStyle}>{a.category || '—'}</TableCell>
@@ -1393,13 +1307,6 @@ function KnowledgeView({ items, theme }: { items: KnowledgeArticle[]; theme: 'li
 function CatalogView({ items, theme }: { items: CatalogItem[]; theme: 'light' | 'dark' }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
-
-  const filteredItems = items.filter(item =>
-    !filter ||
-    item.name?.toLowerCase().includes(filter.toLowerCase()) ||
-    item.category?.toLowerCase().includes(filter.toLowerCase())
-  );
 
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
@@ -1415,15 +1322,14 @@ function CatalogView({ items, theme }: { items: CatalogItem[]; theme: 'light' | 
         <ExpandButton />
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by name or category…" theme={theme} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', padding: '12px' }}>
-        {filteredItems.length === 0 && (
+        {items.length === 0 && (
           <div className={styles.empty} style={{ gridColumn: '1 / -1', color: t.textWeak }}>
-            {filter ? 'No matching catalog items.' : 'No catalog items found.'}
+            No catalog items found.
           </div>
         )}
-        {filteredItems.map(item => (
+        {items.map(item => (
           <div key={item.sys_id} style={{
             border: `1px solid ${t.border}`, borderRadius: '6px', padding: '12px',
             background: t.surface, boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
@@ -1455,14 +1361,7 @@ function ApprovalsView({ items, callTool, toast, theme }: {
 }) {
   const styles = useStyles();
   const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [actingId, setActingId] = useState<string | null>(null);
-
-  const filteredItems = items.filter(a =>
-    !filter ||
-    a.approver?.toLowerCase().includes(filter.toLowerCase()) ||
-    a.document?.toLowerCase().includes(filter.toLowerCase())
-  );
 
   const act = async (sys_id: string, action: 'approve' | 'reject') => {
     setActingId(sys_id);
@@ -1499,7 +1398,6 @@ function ApprovalsView({ items, callTool, toast, theme }: {
         <ExpandButton />
       </div>
 
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by approver or document…" theme={theme} />
 
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
@@ -1513,12 +1411,12 @@ function ApprovalsView({ items, callTool, toast, theme }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredItems.length === 0 && (
-            <TableRow><TableCell colSpan={6} className={styles.empty}><Text>{filter ? 'No matching approvals.' : 'No pending approvals.'}</Text></TableCell></TableRow>
+          {items.length === 0 && (
+            <TableRow><TableCell colSpan={6} className={styles.empty}><Text>No pending approvals.</Text></TableCell></TableRow>
           )}
-          {filteredItems.map((a, idx) => (
+          {items.map((a, idx) => (
             <TableRow key={a.sys_id} className="snow-row"
-              style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+              style={{ borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}` }}>
               <TableCell style={cellStyle}>{a.approver || '—'}</TableCell>
               <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', color: '#293E40' }}>{a.document || '—'}</span></TableCell>
               <TableCell style={cellStyle}><ApprovalPill approval={a.state} theme={theme} /></TableCell>
