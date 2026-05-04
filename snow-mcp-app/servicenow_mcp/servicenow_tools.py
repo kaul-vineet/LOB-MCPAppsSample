@@ -48,6 +48,22 @@ async def _fetch_incidents(limit: int = 5) -> list:
     ]
 
 
+async def _fetch_approvals(limit: int = 10) -> list:
+    resp = await servicenow_request(
+        "GET", "/api/now/table/sysapproval_approver",
+        params={"sysparm_limit": limit,
+                "sysparm_query": "state=requested^ORDERBYDESCsys_created_on",
+                "sysparm_fields": "sys_id,approver,sysapproval,state,due_date,sys_created_on",
+                "sysparm_display_value": "true"},
+    )
+    return [
+        {"sys_id": _val(r.get("sys_id")), "approver": _val(r.get("approver")),
+         "document": _val(r.get("sysapproval")), "state": _val(r.get("state")),
+         "due_date": _val(r.get("due_date")), "created_on": _val(r.get("sys_created_on"))}
+        for r in resp.json().get("result", [])
+    ]
+
+
 async def _fetch_requests(limit: int = 5) -> list:
     resp = await servicenow_request(
         "GET", "/api/now/table/sc_request",
@@ -662,11 +678,55 @@ async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolRes
     )
 
 
+async def sn__approve_record(sys_id: str) -> types.CallToolResult:
+    try:
+        await servicenow_request(
+            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
+            json_body={"state": "approved", "comments": "Approved via M365 Copilot"},
+        )
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error approving record: {e}")
+    try:
+        approvals = await _fetch_approvals()
+    except Exception as exc:
+        log.warning("sn__approve_record_refresh_failed", error=str(exc))
+        approvals = []
+    structured = {"type": "approvals", "total": len(approvals), "items": approvals}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Approval granted. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
+async def sn__reject_record(sys_id: str, comments: str = "") -> types.CallToolResult:
+    try:
+        await servicenow_request(
+            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
+            json_body={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
+        )
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error rejecting record: {e}")
+    try:
+        approvals = await _fetch_approvals()
+    except Exception as exc:
+        log.warning("sn__reject_record_refresh_failed", error=str(exc))
+        approvals = []
+    structured = {"type": "approvals", "total": len(approvals), "items": approvals}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text="Approval rejected. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
 async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
     try:
         await servicenow_request(
             "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
-            json={"state": "approved", "comments": "Approved via M365 Copilot"},
+            json_body={"state": "approved", "comments": "Approved via M365 Copilot"},
         )
     except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
@@ -684,7 +744,7 @@ async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallToo
     try:
         await servicenow_request(
             "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
-            json={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
+            json_body={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
         )
     except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
@@ -787,6 +847,12 @@ _TOOL_SPECS_LIST = [
     {"name": "sn__add_hr_work_note",
      "description": "Add a work note to an existing HR case in ServiceNow. Requires sys_id and work_note text.",
      "handler": sn__add_hr_work_note},
+    {"name": "sn__approve_record",
+     "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record.",
+     "handler": sn__approve_record},
+    {"name": "sn__reject_record",
+     "description": "Reject a pending approval in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
+     "handler": sn__reject_record},
     {"name": "sn__hr_approve_record",
      "description": "Approve an HR approval record in ServiceNow. Requires sys_id of the sysapproval_approver record.",
      "handler": sn__hr_approve_record},
