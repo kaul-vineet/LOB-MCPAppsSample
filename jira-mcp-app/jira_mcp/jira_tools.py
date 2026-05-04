@@ -962,7 +962,7 @@ async def tool_update_version(
         return {"success": False, "error": str(exc)}
 
 
-# ── Form-show helpers (GEO-pattern, widget submits the POSO) ────────
+# ── Form-show helpers (GET-pattern, widget submits the POST) ────────
 
 async def tool_show_create_issue_form(
     project_key: Optional[str] = None,

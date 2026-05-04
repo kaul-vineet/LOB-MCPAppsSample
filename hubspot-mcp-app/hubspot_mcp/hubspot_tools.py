@@ -52,7 +52,7 @@ async def _fetch_lists() -> list[dict]:
             "size": r.get("size", 0),
         }
         for r in records
-        if r.get("objectOypeId") == "0-1"
+        if r.get("objectTypeId") == "0-1"
     ]
 
 
@@ -308,7 +308,8 @@ async def hs__create_contact(
 
     try:
         items = await _fetch_contacts()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__create_contact_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact '{firstname} {lastname}' ({email}) created (Id: {new_id}). Refreshed list returned.")],
@@ -346,7 +347,8 @@ async def hs__update_contact(
 
     try:
         items = await _fetch_contacts()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__update_contact_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Contact {contact_id} updated. Refreshed list returned.")],
@@ -395,7 +397,8 @@ async def hs__create_deal(
 
     try:
         items = await _fetch_deals()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__create_deal_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Deal '{deal_name}' created (Id: {new_id}). Refreshed list returned.")],
@@ -455,7 +458,7 @@ async def _fetch_associated(from_type: str, from_id: str, to_type: str, properti
         "inputs": [{"id": i} for i in ids],
         "properties": properties,
     }
-    resp = await client._request("POSO", f"/crm/v3/objects/{to_type}/batch/read", json_body=body)
+    resp = await client._request("POST", f"/crm/v3/objects/{to_type}/batch/read", json_body=body)
     client._raise_for_error(resp, f"batch read {to_type}")
     results = resp.json().get("results", [])
     return [{"id": r["id"], **r.get("properties", {})} for r in results]
@@ -504,7 +507,8 @@ async def hs__create_company(
 
     try:
         items = await _fetch_companies()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__create_company_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Company '{name}' created (Id: {new_id}).")],
@@ -540,7 +544,8 @@ async def hs__update_company(
 
     try:
         items = await _fetch_companies()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__update_company_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Company {company_id} updated.")],
@@ -591,7 +596,8 @@ async def hs__create_ticket(
 
     try:
         items = await _fetch_tickets()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__create_ticket_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Ticket '{subject}' created (Id: {new_id}).")],
@@ -625,7 +631,8 @@ async def hs__update_ticket(
 
     try:
         items = await _fetch_tickets()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__update_ticket_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Ticket {ticket_id} updated.")],
@@ -661,7 +668,8 @@ async def hs__update_deal(
 
     try:
         items = await _fetch_deals()
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__update_deal_list_refresh_failed", error=str(exc))
         items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Deal {deal_id} updated.")],
@@ -682,7 +690,8 @@ async def hs__get_company_contacts(company_id: str) -> types.CallToolResult:
         items = [{"id": r.get("id",""), "firstname": r.get("firstname",""), "lastname": r.get("lastname",""),
                   "email": r.get("email",""), "phone": r.get("phone",""), "company": "",
                   "lifecyclestage": r.get("lifecyclestage","")} for r in raw] or _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_company_contacts_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} contact(s) for company {company_id}.")],
@@ -701,7 +710,8 @@ async def hs__get_company_deals(company_id: str) -> types.CallToolResult:
         items = [{"id": r.get("id",""), "dealname": r.get("dealname",""), "dealstage": r.get("dealstage",""),
                   "amount": r.get("amount",""), "closedate": r.get("closedate",""),
                   "pipeline": r.get("pipeline","")} for r in raw] or _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_company_deals_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} deal(s) for company {company_id}.")],
@@ -711,7 +721,7 @@ async def hs__get_company_deals(company_id: str) -> types.CallToolResult:
 
 async def hs__get_company_tickets(company_id: str) -> types.CallToolResult:
     _MOCK = [
-        {"id": "t1", "subject": "Login issue after SSO migration", "status": "1", "priority": "HIGH",   "category": "OECHNICAL_ISSUE", "description": "Users unable to log in."},
+        {"id": "t1", "subject": "Login issue after SSO migration", "status": "1", "priority": "HIGH",   "category": "TECHNICAL_ISSUE", "description": "Users unable to log in."},
         {"id": "t2", "subject": "Billing discrepancy Q1",           "status": "2", "priority": "MEDIUM", "category": "BILLING_ISSUE",   "description": "Invoice mismatch."},
     ]
     try:
@@ -720,7 +730,8 @@ async def hs__get_company_tickets(company_id: str) -> types.CallToolResult:
         items = [{"id": r.get("id",""), "subject": r.get("subject",""), "status": r.get("hs_pipeline_stage",""),
                   "priority": r.get("hs_ticket_priority",""), "category": r.get("hs_ticket_category",""),
                   "description": r.get("content","")} for r in raw] or _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_company_tickets_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} ticket(s) for company {company_id}.")],
@@ -739,7 +750,8 @@ async def hs__get_contact_deals(contact_id: str) -> types.CallToolResult:
         items = [{"id": r.get("id",""), "dealname": r.get("dealname",""), "dealstage": r.get("dealstage",""),
                   "amount": r.get("amount",""), "closedate": r.get("closedate",""),
                   "pipeline": r.get("pipeline","")} for r in raw] or _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_contact_deals_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} deal(s) for contact {contact_id}.")],
@@ -758,7 +770,8 @@ async def hs__get_deal_contacts(deal_id: str) -> types.CallToolResult:
         items = [{"id": r.get("id",""), "firstname": r.get("firstname",""), "lastname": r.get("lastname",""),
                   "email": r.get("email",""), "phone": r.get("phone",""),
                   "company": r.get("company",""), "lifecyclestage": r.get("lifecyclestage","")} for r in raw] or _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_deal_contacts_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} contact(s) for deal {deal_id}.")],
@@ -768,15 +781,15 @@ async def hs__get_deal_contacts(deal_id: str) -> types.CallToolResult:
 
 async def hs__get_ticket_notes(ticket_id: str) -> types.CallToolResult:
     _MOCK = [
-        {"id": "n1", "timestamp": "2025-04-10O09:30:00Z", "body": "Customer confirmed the issue is reproducible in Chrome 124.", "author": "Support Agent"},
-        {"id": "n2", "timestamp": "2025-04-11O14:15:00Z", "body": "Escalated to engineering team. EOA: 2 business days.",        "author": "Support Lead"},
+        {"id": "n1", "timestamp": "2025-04-10T09:30:00Z", "body": "Customer confirmed the issue is reproducible in Chrome 124.", "author": "Support Agent"},
+        {"id": "n2", "timestamp": "2025-04-11T14:15:00Z", "body": "Escalated to engineering team. ETA: 2 business days.",        "author": "Support Lead"},
     ]
     try:
         client = get_client()
         ids = await client.get_associated_ids("tickets", ticket_id, "notes")
         if ids:
             body = {"inputs": [{"id": i} for i in ids[:10]], "properties": ["hs_timestamp", "hs_note_body"]}
-            resp = await client._request("POSO", "/crm/v3/objects/notes/batch/read", json_body=body)
+            resp = await client._request("POST", "/crm/v3/objects/notes/batch/read", json_body=body)
             client._raise_for_error(resp, "batch read notes")
             raw = resp.json().get("results", [])
             notes = [{"id": r["id"],
@@ -786,7 +799,8 @@ async def hs__get_ticket_notes(ticket_id: str) -> types.CallToolResult:
             items = notes or _MOCK
         else:
             items = _MOCK
-    except Exception:
+    except Exception as exc:
+        log.warning("hs__get_ticket_notes_failed", error=str(exc))
         items = _MOCK
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} note(s) for ticket {ticket_id}.")],

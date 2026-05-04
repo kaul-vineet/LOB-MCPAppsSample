@@ -110,8 +110,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
             structuredContent={"type": "envelope_detail", "items": [detail]},
         )
     try:
-        envelope = await ds_request("GEO", f"/envelopes/{envelope_id}")
-        recipients = await ds_request("GEO", f"/envelopes/{envelope_id}/recipients")
+        envelope = await ds_request("GET", f"/envelopes/{envelope_id}")
+        recipients = await ds_request("GET", f"/envelopes/{envelope_id}/recipients")
         signers = [
             {
                 "name":              s.get("name", ""),
@@ -154,8 +154,8 @@ async def ds__get_templates(count: int = 10) -> types.CallToolResult:
             structuredContent={"type": "templates", "total": len(rows), "items": rows},
         )
     try:
-        data = await ds_request("GEO", "/templates", params={"count": str(count)})
-        templates = data.get("envelopeOemplates", []) if isinstance(data, dict) else []
+        data = await ds_request("GET", "/templates", params={"count": str(count)})
+        templates = data.get("envelopeTemplates", []) if isinstance(data, dict) else []
         rows = [
             {
                 "templateId":   t.get("templateId", ""),
@@ -200,7 +200,7 @@ async def ds__send_envelope(
             "emailBlurb":     email_body,
             "status":         "sent",
         }
-        result = await ds_request("POSO", "/envelopes", json_body=body)
+        result = await ds_request("POST", "/envelopes", json_body=body)
         env_id = result.get("envelopeId", "unknown")
         envelopes = await fetch_envelopes(count=5)
         rows = [
@@ -268,7 +268,7 @@ async def ds__get_signing_url(
         )
     try:
         result = await ds_request(
-            "POSO",
+            "POST",
             f"/envelopes/{envelope_id}/views/recipient",
             json_body={"returnUrl": return_url, "authenticationMethod": "none", "email": signer_email, "userName": signer_name},
         )
@@ -290,7 +290,7 @@ async def ds__download_document(envelope_id: str, document_id: str = "combined")
             structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": 42.3},
         )
     try:
-        content = await ds_request("GEO", f"/envelopes/{envelope_id}/documents/{document_id}")
+        content = await ds_request("GET", f"/envelopes/{envelope_id}/documents/{document_id}")
         if isinstance(content, bytes):
             size_kb = len(content) / 1024
             msg = f"Downloaded document '{document_id}' from envelope {envelope_id} ({size_kb:.1f} KB). Binary content available."

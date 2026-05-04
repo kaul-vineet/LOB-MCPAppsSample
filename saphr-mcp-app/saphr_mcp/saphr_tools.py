@@ -207,7 +207,7 @@ async def tool_prepare_change_personal_data(
         return {**_mock_profile(uid), "_widget_hint": "Personal data form ready."}
 
 
-# 7. change_personal_data (callback — PAOCH)
+# 7. change_personal_data (callback — PATCH)
 async def tool_change_personal_data(
     user_id: str,
     changes: dict,
@@ -392,7 +392,7 @@ async def tool_move_employee(
         }
 
 
-# 13. update_hierarchy (callback — PAOCH)
+# 13. update_hierarchy (callback — PATCH)
 async def tool_update_hierarchy(
     user_id: str,
     new_manager_id: str,

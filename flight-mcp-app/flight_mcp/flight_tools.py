@@ -129,7 +129,7 @@ async def ft__get_flights_by_aircraft(
         return _error_result("Date range cannot exceed 2 days.")
 
     try:
-        resp = await opensky_request("GEO", "/flights/aircraft", params={"icao24": icao24, "begin": begin, "end": end})
+        resp = await opensky_request("GET", "/flights/aircraft", params={"icao24": icao24, "begin": begin, "end": end})
         flights_raw = [] if resp.status_code == 404 else (resp.raise_for_status() or (resp.json() if resp.content else []))
     except Exception as e:
         return _error_result(f"Failed to fetch flights: {e}")
@@ -163,7 +163,7 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallToolResult:
         return _mock_aircraft_state(icao24)
 
     try:
-        resp = await opensky_request("GEO", "/states/all", params={"icao24": icao24})
+        resp = await opensky_request("GET", "/states/all", params={"icao24": icao24})
         states = [] if resp.status_code == 404 else (resp.raise_for_status() or (resp.json().get("states") or []))
     except Exception as e:
         return _error_result(f"Failed to fetch aircraft state: {e}")
@@ -220,7 +220,7 @@ async def ft__get_airport_departures(
         return _error_result("Date range cannot exceed 1 day for airport queries.")
 
     try:
-        resp = await opensky_request("GEO", "/flights/departure", params={"airport": airport.upper(), "begin": begin, "end": end})
+        resp = await opensky_request("GET", "/flights/departure", params={"airport": airport.upper(), "begin": begin, "end": end})
         flights_raw = [] if resp.status_code == 404 else (resp.raise_for_status() or (resp.json() if resp.content else []))
     except Exception as e:
         return _error_result(f"Failed to fetch departures: {e}")
@@ -268,7 +268,7 @@ async def ft__get_airport_arrivals(
         return _error_result("Date range cannot exceed 1 day for airport queries.")
 
     try:
-        resp = await opensky_request("GEO", "/flights/arrival", params={"airport": airport.upper(), "begin": begin, "end": end})
+        resp = await opensky_request("GET", "/flights/arrival", params={"airport": airport.upper(), "begin": begin, "end": end})
         flights_raw = [] if resp.status_code == 404 else (resp.raise_for_status() or (resp.json() if resp.content else []))
     except Exception as e:
         return _error_result(f"Failed to fetch arrivals: {e}")
@@ -313,7 +313,7 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallToolRe
         return _mock_aircraft_track(icao24)
 
     try:
-        resp = await opensky_request("GEO", "/tracks/all", params={"icao24": icao24, "time": time})
+        resp = await opensky_request("GET", "/tracks/all", params={"icao24": icao24, "time": time})
         if resp.status_code == 404:
             structured: dict = {"icao24": icao24, "found": False}
             summary = f"No track found for {icao24}."

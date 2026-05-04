@@ -1,5 +1,6 @@
 """ServiceNow tool handlers + _TOOL_SPECS_LIST registry."""
 import httpx
+import structlog
 from mcp import types
 from mcp.types import PromptMessage, TextContent
 
@@ -13,6 +14,9 @@ from .servicenow_client import (
 )
 
 
+log = structlog.get_logger("sn")
+
+
 def _error_result(message: str) -> types.CallToolResult:
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=message)],
@@ -20,12 +24,17 @@ def _error_result(message: str) -> types.CallToolResult:
     )
 
 
+def _sn_escape(value: str) -> str:
+    """Escape a value embedded in a ServiceNow encoded query — removes ^ and = injectors."""
+    return value.replace("^", "").replace("=", "")
+
+
 # ── Read tools ────────────────────────────────────────────────────────────────
 
 async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/incident",
+            "GET", "/api/now/table/incident",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
                     "sysparm_fields": INCIDENT_FIELDS, "sysparm_display_value": "true"},
         )
@@ -61,7 +70,7 @@ async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
 async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/sc_request",
+            "GET", "/api/now/table/sc_request",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
                     "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
         )
@@ -96,7 +105,7 @@ async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
 async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/sc_req_item",
+            "GET", "/api/now/table/sc_req_item",
             params={"sysparm_query": f"request={request_sys_id}",
                     "sysparm_fields": REQUEST_ITEM_FIELDS, "sysparm_display_value": "true"},
         )
@@ -130,7 +139,7 @@ async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
 async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/change_request",
+            "GET", "/api/now/table/change_request",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
                     "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
         )
@@ -165,7 +174,7 @@ async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
 async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/problem",
+            "GET", "/api/now/table/problem",
             params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
                     "sysparm_fields": "sys_id,number,short_description,state,priority,assigned_to,sys_created_on",
                     "sysparm_display_value": "true"},
@@ -200,7 +209,7 @@ async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
 async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/sysapproval_approver",
+            "GET", "/api/now/table/sysapproval_approver",
             params={"sysparm_limit": limit,
                     "sysparm_query": "state=requested^ORDERBYDESCsys_created_on",
                     "sysparm_fields": "sys_id,approver,sysapproval,state,due_date,sys_created_on",
@@ -235,7 +244,7 @@ async def sn__get_pending_approvals(limit: int = 10) -> types.CallToolResult:
 async def sn__get_service_catalog_items(limit: int = 10) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/sc_cat_item",
+            "GET", "/api/now/table/sc_cat_item",
             params={"sysparm_limit": limit, "sysparm_query": "active=true^ORDERBYname",
                     "sysparm_fields": "sys_id,name,short_description,category,price,sys_class_name",
                     "sysparm_display_value": "true"},
@@ -273,12 +282,13 @@ async def sn__get_knowledge_articles(query: str = "", limit: int = 5) -> types.C
         "sysparm_query": "workflow_state=published^ORDERBYDESCsys_updated_on",
     }
     if query:
+        safe_q = _sn_escape(query)
         params["sysparm_query"] = (
-            f"short_descriptionLIKE{query}^ORtextLIKE{query}"
+            f"short_descriptionLIKE{safe_q}^ORtextLIKE{safe_q}"
             "^workflow_state=published^ORDERBYDESCsys_updated_on"
         )
     try:
-        resp = await servicenow_request("GEO", "/api/now/table/kb_knowledge", params=params)
+        resp = await servicenow_request("GET", "/api/now/table/kb_knowledge", params=params)
         records = resp.json().get("result", [])
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to fetch knowledge articles: {e.response.status_code} {e.response.text}")
@@ -311,7 +321,7 @@ async def sn__create_incident(
     if description: body["description"] = description
     if category: body["category"] = category
     try:
-        resp = await servicenow_request("POSO", "/api/now/table/incident", json_body=body)
+        resp = await servicenow_request("POST", "/api/now/table/incident", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to create incident: {e.response.status_code} {e.response.text}")
@@ -332,7 +342,7 @@ async def sn__create_request(
     body: dict = {"short_description": short_description, "priority": priority}
     if description: body["description"] = description
     try:
-        resp = await servicenow_request("POSO", "/api/now/table/sc_request", json_body=body)
+        resp = await servicenow_request("POST", "/api/now/table/sc_request", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to create request: {e.response.status_code} {e.response.text}")
@@ -352,7 +362,7 @@ async def sn__create_change_request(
 ) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "POSO", "/api/now/table/change_request",
+            "POST", "/api/now/table/change_request",
             json_body={"short_description": short_description, "category": category,
                        "risk": risk, "priority": priority},
         )
@@ -366,7 +376,7 @@ async def sn__create_change_request(
 
     try:
         refresh_resp = await servicenow_request(
-            "GEO", "/api/now/table/change_request",
+            "GET", "/api/now/table/change_request",
             params={"sysparm_limit": 5, "sysparm_query": "ORDERBYDESCsys_created_on",
                     "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
         )
@@ -376,7 +386,8 @@ async def sn__create_change_request(
              "priority": _val(r.get("priority")), "risk": _val(r.get("risk"))}
             for r in refresh_resp.json().get("result", [])
         ]
-    except Exception:
+    except Exception as exc:
+        log.warning("sn__create_change_request_list_refresh_failed", error=str(exc))
         items = []
 
     structured = {"type": "change_requests", "total": len(items), "items": items, "_createdId": new_id}
@@ -395,7 +406,7 @@ async def sn__update_incident(
     if not body:
         return _error_result("No fields to update. Provide description or priority.")
     try:
-        resp = await servicenow_request("PAOCH", f"/api/now/table/incident/{sys_id}", json_body=body)
+        resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update incident: {e.response.status_code} {e.response.text}")
@@ -416,7 +427,7 @@ async def sn__update_request(sys_id: str, approval: str | None = None) -> types.
     if not body:
         return _error_result("No fields to update. Provide approval.")
     try:
-        resp = await servicenow_request("PAOCH", f"/api/now/table/sc_request/{sys_id}", json_body=body)
+        resp = await servicenow_request("PATCH", f"/api/now/table/sc_request/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update request: {e.response.status_code} {e.response.text}")
@@ -437,7 +448,7 @@ async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> t
     if not body:
         return _error_result("No fields to update. Provide quantity.")
     try:
-        resp = await servicenow_request("PAOCH", f"/api/now/table/sc_req_item/{sys_id}", json_body=body)
+        resp = await servicenow_request("PATCH", f"/api/now/table/sc_req_item/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to update request item: {e.response.status_code} {e.response.text}")
@@ -455,7 +466,7 @@ async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> t
 async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallToolResult:
     body = {"state": "6", "close_code": close_code, "close_notes": close_notes}
     try:
-        resp = await servicenow_request("PAOCH", f"/api/now/table/incident/{sys_id}", json_body=body)
+        resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
         return _error_result(f"Failed to resolve incident: {e.response.status_code} {e.response.text}")
@@ -474,7 +485,7 @@ async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -
 async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "PAOCH", f"/api/now/table/incident/{sys_id}", json_body={"work_notes": work_note}
+            "PATCH", f"/api/now/table/incident/{sys_id}", json_body={"work_notes": work_note}
         )
         record = resp.json().get("result", {})
     except httpx.HTTPStatusError as e:
@@ -510,7 +521,7 @@ async def sn__create_request_form() -> types.CallToolResult:
 async def sn__get_change_tasks(change_sys_id: str) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "GEO", "/api/now/table/change_task",
+            "GET", "/api/now/table/change_task",
             params={"sysparm_query": f"change_request={change_sys_id}^ORDERBYDESCsys_created_on",
                     "sysparm_fields": "sys_id,short_description,state,priority,assigned_to,sys_created_on",
                     "sysparm_display_value": "true"},
@@ -541,7 +552,7 @@ async def sn__create_hr_case(
 ) -> types.CallToolResult:
     try:
         resp = await servicenow_request(
-            "POSO", "/api/now/table/sn_hr_core_case",
+            "POST", "/api/now/table/sn_hr_core_case",
             json={"short_description": subject, "description": description, "priority": priority},
         )
         new_id = resp.json().get("result", {}).get("sys_id", "")
@@ -568,7 +579,7 @@ async def sn__update_hr_case(
     if state is not None:
         body["state"] = state
     try:
-        await servicenow_request("PAOCH", f"/api/now/table/sn_hr_core_case/{sys_id}", json=body)
+        await servicenow_request("PATCH", f"/api/now/table/sn_hr_core_case/{sys_id}", json=body)
     except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
@@ -584,7 +595,7 @@ async def sn__update_hr_case(
 async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
     try:
         await servicenow_request(
-            "PAOCH", f"/api/now/table/sn_hr_core_case/{sys_id}",
+            "PATCH", f"/api/now/table/sn_hr_core_case/{sys_id}",
             json={"work_notes": work_note},
         )
     except httpx.HTTPStatusError as e:
@@ -602,7 +613,7 @@ async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolRes
 async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
     try:
         await servicenow_request(
-            "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
+            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
             json={"state": "approved", "comments": "Approved via M365 Copilot"},
         )
     except httpx.HTTPStatusError as e:
@@ -620,7 +631,7 @@ async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
 async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallToolResult:
     try:
         await servicenow_request(
-            "PAOCH", f"/api/now/table/sysapproval_approver/{sys_id}",
+            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
             json={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
         )
     except httpx.HTTPStatusError as e:
