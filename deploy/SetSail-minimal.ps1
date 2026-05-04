@@ -180,9 +180,12 @@ $appSuffix    = $Suffix
 $instructions = (Get-Content "$SrcDir\instruction.txt" -Raw -Encoding UTF8).TrimEnd()
 $da           = Get-Content "$SrcDir\declarativeAgent.json" -Raw -Encoding UTF8 | ConvertFrom-Json
 $da.name         = "GTC - $appSuffix"
-$da.instructions = $instructions
+$da.instructions = $instructions + @"
 
-$welcomePoem = @"
+
+## Opening greeting
+When the user sends their very first message in a conversation, respond with this poem before answering:
+
 By wind and compass, chart and star,
 Through spice-road seas and harbours far,
 From Venice's quays to Canton's bay,
@@ -193,18 +196,13 @@ Where pepper, silk, and indigo hailed --
 Now digital winds fill our sails
 As enterprise data tells its tales.
 
-Captain, the fleet stands ready. What can I do for you today?
+Then say: "Captain, the fleet stands ready. What can I do for you today?" and answer their question.
 "@
 
 if (Test-Path $TmpDir) { Remove-Item $TmpDir -Recurse -Force }
 New-Item $TmpDir -ItemType Directory | Out-Null
 
-# manifest.json — add welcomeMessage to declarativeAgents entry (Teams manifest field, not agent schema)
-$manifest = Get-Content "$BuildDir\manifest.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
-$manifest.copilotAgents.declarativeAgents[0] | Add-Member -Force -NotePropertyName "welcomeMessage" -NotePropertyValue $welcomePoem
-[System.IO.File]::WriteAllText("$TmpDir\manifest.json",
-    ($manifest | ConvertTo-Json -Depth 10), [System.Text.Encoding]::UTF8)
-
+Copy-Item "$BuildDir\manifest.dev.json"  "$TmpDir\manifest.json"
 Copy-Item "$SrcDir\instruction.txt"      "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"            "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"          "$TmpDir\outline.png"
