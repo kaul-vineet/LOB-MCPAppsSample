@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useApp, type App } from '@modelcontextprotocol/ext-apps/react';
 import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps';
 
+class ToolSemanticError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolSemanticError';
+  }
+}
+
 interface McpBridgeContextType {
   toolData: any;
   theme: 'light' | 'dark';
@@ -127,7 +134,7 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
       try {
         const result = await app.callServerTool({ name, arguments: args || {} });
         if (result.isError) {
-          throw new Error(
+          throw new ToolSemanticError(
             result.content?.map((c: any) => ('text' in c ? c.text : '')).join('') || 'Tool call failed'
           );
         }
@@ -163,7 +170,9 @@ export function McpBridgeProvider({ appName, children }: { appName: string; chil
     try {
       return await callToolOnce(name, args);
     } catch (e) {
-      // Retry once after 1s for transient errors
+      // Don't retry errors the server explicitly returned (isError result) —
+      // those are semantic, not transient. Only retry connection/timeout errors.
+      if (e instanceof ToolSemanticError) throw e;
       await new Promise(r => setTimeout(r, 1000));
       return callToolOnce(name, args);
     }

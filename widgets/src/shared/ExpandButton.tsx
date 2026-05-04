@@ -9,6 +9,8 @@ export function ExpandButton() {
   return (
     <button
       onClick={isFullscreen ? exitFullscreen : requestFullscreen}
+      aria-label={isFullscreen ? 'Exit expanded view' : 'Expand to fullscreen'}
+      aria-pressed={isFullscreen}
       title={isFullscreen ? 'Exit expanded view' : 'Expand'}
       style={{
         background: 'rgba(255,255,255,0.92)',
