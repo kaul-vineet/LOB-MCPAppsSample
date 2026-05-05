@@ -874,7 +874,7 @@
         },
         {
             "name": "sn__get_incidents",
-            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
+            "description": "Get ServiceNow incidents. Pass number for exact lookup \u2192 opens edit form. Pass number + action=\"resolve\" \u2192 opens resolve form with resolution code picklist. Otherwise lists recent incidents.",
             "inputSchema": {
                 "properties": {
                     "limit": {
@@ -888,6 +888,13 @@
                     "query": {
                         "default": "",
                         "type": "string"
+                    },
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "resolve"
+                        ],
+                        "description": "Pass \"resolve\" to open the resolve form instead of the edit form."
                     }
                 },
                 "type": "object",

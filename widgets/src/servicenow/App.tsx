@@ -1425,6 +1425,115 @@ if (typeof document !== 'undefined' && !document.getElementById(nowStyleId)) {
   document.head.appendChild(style);
 }
 
+// ── Resolve Incident View ────────────────────────────────────────────────────
+const CLOSE_CODES = [
+  'Solved (Permanently)',
+  'Solved (Work Around)',
+  'Solved Remotely (Permanently)',
+  'Solved Remotely (Work Around)',
+  'Not Solved (Not Reproducible)',
+  'Not Solved (Too Costly)',
+  'Closed/Resolved by Caller',
+];
+
+function ResolveIncidentView({ sys_id, number, callTool, toast, theme }: {
+  sys_id: string;
+  number: string;
+  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
+  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  theme: 'light' | 'dark';
+}) {
+  const styles = useStyles();
+  const t = now(theme);
+  const [closeCode, setCloseCode] = useState('Solved (Permanently)');
+  const [closeNotes, setCloseNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleResolve = async () => {
+    setSubmitting(true);
+    try {
+      await callTool('sn__resolve_incident', {
+        sys_id,
+        close_code: closeCode,
+        close_notes: closeNotes.trim() || 'Resolved',
+      });
+      setSubmitted(true);
+      toast('✓ Incident resolved');
+    } catch (e: any) {
+      toast(e.message || 'Failed to resolve incident', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const selectStyle: React.CSSProperties = {
+    width: '100%', padding: '6px 10px', borderRadius: '4px',
+    border: `1px solid ${t.border}`, background: t.surface,
+    color: t.text, fontSize: '13px', fontFamily: 'inherit', cursor: 'pointer',
+  };
+
+  return (
+    <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
+      <div className={styles.headerBar} style={{ background: 'linear-gradient(135deg, #293E40 0%, #3A5A5C 100%)', borderBottom: '2px solid #81B5A1' }}>
+        <div className={styles.headerLeft}>
+          <span style={{ fontSize: '18px' }}>🔒</span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Resolve Incident — {number}</span>
+        </div>
+      </div>
+
+      {submitted ? (
+        <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px', marginBottom: '8px' }}>✅</div>
+          <Text weight="semibold" style={{ color: t.success, fontSize: '14px' }}>
+            Incident {number} resolved ({closeCode})
+          </Text>
+        </div>
+      ) : (
+        <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: t.text, marginBottom: '6px' }}>
+              Resolution Code <span style={{ color: t.error }}>*</span>
+            </label>
+            <select value={closeCode} onChange={e => setCloseCode(e.target.value)} style={selectStyle}>
+              {CLOSE_CODES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: t.text, marginBottom: '6px' }}>
+              Resolution Notes
+            </label>
+            <textarea
+              value={closeNotes}
+              onChange={e => setCloseNotes(e.target.value)}
+              placeholder="Describe how the incident was resolved…"
+              rows={3}
+              style={{
+                width: '100%', padding: '8px', borderRadius: '4px',
+                border: `1px solid ${t.border}`, background: t.surface,
+                color: t.text, fontSize: '13px', fontFamily: 'inherit',
+                resize: 'vertical', boxSizing: 'border-box',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              appearance="primary"
+              size="small"
+              onClick={handleResolve}
+              disabled={submitting}
+              style={{ background: '#293E40', borderColor: '#293E40', borderRadius: '4px', height: '34px', padding: '0 20px' }}
+            >
+              {submitting ? '…' : '🔒 Resolve Incident'}
+            </Button>
+          </div>
+        </div>
+      )}
+      <NowFooter theme={theme} />
+    </div>
+  );
+}
+
 // ── Form View (standalone create form) ──────────────────────────────────────
 const FORM_URGENCIES = ['1', '2', '3'];
 const FORM_URGENCY_LABELS: Record<string, string> = { '1': '1 – High', '2': '2 – Medium', '3': '3 – Low' };
@@ -1673,7 +1782,16 @@ export function ServiceNowApp() {
       {data.type === 'approvals' && (
         <ApprovalsView items={(data.items || []) as SnowApproval[]} callTool={callTool} toast={toast} theme={theme} />
       )}
-      {data.type === 'form' && (
+      {data.type === 'form' && data.mode === 'resolve' && (
+        <ResolveIncidentView
+          sys_id={data.recordId || ''}
+          number={data.number || ''}
+          callTool={callTool}
+          toast={toast}
+          theme={theme}
+        />
+      )}
+      {data.type === 'form' && data.mode !== 'resolve' && (
         <FormView
           entity={(data.entity || 'incident') as 'incident' | 'request' | 'change_request' | 'problem'}
           mode={(data.mode || 'create') as 'create' | 'edit'}

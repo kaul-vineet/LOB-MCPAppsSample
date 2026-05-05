@@ -136,7 +136,7 @@ async def _fetch_requests(limit: int = 5) -> list:
 
 # ── Read tools ────────────────────────────────────────────────────────────────
 
-async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "") -> types.CallToolResult:
+async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "", action: str = "") -> types.CallToolResult:
     PROBLEM_FIELDS_LOCAL = INCIDENT_FIELDS
     if number:
         num = number.strip().upper()
@@ -152,6 +152,14 @@ async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "") -
         if not records:
             return _error_result(f"Incident {num} not found.")
         r = records[0]
+        if action == "resolve":
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening resolve form for {_val(r.get('number'))}.")],
+                structuredContent={"type": "form", "entity": "incident", "mode": "resolve",
+                                   "recordId": _val(r.get("sys_id")),
+                                   "number": _val(r.get("number")),
+                                   "prefill": {"close_code": "Solved (Permanently)", "close_notes": ""}},
+            )
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=f"Opening edit form for {_val(r.get('number'))}.")],
             structuredContent={"type": "form", "entity": "incident", "mode": "edit",
