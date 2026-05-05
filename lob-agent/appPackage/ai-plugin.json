@@ -176,7 +176,7 @@
         },
         {
             "name": "sn__resolve_incident",
-            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
+            "description": "Resolve a ServiceNow incident. Sets state to Resolved. close_code must be one of the valid SN resolution codes. close_notes defaults to \"Resolved\" if not specified."
         },
         {
             "name": "sn__create_incident_form",

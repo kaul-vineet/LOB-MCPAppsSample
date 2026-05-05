@@ -776,7 +776,11 @@ async def sn__create_problem(
     )
 
 
-async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallToolResult:
+async def sn__resolve_incident(
+    sys_id: str,
+    close_code: str = "Solved (Permanently)",
+    close_notes: str = "Resolved",
+) -> types.CallToolResult:
     body = {"state": "6", "close_code": close_code, "close_notes": close_notes}
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)

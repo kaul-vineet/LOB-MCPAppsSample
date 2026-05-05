@@ -1314,23 +1314,34 @@
         },
         {
             "name": "sn__resolve_incident",
-            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes.",
+            "description": "Resolve a ServiceNow incident. Sets state to Resolved. close_code must be one of the valid SN resolution codes. close_notes defaults to \"Resolved\" if not specified.",
             "inputSchema": {
                 "properties": {
                     "sys_id": {
                         "type": "string"
                     },
                     "close_code": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "Solved (Permanently)",
+                            "Solved (Work Around)",
+                            "Solved Remotely (Permanently)",
+                            "Solved Remotely (Work Around)",
+                            "Not Solved (Not Reproducible)",
+                            "Not Solved (Too Costly)",
+                            "Closed/Resolved by Caller"
+                        ],
+                        "default": "Solved (Permanently)",
+                        "description": "Resolution code \u2014 must be an exact match"
                     },
                     "close_notes": {
-                        "type": "string"
+                        "type": "string",
+                        "default": "Resolved",
+                        "description": "Resolution notes (optional, defaults to Resolved)"
                     }
                 },
                 "required": [
-                    "sys_id",
-                    "close_code",
-                    "close_notes"
+                    "sys_id"
                 ],
                 "type": "object"
             },
