@@ -19,10 +19,6 @@
             "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads."
         },
         {
-            "name": "sf__get_lead",
-            "description": "Get full details for a single Salesforce Lead by Id. Returns all fields including description, title, website, revenue, and created date."
-        },
-        {
             "name": "sf__get_opportunities",
             "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability."
         },
@@ -71,10 +67,6 @@
             "description": "Update a Salesforce Case. Required: case_id. Optional: status, resolution (Internal Comments)."
         },
         {
-            "name": "sf__get_case",
-            "description": "Get full details for a single Salesforce Case by Id. Returns all fields including description, comments, origin, type, account, and dates."
-        },
-        {
             "name": "sf__get_case_comments",
             "description": "Get notes/comments for a Salesforce Case by case Id."
         },
@@ -89,10 +81,6 @@
         {
             "name": "sf__update_task",
             "description": "Update a Salesforce Task. Pass task_id plus any fields to change."
-        },
-        {
-            "name": "sf__get_task",
-            "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record."
         },
         {
             "name": "sf__convert_lead",
@@ -167,6 +155,10 @@
             "description": "Create a new Change Request in ServiceNow. Required: short_description. Optional: category, risk, priority."
         },
         {
+            "name": "sn__update_change_request",
+            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Editable fields: short_description, category, risk, priority."
+        },
+        {
             "name": "sn__update_incident",
             "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority."
         },
@@ -179,12 +171,12 @@
             "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity."
         },
         {
-            "name": "sn__resolve_incident",
-            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
+            "name": "sn__update_problem",
+            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note."
         },
         {
-            "name": "sn__add_work_note",
-            "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IO staff."
+            "name": "sn__resolve_incident",
+            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
         },
         {
             "name": "sn__create_incident_form",
@@ -215,16 +207,12 @@
             "description": "Update an existing HR case in ServiceNow. Requires sys_id. Optional editable fields: subject, priority, state."
         },
         {
-            "name": "sn__add_hr_work_note",
-            "description": "Add a work note to an existing HR case in ServiceNow. Requires sys_id and work_note text."
+            "name": "sn__approve_record",
+            "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record."
         },
         {
-            "name": "sn__hr_approve_record",
-            "description": "Approve an HR approval record in ServiceNow. Requires sys_id of the sysapproval_approver record."
-        },
-        {
-            "name": "sn__hr_reject_record",
-            "description": "Reject an HR approval record in ServiceNow. Requires sys_id. Optional: comments explaining the rejection."
+            "name": "sn__reject_record",
+            "description": "Reject a pending approval in ServiceNow. Requires sys_id. Optional: comments explaining the rejection."
         },
         {
             "name": "sap__get_purchase_orders",
@@ -323,14 +311,6 @@
             "description": "Create a new Deal in HubSpot CRM. Requires deal_name at minimum. Returns the updated list of latest 5 deals."
         },
         {
-            "name": "hs__create_contact_form",
-            "description": "Use this when the user asks to create a new HubSpot contact. Opens the interactive contact creation form."
-        },
-        {
-            "name": "hs__create_deal_form",
-            "description": "Use this when the user asks to create a new HubSpot deal. Opens the interactive deal creation form."
-        },
-        {
             "name": "hs__get_companies",
             "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry."
         },
@@ -381,14 +361,6 @@
         {
             "name": "hs__get_ticket_notes",
             "description": "Get notes/comments for a specific HubSpot Support Ticket. Called when drilling into a ticket row."
-        },
-        {
-            "name": "hs__create_company_form",
-            "description": "Use this when the user asks to create a new HubSpot company. Opens the interactive company creation form."
-        },
-        {
-            "name": "hs__create_ticket_form",
-            "description": "Use this when the user asks to create a new HubSpot support ticket. Opens the interactive ticket creation form."
         },
         {
             "name": "ft__get_flights_by_aircraft",
@@ -912,7 +884,6 @@
                 "sf__get_leads",
                 "sf__create_lead",
                 "sf__update_lead",
-                "sf__get_lead",
                 "sf__get_opportunities",
                 "sf__create_opportunity",
                 "sf__update_opportunity",
@@ -925,12 +896,10 @@
                 "sf__get_cases",
                 "sf__create_case",
                 "sf__update_case",
-                "sf__get_case",
                 "sf__get_case_comments",
                 "sf__get_tasks",
                 "sf__create_task",
                 "sf__update_task",
-                "sf__get_task",
                 "sf__convert_lead",
                 "sf__get_pipeline_dashboard",
                 "sf__get_campaigns",
@@ -963,11 +932,12 @@
                 "sn__create_incident",
                 "sn__create_request",
                 "sn__create_change_request",
+                "sn__update_change_request",
                 "sn__update_incident",
                 "sn__update_request",
                 "sn__update_request_item",
+                "sn__update_problem",
                 "sn__resolve_incident",
-                "sn__add_work_note",
                 "sn__create_incident_form",
                 "sn__create_request_form",
                 "sn__get_change_tasks",
@@ -975,9 +945,8 @@
                 "sn__get_hr_cases",
                 "sn__create_hr_case",
                 "sn__update_hr_case",
-                "sn__add_hr_work_note",
-                "sn__hr_approve_record",
-                "sn__hr_reject_record"
+                "sn__approve_record",
+                "sn__reject_record"
             ],
             "auth": {
                 "type": "None"
@@ -1030,8 +999,6 @@
                 "hs__update_contact",
                 "hs__get_deals",
                 "hs__create_deal",
-                "hs__create_contact_form",
-                "hs__create_deal_form",
                 "hs__get_companies",
                 "hs__create_company",
                 "hs__update_company",
@@ -1044,9 +1011,7 @@
                 "hs__get_company_tickets",
                 "hs__get_contact_deals",
                 "hs__get_deal_contacts",
-                "hs__get_ticket_notes",
-                "hs__create_company_form",
-                "hs__create_ticket_form"
+                "hs__get_ticket_notes"
             ],
             "auth": {
                 "type": "None"

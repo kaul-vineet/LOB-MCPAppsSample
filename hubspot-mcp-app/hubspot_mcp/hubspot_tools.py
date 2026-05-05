@@ -845,33 +845,6 @@ async def hs__get_ticket_notes(ticket_id: str) -> types.CallToolResult:
     )
 
 
-async def hs__create_company_form() -> types.CallToolResult:
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Company creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "company"},
-    )
-
-
-async def hs__create_ticket_form() -> types.CallToolResult:
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Ticket creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "ticket"},
-    )
-
-
-async def hs__create_contact_form() -> types.CallToolResult:
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Contact creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "contact"},
-    )
-
-
-async def hs__create_deal_form() -> types.CallToolResult:
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening Deal creation form. Fill in the details and click Submit.")],
-        structuredContent={"type": "form", "entity": "deal"},
-    )
-
 
 # ── Prompt handlers ───────────────────────────────────────────────────────────
 
@@ -961,16 +934,6 @@ _TOOL_SPECS_LIST = [
         "handler": hs__create_deal,
     },
     {
-        "name": "hs__create_contact_form",
-        "description": "Use this when the user asks to create a new HubSpot contact. Opens the interactive contact creation form.",
-        "handler": hs__create_contact_form,
-    },
-    {
-        "name": "hs__create_deal_form",
-        "description": "Use this when the user asks to create a new HubSpot deal. Opens the interactive deal creation form.",
-        "handler": hs__create_deal_form,
-    },
-    {
         "name": "hs__get_companies",
         "description": "Get companies from HubSpot CRM. Pass id for exact lookup → opens edit form. Otherwise returns the latest 5 companies with name, domain, phone, city, industry.",
         "handler": hs__get_companies,
@@ -1034,16 +997,6 @@ _TOOL_SPECS_LIST = [
         "name": "hs__get_ticket_notes",
         "description": "Get notes/comments for a specific HubSpot Support Ticket. Called when drilling into a ticket row.",
         "handler": hs__get_ticket_notes,
-    },
-    {
-        "name": "hs__create_company_form",
-        "description": "Use this when the user asks to create a new HubSpot company. Opens the interactive company creation form.",
-        "handler": hs__create_company_form,
-    },
-    {
-        "name": "hs__create_ticket_form",
-        "description": "Use this when the user asks to create a new HubSpot support ticket. Opens the interactive ticket creation form.",
-        "handler": hs__create_ticket_form,
     },
 ]
 

@@ -119,27 +119,6 @@
             }
         },
         {
-            "name": "sf__get_lead",
-            "description": "Get full details for a single Salesforce Lead by Id. Returns all fields including description, title, website, revenue, and created date.",
-            "inputSchema": {
-                "properties": {
-                    "lead_id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "lead_id"
-                ],
-                "type": "object"
-            },
-            "title": "Get lead",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/crm.html"
-                }
-            }
-        },
-        {
             "name": "sf__get_opportunities",
             "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability.",
             "inputSchema": {
@@ -552,27 +531,6 @@
             }
         },
         {
-            "name": "sf__get_case",
-            "description": "Get full details for a single Salesforce Case by Id. Returns all fields including description, comments, origin, type, account, and dates.",
-            "inputSchema": {
-                "properties": {
-                    "case_id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "case_id"
-                ],
-                "type": "object"
-            },
-            "title": "Get case",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/crm.html"
-                }
-            }
-        },
-        {
             "name": "sf__get_case_comments",
             "description": "Get notes/comments for a Salesforce Case by case Id.",
             "inputSchema": {
@@ -685,27 +643,6 @@
                 "type": "object"
             },
             "title": "Update task",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/crm.html"
-                }
-            }
-        },
-        {
-            "name": "sf__get_task",
-            "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record.",
-            "inputSchema": {
-                "properties": {
-                    "task_id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "task_id"
-                ],
-                "type": "object"
-            },
-            "title": "Get task",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/crm.html"
@@ -1106,6 +1043,23 @@
             }
         },
         {
+            "name": "sn__update_change_request",
+            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Editable fields: short_description, category, risk, priority.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id": { "type": "string" },
+                    "short_description": { "default": null, "type": "string" },
+                    "category": { "default": null, "type": "string" },
+                    "risk": { "default": null, "type": "string" },
+                    "priority": { "default": null, "type": "string" }
+                },
+                "required": ["sys_id"],
+                "type": "object"
+            },
+            "title": "Update change request",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+        },
+        {
             "name": "sn__update_incident",
             "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
             "inputSchema": {
@@ -1181,6 +1135,23 @@
             }
         },
         {
+            "name": "sn__update_problem",
+            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id": { "type": "string" },
+                    "short_description": { "default": null, "type": "string" },
+                    "priority": { "default": null, "type": "string" },
+                    "state": { "default": null, "type": "string" },
+                    "work_note": { "default": null, "type": "string" }
+                },
+                "required": ["sys_id"],
+                "type": "object"
+            },
+            "title": "Update problem",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+        },
+        {
             "name": "sn__resolve_incident",
             "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes.",
             "inputSchema": {
@@ -1203,31 +1174,6 @@
                 "type": "object"
             },
             "title": "Resolve incident",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/servicenow.html"
-                }
-            }
-        },
-        {
-            "name": "sn__add_work_note",
-            "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IO staff.",
-            "inputSchema": {
-                "properties": {
-                    "sys_id": {
-                        "type": "string"
-                    },
-                    "work_note": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "sys_id",
-                    "work_note"
-                ],
-                "type": "object"
-            },
-            "title": "Add work note",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/servicenow.html"
@@ -1373,75 +1319,31 @@
             }
         },
         {
-            "name": "sn__add_hr_work_note",
-            "description": "Add a work note to an existing HR case in ServiceNow. Requires sys_id and work_note text.",
+            "name": "sn__approve_record",
+            "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": {
-                        "type": "string"
-                    },
-                    "work_note": {
-                        "type": "string"
-                    }
+                    "sys_id": { "type": "string" }
                 },
-                "required": [
-                    "sys_id",
-                    "work_note"
-                ],
+                "required": ["sys_id"],
                 "type": "object"
             },
-            "title": "Add hr work note",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/servicenow.html"
-                }
-            }
+            "title": "Approve record",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
         },
         {
-            "name": "sn__hr_approve_record",
-            "description": "Approve an HR approval record in ServiceNow. Requires sys_id of the sysapproval_approver record.",
+            "name": "sn__reject_record",
+            "description": "Reject a pending approval in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": {
-                        "type": "string"
-                    }
+                    "sys_id": { "type": "string" },
+                    "comments": { "default": "", "type": "string" }
                 },
-                "required": [
-                    "sys_id"
-                ],
+                "required": ["sys_id"],
                 "type": "object"
             },
-            "title": "Hr approve record",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/servicenow.html"
-                }
-            }
-        },
-        {
-            "name": "sn__hr_reject_record",
-            "description": "Reject an HR approval record in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
-            "inputSchema": {
-                "properties": {
-                    "sys_id": {
-                        "type": "string"
-                    },
-                    "comments": {
-                        "default": "",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "sys_id"
-                ],
-                "type": "object"
-            },
-            "title": "Hr reject record",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/servicenow.html"
-                }
-            }
+            "title": "Reject record",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
         },
         {
             "name": "sap__get_purchase_orders",
@@ -2017,36 +1919,6 @@
             }
         },
         {
-            "name": "hs__create_contact_form",
-            "description": "Opens a form to create a new HubSpot Contact. The user fills in details and submits.",
-            "inputSchema": {
-                "properties": {},
-                "type": "object",
-                "required": []
-            },
-            "title": "Create contact form",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "hs__create_deal_form",
-            "description": "Opens a form to create a new HubSpot Deal. The user fills in details and submits.",
-            "inputSchema": {
-                "properties": {},
-                "type": "object",
-                "required": []
-            },
-            "title": "Create deal form",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
             "name": "hs__get_companies",
             "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry.",
             "inputSchema": {
@@ -2385,36 +2257,6 @@
                 "type": "object"
             },
             "title": "Get ticket notes",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "hs__create_company_form",
-            "description": "Opens a form to create a new HubSpot Company. The user fills in details and submits.",
-            "inputSchema": {
-                "properties": {},
-                "type": "object",
-                "required": []
-            },
-            "title": "Create company form",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
-            "name": "hs__create_ticket_form",
-            "description": "Opens a form to create a new HubSpot Support Ticket. The user fills in details and submits.",
-            "inputSchema": {
-                "properties": {},
-                "type": "object",
-                "required": []
-            },
-            "title": "Create ticket form",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
