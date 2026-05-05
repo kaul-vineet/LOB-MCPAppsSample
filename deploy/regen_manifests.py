@@ -125,7 +125,7 @@ for plugin_path in [
             "auth": {"type": "None"},
         }
         base["spec"]["url"] = TUNNEL_BASE + rt["path"]
-        base["spec"]["mcp_tool_description"] = {"file": TUNNEL_BASE + "/mcp-tools.json"}
+        base["spec"]["mcp_tool_description"] = {"file": "mcp-tools.json"}
         base["run_for_functions"] = [f["name"] for f in rt["functions"]]
         new_runtimes.append(base)
     plugin["runtimes"] = new_runtimes

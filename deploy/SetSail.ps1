@@ -369,8 +369,8 @@ Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
 
-# ai-plugin.json uses {file:"<tunnel>/mcp-tools.json"} — gateway serves mcp-tools.json
-# at GET /mcp-tools.json so MOS3 validation can fetch it. No inlining needed.
+# mcp-tools.json must be in the zip — MOS3 resolves "file" values as zip-relative paths.
+Copy-Item "$SrcDir\mcp-tools.json"       "$TmpDir\mcp-tools.json"
 Copy-Item "$BuildDir\ai-plugin.dev.json" "$TmpDir\ai-plugin.json"
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
