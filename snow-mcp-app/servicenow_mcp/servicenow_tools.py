@@ -85,6 +85,23 @@ async def _fetch_problems(limit: int = 5) -> list:
     ]
 
 
+async def _fetch_hr_cases(limit: int = 10) -> list:
+    HR_FIELDS = "sys_id,number,short_description,description,state,priority,opened_by,sys_created_on"
+    resp = await servicenow_request(
+        "GET", "/api/now/table/sn_hr_core_case",
+        params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": HR_FIELDS, "sysparm_display_value": "true"},
+    )
+    return [
+        {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+         "subject": _val(r.get("short_description")), "description": _val(r.get("description")),
+         "state": _val(r.get("state")), "priority": _val(r.get("priority")),
+         "opened_by": _val(r.get("opened_by")) or None,
+         "sys_created_on": _val(r.get("sys_created_on"))}
+        for r in resp.json().get("result", [])
+    ]
+
+
 async def _fetch_approvals(limit: int = 10) -> list:
     resp = await servicenow_request(
         "GET", "/api/now/table/sysapproval_approver",
@@ -728,6 +745,30 @@ async def sn__update_problem(
     )
 
 
+async def sn__create_problem(
+    short_description: str, description: str = "", priority: str = "3",
+) -> types.CallToolResult:
+    body: dict = {"short_description": short_description}
+    if description: body["description"] = description
+    if priority:    body["priority"] = priority
+    try:
+        resp = await servicenow_request("POST", "/api/now/table/problem", json_body=body)
+        new_id = resp.json().get("result", {}).get("sys_id", "")
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error creating problem: {e}")
+    try:
+        items = await _fetch_problems()
+    except Exception as exc:
+        log.warning("sn__create_problem_refresh_failed", error=str(exc))
+        items = []
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Problem created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent={"type": "problems", "total": len(items), "items": items, "_createdId": new_id},
+    )
+
+
 async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallToolResult:
     body = {"state": "6", "close_code": close_code, "close_notes": close_notes}
     try:
@@ -792,6 +833,37 @@ async def sn__get_change_tasks(change_sys_id: str) -> types.CallToolResult:
     )
 
 
+async def sn__get_hr_cases(sys_id: str = "", limit: int = 10) -> types.CallToolResult:
+    if sys_id:
+        HR_FIELDS = "sys_id,number,short_description,description,state,priority"
+        try:
+            resp = await servicenow_request(
+                "GET", f"/api/now/table/sn_hr_core_case/{sys_id}",
+                params={"sysparm_fields": HR_FIELDS, "sysparm_display_value": "true"},
+            )
+            r = resp.json().get("result", {})
+        except Exception as e:
+            return _error_result(f"Error fetching HR case: {e}")
+        prefill = {"subject": _val(r.get("short_description")), "description": _val(r.get("description")),
+                   "priority": _val(r.get("priority")), "state": _val(r.get("state"))}
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"HR case {sys_id} ready to edit.")],
+            structuredContent={"type": "form", "entity": "hr_case", "mode": "edit",
+                               "recordId": sys_id, "prefill": prefill},
+        )
+    try:
+        items = await _fetch_hr_cases(limit)
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error fetching HR cases: {e}")
+    summary = f"Found {len(items)} HR case(s)." if items else "No HR cases found."
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=summary)],
+        structuredContent={"type": "hr_cases", "total": len(items), "items": items},
+    )
+
+
 async def sn__create_hr_case(
     subject: str, description: str = "", priority: str = "3"
 ) -> types.CallToolResult:
@@ -805,11 +877,14 @@ async def sn__create_hr_case(
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error creating HR case: {e}")
-
-    structured = {"type": "hr_case_created", "sys_id": new_id, "subject": subject}
+    try:
+        items = await _fetch_hr_cases()
+    except Exception as exc:
+        log.warning("sn__create_hr_case_refresh_failed", error=str(exc))
+        items = []
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"HR case created: {subject}")],
-        structuredContent=structured,
+        structuredContent={"type": "hr_cases", "total": len(items), "items": items, "_createdId": new_id},
     )
 
 
@@ -830,11 +905,14 @@ async def sn__update_hr_case(
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
         return _error_result(f"Error updating HR case: {e}")
-
-    structured = {"type": "hr_case_updated", "sys_id": sys_id}
+    try:
+        items = await _fetch_hr_cases()
+    except Exception as exc:
+        log.warning("sn__update_hr_case_refresh_failed", error=str(exc))
+        items = []
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="HR case updated.")],
-        structuredContent=structured,
+        content=[types.TextContent(type="text", text="HR case updated. Refreshed list returned.")],
+        structuredContent={"type": "hr_cases", "total": len(items), "items": items, "_updatedId": sys_id},
     )
 
 
@@ -962,11 +1040,17 @@ _TOOL_SPECS_LIST = [
     {"name": "sn__get_change_tasks",
      "description": "Get change tasks for a specific change request. Requires change_sys_id (the sys_id of the parent change_request). Called from the widget when expanding a change request row.",
      "handler": sn__get_change_tasks},
+    {"name": "sn__create_problem",
+     "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low).",
+     "handler": sn__create_problem},
+    {"name": "sn__get_hr_cases",
+     "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup → opens edit form. No params returns the latest HR cases.",
+     "handler": sn__get_hr_cases},
     {"name": "sn__create_hr_case",
      "description": "Create a new HR case in ServiceNow. Requires subject. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low).",
      "handler": sn__create_hr_case},
     {"name": "sn__update_hr_case",
-     "description": "Update an existing HR case in ServiceNow. Requires sys_id. Editable fields: subject, priority, state, work_note (appended as internal journal entry).",
+     "description": "Update an existing HR case in ServiceNow. Requires sys_id. Editable fields: subject, priority, state, work_note.",
      "handler": sn__update_hr_case},
     {"name": "sn__approve_record",
      "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record.",

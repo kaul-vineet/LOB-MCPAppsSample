@@ -45,6 +45,8 @@ const TASK_STATUSES = ['Not Started', 'In Progress', 'Completed', 'Waiting on so
 const TASK_PRIOS    = ['Low', 'Normal', 'High'];
 const ACCT_INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Manufacturing', 'Retail', 'Education', 'Other'];
 const ACCT_TYPES    = ['Prospect', 'Customer', 'Partner', 'Competitor', 'Other'];
+const CAMPAIGN_STATUSES = ['Planned', 'Active', 'Completed', 'Aborted'];
+const CAMPAIGN_TYPES    = ['Email', 'Webinar', 'Conference', 'Seminar/Live Event', 'Direct Mail', 'Advertisement', 'Referral Program', 'Other'];
 const CAMP_TYPES    = ['Email', 'Phone', 'Web', 'Event', 'Other'];
 const CAMP_STATUSES = ['Planning', 'Active', 'Completed', 'Aborted'];
 
@@ -991,7 +993,7 @@ function TasksView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
 // ────────────────────────────────────────────────────────────────────────────
 // ── CampaignsView ──────────────────────────────────────────────────────────
 // ────────────────────────────────────────────────────────────────────────────
-function CampaignsView({ items: initItems, callTool, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
+function CampaignsView({ items: initItems, callTool, toast, theme, cacheInfo: initCacheInfo }: { items: any[]; callTool: (n: string, a?: any) => Promise<any>; toast: (m: string, t?: any) => void; theme: 'light' | 'dark'; cacheInfo?: { hit: boolean; cached_at: string } }) {
   const styles = useStyles();
   const t = slds(theme);
   const [items, setItems] = useState(initItems);
@@ -1030,7 +1032,7 @@ function CampaignsView({ items: initItems, callTool, theme, cacheInfo: initCache
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={{ ...H_CELL, width: 28, color: t.textWeak }} />
-            {['Name', 'Status', 'Type', 'Start', 'End', '# Leads'].map(h => <TableHeaderCell key={h} style={{ ...H_CELL, color: t.textWeak }}>{h}</TableHeaderCell>)}
+            {['Name', 'Status', 'Type', 'Start', 'End', '# Leads', ''].map(h => <TableHeaderCell key={h} style={{ ...H_CELL, color: t.textWeak }}>{h}</TableHeaderCell>)}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1045,10 +1047,13 @@ function CampaignsView({ items: initItems, callTool, theme, cacheInfo: initCache
                 <TableCell style={D_CELL}>{fmtDate(c.start_date)}</TableCell>
                 <TableCell style={D_CELL}>{fmtDate(c.end_date)}</TableCell>
                 <TableCell style={D_CELL}>{c.number_of_leads ?? '—'}</TableCell>
+                <TableCell style={{ ...D_CELL, width: 36 }}>
+                  <button title="Edit" onClick={() => callTool('sf__get_campaigns', { campaign_id: c.id }).catch((e: any) => toast(e.message || 'Error', 'error'))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textWeak, fontSize: '14px', padding: '2px 4px' }}>✏️</button>
+                </TableCell>
               </TableRow>
               {expandedId === c.id && (
                 <TableRow>
-                  <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
+                  <TableCell colSpan={8} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
                     <div style={{ padding: '8px 28px 12px' }}>
                       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Campaign Leads</div>
                       {loadingChild === c.id ? <Spinner size="tiny" label="Loading leads…" /> : (
@@ -1233,12 +1238,19 @@ const FORM_DEFS: Record<string, { label: string; key: string; required?: boolean
     { label: 'Priority', key: 'priority', type: 'select', options: TASK_PRIOS }, { label: 'Due Date', key: 'activity_date', inputType: 'date' },
     { label: 'Description', key: 'description' },
   ],
+  campaign: [
+    { label: 'Name *', key: 'name', required: true },
+    { label: 'Status', key: 'status', type: 'select', options: CAMPAIGN_STATUSES },
+    { label: 'Type', key: 'type', type: 'select', options: CAMPAIGN_TYPES },
+    { label: 'Start Date', key: 'start_date', inputType: 'date' },
+    { label: 'End Date', key: 'end_date', inputType: 'date' },
+  ],
 };
 
-const FORM_CREATE_TOOL: Record<string, string> = { lead: 'create_lead', account: 'create_account', contact: 'create_contact', opportunity: 'create_opportunity', case: 'create_case', task: 'create_task' };
-const FORM_UPDATE_TOOL: Record<string, string> = { lead: 'update_lead', account: 'update_account', contact: 'update_contact', opportunity: 'update_opportunity', case: 'update_case', task: 'update_task' };
-const FORM_ID_PARAM: Record<string, string>    = { lead: 'lead_id', account: 'account_id', contact: 'contact_id', opportunity: 'opportunity_id', case: 'case_id', task: 'task_id' };
-const FORM_ICONS: Record<string, string> = { lead: '👤', account: '🏢', contact: '👥', opportunity: '💰', case: '🎫', task: '✅' };
+const FORM_CREATE_TOOL: Record<string, string> = { lead: 'create_lead', account: 'create_account', contact: 'create_contact', opportunity: 'create_opportunity', case: 'create_case', task: 'create_task', campaign: 'create_campaign' };
+const FORM_UPDATE_TOOL: Record<string, string> = { lead: 'update_lead', account: 'update_account', contact: 'update_contact', opportunity: 'update_opportunity', case: 'update_case', task: 'update_task', campaign: 'update_campaign' };
+const FORM_ID_PARAM: Record<string, string>    = { lead: 'lead_id', account: 'account_id', contact: 'contact_id', opportunity: 'opportunity_id', case: 'case_id', task: 'task_id', campaign: 'campaign_id' };
+const FORM_ICONS: Record<string, string> = { lead: '👤', account: '🏢', contact: '👥', opportunity: '💰', case: '🎫', task: '✅', campaign: '📣' };
 
 function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, callTool, toast, theme }: {
   entity: string;
@@ -1436,7 +1448,7 @@ export function SalesforceApp() {
       {ld.type === 'opportunities'&& <OpportunitiesView items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
       {ld.type === 'cases'        && <CasesView        items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
       {ld.type === 'tasks'        && <TasksView        items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
-      {ld.type === 'campaigns'    && <CampaignsView    items={items} callTool={callTool} theme={theme} cacheInfo={cache} />}
+      {ld.type === 'campaigns'    && <CampaignsView    items={items} callTool={callTool} toast={toast} theme={theme} cacheInfo={cache} />}
       {ld.type === 'approvals'    && <ApprovalsView    items={items} theme={theme} />}
     </div>
   );

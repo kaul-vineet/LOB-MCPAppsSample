@@ -104,7 +104,15 @@
         },
         {
             "name": "sf__get_campaigns",
-            "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count."
+            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup → opens edit form. No params returns the 5 most recent campaigns."
+        },
+        {
+            "name": "sf__create_campaign",
+            "description": "Create a new Salesforce Campaign. Required: name. Optional: status, type, start_date, end_date."
+        },
+        {
+            "name": "sf__update_campaign",
+            "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date."
         },
         {
             "name": "sf__get_pending_approvals",
@@ -203,6 +211,14 @@
             "description": "Get change tasks for a specific change request. Requires change_sys_id (the sys_id of the parent change_request). Called from the widget when expanding a change request row."
         },
         {
+            "name": "sn__create_problem",
+            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority."
+        },
+        {
+            "name": "sn__get_hr_cases",
+            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup → opens edit form. No params returns the latest HR cases."
+        },
+        {
             "name": "sn__create_hr_case",
             "description": "Create a new HR case in ServiceNow. Requires subject. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low)."
         },
@@ -241,10 +257,6 @@
         {
             "name": "sap__update_purchase_order",
             "description": "Update an existing Purchase Order in SAP S/4HANA by its PO number. Only fields provided will be updated. Returns the updated list of latest purchase orders."
-        },
-        {
-            "name": "sap__get_material_details",
-            "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material."
         },
         {
             "name": "sap__get_po_line_items",
@@ -934,6 +946,8 @@
                 "sf__convert_lead",
                 "sf__get_pipeline_dashboard",
                 "sf__get_campaigns",
+                "sf__create_campaign",
+                "sf__update_campaign",
                 "sf__get_pending_approvals",
                 "sf__get_entity_config",
                 "sf__update_entity_config",
@@ -972,6 +986,8 @@
                 "sn__create_incident_form",
                 "sn__create_request_form",
                 "sn__get_change_tasks",
+                "sn__create_problem",
+                "sn__get_hr_cases",
                 "sn__create_hr_case",
                 "sn__update_hr_case",
                 "sn__add_hr_work_note",
@@ -996,7 +1012,6 @@
                 "sap__get_materials",
                 "sap__create_purchase_order",
                 "sap__update_purchase_order",
-                "sap__get_material_details",
                 "sap__get_po_line_items",
                 "sap__get_goods_receipts",
                 "sap__get_bp_purchase_orders",

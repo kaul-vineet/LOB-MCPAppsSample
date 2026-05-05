@@ -157,6 +157,19 @@ async def _fetch_contacts()      -> list[dict]: return await _fetch_entity("Cont
 async def _fetch_cases()         -> list[dict]: return await _fetch_entity("Case")
 async def _fetch_tasks()         -> list[dict]: return await _fetch_entity("Task")
 
+async def _fetch_campaigns() -> list[dict]:
+    sf = get_client()
+    records = await sf.query(
+        "SELECT Id, Name, Status, Type, StartDate, EndDate, NumberOfLeads "
+        "FROM Campaign ORDER BY CreatedDate DESC LIMIT 5"
+    )
+    return [
+        {"id": r.get("Id"), "name": r.get("Name") or "", "status": r.get("Status") or "",
+         "type": r.get("Type") or "", "start_date": r.get("StartDate") or "",
+         "end_date": r.get("EndDate") or "", "num_leads": r.get("NumberOfLeads") or 0}
+        for r in records
+    ]
+
 
 # ── Tool handlers ─────────────────────────────────────────────────────────────
 
@@ -894,8 +907,30 @@ async def sf__get_pipeline_dashboard() -> types.CallToolResult:
     )
 
 
-async def sf__get_campaigns(refresh: bool = False) -> types.CallToolResult:
-    log.info("sf__get_campaigns", refresh=refresh)
+async def sf__get_campaigns(campaign_id: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_campaigns", campaign_id=campaign_id, refresh=refresh)
+    if campaign_id:
+        try:
+            sf = get_client()
+            records = await sf.query(
+                f"SELECT Id, Name, Status, Type, StartDate, EndDate "
+                f"FROM Campaign WHERE Id = '{_sq(campaign_id)}' LIMIT 1"
+            )
+        except SalesforceAuthError as exc:
+            return _error_result(f"Salesforce authentication failed: {exc}")
+        except Exception as exc:
+            return _error_result(f"Error fetching campaign: {exc}")
+        if not records:
+            return _error_result(f"Campaign {campaign_id} not found.")
+        r = records[0]
+        prefill = {"name": r.get("Name") or "", "status": r.get("Status") or "",
+                   "type": r.get("Type") or "", "start_date": r.get("StartDate") or "",
+                   "end_date": r.get("EndDate") or ""}
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Campaign {campaign_id} ready to edit.")],
+            structuredContent={"type": "form", "entity": "campaign", "mode": "edit",
+                               "recordId": campaign_id, "prefill": prefill},
+        )
     if not refresh:
         cached_items, stored_at = _cache_get("campaigns")
         if cached_items is not None:
@@ -905,23 +940,13 @@ async def sf__get_campaigns(refresh: bool = False) -> types.CallToolResult:
                                    "_cache": {"hit": True, "cached_at": stored_at}},
             )
     try:
-        sf = get_client()
-        records = await sf.query(
-            "SELECT Id, Name, Status, Type, StartDate, EndDate, NumberOfLeads "
-            "FROM Campaign ORDER BY CreatedDate DESC LIMIT 5"
-        )
+        items = await _fetch_campaigns()
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching campaigns: {exc}")
-    items = [
-        {"id": r.get("Id"), "name": r.get("Name") or "", "status": r.get("Status") or "",
-         "type": r.get("Type") or "", "start_date": r.get("StartDate") or "",
-         "end_date": r.get("EndDate") or "", "num_leads": r.get("NumberOfLeads") or 0}
-        for r in records
-    ]
     cached_at = _cache_set("campaigns", items)
     if not items:
         summary = "No campaigns found."
@@ -932,6 +957,66 @@ async def sf__get_campaigns(refresh: bool = False) -> types.CallToolResult:
         summary = "\n".join(lines)
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
+        structuredContent={"type": "campaigns", "total": len(items), "items": items,
+                           "_cache": {"hit": False, "cached_at": cached_at}},
+    )
+
+
+async def sf__create_campaign(
+    name: str, status: str = "Planned", type: str = "",
+    start_date: str = "", end_date: str = "",
+) -> types.CallToolResult:
+    try:
+        sf = get_client()
+        data: dict = {"Name": name}
+        if status:     data["Status"] = status
+        if type:       data["Type"] = type
+        if start_date: data["StartDate"] = start_date
+        if end_date:   data["EndDate"] = end_date
+        new_id = await sf.create("Campaign", data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to create campaign: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error creating campaign: {exc}")
+    _cache_invalidate("campaigns")
+    try: items = await _fetch_campaigns()
+    except Exception: items = []
+    cached_at = _cache_set("campaigns", items)
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Campaign created (Id: {new_id}). Refreshed list returned.")],
+        structuredContent={"type": "campaigns", "total": len(items), "items": items, "_createdId": new_id,
+                           "_cache": {"hit": False, "cached_at": cached_at}},
+    )
+
+
+async def sf__update_campaign(
+    campaign_id: str, name: str = "", status: str = "", type: str = "",
+    start_date: str = "", end_date: str = "",
+) -> types.CallToolResult:
+    try:
+        sf = get_client()
+        data: dict = {}
+        if name:       data["Name"] = name
+        if status:     data["Status"] = status
+        if type:       data["Type"] = type
+        if start_date: data["StartDate"] = start_date
+        if end_date:   data["EndDate"] = end_date
+        if not data: return _error_result("No fields provided to update.")
+        await sf.update("Campaign", campaign_id, data)
+    except SalesforceAuthError as exc:
+        return _error_result(f"Salesforce authentication failed: {exc}")
+    except SalesforceAPIError as exc:
+        return _error_result(f"Failed to update campaign: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error updating campaign: {exc}")
+    _cache_invalidate("campaigns")
+    try: items = await _fetch_campaigns()
+    except Exception: items = []
+    cached_at = _cache_set("campaigns", items)
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Campaign {campaign_id} updated. Refreshed list returned.")],
         structuredContent={"type": "campaigns", "total": len(items), "items": items,
                            "_cache": {"hit": False, "cached_at": cached_at}},
     )
@@ -1090,12 +1175,14 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__update_task",           "description": "Update a Salesforce Task. Pass task_id plus any fields to change.", "handler": sf__update_task},
     {"name": "sf__convert_lead",          "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status, create_opportunity.", "handler": sf__convert_lead},
     {"name": "sf__get_pipeline_dashboard","description": "Get the Salesforce opportunity pipeline grouped by stage. Returns deal count and total amount per stage.", "handler": sf__get_pipeline_dashboard},
-    {"name": "sf__get_campaigns",         "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count.", "handler": sf__get_campaigns},
+    {"name": "sf__get_campaigns",         "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup → opens edit form. No params returns the 5 most recent campaigns.", "handler": sf__get_campaigns},
+    {"name": "sf__create_campaign",       "description": "Create a new Salesforce Campaign. Required: name. Optional: status (Planned/Active/Completed/Aborted), type, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD).", "handler": sf__create_campaign},
+    {"name": "sf__update_campaign",       "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date.", "handler": sf__update_campaign},
     {"name": "sf__get_pending_approvals", "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action.", "handler": sf__get_pending_approvals},
     {"name": "sf__get_entity_config",     "description": "Get the current display configuration for a Salesforce entity. entity_type: Lead, Opportunity, Account, Contact, Case, or Task.", "handler": sf__get_entity_config},
     {"name": "sf__update_entity_config",  "description": "Update the display configuration for a Salesforce entity. Pass entity_type and a JSON patch string. Changes take effect immediately and are saved to disk.", "handler": sf__update_entity_config},
     {"name": "sf__reset_entity_config",   "description": "Reset a Salesforce entity configuration to factory defaults. Pass entity_type='all' to reset every entity at once.", "handler": sf__reset_entity_config},
-    {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, or task. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task).", "handler": sf__show_create_form},
+    {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign).", "handler": sf__show_create_form},
 ]
 
 PROMPT_SPECS = [

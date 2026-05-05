@@ -572,7 +572,9 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sf__get_tasks` | Latest 5 tasks/activities |
 | `sf__create_task` | Create task |
 | `sf__get_pipeline_dashboard` | Opportunity pipeline by stage (count + amount) |
-| `sf__get_campaigns` | Latest 5 campaigns |
+| `sf__get_campaigns` | Get campaigns; pass campaign_id for edit form |
+| `sf__create_campaign` | Create campaign |
+| `sf__update_campaign` | Update campaign |
 | `sf__get_pending_approvals` | Pending ProcessInstance workitems |
 | `sf__get_products` | Product catalog |
 | `sf__get_price_books` | Price books |
@@ -598,7 +600,12 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sn__update_request_item` | Update request item |
 | `sn__get_change_requests` | Latest change requests |
 | `sn__create_change_request` | Create change request |
-| `sn__get_problems` | Latest problem records |
+| `sn__get_problems` | Get problems; pass number for edit form |
+| `sn__create_problem` | Create problem record |
+| `sn__update_problem` | Update problem record |
+| `sn__get_hr_cases` | Get HR cases; pass sys_id for edit form |
+| `sn__create_hr_case` | Create HR case |
+| `sn__update_hr_case` | Update HR case |
 | `sn__get_pending_approvals` | Pending approvals queue |
 | `sn__get_service_catalog_items` | Active catalog items |
 | `sn__add_work_note` | Add work note to a record |

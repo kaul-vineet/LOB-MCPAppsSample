@@ -128,7 +128,32 @@ async def sap__get_business_partners(limit: int = 5) -> types.CallToolResult:
     )
 
 
-async def sap__get_materials(limit: int = 5) -> types.CallToolResult:
+async def sap__get_materials(material_id: str = "", limit: int = 5) -> types.CallToolResult:
+    if material_id:
+        try:
+            sap = get_client()
+            record = await sap.get_entity(MAT_SERVICE, MAT_ENTITY, material_id)
+        except SAPAuthError as exc:
+            return _error_result(f"SAP authentication failed: {exc}")
+        except SAPAPIError as exc:
+            return _error_result(f"SAP API error: {exc}")
+        except Exception as exc:
+            return _error_result(f"Unexpected error fetching material details: {exc}")
+        item = {
+            "product":              record.get("Product", ""),
+            "product_type":         record.get("ProductType", ""),
+            "product_group":        record.get("ProductGroup", ""),
+            "base_unit":            record.get("BaseUnit", ""),
+            "gross_weight":         record.get("GrossWeight", ""),
+            "net_weight":           record.get("NetWeight", ""),
+            "weight_unit":          record.get("WeightUnit", ""),
+            "industry_sector":      record.get("IndustrySector", ""),
+            "material_description": record.get("ProductDescription", ""),
+        }
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Material {material_id} details retrieved.")],
+            structuredContent={"type": "material_detail", "item": item, "sandbox": sap.is_sandbox},
+        )
     try:
         items = await _fetch_materials(limit)
     except SAPAuthError as exc:
@@ -219,34 +244,6 @@ async def sap__update_purchase_order(
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Purchase order {purchase_order_id} updated. Refreshed list returned.")],
         structuredContent={"type": "purchase_orders", "total": len(items), "items": items, "sandbox": get_client().is_sandbox},
-    )
-
-
-async def sap__get_material_details(material_id: str) -> types.CallToolResult:
-    try:
-        sap = get_client()
-        record = await sap.get_entity(MAT_SERVICE, MAT_ENTITY, material_id)
-    except SAPAuthError as exc:
-        return _error_result(f"SAP authentication failed: {exc}")
-    except SAPAPIError as exc:
-        return _error_result(f"SAP API error: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error fetching material details: {exc}")
-
-    item = {
-        "product":              record.get("Product", ""),
-        "product_type":         record.get("ProductType", ""),
-        "product_group":        record.get("ProductGroup", ""),
-        "base_unit":            record.get("BaseUnit", ""),
-        "gross_weight":         record.get("GrossWeight", ""),
-        "net_weight":           record.get("NetWeight", ""),
-        "weight_unit":          record.get("WeightUnit", ""),
-        "industry_sector":      record.get("IndustrySector", ""),
-        "material_description": record.get("ProductDescription", ""),
-    }
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Material {material_id} details retrieved.")],
-        structuredContent={"type": "material_detail", "item": item, "sandbox": sap.is_sandbox},
     )
 
 
@@ -524,7 +521,8 @@ _TOOL_SPECS_LIST = [
         "name": "sap__get_materials",
         "description": (
             "Fetch materials master data from SAP S/4HANA. "
-            "Returns product ID, type, group, and base unit."
+            "Pass material_id for full detail view. "
+            "No params returns the list (product ID, type, group, base unit)."
         ),
         "handler": sap__get_materials,
     },
@@ -545,14 +543,6 @@ _TOOL_SPECS_LIST = [
             "Returns the updated list of latest purchase orders."
         ),
         "handler": sap__update_purchase_order,
-    },
-    {
-        "name": "sap__get_material_details",
-        "description": (
-            "Get detailed information about a specific material from SAP S/4HANA. "
-            "Returns all available fields for the material."
-        ),
-        "handler": sap__get_material_details,
     },
     {
         "name": "sap__get_po_line_items",

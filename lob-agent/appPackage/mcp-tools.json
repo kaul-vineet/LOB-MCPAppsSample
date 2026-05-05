@@ -758,18 +758,51 @@
         },
         {
             "name": "sf__get_campaigns",
-            "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count.",
+            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup → opens edit form. No params returns the 5 most recent campaigns.",
             "inputSchema": {
-                "properties": {},
-                "type": "object",
-                "required": []
+                "properties": {
+                    "campaign_id": { "default": "", "type": "string" },
+                    "refresh": { "default": false, "type": "boolean" }
+                },
+                "type": "object"
             },
             "title": "Get campaigns",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/crm.html"
-                }
-            }
+            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
+        },
+        {
+            "name": "sf__create_campaign",
+            "description": "Create a new Salesforce Campaign. Required: name. Optional: status, type, start_date, end_date.",
+            "inputSchema": {
+                "properties": {
+                    "name": { "type": "string" },
+                    "status": { "default": "Planned", "type": "string" },
+                    "type": { "default": "", "type": "string" },
+                    "start_date": { "default": "", "type": "string" },
+                    "end_date": { "default": "", "type": "string" }
+                },
+                "required": ["name"],
+                "type": "object"
+            },
+            "title": "Create campaign",
+            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
+        },
+        {
+            "name": "sf__update_campaign",
+            "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date.",
+            "inputSchema": {
+                "properties": {
+                    "campaign_id": { "type": "string" },
+                    "name": { "default": "", "type": "string" },
+                    "status": { "default": "", "type": "string" },
+                    "type": { "default": "", "type": "string" },
+                    "start_date": { "default": "", "type": "string" },
+                    "end_date": { "default": "", "type": "string" }
+                },
+                "required": ["campaign_id"],
+                "type": "object"
+            },
+            "title": "Update campaign",
+            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
         },
         {
             "name": "sf__get_pending_approvals",
@@ -1320,6 +1353,34 @@
             }
         },
         {
+            "name": "sn__create_problem",
+            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority.",
+            "inputSchema": {
+                "properties": {
+                    "short_description": { "type": "string" },
+                    "description": { "default": "", "type": "string" },
+                    "priority": { "default": "3", "type": "string" }
+                },
+                "required": ["short_description"],
+                "type": "object"
+            },
+            "title": "Create problem",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+        },
+        {
+            "name": "sn__get_hr_cases",
+            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup → opens edit form. No params returns the latest HR cases.",
+            "inputSchema": {
+                "properties": {
+                    "sys_id": { "default": "", "type": "string" },
+                    "limit": { "default": 10, "type": "integer" }
+                },
+                "type": "object"
+            },
+            "title": "Get HR cases",
+            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow-hr.html" } }
+        },
+        {
             "name": "sn__create_hr_case",
             "description": "Create a new HR case in ServiceNow. Requires subject. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low).",
             "inputSchema": {
@@ -1491,16 +1552,13 @@
         },
         {
             "name": "sap__get_materials",
-            "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit.",
+            "description": "Fetch materials from SAP S/4HANA. Pass material_id for full detail view. No params returns the list.",
             "inputSchema": {
                 "properties": {
-                    "limit": {
-                        "default": 5,
-                        "type": "integer"
-                    }
+                    "material_id": { "default": "", "type": "string" },
+                    "limit": { "default": 5, "type": "integer" }
                 },
-                "type": "object",
-                "required": []
+                "type": "object"
             },
             "title": "Get materials",
             "_meta": {
@@ -1561,27 +1619,6 @@
                 "type": "object"
             },
             "title": "Update purchase order",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/sap.html"
-                }
-            }
-        },
-        {
-            "name": "sap__get_material_details",
-            "description": "Get detailed information about a specific material from SAP S/4HANA. Returns all available fields for the material.",
-            "inputSchema": {
-                "properties": {
-                    "material_id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "material_id"
-                ],
-                "type": "object"
-            },
-            "title": "Get material details",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/sap.html"
