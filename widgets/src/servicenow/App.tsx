@@ -415,19 +415,15 @@ function IncidentsView({ items, callTool, toast, theme }: {
   const styles = useStyles();
   const t = now(theme);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState<Record<string, string>>({});
-  const [addingNote, setAddingNote] = useState<string | null>(null);
   const [form, setForm] = useState({
     short_description: '', description: '', priority: '3', state: 'New', category: 'inquiry',
   });
 
   const openEdit = (inc: Incident) => {
     setCreating(false);
-    setExpandedId(null);
     setEditingId(inc.sys_id);
     setForm({
       short_description: inc.short_description || '',
@@ -440,17 +436,11 @@ function IncidentsView({ items, callTool, toast, theme }: {
 
   const openCreate = () => {
     setEditingId(null);
-    setExpandedId(null);
     setCreating(true);
     setForm({ short_description: '', description: '', priority: '3', state: 'New', category: 'inquiry' });
   };
 
   const cancel = () => { setEditingId(null); setCreating(false); };
-
-  const toggleWorkNotes = (id: string) => {
-    if (editingId) return;
-    setExpandedId(prev => prev === id ? null : id);
-  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -477,22 +467,6 @@ function IncidentsView({ items, callTool, toast, theme }: {
       toast(e.message || 'Operation failed', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const submitNote = async (sys_id: string) => {
-    const text = (noteText[sys_id] || '').trim();
-    if (!text) { toast('Enter a work note first', 'error'); return; }
-    setAddingNote(sys_id);
-    try {
-      await callTool('sn__update_incident', { sys_id, work_note: text });
-      toast('✓ Work note added');
-      setNoteText(p => ({ ...p, [sys_id]: '' }));
-      setExpandedId(null);
-    } catch (e: any) {
-      toast(e.message || 'Failed to add work note', 'error');
-    } finally {
-      setAddingNote(null);
     }
   };
 
@@ -599,17 +573,14 @@ function IncidentsView({ items, callTool, toast, theme }: {
             <React.Fragment key={inc.sys_id}>
               <TableRow
                 className="snow-row"
-                onClick={() => toggleWorkNotes(inc.sys_id)}
                 style={{
-                  cursor: 'pointer',
-                  borderBottom: idx === items.length - 1 && expandedId !== inc.sys_id ? 'none' : `1px solid ${t.border}`,
-                  background: expandedId === inc.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EEF6F1') : 'transparent',
+                  borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}`,
                   ...(lastSavedId === inc.sys_id ? { animation: 'snowRowFlash 1.5s ease-out' } : {}),
                 }}
               >
                 <TableCell style={cellStyle}>
                   <span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#293E40' }}>
-                    {expandedId === inc.sys_id ? '▼' : '▶'} {inc.number}
+                    {inc.number}
                   </span>
                 </TableCell>
                 <TableCell style={{ ...cellStyle, maxWidth: '220px' }}>{inc.short_description || '—'}</TableCell>
@@ -627,49 +598,6 @@ function IncidentsView({ items, callTool, toast, theme }: {
                 </TableCell>
               </TableRow>
               {editingId === inc.sys_id && renderForm('✏️ Edit Incident ' + inc.number)}
-              {expandedId === inc.sys_id && (
-                <TableRow>
-                  <TableCell colSpan={colSpan} style={{ padding: 0 }}>
-                    <div className={styles.subTableWrap} style={{
-                      background: theme === 'dark' ? '#1A2E25' : '#EEF6F1',
-                      borderBottom: `1px solid ${t.border}`,
-                    }}>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: t.text, marginBottom: '8px' }}>
-                        📝 Add Work Note — {inc.number}
-                      </div>
-                      <textarea
-                        value={noteText[inc.sys_id] || ''}
-                        onChange={(e) => setNoteText(p => ({ ...p, [inc.sys_id]: e.target.value }))}
-                        placeholder="Enter work note (internal — visible to IT staff only)…"
-                        rows={3}
-                        style={{
-                          width: '100%', padding: '8px', borderRadius: '4px',
-                          border: `1px solid ${t.border}`, background: t.surface,
-                          color: t.text, fontSize: '12px', fontFamily: 'inherit',
-                          resize: 'vertical', boxSizing: 'border-box',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => setExpandedId(null)} style={{
-                          padding: '4px 12px', borderRadius: '4px', border: `1px solid ${t.border}`,
-                          background: 'transparent', color: t.textWeak, fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit',
-                        }}>▲ Collapse</button>
-                        <button
-                          onClick={() => submitNote(inc.sys_id)}
-                          disabled={addingNote === inc.sys_id}
-                          style={{
-                            padding: '4px 14px', borderRadius: '4px', border: 'none',
-                            background: '#293E40', color: '#fff', fontSize: '12px',
-                            cursor: addingNote === inc.sys_id ? 'not-allowed' : 'pointer',
-                            fontFamily: 'inherit', opacity: addingNote === inc.sys_id ? 0.6 : 1,
-                          }}>
-                          {addingNote === inc.sys_id ? '…' : '+ Add Note'}
-                        </button>
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
             </React.Fragment>
           ))}
         </TableBody>
