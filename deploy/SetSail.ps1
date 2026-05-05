@@ -4,6 +4,7 @@
 
 .EXAMPLE
     .\deploy\SetSail.ps1                       # Full launch: gateway + tunnel + MOS3
+    .\deploy\SetSail.ps1 -SkipMOS3             # Gateway + tunnel only (no MOS3 upload)
     .\deploy\SetSail.ps1 -GatewayOnly          # Start (or reattach to) gateway only
     .\deploy\SetSail.ps1 -TunnelOnly           # Start (or reattach to) tunnel only
     .\deploy\SetSail.ps1 -SkipGateway          # Tunnel + MOS3 (gateway already running)
@@ -19,6 +20,7 @@ param(
     [switch]$SkipTunnel,
     [switch]$GatewayOnly,
     [switch]$TunnelOnly,
+    [switch]$SkipMOS3,
     [string]$TunnelName  = "gtc-v2",
     [int]$GatewayPort    = 8080
 )
@@ -268,6 +270,18 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 
 # ── Acquire MOS3 token ────────────────────────────────────────────────────────
+if ($SkipMOS3) {
+    Write-Host "  [ SKIP      ] MOS3 upload skipped (-SkipMOS3)" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  =====================================" -ForegroundColor DarkCyan
+    Write-Host "   FLEET IS LIVE (no MOS3 upload)     " -ForegroundColor Green
+    Write-Host "  =====================================" -ForegroundColor DarkCyan
+    Write-Host "  Gateway  -->  http://localhost:$GatewayPort" -ForegroundColor White
+    if ($tunnelUrl) { Write-Host "  Tunnel   -->  $tunnelUrl" -ForegroundColor White }
+    Write-Host "  =====================================" -ForegroundColor DarkCyan
+    exit 0
+}
+
 
 Write-Host "  >> Acquiring MOS3 token..." -ForegroundColor Cyan
 
