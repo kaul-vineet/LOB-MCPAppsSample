@@ -1097,11 +1097,15 @@ const DEAL_STAGES = [
 
 function FormView({
   entity,
+  mode = 'create',
+  recordId,
   prefill,
   callTool,
   toast,
 }: {
   entity: 'contact' | 'deal' | 'company' | 'ticket';
+  mode?: 'create' | 'edit';
+  recordId?: string;
   prefill?: Record<string, string>;
   callTool: (tool: string, args: Record<string, unknown>) => Promise<any>;
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -1109,6 +1113,7 @@ function FormView({
 }) {
   const styles = useStyles();
   const c = useHsColors();
+  const isEdit = mode === 'edit' && !!recordId;
 
   const [fields, setFields] = useState<Record<string, string>>(() => ({
     ...(prefill || {}),
@@ -1119,10 +1124,10 @@ function FormView({
     setFields((prev) => ({ ...prev, [key]: value }));
 
   const titleMap: Record<typeof entity, string> = {
-    contact: 'New Contact',
-    deal: 'New Deal',
-    company: 'New Company',
-    ticket: 'New Ticket',
+    contact: isEdit ? 'Edit Contact' : 'New Contact',
+    deal: isEdit ? 'Edit Deal' : 'New Deal',
+    company: isEdit ? 'Edit Company' : 'New Company',
+    ticket: isEdit ? 'Edit Ticket' : 'New Ticket',
   };
 
   const handleSubmit = async () => {
@@ -1133,20 +1138,40 @@ function FormView({
     setSubmitting(true);
     try {
       if (entity === 'contact') {
-        await callTool('hs__create_contact', { email: fields.email || '', firstname: fields.firstname || '', lastname: fields.lastname || '', phone: fields.phone || '', company: fields.company || '' });
-        toast('Contact created successfully!', 'success');
+        if (isEdit) {
+          await callTool('hs__update_contact', { contact_id: recordId, email: fields.email || '', firstname: fields.firstname || '', lastname: fields.lastname || '', phone: fields.phone || '', company: fields.company || '' });
+          toast('Contact updated successfully!', 'success');
+        } else {
+          await callTool('hs__create_contact', { email: fields.email || '', firstname: fields.firstname || '', lastname: fields.lastname || '', phone: fields.phone || '', company: fields.company || '' });
+          toast('Contact created successfully!', 'success');
+        }
       } else if (entity === 'deal') {
-        await callTool('hs__create_deal', { deal_name: fields.deal_name || '', amount: fields.amount || '', pipeline: fields.pipeline || '', deal_stage: fields.deal_stage || '' });
-        toast('Deal created successfully!', 'success');
+        if (isEdit) {
+          await callTool('hs__update_deal', { deal_id: recordId, deal_name: fields.deal_name || '', amount: fields.amount || '', pipeline: fields.pipeline || '', deal_stage: fields.deal_stage || '' });
+          toast('Deal updated successfully!', 'success');
+        } else {
+          await callTool('hs__create_deal', { deal_name: fields.deal_name || '', amount: fields.amount || '', pipeline: fields.pipeline || '', deal_stage: fields.deal_stage || '' });
+          toast('Deal created successfully!', 'success');
+        }
       } else if (entity === 'company') {
-        await callTool('hs__create_company', { name: fields.name || '', domain: fields.domain || '', phone: fields.phone || '', city: fields.city || '', industry: fields.industry || '' });
-        toast('Company created successfully!', 'success');
+        if (isEdit) {
+          await callTool('hs__update_company', { company_id: recordId, name: fields.name || '', domain: fields.domain || '', phone: fields.phone || '', city: fields.city || '', industry: fields.industry || '' });
+          toast('Company updated successfully!', 'success');
+        } else {
+          await callTool('hs__create_company', { name: fields.name || '', domain: fields.domain || '', phone: fields.phone || '', city: fields.city || '', industry: fields.industry || '' });
+          toast('Company created successfully!', 'success');
+        }
       } else {
-        await callTool('hs__create_ticket', { subject: fields.subject || '', status: fields.status || 'new', priority: fields.priority || 'MEDIUM', category: fields.category || '', description: fields.description || '' });
-        toast('Ticket created successfully!', 'success');
+        if (isEdit) {
+          await callTool('hs__update_ticket', { ticket_id: recordId, subject: fields.subject || '', status: fields.status || '', priority: fields.priority || '', category: fields.category || '' });
+          toast('Ticket updated successfully!', 'success');
+        } else {
+          await callTool('hs__create_ticket', { subject: fields.subject || '', status: fields.status || 'new', priority: fields.priority || 'MEDIUM', category: fields.category || '', description: fields.description || '' });
+          toast('Ticket created successfully!', 'success');
+        }
       }
     } catch (e: any) {
-      toast(e.message || `Failed to create ${entity}`, 'error');
+      toast(e.message || `Failed to ${isEdit ? 'update' : 'create'} ${entity}`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -1161,7 +1186,7 @@ function FormView({
         style={{ background: `linear-gradient(135deg, ${c.coral}, ${c.coralDark})`, color: '#fff' }}
       >
         <div className={styles.titleRow}>
-          <Text size={500} weight="bold" style={{ color: '#fff' }}>✨ {titleMap[entity]}</Text>
+          <Text size={500} weight="bold" style={{ color: '#fff' }}>{isEdit ? '✏️' : '✨'} {titleMap[entity]}</Text>
         </div>
       </div>
 
@@ -1313,27 +1338,6 @@ function HsViewHeader({ icon, title, count, onNew, newLabel }: {
   );
 }
 
-// ── Shared CRM filter bar ─────────────────────────────────────────────
-function HsFilterBar({ value, onChange, onSearch, placeholder, loading, hidden }: {
-  value: string; onChange: (v: string) => void; onSearch: () => void;
-  placeholder: string; loading: boolean; hidden?: boolean;
-}) {
-  const c = useHsColors();
-  if (hidden) return null;
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderBottom: `1px solid ${c.border}`, backgroundColor: c.bg, flexWrap: 'wrap' }}>
-      <Input size="small" value={value} onChange={(_, d) => onChange(d.value)} onKeyDown={e => e.key === 'Enter' && onSearch()}
-        placeholder={placeholder} style={{ flex: 1, maxWidth: 280, border: `1px solid ${c.border}`, borderRadius: '3px' }} />
-      <button onClick={onSearch} disabled={loading}
-        style={{ padding: '5px 14px', borderRadius: '3px', border: 'none', backgroundColor: c.coral, color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-        {loading ? '…' : 'Search'}
-      </button>
-      {value && <button onClick={() => { onChange(''); onSearch(); }}
-        style={{ padding: '5px 8px', borderRadius: '3px', border: `1px solid ${c.border}`, backgroundColor: 'transparent', color: c.textSec, fontSize: '12px', cursor: 'pointer' }}>✕ Clear</button>}
-    </div>
-  );
-}
-
 // ── CRM Contacts View ─────────────────────────────────────────────────
 function CrmContactsView({ items: initItems, total, callTool, toast }: {
   items: any[]; total?: number;
@@ -1343,8 +1347,6 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
   const styles = useStyles();
   const c = useHsColors();
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1354,13 +1356,6 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
   const [contactDeals, setContactDeals] = useState<Record<string, any[]>>({});
 
   useEffect(() => setLocalItems(initItems), [initItems]);
-
-  const doSearch = async () => {
-    if (!filterName.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const r = await callTool('hs__get_contacts', { name: filterName }); setLocalItems(r?.items || []); }
-    finally { setFiltering(false); }
-  };
 
   const toggleExpand = useCallback(async (ctId: string) => {
     if (expandedId === ctId) { setExpandedId(null); return; }
@@ -1404,7 +1399,6 @@ function CrmContactsView({ items: initItems, total, callTool, toast }: {
   return (
     <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
       <HsViewHeader icon={<PeopleRegular style={{ color: c.coral, fontSize: 22 }} />} title="Contacts" count={total ?? localItems.length} onNew={openCreate} newLabel="New Contact" />
-      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by name or email…" loading={filtering} hidden={creating} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
@@ -1485,8 +1479,6 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
   const styles = useStyles();
   const c = useHsColors();
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1497,13 +1489,6 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
   const [companyDetails, setCompanyDetails] = useState<Record<string, CompanyDetails>>({});
 
   useEffect(() => setLocalItems(initItems), [initItems]);
-
-  const doSearch = async () => {
-    if (!filterName.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const r = await callTool('hs__get_companies', { name: filterName }); setLocalItems(r?.items || []); }
-    finally { setFiltering(false); }
-  };
 
   const toggleExpand = useCallback(async (coId: string) => {
     if (expandedId === coId) { setExpandedId(null); return; }
@@ -1568,7 +1553,6 @@ function CompaniesView({ items: initItems, total, callTool, toast }: {
   return (
     <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
       <HsViewHeader icon={<span style={{ fontSize: 20, color: c.coral }}>🏢</span>} title="Companies" count={total ?? localItems.length} onNew={openCreate} newLabel="New Company" />
-      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by name…" loading={filtering} hidden={creating} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
@@ -1638,8 +1622,6 @@ function DealsView({ items: initItems, total, callTool, toast }: {
   const styles = useStyles();
   const c = useHsColors();
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1651,13 +1633,6 @@ function DealsView({ items: initItems, total, callTool, toast }: {
   useEffect(() => setLocalItems(initItems), [initItems]);
 
   const stageLabels: Record<string, string> = Object.fromEntries(DEAL_STAGES.filter(s => s.value).map(s => [s.value, s.label]));
-
-  const doSearch = async () => {
-    if (!filterName.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const r = await callTool('hs__get_deals', { name: filterName }); setLocalItems(r?.items || []); }
-    finally { setFiltering(false); }
-  };
 
   const toggleExpand = useCallback(async (dId: string) => {
     if (expandedId === dId) { setExpandedId(null); return; }
@@ -1700,7 +1675,6 @@ function DealsView({ items: initItems, total, callTool, toast }: {
   return (
     <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
       <HsViewHeader icon={<span style={{ fontSize: 20, color: c.teal }}>💰</span>} title="Deals" count={total ?? localItems.length} onNew={openCreate} newLabel="New Deal" />
-      <HsFilterBar value={filterName} onChange={setFilterName} onSearch={doSearch} placeholder="Search by deal name…" loading={filtering} hidden={creating} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
@@ -1781,8 +1755,6 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
   const styles = useStyles();
   const c = useHsColors();
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterSubject, setFilterSubject] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1792,13 +1764,6 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
   const [form, setForm] = useState({ subject: '', status: '', priority: '', category: '', description: '' });
 
   useEffect(() => setLocalItems(initItems), [initItems]);
-
-  const doSearch = async () => {
-    if (!filterSubject.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const r = await callTool('hs__get_tickets', { subject: filterSubject }); setLocalItems(r?.items || []); }
-    finally { setFiltering(false); }
-  };
 
   const toggleExpand = useCallback(async (tkId: string) => {
     if (expandedId === tkId) { setExpandedId(null); return; }
@@ -1841,7 +1806,6 @@ function TicketsView({ items: initItems, total, callTool, toast }: {
   return (
     <div className={styles.tableWrapper} style={{ border: `1px solid ${c.border}` }}>
       <HsViewHeader icon={<span style={{ fontSize: 20, color: c.coral }}>🎫</span>} title="Tickets" count={total ?? localItems.length} onNew={openCreate} newLabel="New Ticket" />
-      <HsFilterBar value={filterSubject} onChange={setFilterSubject} onSearch={doSearch} placeholder="Search by subject…" loading={filtering} hidden={creating} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ backgroundColor: c.surface }}>
@@ -2031,6 +1995,8 @@ export function HubSpotApp() {
       <div className={styles.shell}>
         <FormView
           entity={data.entity || 'contact'}
+          mode={data.mode || 'create'}
+          recordId={data.recordId}
           prefill={data.prefill}
           callTool={callTool}
           toast={toast}

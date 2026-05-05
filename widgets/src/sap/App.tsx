@@ -176,96 +176,6 @@ function EmptyState({ label }: { label?: string }) {
   );
 }
 
-/* ─── Filter Bar ──────────────────────────────────────────────────────── */
-function FilterBar({ children }: { children: React.ReactNode }) {
-  const t = useFioriTokens();
-  return (
-    <div style={{
-      display: 'flex', gap: '12px', alignItems: 'flex-end',
-      flexWrap: 'wrap',
-      backgroundColor: t.headerBg,
-      border: `1px solid ${t.border}`,
-      borderBottom: 'none',
-      padding: '12px 16px',
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function FilterInput({
-  label, value, onChange, placeholder,
-}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
-  const t = useFioriTokens();
-  const [focused, setFocused] = useState(false);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: '160px' }}>
-      <label style={{ fontSize: '11px', fontWeight: 600, color: t.textWeak, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-        {label}
-      </label>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          height: '30px', padding: '0 8px', fontSize: '13px',
-          color: t.text, backgroundColor: t.surface,
-          border: 'none',
-          borderBottom: focused ? `2px solid ${t.brand}` : `1px solid ${t.inputBorder}`,
-          outline: 'none',
-        }}
-      />
-    </div>
-  );
-}
-
-function FilterSelect({
-  label, value, onChange, options,
-}: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
-  const t = useFioriTokens();
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: '140px' }}>
-      <label style={{ fontSize: '11px', fontWeight: 600, color: t.textWeak, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{
-          height: '30px', padding: '0 8px', fontSize: '13px',
-          color: t.text, backgroundColor: t.surface,
-          border: `1px solid ${t.inputBorder}`, borderRadius: '2px',
-          outline: 'none', cursor: 'pointer',
-        }}
-      >
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </div>
-  );
-}
-
-function FilterToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  const t = useFioriTokens();
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', justifyContent: 'flex-end', paddingBottom: '2px' }}>
-      <label style={{ fontSize: '11px', fontWeight: 600, color: t.textWeak, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-        &nbsp;
-      </label>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: t.text }}>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={e => onChange(e.target.checked)}
-          style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: t.brand }}
-        />
-        {label}
-      </label>
-    </div>
-  );
-}
-
 /* ─── Fiori Table ─────────────────────────────────────────────────────── */
 function Table({ columns, children }: {
   columns: { label: string; width?: number | string }[];
@@ -448,13 +358,6 @@ function PurchaseOrdersView({
 }) {
   const t = useFioriTokens();
 
-  /* Filters */
-  const [supplier, setSupplier]   = useState('');
-  const [org, setOrg]             = useState('');
-  const [dateFrom, setDateFrom]   = useState('');
-  const [dateTo, setDateTo]       = useState('');
-  const [showDeleted, setShowDeleted] = useState(true);
-
   /* Expand state — level 1 (PO → line items) */
   const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
   const [loading, setLoading]     = useState<Record<string, boolean>>({});
@@ -464,19 +367,6 @@ function PurchaseOrdersView({
   const [expandedLI, setExpandedLI]       = useState<Record<string, boolean>>({});
   const [loadingLI, setLoadingLI]         = useState<Record<string, boolean>>({});
   const [goodsReceipts, setGoodsReceipts] = useState<Record<string, GoodsReceipt[]>>({});
-
-  /* Unique orgs for dropdown */
-  const orgs = Array.from(new Set(items.map(p => p.purchasing_org).filter(Boolean)));
-  const orgOptions = [{ value: '', label: '— All Orgs —' }, ...orgs.map(o => ({ value: o, label: o }))];
-
-  const filtered = items.filter(po => {
-    if (supplier && !po.supplier.toLowerCase().includes(supplier.toLowerCase())) return false;
-    if (org && po.purchasing_org !== org) return false;
-    if (dateFrom && po.order_date < dateFrom) return false;
-    if (dateTo && po.order_date > dateTo) return false;
-    if (!showDeleted && po.deletion_code) return false;
-    return true;
-  });
 
   const toggleExpand = useCallback(async (po: PurchaseOrder) => {
     const key = po.purchase_order;
@@ -545,21 +435,13 @@ function PurchaseOrdersView({
 
   return (
     <>
-      <SectionHeader title="Purchase Orders" count={filtered.length} />
+      <SectionHeader title="Purchase Orders" count={items.length} />
 
-      <FilterBar>
-        <FilterInput label="Supplier" value={supplier} onChange={setSupplier} placeholder="Search…" />
-        <FilterSelect label="Purchasing Org" value={org} onChange={setOrg} options={orgOptions} />
-        <FilterInput label="Order Date From" value={dateFrom} onChange={setDateFrom} placeholder="YYYY-MM-DD" />
-        <FilterInput label="Order Date To" value={dateTo} onChange={setDateTo} placeholder="YYYY-MM-DD" />
-        <FilterToggle label="Show Deleted" checked={showDeleted} onChange={setShowDeleted} />
-      </FilterBar>
-
-      {filtered.length === 0
-        ? <EmptyState label="No purchase orders match the current filters." />
+      {items.length === 0
+        ? <EmptyState label="No purchase orders found." />
         : (
           <Table columns={cols}>
-            {filtered.map(po => (
+            {items.map(po => (
               <React.Fragment key={po.purchase_order}>
                 <TableRow expandable>
                   <TD>
@@ -668,10 +550,6 @@ function BusinessPartnersView({
 }) {
   const t = useFioriTokens();
 
-  /* Filters */
-  const [name, setName]     = useState('');
-  const [category, setCategory] = useState('');
-
   /* Expand state — level 1 (BP → POs) */
   const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
   const [loading, setLoading]     = useState<Record<string, boolean>>({});
@@ -681,19 +559,6 @@ function BusinessPartnersView({
   const [expandedPO, setExpandedPO]     = useState<Record<string, boolean>>({});
   const [loadingPO, setLoadingPO]       = useState<Record<string, boolean>>({});
   const [poLineItems, setPoLineItems]   = useState<Record<string, PoLineItem[]>>({});
-
-  const catOptions = [
-    { value: '', label: '— All Categories —' },
-    { value: '1', label: 'Vendor' },
-    { value: '2', label: 'Customer' },
-    { value: '3', label: 'Both' },
-  ];
-
-  const filtered = items.filter(bp => {
-    if (name && !bp.name.toLowerCase().includes(name.toLowerCase())) return false;
-    if (category && bp.category !== category) return false;
-    return true;
-  });
 
   const toggleExpand = useCallback(async (bp: BusinessPartner) => {
     const key = bp.id;
@@ -761,18 +626,13 @@ function BusinessPartnersView({
 
   return (
     <>
-      <SectionHeader title="Business Partners" count={filtered.length} />
+      <SectionHeader title="Business Partners" count={items.length} />
 
-      <FilterBar>
-        <FilterInput label="Name" value={name} onChange={setName} placeholder="Search…" />
-        <FilterSelect label="Category" value={category} onChange={setCategory} options={catOptions} />
-      </FilterBar>
-
-      {filtered.length === 0
-        ? <EmptyState label="No business partners match the current filters." />
+      {items.length === 0
+        ? <EmptyState label="No business partners found." />
         : (
           <Table columns={cols}>
-            {filtered.map(bp => (
+            {items.map(bp => (
               <React.Fragment key={bp.id}>
                 <TableRow expandable>
                   <TD>
@@ -880,11 +740,6 @@ function MaterialsView({
 }) {
   const t = useFioriTokens();
 
-  /* Filters */
-  const [product, setProduct]     = useState('');
-  const [pType, setPType]         = useState('');
-  const [pGroup, setPGroup]       = useState('');
-
   /* Expand state — level 1 (material → plant data) */
   const [expanded, setExpanded]     = useState<Record<string, boolean>>({});
   const [loading, setLoading]       = useState<Record<string, boolean>>({});
@@ -894,22 +749,6 @@ function MaterialsView({
   const [expandedPlant, setExpandedPlant]   = useState<Record<string, boolean>>({});
   const [loadingPlant, setLoadingPlant]     = useState<Record<string, boolean>>({});
   const [stockLevels, setStockLevels]       = useState<Record<string, StockLevel[]>>({});
-
-  const typeOptions = [
-    { value: '', label: '— All Types —' },
-    ...Array.from(new Set(items.map(m => m.product_type).filter(Boolean))).map(v => ({ value: v, label: v })),
-  ];
-  const groupOptions = [
-    { value: '', label: '— All Groups —' },
-    ...Array.from(new Set(items.map(m => m.product_group).filter(Boolean))).map(v => ({ value: v, label: v })),
-  ];
-
-  const filtered = items.filter(m => {
-    if (product && !m.product.toLowerCase().includes(product.toLowerCase())) return false;
-    if (pType && m.product_type !== pType) return false;
-    if (pGroup && m.product_group !== pGroup) return false;
-    return true;
-  });
 
   const toggleExpand = useCallback(async (m: Material) => {
     const key = m.product;
@@ -976,19 +815,13 @@ function MaterialsView({
 
   return (
     <>
-      <SectionHeader title="Materials" count={filtered.length} />
+      <SectionHeader title="Materials" count={items.length} />
 
-      <FilterBar>
-        <FilterInput label="Material#" value={product} onChange={setProduct} placeholder="Search…" />
-        <FilterSelect label="Product Type" value={pType} onChange={setPType} options={typeOptions} />
-        <FilterSelect label="Product Group" value={pGroup} onChange={setPGroup} options={groupOptions} />
-      </FilterBar>
-
-      {filtered.length === 0
-        ? <EmptyState label="No materials match the current filters." />
+      {items.length === 0
+        ? <EmptyState label="No materials found." />
         : (
           <Table columns={cols}>
-            {filtered.map(m => (
+            {items.map(m => (
               <React.Fragment key={m.product}>
                 <TableRow expandable>
                   <TD>
@@ -1188,12 +1021,6 @@ function SalesOrdersView({
 }) {
   const t = useFioriTokens();
 
-  const [soldTo, setSoldTo]       = useState('');
-  const [currency, setCurrency]   = useState('');
-  const [status, setStatus]       = useState('');
-  const [dateFrom, setDateFrom]   = useState('');
-  const [dateTo, setDateTo]       = useState('');
-
   /* Expand state — level 1 (SO → items) */
   const [expanded, setExpanded]   = useState<Record<string, boolean>>({});
   const [loading, setLoading]     = useState<Record<string, boolean>>({});
@@ -1203,20 +1030,6 @@ function SalesOrdersView({
   const [expandedItem, setExpandedItem] = useState<Record<string, boolean>>({});
   const [loadingItem, setLoadingItem]   = useState<Record<string, boolean>>({});
   const [deliveries, setDeliveries]     = useState<Record<string, Delivery[]>>({});
-
-  const currencies = Array.from(new Set(items.map(s => s.currency).filter(Boolean)));
-  const currencyOptions = [{ value: '', label: '— All —' }, ...currencies.map(c => ({ value: c, label: c }))];
-  const statuses = Array.from(new Set(items.map(s => s.status).filter(Boolean)));
-  const statusOptions = [{ value: '', label: '— All Statuses —' }, ...statuses.map(s => ({ value: s, label: s }))];
-
-  const filtered = items.filter(so => {
-    if (soldTo && !so.sold_to_party.toLowerCase().includes(soldTo.toLowerCase())) return false;
-    if (currency && so.currency !== currency) return false;
-    if (status && so.status !== status) return false;
-    if (dateFrom && so.order_date < dateFrom) return false;
-    if (dateTo && so.order_date > dateTo) return false;
-    return true;
-  });
 
   const toggleSO = useCallback(async (so: SalesOrder) => {
     const key = so.sales_order;
@@ -1292,21 +1105,13 @@ function SalesOrdersView({
 
   return (
     <>
-      <SectionHeader title="Sales Orders" count={filtered.length} />
+      <SectionHeader title="Sales Orders" count={items.length} />
 
-      <FilterBar>
-        <FilterInput label="Sold-to Party" value={soldTo} onChange={setSoldTo} placeholder="Search…" />
-        <FilterSelect label="Currency" value={currency} onChange={setCurrency} options={currencyOptions} />
-        <FilterSelect label="Status" value={status} onChange={setStatus} options={statusOptions} />
-        <FilterInput label="Date From" value={dateFrom} onChange={setDateFrom} placeholder="YYYY-MM-DD" />
-        <FilterInput label="Date To" value={dateTo} onChange={setDateTo} placeholder="YYYY-MM-DD" />
-      </FilterBar>
-
-      {filtered.length === 0
-        ? <EmptyState label="No sales orders match the current filters." />
+      {items.length === 0
+        ? <EmptyState label="No sales orders found." />
         : (
           <Table columns={cols}>
-            {filtered.map(so => (
+            {items.map(so => (
               <React.Fragment key={so.sales_order}>
                 <TableRow expandable>
                   <TD>

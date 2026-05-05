@@ -48,7 +48,7 @@ def _mock_list_response(rows: list[dict], label: str, data_type: str = "envelope
         )
     return types.CallToolResult(
         content=[types.TextContent(type="text", text="\n".join(summary_lines))],
-        structuredContent={"type": data_type, "total": len(rows), "items": rows},
+        structuredContent={"type": data_type, "total": len(rows), "data": rows},
     )
 
 
@@ -58,7 +58,48 @@ async def ds__get_envelopes(
     from_date: str | None = None,
     status: str | None = None,
     count: int = 10,
+    envelope_id: str = "",
 ) -> types.CallToolResult:
+    if envelope_id:
+        if is_mock():
+            env = next((e for e in MOCK_ENVELOPES if e["envelopeId"] == envelope_id), MOCK_ENVELOPES[0])
+            detail = {
+                **env,
+                "statusEmoji": status_emoji(env["status"]),
+                "signers": [
+                    {"name": "Alexandra Harrington", "email": "a.harrington@cloudbase.corp", "status": "completed", "signedDateTime": "2026-04-21T10:00:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
+                    {"name": "James Pemberton",       "email": "j.pemberton@gtc.internal",   "status": "completed", "signedDateTime": "2026-04-21T14:22:00Z", "deliveredDateTime": "2026-04-20T09:05:00Z"},
+                ],
+            }
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"[demo] Opening envelope: {detail['emailSubject']}")],
+                structuredContent={"type": "envelope_detail", "data": detail},
+            )
+        try:
+            envelope = await ds_request("GET", f"/envelopes/{envelope_id}")
+            recipients = await ds_request("GET", f"/envelopes/{envelope_id}/recipients")
+            signers = [
+                {"name": s.get("name", ""), "email": s.get("email", ""), "status": s.get("status", ""),
+                 "signedDateTime": s.get("signedDateTime", ""), "deliveredDateTime": s.get("deliveredDateTime", "")}
+                for s in recipients.get("signers", [])
+            ]
+            detail = {
+                "envelopeId":        envelope.get("envelopeId", ""),
+                "emailSubject":      envelope.get("emailSubject", ""),
+                "status":            envelope.get("status", ""),
+                "statusEmoji":       status_emoji(envelope.get("status", "")),
+                "sentDateTime":      envelope.get("sentDateTime", ""),
+                "completedDateTime": envelope.get("completedDateTime", ""),
+                "signers":           signers,
+            }
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening envelope: {detail['emailSubject']}")],
+                structuredContent={"type": "envelope_detail", "data": detail},
+            )
+        except Exception as exc:
+            log.error("ds__get_envelope_by_id_failed", error=str(exc))
+            return _error_result(str(exc))
+
     if is_mock():
         filtered = [e for e in MOCK_ENVELOPES if not status or e["status"] == status]
         return _mock_list_response(_mock_envelope_rows(filtered[:count]), "envelope(s)", "envelopes")
@@ -82,7 +123,7 @@ async def ds__get_envelopes(
         ]
         return types.CallToolResult(
             content=[types.TextContent(type="text", text="\n".join(summary))],
-            structuredContent={"type": "envelopes", "total": len(rows), "items": rows},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
         )
     except Exception as exc:
         log.error("ds__get_envelopes_failed", error=str(exc))
@@ -107,7 +148,7 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
         )
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=summary)],
-            structuredContent={"type": "envelope_detail", "items": [detail]},
+            structuredContent={"type": "envelope_detail", "data": detail},
         )
     try:
         envelope = await ds_request("GET", f"/envelopes/{envelope_id}")
@@ -138,7 +179,7 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
         ) + "".join(f"\n  • {s['name']} ({s['email']}) — {s['status']}" for s in signers)
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=summary)],
-            structuredContent={"type": "envelope_detail", "items": [detail]},
+            structuredContent={"type": "envelope_detail", "data": detail},
         )
     except Exception as exc:
         log.error("ds__get_envelope_details_failed", error=str(exc))
@@ -151,7 +192,7 @@ async def ds__get_templates(count: int = 10) -> types.CallToolResult:
         lines = [f"[demo] Found {len(rows)} template(s)."] + [f"  {r['name']} ({r['templateId']})" for r in rows]
         return types.CallToolResult(
             content=[types.TextContent(type="text", text="\n".join(lines))],
-            structuredContent={"type": "templates", "total": len(rows), "items": rows},
+            structuredContent={"type": "templates", "total": len(rows), "data": rows},
         )
     try:
         data = await ds_request("GET", "/templates", params={"count": str(count)})
@@ -169,7 +210,7 @@ async def ds__get_templates(count: int = 10) -> types.CallToolResult:
         summary = [f"Found {len(rows)} template(s)."] + [f"  📋 {r['name']} ({r['templateId'][:8]}…)" for r in rows[:5]]
         return types.CallToolResult(
             content=[types.TextContent(type="text", text="\n".join(summary))],
-            structuredContent={"type": "templates", "total": len(rows), "items": rows},
+            structuredContent={"type": "templates", "total": len(rows), "data": rows},
         )
     except Exception as exc:
         log.error("ds__get_templates_failed", error=str(exc))
@@ -190,7 +231,7 @@ async def ds__send_envelope(
         )
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=f"[demo] Envelope sent. ID: {mock_id}, Status: sent")],
-            structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": mock_id},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows, "_createdId": mock_id},
         )
     try:
         body = {
@@ -215,7 +256,7 @@ async def ds__send_envelope(
         ]
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=f"Envelope sent. ID: {env_id}, Status: {result.get('status', '')}")],
-            structuredContent={"type": "envelopes", "total": len(rows), "items": rows, "_createdId": env_id},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows, "_createdId": env_id},
         )
     except Exception as exc:
         log.error("ds__send_envelope_failed", error=str(exc))
@@ -225,33 +266,49 @@ async def ds__send_envelope(
 async def ds__void_envelope(envelope_id: str, void_reason: str) -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Envelope {envelope_id} voided. Reason: {void_reason}"
-    else:
-        try:
-            await ds_request("PUO", f"/envelopes/{envelope_id}", json_body={"status": "voided", "voidedReason": void_reason})
-            msg = f"Envelope {envelope_id} voided. Reason: {void_reason}"
-        except Exception as exc:
-            log.error("ds__void_envelope_failed", error=str(exc))
-            return _error_result(str(exc))
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=msg)],
-        structuredContent={"type": "action_result", "action": "void", "envelopeId": envelope_id, "message": msg},
-    )
+        rows = _mock_envelope_rows(
+            [{**e, "status": "voided"} if e["envelopeId"] == envelope_id else e for e in MOCK_ENVELOPES]
+        )
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
+        )
+    try:
+        await ds_request("PUT", f"/envelopes/{envelope_id}", json_body={"status": "voided", "voidedReason": void_reason})
+        msg = f"Envelope {envelope_id} voided. Reason: {void_reason}"
+        envelopes = await fetch_envelopes(count=10)
+        rows = [{"envelopeId": e.get("envelopeId", ""), "emailSubject": e.get("emailSubject", ""), "status": e.get("status", ""),
+                 "statusEmoji": status_emoji(e.get("status", "")), "sentDateTime": e.get("sentDateTime", ""), "completedDateTime": e.get("completedDateTime", "")} for e in envelopes]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
+        )
+    except Exception as exc:
+        log.error("ds__void_envelope_failed", error=str(exc))
+        return _error_result(str(exc))
 
 
 async def ds__resend_envelope(envelope_id: str) -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Envelope {envelope_id} resent to pending recipients."
-    else:
-        try:
-            await ds_request("PUO", f"/envelopes/{envelope_id}", json_body={"resend_envelope": "true"})
-            msg = f"Envelope {envelope_id} resent to pending recipients."
-        except Exception as exc:
-            log.error("ds__resend_envelope_failed", error=str(exc))
-            return _error_result(str(exc))
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=msg)],
-        structuredContent={"type": "action_result", "action": "resend", "envelopeId": envelope_id, "message": msg},
-    )
+        rows = _mock_envelope_rows(MOCK_ENVELOPES)
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
+        )
+    try:
+        await ds_request("PUT", f"/envelopes/{envelope_id}", json_body={"resend_envelope": "true"})
+        msg = f"Envelope {envelope_id} resent to pending recipients."
+        envelopes = await fetch_envelopes(count=10)
+        rows = [{"envelopeId": e.get("envelopeId", ""), "emailSubject": e.get("emailSubject", ""), "status": e.get("status", ""),
+                 "statusEmoji": status_emoji(e.get("status", "")), "sentDateTime": e.get("sentDateTime", ""), "completedDateTime": e.get("completedDateTime", "")} for e in envelopes]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
+        )
+    except Exception as exc:
+        log.error("ds__resend_envelope_failed", error=str(exc))
+        return _error_result(str(exc))
 
 
 async def ds__get_signing_url(
@@ -262,9 +319,10 @@ async def ds__get_signing_url(
 ) -> types.CallToolResult:
     if is_mock():
         url = f"https://demo.docusign.net/signing/mock?env={envelope_id}"
+        rows = _mock_envelope_rows(MOCK_ENVELOPES)
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=f"[demo] Signing URL for {signer_name}: {url}")],
-            structuredContent={"type": "signing_url", "signerName": signer_name, "url": url},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows, "_signingUrl": url},
         )
     try:
         result = await ds_request(
@@ -273,9 +331,12 @@ async def ds__get_signing_url(
             json_body={"returnUrl": return_url, "authenticationMethod": "none", "email": signer_email, "userName": signer_name},
         )
         signing_url = result.get("url", "")
+        envelopes = await fetch_envelopes(count=10)
+        rows = [{"envelopeId": e.get("envelopeId", ""), "emailSubject": e.get("emailSubject", ""), "status": e.get("status", ""),
+                 "statusEmoji": status_emoji(e.get("status", "")), "sentDateTime": e.get("sentDateTime", ""), "completedDateTime": e.get("completedDateTime", "")} for e in envelopes]
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=f"Signing URL for {signer_name}: {signing_url}")],
-            structuredContent={"type": "signing_url", "signerName": signer_name, "url": signing_url},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows, "_signingUrl": signing_url},
         )
     except Exception as exc:
         log.error("ds__get_signing_url_failed", error=str(exc))
@@ -285,22 +346,24 @@ async def ds__get_signing_url(
 async def ds__download_document(envelope_id: str, document_id: str = "combined") -> types.CallToolResult:
     if is_mock():
         msg = f"[demo] Downloaded document '{document_id}' from envelope {envelope_id} (42.3 KB). Binary content available."
+        rows = _mock_envelope_rows(MOCK_ENVELOPES)
         return types.CallToolResult(
             content=[types.TextContent(type="text", text=msg)],
-            structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": 42.3},
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
         )
     try:
         content = await ds_request("GET", f"/envelopes/{envelope_id}/documents/{document_id}")
         if isinstance(content, bytes):
             size_kb = len(content) / 1024
             msg = f"Downloaded document '{document_id}' from envelope {envelope_id} ({size_kb:.1f} KB). Binary content available."
-            return types.CallToolResult(
-                content=[types.TextContent(type="text", text=msg)],
-                structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id, "sizeKb": round(size_kb, 1)},
-            )
+        else:
+            msg = "Document downloaded (unexpected format)."
+        envelopes = await fetch_envelopes(count=10)
+        rows = [{"envelopeId": e.get("envelopeId", ""), "emailSubject": e.get("emailSubject", ""), "status": e.get("status", ""),
+                 "statusEmoji": status_emoji(e.get("status", "")), "sentDateTime": e.get("sentDateTime", ""), "completedDateTime": e.get("completedDateTime", "")} for e in envelopes]
         return types.CallToolResult(
-            content=[types.TextContent(type="text", text="Document downloaded (unexpected format).")],
-            structuredContent={"type": "document_download", "envelopeId": envelope_id, "documentId": document_id},
+            content=[types.TextContent(type="text", text=msg)],
+            structuredContent={"type": "envelopes", "total": len(rows), "data": rows},
         )
     except Exception as exc:
         log.error("ds__download_document_failed", error=str(exc))
@@ -341,8 +404,9 @@ _TOOL_SPECS_LIST = [
     {
         "name": "ds__get_envelopes",
         "description": (
-            "Get the latest envelopes from DocuSign. "
-            "Optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10)."
+            "Get envelopes from DocuSign. Pass envelope_id for exact lookup → opens detail view. "
+            "Otherwise lists envelopes with optional filters: from_date (ISO 8601), "
+            "status (sent|delivered|completed|declined|voided), count (default 10)."
         ),
         "handler": ds__get_envelopes,
     },

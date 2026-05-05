@@ -154,56 +154,6 @@ export interface SfErrorData {
   type?: string;
 }
 
-// ── Detail views (legacy) ─────────────────────────────────────────────────
-export interface LeadDetail {
-  id: string;
-  first_name: string;
-  last_name: string;
-  company: string;
-  email: string;
-  phone: string;
-  status: string;
-  lead_source: string;
-  title?: string;
-  website?: string;
-  description?: string;
-  annual_revenue?: number | null;
-  number_of_employees?: number | null;
-  created_date?: string;
-}
-
-export interface CaseDetail {
-  id: string;
-  case_number: string;
-  subject: string;
-  status: string;
-  priority: string;
-  origin?: string;
-  type?: string;
-  account_name?: string;
-  description?: string;
-  comments?: string;
-  created_date?: string;
-  closed_date?: string;
-}
-
-export interface TaskDetail {
-  id: string;
-  subject: string;
-  status: string;
-  priority: string;
-  activity_date?: string;
-  description?: string;
-  who_id?: string;
-  what_id?: string;
-  created_date?: string;
-}
-
-export interface SfDetailData {
-  type: 'lead_detail' | 'case_detail' | 'task_detail';
-  record: LeadDetail | CaseDetail | TaskDetail;
-}
-
 // ── Union type ────────────────────────────────────────────────────────────
 export type SfData =
   | SfListData
@@ -211,5 +161,4 @@ export type SfData =
   | SalesDashboardData
   | SupportDashboardData
   | LeadConvertData
-  | SfDetailData
   | SfErrorData;

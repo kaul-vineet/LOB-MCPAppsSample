@@ -162,6 +162,25 @@ class HubSpotClient:
         result = resp.json()
         return result["id"]
 
+    # ── Get single object ─────────────────────────────────────────────────────
+
+    async def get_object(
+        self,
+        object_type: str,
+        object_id: str,
+        properties: list[str],
+    ) -> dict[str, Any]:
+        """Fetch a single HubSpot CRM record by id. Returns flattened properties dict."""
+        params = {"properties": ",".join(properties)}
+        resp = await self._request(
+            "GET",
+            f"/crm/v3/objects/{object_type}/{object_id}",
+            params=params,
+        )
+        self._raise_for_error(resp, f"get {object_type}/{object_id}")
+        r = resp.json()
+        return {"id": r["id"], **r.get("properties", {})}
+
     # ── Update ────────────────────────────────────────────────────────────────
 
     async def update_object(

@@ -160,8 +160,29 @@ async def _fetch_tasks()         -> list[dict]: return await _fetch_entity("Task
 
 # ── Tool handlers ─────────────────────────────────────────────────────────────
 
-async def sf__get_leads(campaign_id: str = "", name: str = "", refresh: bool = False) -> types.CallToolResult:
-    log.info("sf__get_leads", campaign_id=campaign_id, name=name, refresh=refresh)
+async def sf__get_leads(campaign_id: str = "", name: str = "", lead_id: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_leads", campaign_id=campaign_id, name=name, lead_id=lead_id, refresh=refresh)
+    if lead_id:
+        try:
+            sf = get_client()
+            soql = (f"SELECT Id, FirstName, LastName, Company, Email, Phone, Status, LeadSource, "
+                    f"Title, Website, Description, AnnualRevenue, NumberOfEmployees, CreatedDate "
+                    f"FROM Lead WHERE Id = '{_sq(lead_id)}' LIMIT 1")
+            records = await sf.query(soql)
+        except Exception as exc:
+            return _error_result(f"Error looking up lead: {exc}")
+        if not records:
+            return _error_result(f"Lead {lead_id} not found.")
+        r = records[0]
+        name_str = f"{r.get('FirstName') or ''} {r.get('LastName') or ''}".strip()
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for lead: {name_str}.")],
+            structuredContent={"type": "form", "entity": "lead", "mode": "edit", "recordId": r.get("Id", ""),
+                               "prefill": {"first_name": r.get("FirstName") or "", "last_name": r.get("LastName") or "",
+                                           "company": r.get("Company") or "", "email": r.get("Email") or "",
+                                           "phone": r.get("Phone") or "", "status": r.get("Status") or "",
+                                           "lead_source": r.get("LeadSource") or ""}},
+        )
     use_cache = not campaign_id and not name and not refresh
     cache_hit, cached_at = False, _now_iso()
     if use_cache:
@@ -265,37 +286,6 @@ async def sf__update_lead(
         content=[types.TextContent(type="text", text=f"Lead {lead_id} updated. Refreshed list returned.")],
         structuredContent={"type": "leads", "total": len(items), "items": items,
                            "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
-    )
-
-
-async def sf__get_lead(lead_id: str) -> types.CallToolResult:
-    log.info("sf__get_lead", lead_id=lead_id)
-    try:
-        sf = get_client()
-        soql = (f"SELECT Id, FirstName, LastName, Company, Email, Phone, Status, LeadSource, "
-                f"Title, Website, Description, AnnualRevenue, NumberOfEmployees, CreatedDate "
-                f"FROM Lead WHERE Id = '{lead_id}' LIMIT 1")
-        records = await sf.query(soql)
-    except SalesforceAuthError as exc:
-        return _error_result(f"Salesforce authentication failed: {exc}")
-    except SalesforceAPIError as exc:
-        return _error_result(f"Salesforce API error: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error fetching lead: {exc}")
-    if not records: return _error_result(f"Lead {lead_id} not found.")
-    r = records[0]
-    record = {
-        "id": r.get("Id", ""), "first_name": r.get("FirstName") or "", "last_name": r.get("LastName") or "",
-        "company": r.get("Company") or "", "email": r.get("Email") or "", "phone": r.get("Phone") or "",
-        "status": r.get("Status") or "", "lead_source": r.get("LeadSource") or "",
-        "title": r.get("Title") or "", "website": r.get("Website") or "",
-        "description": r.get("Description") or "", "annual_revenue": r.get("AnnualRevenue"),
-        "number_of_employees": r.get("NumberOfEmployees"), "created_date": (r.get("CreatedDate") or "")[:10],
-    }
-    name = f"{record['first_name']} {record['last_name']}".strip()
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Lead: {name} at {record['company']}. Status: {record['status']}.")],
-        structuredContent={"type": "lead_detail", "record": record},
     )
 
 
@@ -595,8 +585,28 @@ async def sf__update_contact(
     )
 
 
-async def sf__get_cases(account_id: str = "", subject: str = "", refresh: bool = False) -> types.CallToolResult:
-    log.info("sf__get_cases", account_id=account_id, subject=subject, refresh=refresh)
+async def sf__get_cases(account_id: str = "", subject: str = "", case_id: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_cases", account_id=account_id, subject=subject, case_id=case_id, refresh=refresh)
+    if case_id:
+        try:
+            sf = get_client()
+            soql = (f"SELECT Id, CaseNumber, Subject, Status, Priority, Origin, Type, "
+                    f"Account.Name, Description, CreatedDate "
+                    f"FROM Case WHERE Id = '{_sq(case_id)}' LIMIT 1")
+            records = await sf.query(soql)
+        except Exception as exc:
+            return _error_result(f"Error looking up case: {exc}")
+        if not records:
+            return _error_result(f"Case {case_id} not found.")
+        r = records[0]
+        account = r.get("Account") or {}
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for case: {r.get('CaseNumber', '')}.")],
+            structuredContent={"type": "form", "entity": "case", "mode": "edit", "recordId": r.get("Id", ""),
+                               "prefill": {"subject": r.get("Subject") or "", "status": r.get("Status") or "",
+                                           "priority": r.get("Priority") or "", "account_name": account.get("Name") or "",
+                                           "description": r.get("Description") or ""}},
+        )
     use_cache = not account_id and not subject and not refresh
     if use_cache:
         cached_items, stored_at = _cache_get("cases")
@@ -687,36 +697,6 @@ async def sf__update_case(case_id: str, status: str = "", resolution: str = "") 
     )
 
 
-async def sf__get_case(case_id: str) -> types.CallToolResult:
-    log.info("sf__get_case", case_id=case_id)
-    try:
-        sf = get_client()
-        soql = (f"SELECT Id, CaseNumber, Subject, Status, Priority, Origin, Type, "
-                f"Account.Name, Description, Comments, CreatedDate, ClosedDate "
-                f"FROM Case WHERE Id = '{case_id}' LIMIT 1")
-        records = await sf.query(soql)
-    except SalesforceAuthError as exc:
-        return _error_result(f"Salesforce authentication failed: {exc}")
-    except SalesforceAPIError as exc:
-        return _error_result(f"Salesforce API error: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error fetching case: {exc}")
-    if not records: return _error_result(f"Case {case_id} not found.")
-    r = records[0]; account = r.get("Account") or {}
-    record = {
-        "id": r.get("Id", ""), "case_number": r.get("CaseNumber") or "",
-        "subject": r.get("Subject") or "", "status": r.get("Status") or "",
-        "priority": r.get("Priority") or "", "origin": r.get("Origin") or "",
-        "type": r.get("Type") or "", "account_name": account.get("Name") or "",
-        "description": r.get("Description") or "", "comments": r.get("Comments") or "",
-        "created_date": (r.get("CreatedDate") or "")[:10], "closed_date": (r.get("ClosedDate") or "")[:10],
-    }
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Case {record['case_number']}: {record['subject']}. Status: {record['status']}.")],
-        structuredContent={"type": "case_detail", "record": record},
-    )
-
-
 async def sf__get_case_comments(case_id: str) -> types.CallToolResult:
     log.info("sf__get_case_comments", case_id=case_id)
     try:
@@ -740,8 +720,27 @@ async def sf__get_case_comments(case_id: str) -> types.CallToolResult:
     )
 
 
-async def sf__get_tasks(subject: str = "", refresh: bool = False) -> types.CallToolResult:
-    log.info("sf__get_tasks", subject=subject, refresh=refresh)
+async def sf__get_tasks(subject: str = "", task_id: str = "", refresh: bool = False) -> types.CallToolResult:
+    log.info("sf__get_tasks", subject=subject, task_id=task_id, refresh=refresh)
+    if task_id:
+        try:
+            sf = get_client()
+            soql = (f"SELECT Id, Subject, Status, Priority, ActivityDate, Description, CreatedDate "
+                    f"FROM Task WHERE Id = '{_sq(task_id)}' LIMIT 1")
+            records = await sf.query(soql)
+        except Exception as exc:
+            return _error_result(f"Error looking up task: {exc}")
+        if not records:
+            return _error_result(f"Task {task_id} not found.")
+        r = records[0]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for task: {r.get('Subject', '')}.")],
+            structuredContent={"type": "form", "entity": "task", "mode": "edit", "recordId": r.get("Id", ""),
+                               "prefill": {"subject": r.get("Subject") or "", "status": r.get("Status") or "",
+                                           "priority": r.get("Priority") or "",
+                                           "activity_date": (r.get("ActivityDate") or "")[:10],
+                                           "description": r.get("Description") or ""}},
+        )
     use_cache = not subject and not refresh
     if use_cache:
         cached_items, stored_at = _cache_get("tasks")
@@ -832,34 +831,6 @@ async def sf__update_task(
         content=[types.TextContent(type="text", text=f"Task {task_id} updated. Refreshed list returned.")],
         structuredContent={"type": "tasks", "total": len(items), "items": items,
                            "_schema": _get_schema("Task"), "_cache": {"hit": False, "cached_at": cached_at}},
-    )
-
-
-async def sf__get_task(task_id: str) -> types.CallToolResult:
-    log.info("sf__get_task", task_id=task_id)
-    try:
-        sf = get_client()
-        soql = (f"SELECT Id, Subject, Status, Priority, ActivityDate, "
-                f"Description, WhoId, WhatId, CreatedDate "
-                f"FROM Task WHERE Id = '{task_id}' LIMIT 1")
-        records = await sf.query(soql)
-    except SalesforceAuthError as exc:
-        return _error_result(f"Salesforce authentication failed: {exc}")
-    except SalesforceAPIError as exc:
-        return _error_result(f"Salesforce API error: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error fetching task: {exc}")
-    if not records: return _error_result(f"Task {task_id} not found.")
-    r = records[0]
-    record = {
-        "id": r.get("Id", ""), "subject": r.get("Subject") or "", "status": r.get("Status") or "",
-        "priority": r.get("Priority") or "", "activity_date": r.get("ActivityDate") or "",
-        "description": r.get("Description") or "", "who_id": r.get("WhoId") or "",
-        "what_id": r.get("WhatId") or "", "created_date": (r.get("CreatedDate") or "")[:10],
-    }
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Task: {record['subject']}. Status: {record['status']}. Due: {record['activity_date'] or 'not set'}.")],
-        structuredContent={"type": "task_detail", "record": record},
     )
 
 
@@ -1120,10 +1091,9 @@ def manage_crm_prompt() -> list[PromptMessage]:
 # ── Registries ────────────────────────────────────────────────────────────────
 
 _TOOL_SPECS_LIST = [
-    {"name": "sf__get_leads",             "description": "Get the 5 most recent Leads from Salesforce. Pass campaign_id to get leads for a specific campaign. Returns lead name, company, email, phone, status, and lead source.", "handler": sf__get_leads},
+    {"name": "sf__get_leads",             "description": "Get Leads from Salesforce. Pass lead_id for exact record lookup → opens edit form. Pass name to search by name/company. No params returns the 5 most recent leads.", "handler": sf__get_leads},
     {"name": "sf__create_lead",           "description": "Create a new Lead in Salesforce. Requires last_name and company at minimum. Returns the updated list of latest 5 leads.", "handler": sf__create_lead},
     {"name": "sf__update_lead",           "description": "Update an existing Lead in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 leads.", "handler": sf__update_lead},
-    {"name": "sf__get_lead",              "description": "Get full details for a single Salesforce Lead by Id. Returns all fields including description, title, website, revenue, and created date.", "handler": sf__get_lead},
     {"name": "sf__get_opportunities",     "description": "Get the 5 most recent Opportunities from Salesforce. Returns opportunity name, account, stage, amount, close date, and probability.", "handler": sf__get_opportunities},
     {"name": "sf__create_opportunity",    "description": "Create a new Opportunity in Salesforce. Requires name, stage, and close_date at minimum. Returns the updated list of latest 5 opportunities.", "handler": sf__create_opportunity},
     {"name": "sf__update_opportunity",    "description": "Update an existing Opportunity in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 opportunities.", "handler": sf__update_opportunity},
@@ -1133,15 +1103,13 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__get_contacts",          "description": "Get the latest 5 Contacts from Salesforce. Returns first name, last name, email, phone, title, and associated account.", "handler": sf__get_contacts},
     {"name": "sf__create_contact",        "description": "Create a new Contact in Salesforce. Requires last_name at minimum. Returns the updated list of latest 5 contacts.", "handler": sf__create_contact},
     {"name": "sf__update_contact",        "description": "Update an existing Contact in Salesforce by its record Id. Only fields provided will be updated. Returns the updated list of latest 5 contacts.", "handler": sf__update_contact},
-    {"name": "sf__get_cases",             "description": "Get the 5 most recent Cases from Salesforce. Returns case number, subject, status, priority, and account name.", "handler": sf__get_cases},
+    {"name": "sf__get_cases",             "description": "Get Cases from Salesforce. Pass case_id for exact record lookup → opens edit form. Pass subject to search by subject. No params returns the 5 most recent cases.", "handler": sf__get_cases},
     {"name": "sf__create_case",           "description": "Create a new Salesforce Case. Required: subject. Optional: priority (High/Medium/Low), account_id, description.", "handler": sf__create_case},
     {"name": "sf__update_case",           "description": "Update a Salesforce Case. Required: case_id. Optional: status, resolution (Internal Comments).", "handler": sf__update_case},
-    {"name": "sf__get_case",              "description": "Get full details for a single Salesforce Case by Id. Returns all fields including description, comments, origin, type, account, and dates.", "handler": sf__get_case},
     {"name": "sf__get_case_comments",     "description": "Get notes/comments for a Salesforce Case by case Id.", "handler": sf__get_case_comments},
-    {"name": "sf__get_tasks",             "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date.", "handler": sf__get_tasks},
+    {"name": "sf__get_tasks",             "description": "Get Tasks from Salesforce. Pass task_id for exact record lookup → opens edit form. Pass subject to search by subject. No params returns the 5 most recent tasks.", "handler": sf__get_tasks},
     {"name": "sf__create_task",           "description": "Create a new Salesforce Task (activity). Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id).", "handler": sf__create_task},
     {"name": "sf__update_task",           "description": "Update a Salesforce Task. Pass task_id plus any fields to change.", "handler": sf__update_task},
-    {"name": "sf__get_task",              "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record.", "handler": sf__get_task},
     {"name": "sf__delete_lead",           "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list.", "handler": sf__delete_lead},
     {"name": "sf__convert_lead",          "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status, create_opportunity.", "handler": sf__convert_lead},
     {"name": "sf__get_pipeline_dashboard","description": "Get the Salesforce opportunity pipeline grouped by stage. Returns deal count and total amount per stage.", "handler": sf__get_pipeline_dashboard},

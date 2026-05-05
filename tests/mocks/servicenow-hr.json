@@ -41,9 +41,8 @@
   "callToolResponses": {
     "create_hr_case": {"type": "hr_cases", "total": 5, "items": "USE_CURRENT_PLUS_NEW"},
     "update_hr_case": {"success": true},
-    "hr_approve_record": {"success": true},
-    "hr_reject_record": {"success": true},
-    "add_hr_work_note": {"success": true},
+    "approve_record": {"type": "approvals", "total": 0, "items": []},
+    "reject_record": {"type": "approvals", "total": 0, "items": []},
     "get_users": {"items": "USE_EMPLOYEES_LIST"}
   }
 }

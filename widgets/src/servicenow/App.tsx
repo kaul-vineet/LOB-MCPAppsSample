@@ -485,7 +485,7 @@ function IncidentsView({ items, callTool, toast, theme }: {
     if (!text) { toast('Enter a work note first', 'error'); return; }
     setAddingNote(sys_id);
     try {
-      await callTool('sn__add_work_note', { sys_id, work_note: text });
+      await callTool('sn__update_incident', { sys_id, work_note: text });
       toast('✓ Work note added');
       setNoteText(p => ({ ...p, [sys_id]: '' }));
       setExpandedId(null);
@@ -1508,7 +1508,7 @@ const FORM_CATEGORY_LABELS: Record<string, string> = {
 };
 
 function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, callTool, toast, theme }: {
-  entity: 'incident' | 'request' | 'change_request';
+  entity: 'incident' | 'request' | 'change_request' | 'problem';
   prefill?: Record<string, string>;
   fkSelections?: Record<string, { label: string; options: { id: string; name: string }[] }>;
   mode?: 'create' | 'edit';
@@ -1527,14 +1527,16 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
   const [changeCategory, setChangeCategory] = useState(prefill?.category || 'Normal');
   const [risk, setRisk] = useState(prefill?.risk || 'medium');
   const [fkChoices, setFkChoices] = useState<Record<string, string>>({});
+  const [workNote, setWorkNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const setFk = (k: string, v: string) => setFkChoices(p => ({ ...p, [k]: v }));
 
   const isIncident = entity === 'incident';
   const isChange = entity === 'change_request';
+  const isProblem = entity === 'problem';
   const isEdit = mode === 'edit';
-  const entityLabel = isIncident ? 'Incident' : isChange ? 'Change Request' : 'Request';
+  const entityLabel = isIncident ? 'Incident' : isChange ? 'Change Request' : isProblem ? 'Problem' : 'Request';
   const title = `${isEdit ? '✏️ Edit' : '✨ New'} ${entityLabel}`;
 
   const handleSubmit = async () => {
@@ -1544,8 +1546,9 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
       const fkArgs: Record<string, string> = {};
       Object.entries(fkChoices).forEach(([k, v]) => { if (v) fkArgs[k] = v; });
       if (isEdit) {
-        const toolName = isIncident ? 'sn__update_incident' : isChange ? 'sn__update_change_request' : 'sn__update_request';
-        await callTool(toolName, { sys_id: recordId, short_description: shortDesc.trim(), description: description.trim(), priority: urgency, ...(isIncident ? { category } : {}), ...(isChange ? { category: changeCategory, risk } : {}), ...fkArgs });
+        const toolName = isIncident ? 'sn__update_incident' : isChange ? 'sn__update_change_request' : isProblem ? 'sn__update_problem' : 'sn__update_request';
+        const noteArg = workNote.trim() ? { work_note: workNote.trim() } : {};
+        await callTool(toolName, { sys_id: recordId, short_description: shortDesc.trim(), description: description.trim(), priority: urgency, ...(isIncident ? { category } : {}), ...(isChange ? { category: changeCategory, risk } : {}), ...noteArg, ...fkArgs });
       } else if (isIncident) {
         await callTool('sn__create_incident', { short_description: shortDesc.trim(), description: description.trim(), priority: urgency, category, ...fkArgs });
       } else if (isChange) {
@@ -1564,7 +1567,7 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
 
   const handleReset = () => {
     setShortDesc(''); setDescription(''); setUrgency('2'); setImpact('2'); setCategory('');
-    setChangeCategory('Normal'); setRisk('medium'); setFkChoices({});
+    setChangeCategory('Normal'); setRisk('medium'); setFkChoices({}); setWorkNote('');
     setSubmitted(false);
   };
 
@@ -1603,7 +1606,7 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {fkDef.options.map(opt => (
                       <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: t.text }}>
-                        <input type="radio" name={fkKey} value={opt.name} checked={fkChoices[fkKey] === opt.name} onChange={() => setFk(fkKey, opt.name)} style={{ accentColor: '#81B5A1' }} />
+                        <input type="radio" name={fkKey} value={opt.id} checked={fkChoices[fkKey] === opt.id} onChange={() => setFk(fkKey, opt.id)} style={{ accentColor: '#81B5A1' }} />
                         {opt.name}
                       </label>
                     ))}
@@ -1624,6 +1627,14 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
               placeholder="Detailed description (optional)" rows={3} resize="vertical"
               style={{ width: '100%', marginTop: '4px' }} />
           </div>
+          {isEdit && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: t.text, fontSize: '12px', fontWeight: 600 }}>Work Note <span style={{ color: t.textWeak, fontWeight: 400 }}>(internal — appended to journal)</span></label>
+              <Textarea size="small" value={workNote} onChange={(_, d) => setWorkNote(d.value)}
+                placeholder="Optional internal note…" rows={2} resize="vertical"
+                style={{ width: '100%', marginTop: '4px' }} />
+            </div>
+          )}
           <div style={formGrid3}>
             <FormSelect label="Priority" value={urgency} options={FORM_URGENCIES} labels={FORM_URGENCY_LABELS} onChange={setUrgency} theme={theme} />
             {isIncident && <FormSelect label="Impact" value={impact} options={FORM_IMPACTS} labels={FORM_IMPACT_LABELS} onChange={setImpact} theme={theme} />}
@@ -1736,7 +1747,9 @@ export function ServiceNowApp() {
       )}
       {data.type === 'form' && (
         <FormView
-          entity={(data.entity || 'incident') as 'incident' | 'request' | 'change_request'}
+          entity={(data.entity || 'incident') as 'incident' | 'request' | 'change_request' | 'problem'}
+          mode={(data.mode || 'create') as 'create' | 'edit'}
+          recordId={data.recordId}
           prefill={data.prefill}
           fkSelections={data.fkSelections}
           callTool={callTool}

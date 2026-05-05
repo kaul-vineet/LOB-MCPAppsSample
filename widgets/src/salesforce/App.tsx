@@ -4,13 +4,12 @@ import {
   Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow,
   Text, makeStyles,
 } from '@fluentui/react-components';
-import { AddRegular, SearchRegular } from '@fluentui/react-icons';
+import { AddRegular } from '@fluentui/react-icons';
 import { useToolData, useMcpBridge, useTheme } from '../shared/McpBridge';
 import { ExpandButton } from '../shared/ExpandButton';
 import { useToast } from '../shared/Toast';
 import type {
-  SfData, SfListData, SfDetailData, SalesDashboardData, SupportDashboardData,
-  LeadDetail, CaseDetail, TaskDetail,
+  SfData, SfListData, SalesDashboardData, SupportDashboardData,
 } from './types';
 
 // ── SLDS Color Tokens ──────────────────────────────────────────────────────
@@ -82,7 +81,6 @@ const useStyles = makeStyles({
   amount:     { fontWeight: 500 as any, fontVariantNumeric: 'tabular-nums' },
   empty:      { padding: '16px', textAlign: 'center' as const, fontSize: '13px' },
   mcpFooter:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 16px', fontSize: '11px' },
-  filterBar:  { display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', flexWrap: 'wrap' as const },
   childTable: { padding: '0 24px 10px', background: 'transparent' },
   kpiGrid:    { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px', padding: '14px 16px' },
   kpiCard:    { borderRadius: '6px', padding: '12px', textAlign: 'center' as const },
@@ -129,32 +127,6 @@ function FormSelect({ label, value, options, onChange, theme }: { label: string;
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
     </Field>
-  );
-}
-
-// ── FilterBar ──────────────────────────────────────────────────────────────
-function FilterBar({ placeholder, value, onValue, onSearch, loading, theme, extra }: {
-  placeholder: string; value: string; onValue: (v: string) => void;
-  onSearch: () => void; loading: boolean; theme: 'light' | 'dark';
-  extra?: React.ReactNode;
-}) {
-  const t = slds(theme);
-  return (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', flexWrap: 'wrap', borderBottom: `1px solid ${t.border}`, background: theme === 'dark' ? '#1a3a65' : '#FAFAF9' }}>
-      <Input size="small" placeholder={placeholder} value={value} onChange={(_, d) => onValue(d.value)}
-        onKeyDown={e => e.key === 'Enter' && onSearch()}
-        style={{ minWidth: '180px', flex: 1, maxWidth: '260px' }} />
-      {extra}
-      <Button size="small" appearance="primary" icon={loading ? <Spinner size="tiny" /> : <SearchRegular />}
-        onClick={onSearch} disabled={loading}
-        style={{ background: t.brand, borderColor: t.brand, height: '30px', minWidth: '80px' }}>
-        {loading ? '' : 'Search'}
-      </Button>
-      {value && (
-        <Button size="small" appearance="subtle" onClick={() => { onValue(''); onSearch(); }}
-          style={{ height: '30px', color: t.textWeak }}>✕ Clear</Button>
-      )}
-    </div>
   );
 }
 
@@ -297,8 +269,6 @@ function AccountsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
   const [localItems, setLocalItems] = useState(initItems);
   const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -320,14 +290,6 @@ function AccountsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
       setCacheInfo(res?._cache);
     } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
     finally { setRefreshing(false); }
-  };
-
-  const doSearch = async () => {
-    setFiltering(true);
-    try {
-      const res = await callTool('sf__get_accounts', { name: filterName });
-      setLocalItems(res?.items || []);
-    } finally { setFiltering(false); }
   };
 
   const openEdit = (a: any) => { setCreating(false); setEditingId(a.id); setForm({ name: a.name || '', industry: a.industry || '', phone: a.phone || '', website: a.website || '', type: a.type || '', billing_city: a.billing_city || '' }); };
@@ -376,7 +338,6 @@ function AccountsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="🏢" title="Accounts" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Account" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -464,8 +425,6 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   const [localItems, setLocalItems] = useState(initItems);
   const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -484,13 +443,6 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
       setCacheInfo(res?._cache);
     } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
     finally { setRefreshing(false); }
-  };
-
-  const doSearch = async () => {
-    if (!filterName.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const res = await callTool('sf__get_leads', { name: filterName }); setLocalItems(res?.items || []); }
-    finally { setFiltering(false); }
   };
 
   const openEdit = (l: any) => { setCreating(false); setEditingId(l.id); setForm({ first_name: l.first_name || '', last_name: l.last_name || '', company: l.company || '', email: l.email || '', phone: l.phone || '', status: l.status || '', lead_source: l.lead_source || '' }); };
@@ -534,7 +486,6 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Lead" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      {!creating && <FilterBar placeholder="Search by name or company…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -602,8 +553,6 @@ function ContactsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
   const [localItems, setLocalItems] = useState(initItems);
   const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -623,13 +572,6 @@ function ContactsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
       setCacheInfo(res?._cache);
     } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
     finally { setRefreshing(false); }
-  };
-
-  const doSearch = async () => {
-    if (!filterName.trim()) { setLocalItems(initItems); return; }
-    setFiltering(true);
-    try { const res = await callTool('sf__get_contacts', { name: filterName }); setLocalItems(res?.items || []); }
-    finally { setFiltering(false); }
   };
 
   const openEdit = (c: any) => { setCreating(false); setEditingId(c.id); setForm({ first_name: c.first_name || '', last_name: c.last_name || '', email: c.email || '', phone: c.phone || '', title: c.title || '', account_name: c.account_name || '' }); };
@@ -671,7 +613,6 @@ function ContactsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="👥" title="Contacts" count={localItems.length} brand={t.danger} onNew={openCreate} newLabel="New Contact" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      {!creating && <FilterBar placeholder="Search by name…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -848,8 +789,6 @@ function CasesView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   const styles = useStyles();
   const t = slds(theme);
   const [localItems, setLocalItems] = useState(initItems);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -871,12 +810,6 @@ function CasesView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
       setCacheInfo(res?._cache);
     } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
     finally { setRefreshing(false); }
-  };
-
-  const doSearch = async () => {
-    setFiltering(true);
-    try { const res = await callTool('sf__get_cases', { subject: filterName }); setLocalItems(res?.items || []); }
-    finally { setFiltering(false); }
   };
 
   const openEdit = (c: any) => { setCreating(false); setEditingId(c.id); setForm({ subject: c.subject || '', status: c.status || '', priority: c.priority || '', account_name: c.account_name || '', description: c.description || '' }); };
@@ -916,7 +849,6 @@ function CasesView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="🎫" title="Cases" count={localItems.length} brand="#706E6B" onNew={openCreate} newLabel="New Case" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -981,8 +913,6 @@ function TasksView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   const [localItems, setLocalItems] = useState(initItems);
   const [cacheInfo, setCacheInfo] = useState(initCacheInfo);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const [filtering, setFiltering] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -999,12 +929,6 @@ function TasksView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
       setCacheInfo(res?._cache);
     } catch (e: any) { toast(e.message || 'Refresh failed', 'error'); }
     finally { setRefreshing(false); }
-  };
-
-  const doSearch = async () => {
-    setFiltering(true);
-    try { const res = await callTool('sf__get_tasks', { subject: filterName }); setLocalItems(res?.items || []); }
-    finally { setFiltering(false); }
   };
 
   const openEdit = (t2: any) => { setCreating(false); setEditingId(t2.id); setForm({ subject: t2.subject || '', status: t2.status || '', priority: t2.priority || '', activity_date: t2.activity_date || '', description: t2.description || '' }); };
@@ -1035,7 +959,6 @@ function TasksView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="✅" title="Tasks" count={localItems.length} brand="#2E844A" onNew={openCreate} newLabel="New Task" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      {!creating && <FilterBar placeholder="Search by subject…" value={filterName} onValue={setFilterName} onSearch={doSearch} loading={filtering} theme={theme} />}
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -1400,9 +1323,9 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
                         <input
                           type="radio"
                           name={fkKey}
-                          value={opt.name}
-                          checked={fkChoices[fkKey] === opt.name}
-                          onChange={() => setFk(fkKey, opt.name)}
+                          value={opt.id}
+                          checked={fkChoices[fkKey] === opt.id}
+                          onChange={() => setFk(fkKey, opt.id)}
                           style={{ accentColor: t.brand }}
                         />
                         {opt.name}
@@ -1433,66 +1356,6 @@ function FormView({ entity, prefill, fkSelections, mode = 'create', recordId, ca
           </div>
         </div>
       )}
-      <SldsFooter theme={theme} />
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// ── DetailView (legacy) ────────────────────────────────────────────────────
-// ────────────────────────────────────────────────────────────────────────────
-function DetailField({ label, value, theme }: { label: string; value?: string | number | null; theme: 'light' | 'dark' }) {
-  const t = slds(theme);
-  if (!value && value !== 0) return null;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak }}>{label}</span>
-      <span style={{ fontSize: '13px', color: t.text, wordBreak: 'break-word' }}>{String(value)}</span>
-    </div>
-  );
-}
-
-function DetailView({ type, record, theme }: { type: 'lead_detail' | 'case_detail' | 'task_detail'; record: LeadDetail | CaseDetail | TaskDetail; theme: 'light' | 'dark' }) {
-  const styles = useStyles();
-  const t = slds(theme);
-  const icons = { lead_detail: '👤', case_detail: '🎫', task_detail: '✅' };
-  const labels = { lead_detail: 'Lead Detail', case_detail: 'Case Detail', task_detail: 'Task Detail' };
-  const title = type === 'lead_detail' ? `${(record as LeadDetail).first_name} ${(record as LeadDetail).last_name}`.trim() || '—'
-    : type === 'case_detail' ? `${(record as CaseDetail).case_number} — ${(record as CaseDetail).subject}`
-    : (record as TaskDetail).subject;
-  const fields: { label: string; value?: string | number | null }[] =
-    type === 'lead_detail' ? [
-      { label: 'Company', value: (record as LeadDetail).company }, { label: 'Email', value: (record as LeadDetail).email },
-      { label: 'Phone', value: (record as LeadDetail).phone }, { label: 'Status', value: (record as LeadDetail).status },
-      { label: 'Lead Source', value: (record as LeadDetail).lead_source }, { label: 'Title', value: (record as LeadDetail).title },
-      { label: 'Revenue', value: (record as LeadDetail).annual_revenue != null ? '$' + Number((record as LeadDetail).annual_revenue).toLocaleString() : null },
-      { label: 'Created', value: (record as LeadDetail).created_date }, { label: 'Description', value: (record as LeadDetail).description },
-    ] : type === 'case_detail' ? [
-      { label: 'Status', value: (record as CaseDetail).status }, { label: 'Priority', value: (record as CaseDetail).priority },
-      { label: 'Account', value: (record as CaseDetail).account_name }, { label: 'Origin', value: (record as CaseDetail).origin },
-      { label: 'Created', value: (record as CaseDetail).created_date }, { label: 'Closed', value: (record as CaseDetail).closed_date },
-      { label: 'Description', value: (record as CaseDetail).description }, { label: 'Comments', value: (record as CaseDetail).comments },
-    ] : [
-      { label: 'Status', value: (record as TaskDetail).status }, { label: 'Priority', value: (record as TaskDetail).priority },
-      { label: 'Due Date', value: (record as TaskDetail).activity_date }, { label: 'Related To', value: (record as TaskDetail).what_id },
-      { label: 'Created', value: (record as TaskDetail).created_date }, { label: 'Description', value: (record as TaskDetail).description },
-    ];
-
-  return (
-    <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: t.brand }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '18px' }}>{icons[type]}</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{labels[type]}</span>
-        </div>
-        <ExpandButton />
-      </div>
-      <div style={{ padding: '16px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: t.text, marginBottom: '16px' }}>{title}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '14px 20px' }}>
-          {fields.map(f => <DetailField key={f.label} label={f.label} value={f.value} theme={theme} />)}
-        </div>
-      </div>
       <SldsFooter theme={theme} />
     </div>
   );
@@ -1531,13 +1394,7 @@ export function SalesforceApp() {
   // ── Form (standalone create form from tool) ──
   if ((data as any).type === 'form') {
     const fd = data as any;
-    return <div className={styles.shell} style={shellStyle}><FormView entity={fd.entity} prefill={fd.prefill} fkSelections={fd.fkSelections} callTool={callTool} toast={toast} theme={theme} /></div>;
-  }
-
-  // ── Detail views ──
-  if ((data as any).type === 'lead_detail' || (data as any).type === 'case_detail' || (data as any).type === 'task_detail') {
-    const dd = data as SfDetailData;
-    return <div className={styles.shell} style={shellStyle}><DetailView type={dd.type} record={dd.record as any} theme={theme} /></div>;
+    return <div className={styles.shell} style={shellStyle}><FormView entity={fd.entity} mode={fd.mode || 'create'} recordId={fd.recordId} prefill={fd.prefill} fkSelections={fd.fkSelections} callTool={callTool} toast={toast} theme={theme} /></div>;
   }
 
   // ── Dashboards ──

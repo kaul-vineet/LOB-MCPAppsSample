@@ -265,7 +265,22 @@ async def hs__update_list(list_id: str, name: str) -> types.CallToolResult:
     )
 
 
-async def hs__get_contacts() -> types.CallToolResult:
+async def hs__get_contacts(id: str = "") -> types.CallToolResult:
+    if id:
+        try:
+            client = get_client()
+            r = await client.get_object("contacts", id, ["firstname", "lastname", "email", "phone", "company", "lifecyclestage"])
+            name = f"{r.get('firstname', '')} {r.get('lastname', '')}".strip() or id
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening edit form for contact: {name}.")],
+                structuredContent={"type": "form", "entity": "contact", "mode": "edit", "recordId": id,
+                                   "prefill": {"firstname": r.get("firstname", ""), "lastname": r.get("lastname", ""),
+                                               "email": r.get("email", ""), "phone": r.get("phone", ""), "company": r.get("company", "")}},
+            )
+        except HubSpotAuthError as exc:
+            return _error_result(f"HubSpot authentication failed: {exc}")
+        except Exception as exc:
+            return _error_result(f"Failed to fetch contact {id}: {exc}")
     try:
         items = await _fetch_contacts()
     except HubSpotAuthError as exc:
@@ -356,7 +371,21 @@ async def hs__update_contact(
     )
 
 
-async def hs__get_deals() -> types.CallToolResult:
+async def hs__get_deals(id: str = "") -> types.CallToolResult:
+    if id:
+        try:
+            client = get_client()
+            r = await client.get_object("deals", id, ["dealname", "dealstage", "amount", "closedate", "pipeline"])
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening edit form for deal: {r.get('dealname', id)}.")],
+                structuredContent={"type": "form", "entity": "deal", "mode": "edit", "recordId": id,
+                                   "prefill": {"deal_name": r.get("dealname", ""), "deal_stage": r.get("dealstage", ""),
+                                               "amount": r.get("amount", ""), "pipeline": r.get("pipeline", "")}},
+            )
+        except HubSpotAuthError as exc:
+            return _error_result(f"HubSpot authentication failed: {exc}")
+        except Exception as exc:
+            return _error_result(f"Failed to fetch deal {id}: {exc}")
     try:
         items = await _fetch_deals()
     except HubSpotAuthError as exc:
@@ -466,7 +495,21 @@ async def _fetch_associated(from_type: str, from_id: str, to_type: str, properti
 
 # ── Companies ──────────────────────────────────────────────────────────────────
 
-async def hs__get_companies() -> types.CallToolResult:
+async def hs__get_companies(id: str = "") -> types.CallToolResult:
+    if id:
+        try:
+            client = get_client()
+            r = await client.get_object("companies", id, ["name", "domain", "phone", "city", "industry"])
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening edit form for company: {r.get('name', id)}.")],
+                structuredContent={"type": "form", "entity": "company", "mode": "edit", "recordId": id,
+                                   "prefill": {"name": r.get("name", ""), "domain": r.get("domain", ""),
+                                               "phone": r.get("phone", ""), "city": r.get("city", ""), "industry": r.get("industry", "")}},
+            )
+        except HubSpotAuthError as exc:
+            return _error_result(f"HubSpot authentication failed: {exc}")
+        except Exception as exc:
+            return _error_result(f"Failed to fetch company {id}: {exc}")
     try:
         items = await _fetch_companies()
     except HubSpotAuthError as exc:
@@ -555,7 +598,22 @@ async def hs__update_company(
 
 # ── Tickets ────────────────────────────────────────────────────────────────────
 
-async def hs__get_tickets() -> types.CallToolResult:
+async def hs__get_tickets(id: str = "") -> types.CallToolResult:
+    if id:
+        try:
+            client = get_client()
+            r = await client.get_object("tickets", id, ["subject", "hs_pipeline_stage", "hs_ticket_priority", "hs_ticket_category", "content"])
+            return types.CallToolResult(
+                content=[types.TextContent(type="text", text=f"Opening edit form for ticket: {r.get('subject', id)}.")],
+                structuredContent={"type": "form", "entity": "ticket", "mode": "edit", "recordId": id,
+                                   "prefill": {"subject": r.get("subject", ""), "status": r.get("hs_pipeline_stage", ""),
+                                               "priority": r.get("hs_ticket_priority", ""), "category": r.get("hs_ticket_category", ""),
+                                               "description": r.get("content", "")}},
+            )
+        except HubSpotAuthError as exc:
+            return _error_result(f"HubSpot authentication failed: {exc}")
+        except Exception as exc:
+            return _error_result(f"Failed to fetch ticket {id}: {exc}")
     try:
         items = await _fetch_tickets()
     except HubSpotAuthError as exc:
@@ -888,8 +946,8 @@ _TOOL_SPECS_LIST = [
     {
         "name": "hs__get_contacts",
         "description": (
-            "Get the latest 5 Contacts from HubSpot CRM. "
-            "Returns name, email, phone, company, and lifecycle stage."
+            "Get contacts from HubSpot CRM. Pass id for exact lookup → opens edit form. "
+            "Otherwise returns the latest 5 contacts with name, email, phone, company, lifecycle stage."
         ),
         "handler": hs__get_contacts,
     },
@@ -914,8 +972,8 @@ _TOOL_SPECS_LIST = [
     {
         "name": "hs__get_deals",
         "description": (
-            "Get the latest 5 Deals from HubSpot CRM. "
-            "Returns deal name, stage, amount, close date, and pipeline."
+            "Get deals from HubSpot CRM. Pass id for exact lookup → opens edit form. "
+            "Otherwise returns the latest 5 deals with name, stage, amount, close date, pipeline."
         ),
         "handler": hs__get_deals,
     },
@@ -940,7 +998,7 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__get_companies",
-        "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry.",
+        "description": "Get companies from HubSpot CRM. Pass id for exact lookup → opens edit form. Otherwise returns the latest 5 companies with name, domain, phone, city, industry.",
         "handler": hs__get_companies,
     },
     {
@@ -955,7 +1013,7 @@ _TOOL_SPECS_LIST = [
     },
     {
         "name": "hs__get_tickets",
-        "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category.",
+        "description": "Get tickets from HubSpot CRM. Pass id for exact lookup → opens edit form. Otherwise returns the latest 5 support tickets with subject, status, priority, category.",
         "handler": hs__get_tickets,
     },
     {

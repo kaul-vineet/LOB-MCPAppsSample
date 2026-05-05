@@ -75,7 +75,6 @@ const useStyles = makeStyles({
   formTitle: { fontSize: '14px', fontWeight: 600 as any, marginBottom: '10px' },
   formGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px 12px', marginBottom: '12px' },
   formActions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' },
-  filterBar: { display: 'flex', gap: '6px', alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid transparent' },
   empty: { padding: '16px', textAlign: 'center' as const, fontSize: '13px' },
   mcpFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 16px', fontSize: '11px' },
   subTableWrap: { padding: '12px 16px' },
@@ -92,16 +91,6 @@ function FormSelect({ label, value, options, labels, onChange, theme }: {
         {options.map(o => <option key={o} value={o}>{labels?.[o] || o}</option>)}
       </select>
     </Field>
-  );
-}
-
-function FilterBar({ value, onChange, onSearch, placeholder, theme }: { value: string; onChange: (v: string) => void; onSearch?: () => void; placeholder?: string; theme: 'light' | 'dark' }) {
-  const t = now(theme); const styles = useStyles();
-  return (
-    <div className={styles.filterBar} style={{ borderBottomColor: t.border, background: t.headerBg }}>
-      <Input size="small" value={value} onChange={(_, d) => onChange(d.value)} onKeyDown={e => e.key === 'Enter' && onSearch?.()} placeholder={placeholder || 'Filter…'} style={{ flex: 1, maxWidth: '260px' }} />
-      {onSearch && <button onClick={onSearch} style={{ padding: '4px 12px', borderRadius: '4px', border: `1px solid ${t.border}`, background: '#293E40', color: '#fff', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>Search</button>}
-    </div>
   );
 }
 
@@ -141,7 +130,6 @@ function HRCasesView({ items, callTool, toast, theme }: {
   theme: 'light' | 'dark';
 }) {
   const styles = useStyles(); const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -150,8 +138,6 @@ function HRCasesView({ items, callTool, toast, theme }: {
   const [noteText, setNoteText] = useState<Record<string, string>>({});
   const [addingNote, setAddingNote] = useState<string | null>(null);
   const [form, setForm] = useState({ subject: '', description: '', priority: '3', state: 'Open' });
-
-  const filteredItems = items.filter(c => !filter || c.number?.toLowerCase().includes(filter.toLowerCase()) || c.subject?.toLowerCase().includes(filter.toLowerCase()) || c.opened_for?.toLowerCase().includes(filter.toLowerCase()));
 
   const openEdit = (c: HRCase) => { setCreating(false); setExpandedId(null); setEditingId(c.sys_id); setForm({ subject: c.subject || '', description: c.description || '', priority: String(c.priority).charAt(0) || '3', state: c.state || 'Open' }); };
   const openCreate = () => { setEditingId(null); setExpandedId(null); setCreating(true); setForm({ subject: '', description: '', priority: '3', state: 'Open' }); };
@@ -181,7 +167,7 @@ function HRCasesView({ items, callTool, toast, theme }: {
     if (!text) { toast('Enter a work note first', 'error'); return; }
     setAddingNote(sys_id);
     try {
-      await callTool('sn__add_hr_work_note', { sys_id, work_note: text });
+      await callTool('sn__update_hr_case', { sys_id, work_note: text });
       toast('✓ Work note added');
       setNoteText(p => ({ ...p, [sys_id]: '' }));
       setExpandedId(null);
@@ -235,7 +221,6 @@ function HRCasesView({ items, callTool, toast, theme }: {
           <ExpandButton />
         </div>
       </div>
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by number, subject, employee…" theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -249,11 +234,11 @@ function HRCasesView({ items, callTool, toast, theme }: {
         </TableHeader>
         <TableBody>
           {creating && renderForm('➕ New HR Case')}
-          {filteredItems.length === 0 && !creating && <TableRow><TableCell colSpan={colSpan} className={styles.empty}><Text>{filter ? 'No matching HR cases.' : 'No HR cases found.'}</Text></TableCell></TableRow>}
-          {filteredItems.map((c, idx) => (
+          {items.length === 0 && !creating && <TableRow><TableCell colSpan={colSpan} className={styles.empty}><Text>No HR cases found.</Text></TableCell></TableRow>}
+          {items.map((c, idx) => (
             <React.Fragment key={c.sys_id}>
               <TableRow className="hr-row" onClick={() => toggleWorkNotes(c.sys_id)}
-                style={{ cursor: 'pointer', borderBottom: idx === filteredItems.length - 1 && expandedId !== c.sys_id ? 'none' : `1px solid ${t.border}`, background: expandedId === c.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EDF5F3') : 'transparent', ...(lastSavedId === c.sys_id ? { animation: 'hrRowFlash 1.5s ease-out' } : {}) }}>
+                style={{ cursor: 'pointer', borderBottom: idx === items.length - 1 && expandedId !== c.sys_id ? 'none' : `1px solid ${t.border}`, background: expandedId === c.sys_id ? (theme === 'dark' ? '#1A2E25' : '#EDF5F3') : 'transparent', ...(lastSavedId === c.sys_id ? { animation: 'hrRowFlash 1.5s ease-out' } : {}) }}>
                 <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', fontWeight: 500, color: '#1B7A6E' }}>{expandedId === c.sys_id ? '▼' : '▶'} {c.number}</span></TableCell>
                 <TableCell style={{ ...cellStyle, maxWidth: '220px' }}>{c.subject || '—'}</TableCell>
                 <TableCell style={cellStyle}>{c.opened_for || '—'}</TableCell>
@@ -296,8 +281,6 @@ function HRCasesView({ items, callTool, toast, theme }: {
 // ── HR Services View ──────────────────────────────────────────────────────────
 function HRServicesView({ items, theme }: { items: HRService[]; theme: 'light' | 'dark' }) {
   const styles = useStyles(); const t = now(theme);
-  const [filter, setFilter] = useState('');
-  const filteredItems = items.filter(s => !filter || s.name?.toLowerCase().includes(filter.toLowerCase()) || s.category?.toLowerCase().includes(filter.toLowerCase()));
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}`, background: t.surface }}>
       <div className={styles.headerBar} style={{ background: '#1B7A6E' }}>
@@ -308,10 +291,9 @@ function HRServicesView({ items, theme }: { items: HRService[]; theme: 'light' |
         </div>
         <ExpandButton />
       </div>
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by name or category…" theme={theme} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', padding: '12px' }}>
-        {filteredItems.length === 0 && <div className={styles.empty} style={{ gridColumn: '1 / -1', color: t.textWeak }}>{filter ? 'No matching HR services.' : 'No HR services found.'}</div>}
-        {filteredItems.map(s => (
+        {items.length === 0 && <div className={styles.empty} style={{ gridColumn: '1 / -1', color: t.textWeak }}>No HR services found.</div>}
+        {items.map(s => (
           <div key={s.sys_id} style={{ border: `1px solid ${t.border}`, borderRadius: '6px', padding: '12px', background: t.surface, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: t.text, marginBottom: '4px' }}>{s.name}</div>
             <div style={{ fontSize: '11px', color: t.textWeak, marginBottom: '6px', lineHeight: 1.4 }}>{s.short_description || '—'}</div>
@@ -332,14 +314,12 @@ function HRApprovalsView({ items, callTool, toast, theme }: {
   theme: 'light' | 'dark';
 }) {
   const styles = useStyles(); const t = now(theme);
-  const [filter, setFilter] = useState('');
   const [actingId, setActingId] = useState<string | null>(null);
-  const filteredItems = items.filter(a => !filter || a.approver?.toLowerCase().includes(filter.toLowerCase()) || a.document?.toLowerCase().includes(filter.toLowerCase()));
 
   const act = async (sys_id: string, action: 'approve' | 'reject') => {
     setActingId(sys_id);
     try {
-      await callTool(action === 'approve' ? 'sn__hr_approve_record' : 'sn__hr_reject_record', { sys_id });
+      await callTool(action === 'approve' ? 'sn__approve_record' : 'sn__reject_record', { sys_id });
       toast(action === 'approve' ? '✓ Approved' : '✓ Rejected', 'success');
     } catch (e: any) { toast(e.message || `Failed to ${action}`, 'error'); }
     finally { setActingId(null); }
@@ -358,7 +338,6 @@ function HRApprovalsView({ items, callTool, toast, theme }: {
         </div>
         <ExpandButton />
       </div>
-      <FilterBar value={filter} onChange={setFilter} placeholder="Filter by approver or document…" theme={theme} />
       <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
@@ -370,9 +349,9 @@ function HRApprovalsView({ items, callTool, toast, theme }: {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredItems.length === 0 && <TableRow><TableCell colSpan={5} className={styles.empty}><Text>{filter ? 'No matching approvals.' : 'No HR approvals.'}</Text></TableCell></TableRow>}
-          {filteredItems.map((a, idx) => (
-            <TableRow key={a.sys_id} className="hr-row" style={{ borderBottom: idx === filteredItems.length - 1 ? 'none' : `1px solid ${t.border}` }}>
+          {items.length === 0 && <TableRow><TableCell colSpan={5} className={styles.empty}><Text>No HR approvals.</Text></TableCell></TableRow>}
+          {items.map((a, idx) => (
+            <TableRow key={a.sys_id} className="hr-row" style={{ borderBottom: idx === items.length - 1 ? 'none' : `1px solid ${t.border}` }}>
               <TableCell style={cellStyle}>{a.approver || '—'}</TableCell>
               <TableCell style={cellStyle}><span style={{ fontFamily: 'monospace', color: '#1B7A6E' }}>{a.document || '—'}</span></TableCell>
               <TableCell style={cellStyle}><StatePill state={a.state} theme={theme} /></TableCell>

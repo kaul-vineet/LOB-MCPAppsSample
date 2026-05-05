@@ -48,6 +48,43 @@ async def _fetch_incidents(limit: int = 5) -> list:
     ]
 
 
+async def _text_search(table: str, query: str, fields: str, limit: int, fallback_query: str) -> list:
+    """Try sysparm_text (full-text) first; fall back to explicit LIKE query if empty or error."""
+    try:
+        resp = await servicenow_request(
+            "GET", f"/api/now/table/{table}",
+            params={"sysparm_text": query, "sysparm_limit": limit,
+                    "sysparm_fields": fields, "sysparm_display_value": "true"},
+        )
+        records = resp.json().get("result", [])
+        if records:
+            return records
+    except Exception:
+        pass
+    resp = await servicenow_request(
+        "GET", f"/api/now/table/{table}",
+        params={"sysparm_query": fallback_query, "sysparm_limit": limit,
+                "sysparm_fields": fields, "sysparm_display_value": "true"},
+    )
+    return resp.json().get("result", [])
+
+
+async def _fetch_problems(limit: int = 5) -> list:
+    PROBLEM_FIELDS = "sys_id,number,short_description,state,priority,assigned_to,sys_created_on"
+    resp = await servicenow_request(
+        "GET", "/api/now/table/problem",
+        params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                "sysparm_fields": PROBLEM_FIELDS, "sysparm_display_value": "true"},
+    )
+    return [
+        {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
+         "short_description": _val(r.get("short_description")), "state": _val(r.get("state")),
+         "priority": _val(r.get("priority")), "assigned_to": _val(r.get("assigned_to")) or None,
+         "sys_created_on": _val(r.get("sys_created_on"))}
+        for r in resp.json().get("result", [])
+    ]
+
+
 async def _fetch_approvals(limit: int = 10) -> list:
     resp = await servicenow_request(
         "GET", "/api/now/table/sysapproval_approver",
@@ -82,19 +119,52 @@ async def _fetch_requests(limit: int = 5) -> list:
 
 # ── Read tools ────────────────────────────────────────────────────────────────
 
-async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
-    try:
-        resp = await servicenow_request(
-            "GET", "/api/now/table/incident",
-            params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": INCIDENT_FIELDS, "sysparm_display_value": "true"},
+async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "") -> types.CallToolResult:
+    PROBLEM_FIELDS_LOCAL = INCIDENT_FIELDS
+    if number:
+        num = number.strip().upper()
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/incident",
+                params={"sysparm_query": f"number={num}", "sysparm_limit": 1,
+                        "sysparm_fields": PROBLEM_FIELDS_LOCAL, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except Exception as e:
+            return _error_result(f"Error looking up incident {num}: {e}")
+        if not records:
+            return _error_result(f"Incident {num} not found.")
+        r = records[0]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for {_val(r.get('number'))}.")],
+            structuredContent={"type": "form", "entity": "incident", "mode": "edit",
+                               "recordId": _val(r.get("sys_id")),
+                               "prefill": {"short_description": _val(r.get("short_description", "")),
+                                           "description": _val(r.get("description", "")),
+                                           "priority": _val(r.get("priority", "3")),
+                                           "state": _val(r.get("state", "")),
+                                           "category": _val(r.get("category", ""))}},
         )
-        records = resp.json().get("result", [])
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error fetching incidents: {e}")
-
+    if query:
+        try:
+            records = await _text_search(
+                "incident", query, PROBLEM_FIELDS_LOCAL, limit,
+                f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORDERBYDESCsys_created_on",
+            )
+        except Exception as e:
+            return _error_result(f"Error searching incidents: {e}")
+    else:
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/incident",
+                params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                        "sysparm_fields": PROBLEM_FIELDS_LOCAL, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except httpx.HTTPStatusError as e:
+            return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+        except Exception as e:
+            return _error_result(f"Error fetching incidents: {e}")
     incidents = [
         {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
          "short_description": _val(r.get("short_description")),
@@ -112,19 +182,50 @@ async def sn__get_incidents(limit: int = 5) -> types.CallToolResult:
     )
 
 
-async def sn__get_requests(limit: int = 5) -> types.CallToolResult:
-    try:
-        resp = await servicenow_request(
-            "GET", "/api/now/table/sc_request",
-            params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
+async def sn__get_requests(limit: int = 5, number: str = "", query: str = "") -> types.CallToolResult:
+    if number:
+        num = number.strip().upper()
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/sc_request",
+                params={"sysparm_query": f"number={num}", "sysparm_limit": 1,
+                        "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except Exception as e:
+            return _error_result(f"Error looking up request {num}: {e}")
+        if not records:
+            return _error_result(f"Request {num} not found.")
+        r = records[0]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for {_val(r.get('number'))}.")],
+            structuredContent={"type": "form", "entity": "request", "mode": "edit",
+                               "recordId": _val(r.get("sys_id")),
+                               "prefill": {"short_description": _val(r.get("short_description", "")),
+                                           "description": _val(r.get("description", "")),
+                                           "priority": _val(r.get("priority", "3")),
+                                           "approval": _val(r.get("approval", ""))}},
         )
-        records = resp.json().get("result", [])
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error fetching requests: {e}")
-
+    if query:
+        try:
+            records = await _text_search(
+                "sc_request", query, REQUEST_FIELDS, limit,
+                f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORDERBYDESCsys_created_on",
+            )
+        except Exception as e:
+            return _error_result(f"Error searching requests: {e}")
+    else:
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/sc_request",
+                params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                        "sysparm_fields": REQUEST_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except httpx.HTTPStatusError as e:
+            return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+        except Exception as e:
+            return _error_result(f"Error fetching requests: {e}")
     requests_list = [
         {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
          "short_description": _val(r.get("short_description")),
@@ -169,19 +270,51 @@ async def sn__get_request_items(request_sys_id: str) -> types.CallToolResult:
     )
 
 
-async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
-    try:
-        resp = await servicenow_request(
-            "GET", "/api/now/table/change_request",
-            params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
+async def sn__get_change_requests(limit: int = 5, number: str = "", query: str = "") -> types.CallToolResult:
+    if number:
+        num = number.strip().upper()
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/change_request",
+                params={"sysparm_query": f"number={num}", "sysparm_limit": 1,
+                        "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except Exception as e:
+            return _error_result(f"Error looking up change request {num}: {e}")
+        if not records:
+            return _error_result(f"Change request {num} not found.")
+        r = records[0]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for {_val(r.get('number'))}.")],
+            structuredContent={"type": "form", "entity": "change_request", "mode": "edit",
+                               "recordId": _val(r.get("sys_id")),
+                               "prefill": {"short_description": _val(r.get("short_description", "")),
+                                           "category": _val(r.get("category", "")),
+                                           "risk": _val(r.get("risk", "medium")),
+                                           "priority": _val(r.get("priority", "3")),
+                                           "state": _val(r.get("state", ""))}},
         )
-        records = resp.json().get("result", [])
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error fetching change requests: {e}")
-
+    if query:
+        try:
+            records = await _text_search(
+                "change_request", query, CHANGE_FIELDS, limit,
+                f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORDERBYDESCsys_created_on",
+            )
+        except Exception as e:
+            return _error_result(f"Error searching change requests: {e}")
+    else:
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/change_request",
+                params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                        "sysparm_fields": CHANGE_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except httpx.HTTPStatusError as e:
+            return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+        except Exception as e:
+            return _error_result(f"Error fetching change requests: {e}")
     items = [
         {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
          "short_description": _val(r.get("short_description")), "state": _val(r.get("state")),
@@ -198,20 +331,51 @@ async def sn__get_change_requests(limit: int = 5) -> types.CallToolResult:
     )
 
 
-async def sn__get_problems(limit: int = 5) -> types.CallToolResult:
-    try:
-        resp = await servicenow_request(
-            "GET", "/api/now/table/problem",
-            params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
-                    "sysparm_fields": "sys_id,number,short_description,state,priority,assigned_to,sys_created_on",
-                    "sysparm_display_value": "true"},
+async def sn__get_problems(limit: int = 5, number: str = "", query: str = "") -> types.CallToolResult:
+    PROBLEM_FIELDS = "sys_id,number,short_description,description,state,priority,assigned_to,sys_created_on"
+    if number:
+        num = number.strip().upper()
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/problem",
+                params={"sysparm_query": f"number={num}", "sysparm_limit": 1,
+                        "sysparm_fields": PROBLEM_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except Exception as e:
+            return _error_result(f"Error looking up problem {num}: {e}")
+        if not records:
+            return _error_result(f"Problem {num} not found.")
+        r = records[0]
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=f"Opening edit form for {_val(r.get('number'))}.")],
+            structuredContent={"type": "form", "entity": "problem", "mode": "edit",
+                               "recordId": _val(r.get("sys_id")),
+                               "prefill": {"short_description": _val(r.get("short_description", "")),
+                                           "description": _val(r.get("description", "")),
+                                           "priority": _val(r.get("priority", "3")),
+                                           "state": _val(r.get("state", ""))}},
         )
-        records = resp.json().get("result", [])
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error fetching problems: {e}")
-
+    if query:
+        try:
+            records = await _text_search(
+                "problem", query, PROBLEM_FIELDS, limit,
+                f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORDERBYDESCsys_created_on",
+            )
+        except Exception as e:
+            return _error_result(f"Error searching problems: {e}")
+    else:
+        try:
+            resp = await servicenow_request(
+                "GET", "/api/now/table/problem",
+                params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                        "sysparm_fields": PROBLEM_FIELDS, "sysparm_display_value": "true"},
+            )
+            records = resp.json().get("result", [])
+        except httpx.HTTPStatusError as e:
+            return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
+        except Exception as e:
+            return _error_result(f"Error fetching problems: {e}")
     items = [
         {"sys_id": _val(r.get("sys_id")), "number": _val(r.get("number")),
          "short_description": _val(r.get("short_description")), "state": _val(r.get("state")),
@@ -456,13 +620,15 @@ async def sn__update_change_request(
 
 
 async def sn__update_incident(
-    sys_id: str, description: str | None = None, priority: str | None = None
+    sys_id: str, description: str | None = None, priority: str | None = None,
+    work_note: str | None = None
 ) -> types.CallToolResult:
     body: dict = {}
     if description is not None: body["description"] = description
     if priority is not None: body["priority"] = priority
+    if work_note is not None: body["work_notes"] = work_note
     if not body:
-        return _error_result("No fields to update. Provide description or priority.")
+        return _error_result("No fields to update. Provide description, priority, or work_note.")
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
@@ -531,6 +697,37 @@ async def sn__update_request_item(sys_id: str, quantity: str | None = None) -> t
     )
 
 
+async def sn__update_problem(
+    sys_id: str, short_description: str | None = None, priority: str | None = None,
+    state: str | None = None, work_note: str | None = None
+) -> types.CallToolResult:
+    body: dict = {}
+    if short_description is not None: body["short_description"] = short_description
+    if priority is not None: body["priority"] = priority
+    if state is not None: body["state"] = state
+    if work_note is not None: body["work_notes"] = work_note
+    if not body:
+        return _error_result("No fields to update. Provide short_description, priority, state, or work_note.")
+    try:
+        resp = await servicenow_request("PATCH", f"/api/now/table/problem/{sys_id}", json_body=body)
+        record = resp.json().get("result", {})
+    except httpx.HTTPStatusError as e:
+        return _error_result(f"Failed to update problem: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        return _error_result(f"Error updating problem: {e}")
+    number = _val(record.get("number", ""))
+    try:
+        items = await _fetch_problems()
+    except Exception as exc:
+        log.warning("sn__update_problem_refresh_failed", error=str(exc))
+        items = []
+    structured = {"type": "problems", "total": len(items), "items": items, "_updatedId": sys_id}
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Problem {number} updated. Refreshed list returned.")],
+        structuredContent=structured,
+    )
+
+
 async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -> types.CallToolResult:
     body = {"state": "6", "close_code": close_code, "close_notes": close_notes}
     try:
@@ -544,26 +741,6 @@ async def sn__resolve_incident(sys_id: str, close_code: str, close_notes: str) -
     structured = {"type": "resolved", "record_type": "incident", "sys_id": sys_id,
                   "number": number, "close_code": close_code,
                   "message": f"Incident {number} resolved ({close_code}): {close_notes}"}
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=structured["message"])],
-        structuredContent=structured,
-    )
-
-
-async def sn__add_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
-    try:
-        resp = await servicenow_request(
-            "PATCH", f"/api/now/table/incident/{sys_id}", json_body={"work_notes": work_note}
-        )
-        record = resp.json().get("result", {})
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"Failed to add work note: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error adding work note: {e}")
-    number = _val(record.get("number", ""))
-    structured = {"type": "work_note_added", "record_type": "incident", "sys_id": sys_id,
-                  "number": number,
-                  "message": f"Work note added to incident {number}: {work_note[:80]}{'...' if len(work_note) > 80 else ''}"}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=structured["message"])],
         structuredContent=structured,
@@ -621,7 +798,7 @@ async def sn__create_hr_case(
     try:
         resp = await servicenow_request(
             "POST", "/api/now/table/sn_hr_core_case",
-            json={"short_description": subject, "description": description, "priority": priority},
+            json_body={"short_description": subject, "description": description, "priority": priority},
         )
         new_id = resp.json().get("result", {}).get("sys_id", "")
     except httpx.HTTPStatusError as e:
@@ -637,17 +814,18 @@ async def sn__create_hr_case(
 
 
 async def sn__update_hr_case(
-    sys_id: str, subject: str | None = None, priority: str | None = None, state: str | None = None
+    sys_id: str, subject: str | None = None, priority: str | None = None,
+    state: str | None = None, work_note: str | None = None
 ) -> types.CallToolResult:
     body: dict = {}
-    if subject is not None:
-        body["short_description"] = subject
-    if priority is not None:
-        body["priority"] = priority
-    if state is not None:
-        body["state"] = state
+    if subject is not None: body["short_description"] = subject
+    if priority is not None: body["priority"] = priority
+    if state is not None: body["state"] = state
+    if work_note is not None: body["work_notes"] = work_note
+    if not body:
+        return _error_result("No fields to update. Provide subject, priority, state, or work_note.")
     try:
-        await servicenow_request("PATCH", f"/api/now/table/sn_hr_core_case/{sys_id}", json=body)
+        await servicenow_request("PATCH", f"/api/now/table/sn_hr_core_case/{sys_id}", json_body=body)
     except httpx.HTTPStatusError as e:
         return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
     except Exception as e:
@@ -656,24 +834,6 @@ async def sn__update_hr_case(
     structured = {"type": "hr_case_updated", "sys_id": sys_id}
     return types.CallToolResult(
         content=[types.TextContent(type="text", text="HR case updated.")],
-        structuredContent=structured,
-    )
-
-
-async def sn__add_hr_work_note(sys_id: str, work_note: str) -> types.CallToolResult:
-    try:
-        await servicenow_request(
-            "PATCH", f"/api/now/table/sn_hr_core_case/{sys_id}",
-            json={"work_notes": work_note},
-        )
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error adding HR work note: {e}")
-
-    structured = {"type": "hr_work_note_added", "sys_id": sys_id}
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Work note added to HR case.")],
         structuredContent=structured,
     )
 
@@ -722,42 +882,6 @@ async def sn__reject_record(sys_id: str, comments: str = "") -> types.CallToolRe
     )
 
 
-async def sn__hr_approve_record(sys_id: str) -> types.CallToolResult:
-    try:
-        await servicenow_request(
-            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
-            json_body={"state": "approved", "comments": "Approved via M365 Copilot"},
-        )
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error approving HR record: {e}")
-
-    structured = {"type": "hr_record_approved", "sys_id": sys_id}
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="HR record approved.")],
-        structuredContent=structured,
-    )
-
-
-async def sn__hr_reject_record(sys_id: str, comments: str = "") -> types.CallToolResult:
-    try:
-        await servicenow_request(
-            "PATCH", f"/api/now/table/sysapproval_approver/{sys_id}",
-            json_body={"state": "rejected", "comments": comments or "Rejected via M365 Copilot"},
-        )
-    except httpx.HTTPStatusError as e:
-        return _error_result(f"ServiceNow API error: {e.response.status_code} {e.response.text}")
-    except Exception as e:
-        return _error_result(f"Error rejecting HR record: {e}")
-
-    structured = {"type": "hr_record_rejected", "sys_id": sys_id}
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text="HR record rejected.")],
-        structuredContent=structured,
-    )
-
-
 # ── Prompts ───────────────────────────────────────────────────────────────────
 
 def prompt_show_incidents() -> list[PromptMessage]:
@@ -779,19 +903,19 @@ def prompt_incident_summary() -> list[PromptMessage]:
 
 _TOOL_SPECS_LIST = [
     {"name": "sn__get_incidents",
-     "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending.",
+     "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
      "handler": sn__get_incidents},
     {"name": "sn__get_requests",
-     "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending.",
+     "description": "Retrieve service requests from ServiceNow. Pass 'number' (e.g. REQ0010001) to open the edit form for that request. Pass 'query' to search by text. No params returns the latest 'limit' requests (default 5).",
      "handler": sn__get_requests},
     {"name": "sn__get_request_items",
      "description": "Retrieve request items for a specific service request. request_sys_id is the sys_id of the parent sc_request record. Called from the widget when expanding a request row.",
      "handler": sn__get_request_items},
     {"name": "sn__get_change_requests",
-     "description": "Get the latest Change Requests from ServiceNow. Returns up to 'limit' records (default 5) ordered by creation date descending.",
+     "description": "Get Change Requests from ServiceNow. Pass 'number' (e.g. CHG0010001) to open the edit form for that change request. Pass 'query' to search by text. No params returns the latest 'limit' records (default 5).",
      "handler": sn__get_change_requests},
     {"name": "sn__get_problems",
-     "description": "Get the latest Problem records from ServiceNow. Returns up to 'limit' problems (default 5) ordered by creation date descending.",
+     "description": "Get Problem records from ServiceNow. Pass 'number' (e.g. PRB0010001) to open the edit form for that problem. Pass 'query' to search by text. No params returns the latest 'limit' problems (default 5).",
      "handler": sn__get_problems},
     {"name": "sn__get_pending_approvals",
      "description": "Get pending approval requests in ServiceNow. Returns up to 'limit' approvals (default 10) with approver, document, and state.",
@@ -815,7 +939,7 @@ _TOOL_SPECS_LIST = [
      "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Optional editable fields: short_description, category, risk, priority.",
      "handler": sn__update_change_request},
     {"name": "sn__update_incident",
-     "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
+     "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, work_note (appended as internal journal entry).",
      "handler": sn__update_incident},
     {"name": "sn__update_request",
      "description": "Update an existing service request in ServiceNow. Requires sys_id. Editable field: approval.",
@@ -823,12 +947,12 @@ _TOOL_SPECS_LIST = [
     {"name": "sn__update_request_item",
      "description": "Update an existing request item in ServiceNow. Requires sys_id. Editable field: quantity.",
      "handler": sn__update_request_item},
+    {"name": "sn__update_problem",
+     "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note (appended as internal journal entry).",
+     "handler": sn__update_problem},
     {"name": "sn__resolve_incident",
      "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes.",
      "handler": sn__resolve_incident},
-    {"name": "sn__add_work_note",
-     "description": "Add a work note to an existing incident in ServiceNow. Work notes are internal comments visible only to IO staff.",
-     "handler": sn__add_work_note},
     {"name": "sn__create_incident_form",
      "description": "Use this when the user asks to create or log a new ServiceNow incident. Opens the interactive incident creation form.",
      "handler": sn__create_incident_form},
@@ -842,23 +966,14 @@ _TOOL_SPECS_LIST = [
      "description": "Create a new HR case in ServiceNow. Requires subject. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low).",
      "handler": sn__create_hr_case},
     {"name": "sn__update_hr_case",
-     "description": "Update an existing HR case in ServiceNow. Requires sys_id. Optional editable fields: subject, priority, state.",
+     "description": "Update an existing HR case in ServiceNow. Requires sys_id. Editable fields: subject, priority, state, work_note (appended as internal journal entry).",
      "handler": sn__update_hr_case},
-    {"name": "sn__add_hr_work_note",
-     "description": "Add a work note to an existing HR case in ServiceNow. Requires sys_id and work_note text.",
-     "handler": sn__add_hr_work_note},
     {"name": "sn__approve_record",
      "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record.",
      "handler": sn__approve_record},
     {"name": "sn__reject_record",
      "description": "Reject a pending approval in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
      "handler": sn__reject_record},
-    {"name": "sn__hr_approve_record",
-     "description": "Approve an HR approval record in ServiceNow. Requires sys_id of the sysapproval_approver record.",
-     "handler": sn__hr_approve_record},
-    {"name": "sn__hr_reject_record",
-     "description": "Reject an HR approval record in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
-     "handler": sn__hr_reject_record},
 ]
 
 PROMPT_SPECS = [
@@ -917,8 +1032,8 @@ PROMPT_SPECS = [
             "I want to find a knowledge article and log it on an incident. "
             "Ask me for the search topic, then call sn__get_knowledge_articles with that query. "
             "Also call sn__get_incidents to show open incidents — these are independent. "
-            "Ask me which article and which incident to link, then call sn__add_work_note "
-            "with the incident sys_id and a note referencing the article."
+            "Ask me which article and which incident to link, then call sn__update_incident "
+            "with the incident sys_id and a work_note referencing the article."
         )))],
     },
     {

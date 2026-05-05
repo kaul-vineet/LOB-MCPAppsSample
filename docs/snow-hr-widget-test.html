@@ -282,19 +282,16 @@ window.addEventListener('message', function(e) {
     } else if (name === 'sn__update_hr_case') {
       result = { success: true, sys_id: args.sys_id };
       logMsg('[sim] update_hr_case: ' + args.sys_id);
-    } else if (name === 'sn__hr_approve_record') {
-      result = { success: true };
-      logMsg('[sim] hr_approve_record: ' + args.sys_id);
-    } else if (name === 'sn__hr_reject_record') {
-      result = { success: true };
-      logMsg('[sim] hr_reject_record: ' + args.sys_id);
+    } else if (name === 'sn__approve_record') {
+      result = { type: 'approvals', total: 0, items: [] };
+      logMsg('[sim] approve_record: ' + args.sys_id);
+    } else if (name === 'sn__reject_record') {
+      result = { type: 'approvals', total: 0, items: [] };
+      logMsg('[sim] reject_record: ' + args.sys_id);
     } else if (name === 'sn__show_hr_create_form') {
       var payload = { type: 'form', entity: args.entity || 'hr_case' };
       if (args.fk_options) payload.fkSelections = args.fk_options;
       result = payload;
-    } else if (name === 'sn__add_hr_work_note') {
-      result = { success: true };
-      logMsg('[sim] add_hr_work_note: ' + args.sys_id + ' — "' + (args.work_note || '').slice(0, 40) + '"');
     } else {
       logMsg('[sim] ' + name + ': ' + JSON.stringify(args).slice(0, 80));
       result = { success: true };
