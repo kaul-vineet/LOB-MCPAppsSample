@@ -2,7 +2,7 @@
     "tools": [
         {
             "name": "sf__get_leads",
-            "description": "Get the 5 most recent Leads from Salesforce. Pass campaign_id to get leads for a specific campaign. Returns lead name, company, email, phone, status, and lead source.",
+            "description": "Get Leads from Salesforce. Pass lead_id for exact record lookup \u2192 opens edit form. Pass name to search by name/company. No params returns the 5 most recent leads.",
             "inputSchema": {
                 "properties": {
                     "campaign_id": {
@@ -12,6 +12,14 @@
                     "name": {
                         "default": "",
                         "type": "string"
+                    },
+                    "lead_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -134,6 +142,10 @@
                     "stage": {
                         "default": "",
                         "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -236,6 +248,10 @@
                     "industry": {
                         "default": "",
                         "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -346,6 +362,10 @@
                     "name": {
                         "default": "",
                         "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -446,7 +466,7 @@
         },
         {
             "name": "sf__get_cases",
-            "description": "Get the 5 most recent Cases from Salesforce. Returns case number, subject, status, priority, and account name.",
+            "description": "Get Cases from Salesforce. Pass case_id for exact record lookup \u2192 opens edit form. Pass subject to search by subject. No params returns the 5 most recent cases.",
             "inputSchema": {
                 "properties": {
                     "account_id": {
@@ -456,6 +476,14 @@
                     "subject": {
                         "default": "",
                         "type": "string"
+                    },
+                    "case_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -553,12 +581,20 @@
         },
         {
             "name": "sf__get_tasks",
-            "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date.",
+            "description": "Get Tasks from Salesforce. Pass task_id for exact record lookup \u2192 opens edit form. Pass subject to search by subject. No params returns the 5 most recent tasks.",
             "inputSchema": {
                 "properties": {
                     "subject": {
                         "default": "",
                         "type": "string"
+                    },
+                    "task_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
                     }
                 },
                 "type": "object",
@@ -695,51 +731,105 @@
         },
         {
             "name": "sf__get_campaigns",
-            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup → opens edit form. No params returns the 5 most recent campaigns.",
+            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup \u2192 opens edit form. No params returns the 5 most recent campaigns.",
             "inputSchema": {
                 "properties": {
-                    "campaign_id": { "default": "", "type": "string" },
-                    "refresh": { "default": false, "type": "boolean" }
+                    "campaign_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "refresh": {
+                        "default": false,
+                        "type": "boolean"
+                    }
                 },
-                "type": "object"
+                "type": "object",
+                "required": []
             },
             "title": "Get campaigns",
-            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
         },
         {
             "name": "sf__create_campaign",
-            "description": "Create a new Salesforce Campaign. Required: name. Optional: status, type, start_date, end_date.",
+            "description": "Create a new Salesforce Campaign. Required: name. Optional: status (Planned/Active/Completed/Aborted), type, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD).",
             "inputSchema": {
                 "properties": {
-                    "name": { "type": "string" },
-                    "status": { "default": "Planned", "type": "string" },
-                    "type": { "default": "", "type": "string" },
-                    "start_date": { "default": "", "type": "string" },
-                    "end_date": { "default": "", "type": "string" }
+                    "name": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "default": "Planned",
+                        "type": "string"
+                    },
+                    "type": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "default": "",
+                        "type": "string"
+                    }
                 },
-                "required": ["name"],
+                "required": [
+                    "name"
+                ],
                 "type": "object"
             },
             "title": "Create campaign",
-            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
         },
         {
             "name": "sf__update_campaign",
             "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date.",
             "inputSchema": {
                 "properties": {
-                    "campaign_id": { "type": "string" },
-                    "name": { "default": "", "type": "string" },
-                    "status": { "default": "", "type": "string" },
-                    "type": { "default": "", "type": "string" },
-                    "start_date": { "default": "", "type": "string" },
-                    "end_date": { "default": "", "type": "string" }
+                    "campaign_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "status": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "type": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "default": "",
+                        "type": "string"
+                    }
                 },
-                "required": ["campaign_id"],
+                "required": [
+                    "campaign_id"
+                ],
                 "type": "object"
             },
             "title": "Update campaign",
-            "_meta": { "ui": { "resourceUri": "ui://widget/crm.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/crm.html"
+                }
+            }
         },
         {
             "name": "sf__get_pending_approvals",
@@ -758,7 +848,7 @@
         },
         {
             "name": "sf__show_create_form",
-            "description": "Opens a create form in the widget for the specified Salesforce entity. Supported entities: lead, account, contact, opportunity, case, task. FK pre-resolution required for contact, opportunity, case.",
+            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign).",
             "inputSchema": {
                 "properties": {
                     "entity": {
@@ -784,12 +874,20 @@
         },
         {
             "name": "sn__get_incidents",
-            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending.",
+            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
             "inputSchema": {
                 "properties": {
                     "limit": {
                         "default": 5,
                         "type": "integer"
+                    },
+                    "number": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "query": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -804,12 +902,20 @@
         },
         {
             "name": "sn__get_requests",
-            "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending.",
+            "description": "Retrieve service requests from ServiceNow. Pass 'number' (e.g. REQ0010001) to open the edit form for that request. Pass 'query' to search by text. No params returns the latest 'limit' requests (default 5).",
             "inputSchema": {
                 "properties": {
                     "limit": {
                         "default": 5,
                         "type": "integer"
+                    },
+                    "number": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "query": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -845,12 +951,20 @@
         },
         {
             "name": "sn__get_change_requests",
-            "description": "Get the latest Change Requests from ServiceNow. Returns up to 'limit' records (default 5) ordered by creation date descending.",
+            "description": "Get Change Requests from ServiceNow. Pass 'number' (e.g. CHG0010001) to open the edit form for that change request. Pass 'query' to search by text. No params returns the latest 'limit' records (default 5).",
             "inputSchema": {
                 "properties": {
                     "limit": {
                         "default": 5,
                         "type": "integer"
+                    },
+                    "number": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "query": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -865,12 +979,20 @@
         },
         {
             "name": "sn__get_problems",
-            "description": "Get the latest Problem records from ServiceNow. Returns up to 'limit' problems (default 5) ordered by creation date descending.",
+            "description": "Get Problem records from ServiceNow. Pass 'number' (e.g. PRB0010001) to open the edit form for that problem. Pass 'query' to search by text. No params returns the latest 'limit' problems (default 5).",
             "inputSchema": {
                 "properties": {
                     "limit": {
                         "default": 5,
                         "type": "integer"
+                    },
+                    "number": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "query": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -1044,24 +1166,40 @@
         },
         {
             "name": "sn__update_change_request",
-            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Editable fields: short_description, category, risk, priority.",
+            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Optional editable fields: short_description, category, risk, priority.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": { "type": "string" },
-                    "short_description": { "default": null, "type": "string" },
-                    "category": { "default": null, "type": "string" },
-                    "risk": { "default": null, "type": "string" },
-                    "priority": { "default": null, "type": "string" }
+                    "sys_id": {
+                        "type": "string"
+                    },
+                    "short_description": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "risk": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "string"
+                    }
                 },
-                "required": ["sys_id"],
+                "required": [
+                    "sys_id"
+                ],
                 "type": "object"
             },
             "title": "Update change request",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sn__update_incident",
-            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority.",
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, state (New, In Progress, On Hold, Resolved, Closed), work_note (appended as internal journal entry).",
             "inputSchema": {
                 "properties": {
                     "sys_id": {
@@ -1071,6 +1209,13 @@
                         "type": "string"
                     },
                     "priority": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Incident state: New, In Progress, On Hold, Resolved, Closed"
+                    },
+                    "work_note": {
                         "type": "string"
                     }
                 },
@@ -1136,20 +1281,36 @@
         },
         {
             "name": "sn__update_problem",
-            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note.",
+            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note (appended as internal journal entry).",
             "inputSchema": {
                 "properties": {
-                    "sys_id": { "type": "string" },
-                    "short_description": { "default": null, "type": "string" },
-                    "priority": { "default": null, "type": "string" },
-                    "state": { "default": null, "type": "string" },
-                    "work_note": { "default": null, "type": "string" }
+                    "sys_id": {
+                        "type": "string"
+                    },
+                    "short_description": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "work_note": {
+                        "type": "string"
+                    }
                 },
-                "required": ["sys_id"],
+                "required": [
+                    "sys_id"
+                ],
                 "type": "object"
             },
             "title": "Update problem",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sn__resolve_incident",
@@ -1182,7 +1343,7 @@
         },
         {
             "name": "sn__create_incident_form",
-            "description": "Opens a form to create a new ServiceNow Incident. The user fills in details and submits.",
+            "description": "Use this when the user asks to create or log a new ServiceNow incident. Opens the interactive incident creation form.",
             "inputSchema": {
                 "properties": {},
                 "type": "object",
@@ -1197,7 +1358,7 @@
         },
         {
             "name": "sn__create_request_form",
-            "description": "Opens a form to create a new ServiceNow Request. The user fills in details and submits.",
+            "description": "Use this when the user asks to raise or create a new ServiceNow service request. Opens the interactive request creation form.",
             "inputSchema": {
                 "properties": {},
                 "type": "object",
@@ -1233,31 +1394,56 @@
         },
         {
             "name": "sn__create_problem",
-            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority.",
+            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low).",
             "inputSchema": {
                 "properties": {
-                    "short_description": { "type": "string" },
-                    "description": { "default": "", "type": "string" },
-                    "priority": { "default": "3", "type": "string" }
+                    "short_description": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "priority": {
+                        "default": "3",
+                        "type": "string"
+                    }
                 },
-                "required": ["short_description"],
+                "required": [
+                    "short_description"
+                ],
                 "type": "object"
             },
             "title": "Create problem",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sn__get_hr_cases",
-            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup → opens edit form. No params returns the latest HR cases.",
+            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup \u2192 opens edit form. No params returns the latest HR cases.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": { "default": "", "type": "string" },
-                    "limit": { "default": 10, "type": "integer" }
+                    "sys_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "limit": {
+                        "default": 10,
+                        "type": "integer"
+                    }
                 },
-                "type": "object"
+                "type": "object",
+                "required": []
             },
-            "title": "Get HR cases",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow-hr.html" } }
+            "title": "Get hr cases",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sn__create_hr_case",
@@ -1290,7 +1476,7 @@
         },
         {
             "name": "sn__update_hr_case",
-            "description": "Update an existing HR case in ServiceNow. Requires sys_id. Optional editable fields: subject, priority, state.",
+            "description": "Update an existing HR case in ServiceNow. Requires sys_id. Editable fields: subject, priority, state, work_note.",
             "inputSchema": {
                 "properties": {
                     "sys_id": {
@@ -1303,6 +1489,9 @@
                         "type": "string"
                     },
                     "state": {
+                        "type": "string"
+                    },
+                    "work_note": {
                         "type": "string"
                     }
                 },
@@ -1323,27 +1512,46 @@
             "description": "Approve a pending approval in ServiceNow. Requires sys_id of the sysapproval_approver record.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": { "type": "string" }
+                    "sys_id": {
+                        "type": "string"
+                    }
                 },
-                "required": ["sys_id"],
+                "required": [
+                    "sys_id"
+                ],
                 "type": "object"
             },
             "title": "Approve record",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sn__reject_record",
             "description": "Reject a pending approval in ServiceNow. Requires sys_id. Optional: comments explaining the rejection.",
             "inputSchema": {
                 "properties": {
-                    "sys_id": { "type": "string" },
-                    "comments": { "default": "", "type": "string" }
+                    "sys_id": {
+                        "type": "string"
+                    },
+                    "comments": {
+                        "default": "",
+                        "type": "string"
+                    }
                 },
-                "required": ["sys_id"],
+                "required": [
+                    "sys_id"
+                ],
                 "type": "object"
             },
             "title": "Reject record",
-            "_meta": { "ui": { "resourceUri": "ui://widget/servicenow.html" } }
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/servicenow.html"
+                }
+            }
         },
         {
             "name": "sap__get_purchase_orders",
@@ -1387,13 +1595,20 @@
         },
         {
             "name": "sap__get_materials",
-            "description": "Fetch materials from SAP S/4HANA. Pass material_id for full detail view. No params returns the list.",
+            "description": "Fetch materials master data from SAP S/4HANA. Pass material_id for full detail view. No params returns the list (product ID, type, group, base unit).",
             "inputSchema": {
                 "properties": {
-                    "material_id": { "default": "", "type": "string" },
-                    "limit": { "default": 5, "type": "integer" }
+                    "material_id": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "limit": {
+                        "default": 5,
+                        "type": "integer"
+                    }
                 },
-                "type": "object"
+                "type": "object",
+                "required": []
             },
             "title": "Get materials",
             "_meta": {
@@ -1767,9 +1982,14 @@
         },
         {
             "name": "hs__get_contacts",
-            "description": "Get the latest 5 Contacts from HubSpot CRM. Returns name, email, phone, company, and lifecycle stage.",
+            "description": "Get contacts from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 contacts with name, email, phone, company, lifecycle stage.",
             "inputSchema": {
-                "properties": {},
+                "properties": {
+                    "id": {
+                        "default": "",
+                        "type": "string"
+                    }
+                },
                 "type": "object",
                 "required": []
             },
@@ -1868,9 +2088,14 @@
         },
         {
             "name": "hs__get_deals",
-            "description": "Get the latest 5 Deals from HubSpot CRM. Returns deal name, stage, amount, close date, and pipeline.",
+            "description": "Get deals from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 deals with name, stage, amount, close date, pipeline.",
             "inputSchema": {
-                "properties": {},
+                "properties": {
+                    "id": {
+                        "default": "",
+                        "type": "string"
+                    }
+                },
                 "type": "object",
                 "required": []
             },
@@ -1920,9 +2145,14 @@
         },
         {
             "name": "hs__get_companies",
-            "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry.",
+            "description": "Get companies from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 companies with name, domain, phone, city, industry.",
             "inputSchema": {
-                "properties": {},
+                "properties": {
+                    "id": {
+                        "default": "",
+                        "type": "string"
+                    }
+                },
                 "type": "object",
                 "required": []
             },
@@ -2013,9 +2243,14 @@
         },
         {
             "name": "hs__get_tickets",
-            "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category.",
+            "description": "Get tickets from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 support tickets with subject, status, priority, category.",
             "inputSchema": {
-                "properties": {},
+                "properties": {
+                    "id": {
+                        "default": "",
+                        "type": "string"
+                    }
+                },
                 "type": "object",
                 "required": []
             },
@@ -2398,7 +2633,7 @@
         },
         {
             "name": "ds__get_envelopes",
-            "description": "Get the latest envelopes from DocuSign. Optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10).",
+            "description": "Get envelopes from DocuSign. Pass envelope_id for exact lookup \u2192 opens detail view. Otherwise lists envelopes with optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10).",
             "inputSchema": {
                 "properties": {
                     "from_date": {
@@ -2410,6 +2645,10 @@
                     "count": {
                         "default": 10,
                         "type": "integer"
+                    },
+                    "envelope_id": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -2606,7 +2845,7 @@
         },
         {
             "name": "ds__send_envelope_form",
-            "description": "Opens a form to send a new DocuSign envelope. The user fills in recipient details and submits.",
+            "description": "Use this when the user asks to send a DocuSign envelope or start a signing request. Opens the interactive envelope sending form.",
             "inputSchema": {
                 "properties": {},
                 "type": "object",
@@ -2919,7 +3158,7 @@
         },
         {
             "name": "saphr__trigger_background_check",
-            "description": "Origger a background check for an employee in SAP SuccessFactors.",
+            "description": "Trigger a background check for an employee in SAP SuccessFactors.",
             "inputSchema": {
                 "properties": {
                     "person_id": {
@@ -3054,7 +3293,7 @@
         },
         {
             "name": "saphr__generate_employment_verification",
-            "description": "Origger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready.",
+            "description": "Trigger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready.",
             "inputSchema": {
                 "properties": {
                     "user_id": {
@@ -3075,7 +3314,7 @@
         },
         {
             "name": "saphr__generate_employment_reference",
-            "description": "Origger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready.",
+            "description": "Trigger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready.",
             "inputSchema": {
                 "properties": {
                     "user_id": {

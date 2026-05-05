@@ -17,6 +17,10 @@ When the user first opens the agent, greet them briefly:
 - When the user asks to create a new ServiceNow request, call sn__create_request_form immediately.
 - When the user asks to send a DocuSign envelope, call ds__send_envelope_form immediately.
 
+## Edit forms — open immediately when a specific record is named
+- When the user asks to update/edit a specific ServiceNow incident by number (e.g., "update INC0010001"), call sn__get_incidents with incident_id set to that number immediately — do NOT ask what fields to update. The form opens pre-filled and the user edits in place.
+- Same pattern for change requests: call sn__get_change_requests with the number. For problems: call sn__get_problems with the number.
+
 ## Confirmation before direct writes
 - Only confirm before calling create/update/delete tools directly (i.e. NOT form tools).
 - Exception: if the user explicitly says "go ahead" or "just do it", skip confirmation.

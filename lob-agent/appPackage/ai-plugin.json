@@ -8,7 +8,7 @@
     "functions": [
         {
             "name": "sf__get_leads",
-            "description": "Get the 5 most recent Leads from Salesforce. Pass campaign_id to get leads for a specific campaign. Returns lead name, company, email, phone, status, and lead source."
+            "description": "Get Leads from Salesforce. Pass lead_id for exact record lookup \u2192 opens edit form. Pass name to search by name/company. No params returns the 5 most recent leads."
         },
         {
             "name": "sf__create_lead",
@@ -56,7 +56,7 @@
         },
         {
             "name": "sf__get_cases",
-            "description": "Get the 5 most recent Cases from Salesforce. Returns case number, subject, status, priority, and account name."
+            "description": "Get Cases from Salesforce. Pass case_id for exact record lookup \u2192 opens edit form. Pass subject to search by subject. No params returns the 5 most recent cases."
         },
         {
             "name": "sf__create_case",
@@ -72,7 +72,7 @@
         },
         {
             "name": "sf__get_tasks",
-            "description": "Get the 5 most recent Tasks from Salesforce. Returns subject, status, priority, and due date."
+            "description": "Get Tasks from Salesforce. Pass task_id for exact record lookup \u2192 opens edit form. Pass subject to search by subject. No params returns the 5 most recent tasks."
         },
         {
             "name": "sf__create_task",
@@ -92,11 +92,11 @@
         },
         {
             "name": "sf__get_campaigns",
-            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup → opens edit form. No params returns the 5 most recent campaigns."
+            "description": "Get Salesforce Campaigns. Pass campaign_id for exact record lookup \u2192 opens edit form. No params returns the 5 most recent campaigns."
         },
         {
             "name": "sf__create_campaign",
-            "description": "Create a new Salesforce Campaign. Required: name. Optional: status, type, start_date, end_date."
+            "description": "Create a new Salesforce Campaign. Required: name. Optional: status (Planned/Active/Completed/Aborted), type, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD)."
         },
         {
             "name": "sf__update_campaign",
@@ -108,15 +108,15 @@
         },
         {
             "name": "sf__show_create_form",
-            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, or task. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task)."
+            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign)."
         },
         {
             "name": "sn__get_incidents",
-            "description": "Retrieve the latest incidents from ServiceNow. Returns up to 'limit' incidents (default 5), ordered by creation date descending."
+            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5)."
         },
         {
             "name": "sn__get_requests",
-            "description": "Retrieve the latest service requests from ServiceNow. Returns up to 'limit' requests (default 5), ordered by creation date descending."
+            "description": "Retrieve service requests from ServiceNow. Pass 'number' (e.g. REQ0010001) to open the edit form for that request. Pass 'query' to search by text. No params returns the latest 'limit' requests (default 5)."
         },
         {
             "name": "sn__get_request_items",
@@ -124,11 +124,11 @@
         },
         {
             "name": "sn__get_change_requests",
-            "description": "Get the latest Change Requests from ServiceNow. Returns up to 'limit' records (default 5) ordered by creation date descending."
+            "description": "Get Change Requests from ServiceNow. Pass 'number' (e.g. CHG0010001) to open the edit form for that change request. Pass 'query' to search by text. No params returns the latest 'limit' records (default 5)."
         },
         {
             "name": "sn__get_problems",
-            "description": "Get the latest Problem records from ServiceNow. Returns up to 'limit' problems (default 5) ordered by creation date descending."
+            "description": "Get Problem records from ServiceNow. Pass 'number' (e.g. PRB0010001) to open the edit form for that problem. Pass 'query' to search by text. No params returns the latest 'limit' problems (default 5)."
         },
         {
             "name": "sn__get_pending_approvals",
@@ -156,11 +156,11 @@
         },
         {
             "name": "sn__update_change_request",
-            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Editable fields: short_description, category, risk, priority."
+            "description": "Update an existing Change Request in ServiceNow. Requires sys_id. Optional editable fields: short_description, category, risk, priority."
         },
         {
             "name": "sn__update_incident",
-            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority."
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, state (New, In Progress, On Hold, Resolved, Closed), work_note (appended as internal journal entry)."
         },
         {
             "name": "sn__update_request",
@@ -172,7 +172,7 @@
         },
         {
             "name": "sn__update_problem",
-            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note."
+            "description": "Update an existing Problem record in ServiceNow. Requires sys_id. Editable fields: short_description, priority, state, work_note (appended as internal journal entry)."
         },
         {
             "name": "sn__resolve_incident",
@@ -192,11 +192,11 @@
         },
         {
             "name": "sn__create_problem",
-            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority."
+            "description": "Create a new Problem record in ServiceNow. Requires short_description. Optional: description, priority (1=Critical, 2=High, 3=Moderate, 4=Low)."
         },
         {
             "name": "sn__get_hr_cases",
-            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup → opens edit form. No params returns the latest HR cases."
+            "description": "Get HR cases from ServiceNow. Pass sys_id for exact record lookup \u2192 opens edit form. No params returns the latest HR cases."
         },
         {
             "name": "sn__create_hr_case",
@@ -204,7 +204,7 @@
         },
         {
             "name": "sn__update_hr_case",
-            "description": "Update an existing HR case in ServiceNow. Requires sys_id. Optional editable fields: subject, priority, state."
+            "description": "Update an existing HR case in ServiceNow. Requires sys_id. Editable fields: subject, priority, state, work_note."
         },
         {
             "name": "sn__approve_record",
@@ -224,7 +224,7 @@
         },
         {
             "name": "sap__get_materials",
-            "description": "Fetch materials master data from SAP S/4HANA. Returns product ID, type, group, and base unit."
+            "description": "Fetch materials master data from SAP S/4HANA. Pass material_id for full detail view. No params returns the list (product ID, type, group, base unit)."
         },
         {
             "name": "sap__create_purchase_order",
@@ -292,7 +292,7 @@
         },
         {
             "name": "hs__get_contacts",
-            "description": "Get the latest 5 Contacts from HubSpot CRM. Returns name, email, phone, company, and lifecycle stage."
+            "description": "Get contacts from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 contacts with name, email, phone, company, lifecycle stage."
         },
         {
             "name": "hs__create_contact",
@@ -304,7 +304,7 @@
         },
         {
             "name": "hs__get_deals",
-            "description": "Get the latest 5 Deals from HubSpot CRM. Returns deal name, stage, amount, close date, and pipeline."
+            "description": "Get deals from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 deals with name, stage, amount, close date, pipeline."
         },
         {
             "name": "hs__create_deal",
@@ -312,7 +312,7 @@
         },
         {
             "name": "hs__get_companies",
-            "description": "Get the latest 5 Companies from HubSpot CRM. Returns name, domain, phone, city, and industry."
+            "description": "Get companies from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 companies with name, domain, phone, city, industry."
         },
         {
             "name": "hs__create_company",
@@ -324,7 +324,7 @@
         },
         {
             "name": "hs__get_tickets",
-            "description": "Get the latest 5 Support Tickets from HubSpot CRM. Returns subject, status, priority, category."
+            "description": "Get tickets from HubSpot CRM. Pass id for exact lookup \u2192 opens edit form. Otherwise returns the latest 5 support tickets with subject, status, priority, category."
         },
         {
             "name": "hs__create_ticket",
@@ -384,7 +384,7 @@
         },
         {
             "name": "ds__get_envelopes",
-            "description": "Get the latest envelopes from DocuSign. Optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10)."
+            "description": "Get envelopes from DocuSign. Pass envelope_id for exact lookup \u2192 opens detail view. Otherwise lists envelopes with optional filters: from_date (ISO 8601), status (sent|delivered|completed|declined|voided), count (default 10)."
         },
         {
             "name": "ds__get_envelope_details",
@@ -472,7 +472,7 @@
         },
         {
             "name": "saphr__trigger_background_check",
-            "description": "Origger a background check for an employee in SAP SuccessFactors."
+            "description": "Trigger a background check for an employee in SAP SuccessFactors."
         },
         {
             "name": "saphr__get_background_check_status",
@@ -492,11 +492,11 @@
         },
         {
             "name": "saphr__generate_employment_verification",
-            "description": "Origger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready."
+            "description": "Trigger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready."
         },
         {
             "name": "saphr__generate_employment_reference",
-            "description": "Origger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready."
+            "description": "Trigger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready."
         },
         {
             "name": "wday__get_worker",

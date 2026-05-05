@@ -636,16 +636,23 @@ async def sn__update_change_request(
     )
 
 
+_INCIDENT_STATE_MAP = {
+    "new": "1", "in progress": "2", "in_progress": "2",
+    "on hold": "3", "on_hold": "3", "resolved": "6", "closed": "7",
+}
+
 async def sn__update_incident(
     sys_id: str, description: str | None = None, priority: str | None = None,
-    work_note: str | None = None
+    state: str | None = None, work_note: str | None = None
 ) -> types.CallToolResult:
     body: dict = {}
     if description is not None: body["description"] = description
     if priority is not None: body["priority"] = priority
+    if state is not None:
+        body["state"] = _INCIDENT_STATE_MAP.get(state.lower(), state)
     if work_note is not None: body["work_notes"] = work_note
     if not body:
-        return _error_result("No fields to update. Provide description, priority, or work_note.")
+        return _error_result("No fields to update. Provide description, priority, state, or work_note.")
     try:
         resp = await servicenow_request("PATCH", f"/api/now/table/incident/{sys_id}", json_body=body)
         record = resp.json().get("result", {})
