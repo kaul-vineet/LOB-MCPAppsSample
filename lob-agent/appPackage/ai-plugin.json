@@ -119,18 +119,6 @@
             "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action."
         },
         {
-            "name": "sf__get_entity_config",
-            "description": "Get the current display configuration for a Salesforce entity. entity_type: Lead, Opportunity, Account, Contact, Case, or Task."
-        },
-        {
-            "name": "sf__update_entity_config",
-            "description": "Update the display configuration for a Salesforce entity. Pass entity_type and a JSON patch string. Changes take effect immediately and are saved to disk."
-        },
-        {
-            "name": "sf__reset_entity_config",
-            "description": "Reset a Salesforce entity configuration to factory defaults. Pass entity_type='all' to reset every entity at once."
-        },
-        {
             "name": "sf__show_create_form",
             "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, or task. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task)."
         },
@@ -949,9 +937,6 @@
                 "sf__create_campaign",
                 "sf__update_campaign",
                 "sf__get_pending_approvals",
-                "sf__get_entity_config",
-                "sf__update_entity_config",
-                "sf__reset_entity_config",
                 "sf__show_create_form"
             ],
             "auth": {

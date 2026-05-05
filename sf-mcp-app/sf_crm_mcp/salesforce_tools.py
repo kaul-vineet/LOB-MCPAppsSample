@@ -1,10 +1,7 @@
 ﻿"""Salesforce CRM tool handlers, _TOOL_SPECS_LIST, PROMPT_SPECS. No MCP bootstrap here."""
 from __future__ import annotations
 
-import copy
-import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 import structlog
@@ -22,30 +19,69 @@ def _sq(value: str) -> str:
     return value.replace("\\", "\\\\").replace("'", "\\'")
 
 
-# ── Entity config ─────────────────────────────────────────────────────────────
+# ── Entity field definitions (columns + hiddenColumns used by _fetch_entity) ───
 
-_CONFIG_PATH  = Path(__file__).parent / "config" / "entities.json"
-_DEFAULT_PATH = Path(__file__).parent / "config" / "entities.default.json"
-_config_store: dict = {}
+_C = lambda a, k: {"apiName": a, "key": k}  # noqa: E731
 
-
-def _load_config() -> None:
-    global _config_store
-    try:
-        _config_store = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        log.warning("entity_config_not_found", falling_back="defaults")
-        _config_store = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
-    except Exception as exc:
-        log.error("entity_config_load_error", error=str(exc))
-        _config_store = {}
+_ENTITY_SCHEMAS: dict[str, dict] = {
+    "Lead": {
+        "soqlObject": "Lead", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("FirstName", "first_name"), _C("LastName", "last_name"), _C("Company", "company"),
+            _C("Email", "email"), _C("Phone", "phone"), _C("Status", "status"), _C("LeadSource", "lead_source"),
+        ],
+        "hiddenColumns": [
+            _C("IsConverted", "is_converted"),
+            _C("ConvertedAccount.Name", "converted_account_name"),
+            _C("ConvertedOpportunity.Name", "converted_opportunity_name"),
+        ],
+    },
+    "Opportunity": {
+        "soqlObject": "Opportunity", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("Name", "name"), _C("Account.Name", "account_name"), _C("StageName", "stage"),
+            _C("Amount", "amount"), _C("CloseDate", "close_date"), _C("Probability", "probability"),
+        ],
+        "hiddenColumns": [_C("AccountId", "account_id")],
+    },
+    "Account": {
+        "soqlObject": "Account", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("Name", "name"), _C("Industry", "industry"), _C("Phone", "phone"),
+            _C("Website", "website"), _C("BillingCity", "billing_city"),
+            _C("Type", "type"), _C("NumberOfEmployees", "number_of_employees"),
+        ],
+        "hiddenColumns": [],
+    },
+    "Contact": {
+        "soqlObject": "Contact", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("FirstName", "first_name"), _C("LastName", "last_name"), _C("Email", "email"),
+            _C("Phone", "phone"), _C("Title", "title"), _C("Account.Name", "account_name"),
+        ],
+        "hiddenColumns": [_C("AccountId", "account_id")],
+    },
+    "Case": {
+        "soqlObject": "Case", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("CaseNumber", "case_number"), _C("Subject", "subject"), _C("Status", "status"),
+            _C("Priority", "priority"), _C("Account.Name", "account_name"),
+        ],
+        "hiddenColumns": [_C("CreatedDate", "created_date"), _C("AccountId", "account_id")],
+    },
+    "Task": {
+        "soqlObject": "Task", "orderBy": "CreatedDate DESC", "limit": 5,
+        "columns": [
+            _C("Subject", "subject"), _C("Status", "status"), _C("Priority", "priority"),
+            _C("ActivityDate", "activity_date"), _C("WhoId", "who_id"), _C("WhatId", "what_id"),
+        ],
+        "hiddenColumns": [],
+    },
+}
 
 
 def _get_schema(entity_type: str) -> dict:
-    return _config_store.get(entity_type, {})
-
-
-_load_config()
+    return _ENTITY_SCHEMAS.get(entity_type, {})
 
 
 # ── TTL cache (90 s, invalidated on write) ────────────────────────────────────
@@ -1061,62 +1097,6 @@ async def sf__get_pending_approvals() -> types.CallToolResult:
     )
 
 
-async def sf__get_entity_config(entity_type: str) -> types.CallToolResult:
-    schema = _get_schema(entity_type)
-    if not schema:
-        return _error_result(f"No configuration found for entity type '{entity_type}'.")
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Configuration for {entity_type} retrieved.")],
-        structuredContent={"type": "entity_config", "entity": entity_type, "config": schema},
-    )
-
-
-async def sf__update_entity_config(entity_type: str, patch: str) -> types.CallToolResult:
-    global _config_store
-    if entity_type not in _config_store:
-        return _error_result(f"Unknown entity type '{entity_type}'. Valid types: {', '.join(_config_store.keys())}")
-    try:
-        patch_dict = json.loads(patch)
-    except json.JSONDecodeError as exc:
-        return _error_result(f"Invalid JSON patch: {exc}")
-    _config_store[entity_type].update(patch_dict)
-    try:
-        _CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
-    except Exception as exc:
-        log.error("entity_config_write_error", error=str(exc))
-        return _error_result(f"Config updated in memory but failed to write to disk: {exc}")
-    log.info("entity_config_updated", entity=entity_type)
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Configuration for {entity_type} updated and saved.")],
-        structuredContent={"type": "entity_config", "entity": entity_type, "config": _config_store[entity_type]},
-    )
-
-
-async def sf__reset_entity_config(entity_type: str) -> types.CallToolResult:
-    global _config_store
-    try:
-        defaults = json.loads(_DEFAULT_PATH.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return _error_result(f"Failed to read default config: {exc}")
-    if entity_type == "all":
-        _config_store = copy.deepcopy(defaults); msg = "All entity configurations reset to factory defaults."
-    elif entity_type in defaults:
-        _config_store[entity_type] = copy.deepcopy(defaults[entity_type]); msg = f"{entity_type} configuration reset to factory defaults."
-    else:
-        return _error_result(f"Unknown entity type '{entity_type}'. Valid types: all, {', '.join(defaults.keys())}")
-    try:
-        _CONFIG_PATH.write_text(json.dumps(_config_store, indent=2, ensure_ascii=False), encoding="utf-8")
-    except Exception as exc:
-        log.error("entity_config_write_error", error=str(exc))
-        return _error_result(f"Config reset in memory but failed to write to disk: {exc}")
-    log.info("entity_config_reset", entity=entity_type)
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=msg)],
-        structuredContent={"type": "entity_config_reset", "entity": entity_type},
-    )
-
-
 async def sf__show_create_form(entity: str, fk_options: dict = None) -> types.CallToolResult:
     structured: dict = {"type": "form", "entity": entity}
     if fk_options:
@@ -1179,9 +1159,6 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__create_campaign",       "description": "Create a new Salesforce Campaign. Required: name. Optional: status (Planned/Active/Completed/Aborted), type, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD).", "handler": sf__create_campaign},
     {"name": "sf__update_campaign",       "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date.", "handler": sf__update_campaign},
     {"name": "sf__get_pending_approvals", "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action.", "handler": sf__get_pending_approvals},
-    {"name": "sf__get_entity_config",     "description": "Get the current display configuration for a Salesforce entity. entity_type: Lead, Opportunity, Account, Contact, Case, or Task.", "handler": sf__get_entity_config},
-    {"name": "sf__update_entity_config",  "description": "Update the display configuration for a Salesforce entity. Pass entity_type and a JSON patch string. Changes take effect immediately and are saved to disk.", "handler": sf__update_entity_config},
-    {"name": "sf__reset_entity_config",   "description": "Reset a Salesforce entity configuration to factory defaults. Pass entity_type='all' to reset every entity at once.", "handler": sf__reset_entity_config},
     {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign).", "handler": sf__show_create_form},
 ]
 
