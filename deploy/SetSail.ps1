@@ -369,9 +369,17 @@ Copy-Item "$SrcDir\instruction.txt"             "$TmpDir\instruction.txt"
 Copy-Item "$SrcDir\color.png"                   "$TmpDir\color.png"
 Copy-Item "$SrcDir\outline.png"                 "$TmpDir\outline.png"
 
-# mcp-tools.json must be in the zip — MOS3 resolves "file" values as zip-relative paths.
-Copy-Item "$SrcDir\mcp-tools.json"       "$TmpDir\mcp-tools.json"
-Copy-Item "$BuildDir\ai-plugin.dev.json" "$TmpDir\ai-plugin.json"
+# Inline tools per runtime from mcp-tools.json — avoids MOS3 file-reference/HTTP validation issues.
+$plugin   = Get-Content "$BuildDir\ai-plugin.dev.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+$allTools = (Get-Content "$SrcDir\mcp-tools.json"      -Raw -Encoding UTF8 | ConvertFrom-Json).tools
+foreach ($rt in $plugin.runtimes) {
+    $rtFnMap = @{}
+    $rt.run_for_functions | ForEach-Object { $rtFnMap[$_] = $true }
+    $rtTools = @($allTools | Where-Object { $rtFnMap.ContainsKey($_.name) })
+    $rt.spec.mcp_tool_description = [PSCustomObject]@{ tools = $rtTools }
+}
+[System.IO.File]::WriteAllText("$TmpDir\ai-plugin.json",
+    ($plugin | ConvertTo-Json -Depth 20), [System.Text.Encoding]::UTF8)
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
