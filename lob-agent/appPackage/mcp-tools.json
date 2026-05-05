@@ -713,27 +713,6 @@
             }
         },
         {
-            "name": "sf__delete_lead",
-            "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list.",
-            "inputSchema": {
-                "properties": {
-                    "lead_id": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "lead_id"
-                ],
-                "type": "object"
-            },
-            "title": "Delete lead",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/crm.html"
-                }
-            }
-        },
-        {
             "name": "sf__convert_lead",
             "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status, create_opportunity.",
             "inputSchema": {

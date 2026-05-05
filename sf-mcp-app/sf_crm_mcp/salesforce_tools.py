@@ -834,28 +834,6 @@ async def sf__update_task(
     )
 
 
-async def sf__delete_lead(lead_id: str) -> types.CallToolResult:
-    log.info("sf__delete_lead", lead_id=lead_id)
-    try:
-        sf = get_client()
-        await sf.delete("Lead", lead_id)
-    except SalesforceAuthError as exc:
-        return _error_result(f"Salesforce authentication failed: {exc}")
-    except SalesforceAPIError as exc:
-        return _error_result(f"Failed to delete lead: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error deleting lead: {exc}")
-    _cache_invalidate("leads")
-    try: items = await _fetch_leads()
-    except Exception: items = []
-    cached_at = _cache_set("leads", items)
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Lead {lead_id} deleted. Refreshed list returned.")],
-        structuredContent={"type": "leads", "total": len(items), "items": items,
-                           "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at}},
-    )
-
-
 async def sf__convert_lead(
     lead_id: str, converted_status: str = "Closed - Converted", create_opportunity: bool = True,
 ) -> types.CallToolResult:
@@ -1110,7 +1088,6 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__get_tasks",             "description": "Get Tasks from Salesforce. Pass task_id for exact record lookup → opens edit form. Pass subject to search by subject. No params returns the 5 most recent tasks.", "handler": sf__get_tasks},
     {"name": "sf__create_task",           "description": "Create a new Salesforce Task (activity). Required: subject. Optional: priority, due_date (YYYY-MM-DD), what_id (related record Id).", "handler": sf__create_task},
     {"name": "sf__update_task",           "description": "Update a Salesforce Task. Pass task_id plus any fields to change.", "handler": sf__update_task},
-    {"name": "sf__delete_lead",           "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list.", "handler": sf__delete_lead},
     {"name": "sf__convert_lead",          "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status, create_opportunity.", "handler": sf__convert_lead},
     {"name": "sf__get_pipeline_dashboard","description": "Get the Salesforce opportunity pipeline grouped by stage. Returns deal count and total amount per stage.", "handler": sf__get_pipeline_dashboard},
     {"name": "sf__get_campaigns",         "description": "Get the 5 most recent Campaigns from Salesforce. Returns campaign name, status, type, start/end date, and lead count.", "handler": sf__get_campaigns},

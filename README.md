@@ -556,7 +556,6 @@ Run after adding or renaming tools, then re-provision the agent.
 | `sf__get_leads` | Latest 5 leads |
 | `sf__create_lead` | Create lead |
 | `sf__update_lead` | Update lead |
-| `sf__delete_lead` | Delete lead |
 | `sf__convert_lead` | Convert lead → Account + Contact + Opportunity |
 | `sf__get_opportunities` | Latest 5 opportunities |
 | `sf__create_opportunity` | Create opportunity |

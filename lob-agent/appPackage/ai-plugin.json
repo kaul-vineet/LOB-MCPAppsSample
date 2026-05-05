@@ -95,10 +95,6 @@
             "description": "Get full details for a single Salesforce Task by Id. Returns subject, status, priority, due date, description, and related record."
         },
         {
-            "name": "sf__delete_lead",
-            "description": "Delete a Salesforce Lead by Id. Returns the refreshed lead list."
-        },
-        {
             "name": "sf__convert_lead",
             "description": "Convert a Salesforce Lead into an Account, Contact, and optionally an Opportunity. Required: lead_id. Optional: converted_status, create_opportunity."
         },
@@ -939,7 +935,6 @@
                 "sf__create_task",
                 "sf__update_task",
                 "sf__get_task",
-                "sf__delete_lead",
                 "sf__convert_lead",
                 "sf__get_pipeline_dashboard",
                 "sf__get_campaigns",
