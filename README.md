@@ -642,7 +642,6 @@ Run after adding or renaming tools, then re-provision the agent.
 | `hs__get_list_contacts` | Contacts in a list |
 | `hs__add_to_list` | Add contact to list |
 | `hs__remove_from_list` | Remove contact from list |
-| `hs__update_email` | Edit email name/subject |
 | `hs__update_list` | Edit list name |
 | `hs__create_contact` | Create contact |
 | `hs__get_contacts` | Recent contacts |

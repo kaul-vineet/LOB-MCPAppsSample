@@ -445,37 +445,13 @@ function MetricCard({ label, value, negative }: { label: string; value: string |
 }
 
 // ── Emails View ──────────────────────────────────────────────────────
-function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
+function EmailsView({ items, total, onNavigateLists }: {
   items: Email[];
   total?: number;
   onNavigateLists: () => void;
-  callTool: (name: string, args?: Record<string, any>) => Promise<any>;
-  toast: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }){
   const styles = useStyles();
   const c = useHsColors();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', subject: '' });
-  const [saving, setSaving] = useState(false);
-
-  const openEdit = (em: Email) => {
-    setEditingId(em.id);
-    setFormData({ name: em.name, subject: em.subject });
-  };
-  const cancel = () => setEditingId(null);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await callTool('hs__update_email', { email_id: editingId, name: formData.name, subject: formData.subject });
-      toast('Email updated');
-      cancel();
-    } catch (e: any) {
-      toast(e.message || 'Failed to update email', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Compute aggregate metrics
   const totalSent = items.reduce((s, em) => s + (em.stats.sent || 0), 0);
@@ -551,7 +527,6 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Sent</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Open Rate</TableHeaderCell>
               <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}` }}>Click Rate</TableHeaderCell>
-              <TableHeaderCell className={styles.headerCell} style={{ color: c.text, borderBottom: `2px solid ${c.border}`, width: 60 }} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -609,69 +584,7 @@ function EmailsView({ items, total, onNavigateLists, callTool, toast }: {
                         <span style={{ fontWeight: 700, fontSize: '13px', color: c.coral }}>{pct(em.stats.clicked, em.stats.delivered)}</span>
                       </div>
                     </TableCell>
-                    <TableCell className={styles.cell}>
-                      <Button appearance="subtle" icon={<EditRegular />} size="small" title="Edit" onClick={() => openEdit(em)} />
-                    </TableCell>
                   </TableRow>
-                  {editingId === em.id && (
-                    <TableRow>
-                      <TableCell colSpan={6} style={{ padding: 0 }}>
-                        <div className={styles.editPanel} style={{ backgroundColor: c.editPanelBg, borderTop: `2px solid ${c.editPanelBorder}` }}>
-                          <div className={styles.editPanelTitle} style={{ color: c.text }}>✏️ Edit Email</div>
-                          <div className={styles.formGrid}>
-                            <Field label={<span style={{ fontSize: '12px', color: c.textSec, fontWeight: 600, textTransform: 'uppercase' }}>Name</span>}>
-                              <Input
-                                value={formData.name}
-                                onChange={(_, d) => setFormData(f => ({ ...f, name: d.value }))}
-                                style={{ border: `1px solid ${c.border}`, borderRadius: '3px' }}
-                              />
-                            </Field>
-                            <Field label={<span style={{ fontSize: '12px', color: c.textSec, fontWeight: 600, textTransform: 'uppercase' }}>Subject</span>}>
-                              <Input
-                                value={formData.subject}
-                                onChange={(_, d) => setFormData(f => ({ ...f, subject: d.value }))}
-                                style={{ border: `1px solid ${c.border}`, borderRadius: '3px' }}
-                              />
-                            </Field>
-                          </div>
-                          <div className={styles.formActions}>
-                            <button
-                              onClick={cancel}
-                              disabled={saving}
-                              style={{
-                                backgroundColor: 'transparent',
-                                border: `1px solid ${c.coral}`,
-                                color: c.coral,
-                                borderRadius: '3px',
-                                padding: '8px 24px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                              }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleSave}
-                              disabled={saving}
-                              style={{
-                                backgroundColor: c.coral,
-                                border: 'none',
-                                color: '#fff',
-                                borderRadius: '3px',
-                                padding: '8px 24px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                              }}
-                            >
-                              {saving ? 'Saving…' : 'Save'}
-                            </button>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </React.Fragment>
               );
             })}
@@ -2085,8 +1998,6 @@ export function HubSpotApp() {
         items={(data.items || []) as Email[]}
         total={data.total}
         onNavigateLists={navigateToLists}
-        callTool={callTool}
-        toast={toast}
       />
       <McpFooter label="HubSpot Marketing" openInLabel="Open in HubSpot" openInUrl="https://app.hubspot.com" />
     </div>

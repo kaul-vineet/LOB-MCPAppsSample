@@ -209,17 +209,6 @@ class HubSpotClient:
         data = resp.json()
         return data.get("results", [])
 
-    # ── Update Marketing Email ────────────────────────────────────────────────
-
-    async def update_email(self, email_id: str, data: dict) -> None:
-        """Update a marketing email's properties."""
-        resp = await self._request(
-            "PATCH",
-            f"/marketing/v3/emails/{email_id}",
-            json_body=data,
-        )
-        self._raise_for_error(resp, f"update email {email_id}")
-
     # ── Update List Name ──────────────────────────────────────────────────────
 
     async def update_list(self, list_id: str, name: str) -> None:

@@ -299,10 +299,6 @@
             "description": "Remove a contact from a static list. Called by the widget."
         },
         {
-            "name": "hs__update_email",
-            "description": "Update a marketing email's name or subject. Called by the widget."
-        },
-        {
             "name": "hs__update_list",
             "description": "Update a list's name. Called by the widget."
         },
@@ -1028,7 +1024,6 @@
                 "hs__get_list_contacts",
                 "hs__add_to_list",
                 "hs__remove_from_list",
-                "hs__update_email",
                 "hs__update_list",
                 "hs__get_contacts",
                 "hs__create_contact",

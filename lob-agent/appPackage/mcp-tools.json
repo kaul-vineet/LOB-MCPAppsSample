@@ -1869,35 +1869,6 @@
             }
         },
         {
-            "name": "hs__update_email",
-            "description": "Update a marketing email's name or subject. Called by the widget.",
-            "inputSchema": {
-                "properties": {
-                    "email_id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "default": "",
-                        "type": "string"
-                    },
-                    "subject": {
-                        "default": "",
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "email_id"
-                ],
-                "type": "object"
-            },
-            "title": "Update email",
-            "_meta": {
-                "ui": {
-                    "resourceUri": "ui://widget/hubspot.html"
-                }
-            }
-        },
-        {
             "name": "hs__update_list",
             "description": "Update a list's name. Called by the widget.",
             "inputSchema": {

@@ -224,27 +224,6 @@ async def hs__remove_from_list(list_id: str, contact_id: str) -> types.CallToolR
     )
 
 
-async def hs__update_email(email_id: str, name: str = "", subject: str = "") -> types.CallToolResult:
-    try:
-        client = get_client()
-        data: dict = {}
-        if name:    data["name"] = name
-        if subject: data["subject"] = subject
-        if not data:
-            return _error_result("No fields provided to update.")
-        await client.update_email(email_id, data)
-        items = await _fetch_emails()
-    except HubSpotAuthError as exc:
-        return _error_result(f"HubSpot authentication failed: {exc}")
-    except HubSpotAPIError as exc:
-        return _error_result(f"Failed to update email: {exc}")
-    except Exception as exc:
-        return _error_result(f"Unexpected error: {exc}")
-
-    return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Email {email_id} updated.")],
-        structuredContent={"type": "emails", "total": len(items), "items": items},
-    )
 
 
 async def hs__update_list(list_id: str, name: str) -> types.CallToolResult:
@@ -932,11 +911,6 @@ _TOOL_SPECS_LIST = [
         "name": "hs__remove_from_list",
         "description": "Remove a contact from a static list. Called by the widget.",
         "handler": hs__remove_from_list,
-    },
-    {
-        "name": "hs__update_email",
-        "description": "Update a marketing email's name or subject. Called by the widget.",
-        "handler": hs__update_email,
     },
     {
         "name": "hs__update_list",
