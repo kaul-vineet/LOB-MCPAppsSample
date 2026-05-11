@@ -914,6 +914,65 @@ function MaterialsView({
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   STOCK LEVELS TOP-LEVEL VIEW  (data.type === "stock_levels")
+   ══════════════════════════════════════════════════════════════════════ */
+function StockLevelsTopView({ items, material_id, plant }: { items: StockLevel[]; material_id?: string; plant?: string }) {
+  const t = useFioriTokens();
+  const hasMaterial = items.some((sl: any) => sl.material);
+
+  const cols = hasMaterial
+    ? [
+        { label: 'Material', width: 120 },
+        { label: 'Plant', width: 80 },
+        { label: 'Storage Loc.', width: 110 },
+        { label: 'Unrestricted', width: 100 },
+        { label: 'QI', width: 70 },
+        { label: 'Blocked', width: 70 },
+        { label: 'In Transit', width: 90 },
+        { label: 'Unit', width: 50 },
+      ]
+    : [
+        { label: 'Storage Loc.', width: 110 },
+        { label: 'Unrestricted', width: 110 },
+        { label: 'QI', width: 80 },
+        { label: 'Blocked', width: 80 },
+        { label: 'In Transit', width: 100 },
+        { label: 'Unit', width: 60 },
+      ];
+
+  const subtitle = material_id && plant
+    ? `${material_id} · Plant ${plant}`
+    : material_id ? material_id : plant ? `Plant ${plant}` : 'All Plants';
+
+  return (
+    <>
+      <SectionHeader title={`Stock Levels — ${subtitle}`} count={items.length} />
+      {items.length === 0
+        ? <EmptyState label="No stock records found." />
+        : (
+          <Table columns={cols}>
+            {items.map((sl: any, i: number) => (
+              <TableRow key={sl.storage_location ? `${sl.material || ''}-${sl.plant || ''}-${sl.storage_location}` : i}>
+                {hasMaterial && <TD><Mono>{sl.material || '—'}</Mono></TD>}
+                {hasMaterial && <TD style={{ color: t.textWeak }}>{sl.plant || '—'}</TD>}
+                <TD><Mono>{sl.storage_location || '—'}</Mono></TD>
+                <TD style={{ textAlign: 'right', color: sl.unrestricted === 0 ? t.error : sl.unrestricted < 20 ? t.warning : t.text }}>
+                  {sl.unrestricted}
+                </TD>
+                <TD style={{ textAlign: 'right', color: t.textWeak }}>{sl.quality_inspection}</TD>
+                <TD style={{ textAlign: 'right', color: t.textWeak }}>{sl.blocked}</TD>
+                <TD style={{ textAlign: 'right', color: t.textWeak }}>{sl.in_transit}</TD>
+                <TD style={{ color: t.textWeak }}>{sl.unit}</TD>
+              </TableRow>
+            ))}
+          </Table>
+        )
+      }
+    </>
+  );
+}
+
 /* ─── Material Detail Panel (2-col grid, no edit) ─────────────────────── */
 function MaterialDetailPanel({ detail }: { detail: MaterialDetail }) {
   const t = useFioriTokens();
@@ -1333,6 +1392,13 @@ export function SapApp() {
             items={(data.items || []) as SalesOrder[]}
             callTool={callTool}
             toast={toast}
+          />
+        )}
+        {data.type === 'stock_levels' && (
+          <StockLevelsTopView
+            items={(data.items || []) as StockLevel[]}
+            material_id={data.material_id}
+            plant={data.plant}
           />
         )}
         {footer}

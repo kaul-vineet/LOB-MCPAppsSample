@@ -342,6 +342,8 @@ async def sap__get_goods_receipts(purchase_order: str, item_number: str) -> type
     except Exception as exc:
         log.warning("sap__get_goods_receipts_api_failed_using_mock", error=str(exc))
         items = _MOCK_GOODS_RECEIPTS
+    if not items:
+        items = _MOCK_GOODS_RECEIPTS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} goods receipt(s) for PO {purchase_order} item {item_number}.")],
         structuredContent={"type": "goods_receipts", "purchase_order": purchase_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -437,6 +439,9 @@ async def sap__get_stock_levels(material_id: str = "", plant: str = "") -> types
         log.warning("sap__get_stock_levels_api_failed_using_mock", error=str(exc))
         items = _MOCK_STOCK_LEVELS
 
+    if not items:
+        items = _MOCK_STOCK_LEVELS
+
     label = f"for {material_id} at {plant}" if material_id and plant else "overview"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"{len(items)} stock level(s) [{label}].")],
@@ -528,6 +533,8 @@ async def sap__get_deliveries(sales_order: str, item_number: str) -> types.CallT
         ]
     except Exception as exc:
         log.warning("sap__get_deliveries_api_failed_using_mock", error=str(exc))
+        items = _MOCK_DELIVERIES
+    if not items:
         items = _MOCK_DELIVERIES
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} delivery(ies) for SO {sales_order} item {item_number}.")],
