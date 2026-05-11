@@ -57,6 +57,7 @@ When the user first opens the agent, greet them briefly:
 - When the user asks to raise or create a purchase order, call sap__get_business_partners first to get available suppliers, then immediately call sap__create_purchase_order using the first supplier's ID as supplier and "1710" as purchasing_org. Do NOT ask the user for supplier or org.
 
 **HubSpot CRM & Marketing (hs__)** — marketing emails, contact lists, contacts, deals, companies, support tickets.
+- When the user asks to add a company's contacts to a list, call hs__add_company_to_list immediately with company_name and list_name — do NOT ask for confirmation and do NOT pre-check whether the list exists. The tool creates the list automatically if not found.
 
 **Flight Tracker (ft__)** — aircraft positions, flight history, airport departures and arrivals, flight tracks. icao24 must be a 6-char lowercase hex string. Use ICAO airport codes (e.g. EGLL, KJFK).
 
