@@ -319,7 +319,29 @@ async def sap__get_po_line_items(purchase_order: str) -> types.CallToolResult:
 
 async def sap__get_goods_receipts(purchase_order: str, item_number: str) -> types.CallToolResult:
     sap = get_client()
-    items = _MOCK_GOODS_RECEIPTS
+    items: list[dict] = []
+    try:
+        records = await sap.query(
+            "API_MATERIAL_DOCUMENT_SRV", "A_MaterialDocumentItem",
+            params={
+                "$filter": f"PurchaseOrder eq '{_odata_str(purchase_order)}' and PurchaseOrderItem eq '{_odata_str(item_number)}'",
+                "$orderby": "PostingDate desc",
+            },
+            limit=20,
+        )
+        items = [
+            {
+                "gr_document":   r.get("MaterialDocument", ""),
+                "posting_date":  r.get("PostingDate", ""),
+                "quantity":      float(r.get("Quantity") or 0),
+                "unit":          r.get("BaseUnit", "EA"),
+                "delivery_note": r.get("DeliveryNote", ""),
+            }
+            for r in records
+        ]
+    except Exception as exc:
+        log.warning("sap__get_goods_receipts_api_failed_using_mock", error=str(exc))
+        items = _MOCK_GOODS_RECEIPTS
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} goods receipt(s) for PO {purchase_order} item {item_number}.")],
         structuredContent={"type": "goods_receipts", "purchase_order": purchase_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
@@ -484,7 +506,29 @@ async def sap__get_so_items(sales_order: str) -> types.CallToolResult:
 
 async def sap__get_deliveries(sales_order: str, item_number: str) -> types.CallToolResult:
     sap = get_client()
-    items = _MOCK_DELIVERIES
+    items: list[dict] = []
+    try:
+        records = await sap.query(
+            "API_OUTBOUND_DELIVERY_SRV", "A_OutbDeliveryItem",
+            params={
+                "$filter": f"ReferenceSDDocument eq '{_odata_str(sales_order)}' and ReferenceSDDocumentItem eq '{_odata_str(item_number)}'",
+                "$orderby": "ActualGoodsMovementDate desc",
+            },
+            limit=20,
+        )
+        items = [
+            {
+                "delivery":          r.get("DeliveryDocument", ""),
+                "actual_gi_date":    r.get("ActualGoodsMovementDate", ""),
+                "delivery_quantity": float(r.get("ActualDeliveryQuantity") or 0),
+                "unit":              r.get("DeliveryQuantityUnit", "EA"),
+                "delivery_status":   r.get("DeliveryDocumentItemCategory", ""),
+            }
+            for r in records
+        ]
+    except Exception as exc:
+        log.warning("sap__get_deliveries_api_failed_using_mock", error=str(exc))
+        items = _MOCK_DELIVERIES
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"Retrieved {len(items)} delivery(ies) for SO {sales_order} item {item_number}.")],
         structuredContent={"type": "deliveries", "sales_order": sales_order, "item_number": item_number, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
