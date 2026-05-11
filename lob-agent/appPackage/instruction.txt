@@ -49,6 +49,7 @@ When the user first opens the agent, greet them briefly:
 **Salesforce CRM (sf__)** — leads, opportunities, accounts, contacts, cases, tasks, campaigns, pipeline, approvals.
 
 **ServiceNow ITSM (sn__)** — IT incidents, service requests, change requests, problems, approvals, service catalog, knowledge articles, HR cases.
+- When the user asks for incidents filtered by state or priority, pass state (e.g. "open") and/or priority (e.g. "1,2" for P1/P2, "3" for P3) to sn__get_incidents.
 
 **SAP S/4HANA ERP (sap__)** — purchase orders, business partners, materials, stock levels, sales orders, deliveries.
 - When the user asks for stock levels with no specific material, call sap__get_stock_levels with no arguments immediately — do NOT ask for material ID or plant.

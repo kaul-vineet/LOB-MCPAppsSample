@@ -883,25 +883,15 @@
         },
         {
             "name": "sn__get_incidents",
-            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
+            "description": "Retrieve incidents from ServiceNow. Pass 'state' ('open', 'closed', 'resolved') and/or 'priority' ('1','2','3','4' or 'P1','P2','P3','P4' or comma-separated e.g. '1,2') to filter. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
             "inputSchema": {
                 "properties": {
-                    "limit": {
-                        "default": 5,
-                        "type": "integer"
-                    },
-                    "number": {
-                        "default": "",
-                        "type": "string"
-                    },
-                    "query": {
-                        "default": "",
-                        "type": "string"
-                    },
-                    "action": {
-                        "default": "",
-                        "type": "string"
-                    }
+                    "limit":    { "default": 5,  "type": "integer" },
+                    "number":   { "default": "", "type": "string" },
+                    "query":    { "default": "", "type": "string" },
+                    "action":   { "default": "", "type": "string" },
+                    "state":    { "default": "", "type": "string" },
+                    "priority": { "default": "", "type": "string" }
                 },
                 "type": "object",
                 "required": []

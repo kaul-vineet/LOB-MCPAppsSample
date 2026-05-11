@@ -136,7 +136,35 @@ async def _fetch_requests(limit: int = 5) -> list:
 
 # ── Read tools ────────────────────────────────────────────────────────────────
 
-async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "", action: str = "") -> types.CallToolResult:
+_PRIORITY_NAMES = {"critical": "1", "high": "2", "moderate": "3", "low": "4"}
+
+
+def _build_incident_query(state: str = "", priority: str = "") -> str:
+    parts = []
+    if state:
+        s = state.lower()
+        if s in ("open", "active"):
+            parts.append("statein1,2,3")
+        elif s == "resolved":
+            parts.append("state=6")
+        elif s == "closed":
+            parts.append("state=7")
+    if priority:
+        nums = []
+        for p in priority.replace(", ", ",").split(","):
+            p = p.strip().lower().lstrip("p")
+            p = _PRIORITY_NAMES.get(p, p)
+            if p in ("1", "2", "3", "4"):
+                nums.append(p)
+        if len(nums) == 1:
+            parts.append(f"priority={nums[0]}")
+        elif len(nums) > 1:
+            parts.append(f"priorityin{','.join(nums)}")
+    parts.append("ORDERBYDESCsys_created_on")
+    return "^".join(parts)
+
+
+async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "", action: str = "", state: str = "", priority: str = "") -> types.CallToolResult:
     PROBLEM_FIELDS_LOCAL = INCIDENT_FIELDS
     if number:
         num = number.strip().upper()
@@ -182,7 +210,7 @@ async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "", a
         try:
             resp = await servicenow_request(
                 "GET", "/api/now/table/incident",
-                params={"sysparm_limit": limit, "sysparm_query": "ORDERBYDESCsys_created_on",
+                params={"sysparm_limit": limit, "sysparm_query": _build_incident_query(state, priority),
                         "sysparm_fields": PROBLEM_FIELDS_LOCAL, "sysparm_display_value": "true"},
             )
             records = resp.json().get("result", [])
