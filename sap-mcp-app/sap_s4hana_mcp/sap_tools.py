@@ -18,12 +18,14 @@ def _odata_str(value: str) -> str:
 
 
 # OData service + entity constants
-PO_SERVICE  = "API_PURCHASEORDER_PROCESS_SRV"
-PO_ENTITY   = "A_PurchaseOrder"
-BP_SERVICE  = "API_BUSINESS_PARTNER"
-BP_ENTITY   = "A_BusinessPartner"
-MAT_SERVICE = "API_PRODUCT_SRV"
-MAT_ENTITY  = "A_Product"
+PO_SERVICE    = "API_PURCHASEORDER_PROCESS_SRV"
+PO_ENTITY     = "A_PurchaseOrder"
+BP_SERVICE    = "API_BUSINESS_PARTNER"
+BP_ENTITY     = "A_BusinessPartner"
+MAT_SERVICE   = "API_PRODUCT_SRV"
+MAT_ENTITY    = "A_Product"
+STOCK_SERVICE = "API_MATERIAL_STOCK_SRV"
+STOCK_ENTITY  = "A_MatlStkInAcctMod"
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
@@ -385,7 +387,34 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
 
 async def sap__get_stock_levels(material_id: str = "", plant: str = "") -> types.CallToolResult:
     sap = get_client()
-    items = _MOCK_STOCK_LEVELS
+    items: list[dict] = []
+    try:
+        filters = []
+        if material_id:
+            filters.append(f"Material eq '{_odata_str(material_id)}'")
+        if plant:
+            filters.append(f"Plant eq '{_odata_str(plant)}'")
+        params: dict = {"$orderby": "Material"}
+        if filters:
+            params["$filter"] = " and ".join(filters)
+        records = await sap.query(STOCK_SERVICE, STOCK_ENTITY, limit=20, params=params)
+        items = [
+            {
+                "material":          r.get("Material", ""),
+                "plant":             r.get("Plant", ""),
+                "storage_location":  r.get("StorageLocation", ""),
+                "unrestricted":       float(r.get("UnrestrictedStockQty") or 0),
+                "quality_inspection": float(r.get("QltyInspectionStockQty") or r.get("MatlQltyInspectionStockQty") or 0),
+                "blocked":            float(r.get("BlockedStockQty") or 0),
+                "in_transit":         float(r.get("InTransitQty") or r.get("StockInTransitQuantity") or 0),
+                "unit":               r.get("MaterialBaseUnit", "EA"),
+            }
+            for r in records
+        ]
+    except Exception as exc:
+        log.warning("sap__get_stock_levels_api_failed_using_mock", error=str(exc))
+        items = _MOCK_STOCK_LEVELS
+
     label = f"for {material_id} at {plant}" if material_id and plant else "overview"
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=f"{len(items)} stock level(s) [{label}].")],
