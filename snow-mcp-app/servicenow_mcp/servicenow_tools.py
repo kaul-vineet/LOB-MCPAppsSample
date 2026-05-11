@@ -144,14 +144,15 @@ def _build_incident_query(state: str = "", priority: str = "") -> str:
     if state:
         s = state.lower()
         if s in ("open", "active"):
-            parts.append("statein1,2,3")
+            parts.append("stateIN1,2,3")
         elif s == "resolved":
             parts.append("state=6")
         elif s == "closed":
             parts.append("state=7")
     if priority:
         nums = []
-        for p in priority.replace(", ", ",").split(","):
+        # normalise separators: "P1 or P2", "P1, P2", "P1,P2" → ["p1","p2"]
+        for p in priority.replace(" or ", ",").replace(", ", ",").split(","):
             p = p.strip().lower().lstrip("p")
             p = _PRIORITY_NAMES.get(p, p)
             if p in ("1", "2", "3", "4"):
@@ -159,7 +160,7 @@ def _build_incident_query(state: str = "", priority: str = "") -> str:
         if len(nums) == 1:
             parts.append(f"priority={nums[0]}")
         elif len(nums) > 1:
-            parts.append(f"priorityin{','.join(nums)}")
+            parts.append(f"priorityIN{','.join(nums)}")
     parts.append("ORDERBYDESCsys_created_on")
     return "^".join(parts)
 
@@ -200,9 +201,11 @@ async def sn__get_incidents(limit: int = 5, number: str = "", query: str = "", a
         )
     if query:
         try:
+            filter_prefix = _build_incident_query(state, priority).replace("^ORDERBYDESCsys_created_on", "")
+            text_clause = f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}"
+            full_query = f"{filter_prefix}^{text_clause}^ORDERBYDESCsys_created_on" if filter_prefix else f"{text_clause}^ORDERBYDESCsys_created_on"
             records = await _text_search(
-                "incident", query, PROBLEM_FIELDS_LOCAL, limit,
-                f"short_descriptionLIKE{query}^ORdescriptionLIKE{query}^ORDERBYDESCsys_created_on",
+                "incident", query, PROBLEM_FIELDS_LOCAL, limit, full_query,
             )
         except Exception as e:
             return _error_result(f"Error searching incidents: {e}")
