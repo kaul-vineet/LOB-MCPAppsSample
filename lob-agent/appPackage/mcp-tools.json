@@ -179,6 +179,10 @@
                     "probability": {
                         "default": 0,
                         "type": "integer"
+                    },
+                    "account_name": {
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -848,11 +852,16 @@
         },
         {
             "name": "sf__show_create_form",
-            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign).",
+            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass entity name (lead/account/contact/opportunity/case/task/campaign). Pass prefill dict to pre-populate fields (e.g. {\"account_name\": \"GlobalFizz\", \"amount\": \"2000000\", \"stage\": \"Qualification\"}).",
             "inputSchema": {
                 "properties": {
                     "entity": {
                         "type": "string"
+                    },
+                    "prefill": {
+                        "additionalProperties": true,
+                        "default": null,
+                        "type": "object"
                     },
                     "fk_options": {
                         "additionalProperties": true,
@@ -874,7 +883,7 @@
         },
         {
             "name": "sn__get_incidents",
-            "description": "Get ServiceNow incidents. Pass number for exact lookup \u2192 opens edit form. Pass number + action=\"resolve\" \u2192 opens resolve form with resolution code picklist. Otherwise lists recent incidents.",
+            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5).",
             "inputSchema": {
                 "properties": {
                     "limit": {
@@ -890,11 +899,8 @@
                         "type": "string"
                     },
                     "action": {
-                        "type": "string",
-                        "enum": [
-                            "resolve"
-                        ],
-                        "description": "Pass \"resolve\" to open the resolve form instead of the edit form."
+                        "default": "",
+                        "type": "string"
                     }
                 },
                 "type": "object",
@@ -1206,7 +1212,7 @@
         },
         {
             "name": "sn__update_incident",
-            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, state (New, In Progress, On Hold, Resolved, Closed), work_note (appended as internal journal entry).",
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, work_note (appended as internal journal entry).",
             "inputSchema": {
                 "properties": {
                     "sys_id": {
@@ -1219,8 +1225,7 @@
                         "type": "string"
                     },
                     "state": {
-                        "type": "string",
-                        "description": "Incident state: New, In Progress, On Hold, Resolved, Closed"
+                        "type": "string"
                     },
                     "work_note": {
                         "type": "string"
@@ -1321,30 +1326,19 @@
         },
         {
             "name": "sn__resolve_incident",
-            "description": "Resolve a ServiceNow incident. Sets state to Resolved. close_code must be one of the valid SN resolution codes. close_notes defaults to \"Resolved\" if not specified.",
+            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes.",
             "inputSchema": {
                 "properties": {
                     "sys_id": {
                         "type": "string"
                     },
                     "close_code": {
-                        "type": "string",
-                        "enum": [
-                            "Solved (Permanently)",
-                            "Solved (Work Around)",
-                            "Solved Remotely (Permanently)",
-                            "Solved Remotely (Work Around)",
-                            "Not Solved (Not Reproducible)",
-                            "Not Solved (Too Costly)",
-                            "Closed/Resolved by Caller"
-                        ],
                         "default": "Solved (Permanently)",
-                        "description": "Resolution code \u2014 must be an exact match"
+                        "type": "string"
                     },
                     "close_notes": {
-                        "type": "string",
                         "default": "Resolved",
-                        "description": "Resolution notes (optional, defaults to Resolved)"
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -1783,20 +1777,13 @@
         },
         {
             "name": "sap__get_stock_levels",
-            "description": "Fetch stock levels for a material at a specific plant. Returns unrestricted, QI, blocked, and in-transit quantities per storage location.",
+            "description": "Fetch stock levels from SAP. Call with no arguments for an overview of all materials. Optionally pass material_id and plant to filter to a specific material.",
             "inputSchema": {
                 "properties": {
-                    "material_id": {
-                        "type": "string"
-                    },
-                    "plant": {
-                        "type": "string"
-                    }
+                    "material_id": { "type": "string", "default": "" },
+                    "plant":       { "type": "string", "default": "" }
                 },
-                "required": [
-                    "material_id",
-                    "plant"
-                ],
+                "required": [],
                 "type": "object"
             },
             "title": "Get stock levels",
@@ -1942,6 +1929,37 @@
                 "type": "object"
             },
             "title": "Add to list",
+            "_meta": {
+                "ui": {
+                    "resourceUri": "ui://widget/hubspot.html"
+                }
+            }
+        },
+        {
+            "name": "hs__create_list",
+            "description": "Create a new static HubSpot contact list by name.",
+            "inputSchema": {
+                "properties": {
+                    "list_name": { "type": "string" }
+                },
+                "required": ["list_name"],
+                "type": "object"
+            },
+            "title": "Create contact list",
+            "_meta": { "ui": { "resourceUri": "ui://widget/hubspot.html" } }
+        },
+        {
+            "name": "hs__add_company_to_list",
+            "description": "Add all contacts from a company to a HubSpot static list in one call. Creates the list if it does not exist. Pass company_name (e.g. 'GlobalFizz') and list_name (e.g. 'Summer Special Discount'). Resolves both by name automatically.",
+            "inputSchema": {
+                "properties": {
+                    "company_name": { "type": "string" },
+                    "list_name":    { "type": "string" }
+                },
+                "required": ["company_name", "list_name"],
+                "type": "object"
+            },
+            "title": "Add company contacts to list",
             "_meta": {
                 "ui": {
                     "resourceUri": "ui://widget/hubspot.html"
@@ -2865,7 +2883,24 @@
             "name": "ds__send_envelope_form",
             "description": "Use this when the user asks to send a DocuSign envelope or start a signing request. Opens the interactive envelope sending form.",
             "inputSchema": {
-                "properties": {},
+                "properties": {
+                    "recipient_name": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "recipient_email": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "template_name": {
+                        "default": "",
+                        "type": "string"
+                    },
+                    "subject": {
+                        "default": "",
+                        "type": "string"
+                    }
+                },
                 "type": "object",
                 "required": []
             },

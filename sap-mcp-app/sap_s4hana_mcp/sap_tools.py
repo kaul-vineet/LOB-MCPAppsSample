@@ -94,10 +94,7 @@ async def sap__get_purchase_orders(limit: int = 5) -> types.CallToolResult:
     if not items:
         summary = "No purchase orders found."
     else:
-        lines = [f"Retrieved {len(items)} purchase order(s):"]
-        for po in items:
-            lines.append(f"- PO {po['purchase_order']} | Supplier: {po['supplier']} | Org: {po['purchasing_org']} | Date: {po['order_date']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} purchase order(s) [sap]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -118,10 +115,7 @@ async def sap__get_business_partners(limit: int = 5) -> types.CallToolResult:
     if not items:
         summary = "No business partners found."
     else:
-        lines = [f"Retrieved {len(items)} business partner(s):"]
-        for bp in items:
-            lines.append(f"- {bp['id']} | {bp['name']} | {bp['organization']} | Category: {bp['category']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} business partner(s) [sap]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -167,10 +161,7 @@ async def sap__get_materials(material_id: str = "", limit: int = 5) -> types.Cal
     if not items:
         summary = "No materials found."
     else:
-        lines = [f"Retrieved {len(items)} material(s):"]
-        for m in items:
-            lines.append(f"- {m['product']} | Type: {m['product_type']} | Group: {m['product_group']} | Unit: {m['base_unit']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} material(s) [sap]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -392,11 +383,12 @@ async def sap__get_material_plant_data(material_id: str) -> types.CallToolResult
     )
 
 
-async def sap__get_stock_levels(material_id: str, plant: str) -> types.CallToolResult:
+async def sap__get_stock_levels(material_id: str = "", plant: str = "") -> types.CallToolResult:
     sap = get_client()
     items = _MOCK_STOCK_LEVELS
+    label = f"for {material_id} at {plant}" if material_id and plant else "overview"
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Retrieved {len(items)} stock level(s) for {material_id} at plant {plant}.")],
+        content=[types.TextContent(type="text", text=f"{len(items)} stock level(s) [{label}].")],
         structuredContent={"type": "stock_levels", "material_id": material_id, "plant": plant, "total": len(items), "items": items, "sandbox": sap.is_sandbox},
     )
 
@@ -424,10 +416,7 @@ async def sap__get_sales_orders(limit: int = 5) -> types.CallToolResult:
     if not items:
         summary = "No sales orders found."
     else:
-        lines = [f"Retrieved {len(items)} sales order(s):"]
-        for so in items:
-            lines.append(f"- SO {so['sales_order']} | {so['sold_to_party']} | {so['net_value']} {so['currency']} | {so['status']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} sales order(s) [sap]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,

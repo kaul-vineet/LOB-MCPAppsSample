@@ -41,13 +41,8 @@ def _mock_envelope_rows(envelopes: list[dict]) -> list[dict]:
 
 
 def _mock_list_response(rows: list[dict], label: str, data_type: str = "envelopes") -> types.CallToolResult:
-    summary_lines = [f"[demo] Found {len(rows)} {label}."]
-    for r in rows[:3]:
-        summary_lines.append(
-            f"  {r.get('statusEmoji', '')} {r.get('emailSubject', r.get('name', ''))} — {r.get('status', '')}"
-        )
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(summary_lines))],
+        content=[types.TextContent(type="text", text=f"{len(rows)} {label} [docusign].")],
         structuredContent={"type": data_type, "total": len(rows), "data": rows},
     )
 
@@ -189,9 +184,8 @@ async def ds__get_envelope_details(envelope_id: str) -> types.CallToolResult:
 async def ds__get_templates(count: int = 10) -> types.CallToolResult:
     if is_mock():
         rows = MOCK_TEMPLATES[:count]
-        lines = [f"[demo] Found {len(rows)} template(s)."] + [f"  {r['name']} ({r['templateId']})" for r in rows]
         return types.CallToolResult(
-            content=[types.TextContent(type="text", text="\n".join(lines))],
+            content=[types.TextContent(type="text", text=f"{len(rows)} template(s) [docusign].")],
             structuredContent={"type": "templates", "total": len(rows), "data": rows},
         )
     try:
@@ -370,10 +364,30 @@ async def ds__download_document(envelope_id: str, document_id: str = "combined")
         return _error_result(str(exc))
 
 
-async def ds__send_envelope_form() -> types.CallToolResult:
+async def ds__send_envelope_form(
+    recipient_name: str = "", recipient_email: str = "",
+    template_name: str = "", subject: str = "",
+) -> types.CallToolResult:
+    prefill: dict = {}
+    if recipient_name:  prefill["recipient_name"]  = recipient_name
+    if recipient_email: prefill["recipient_email"] = recipient_email
+    if subject:         prefill["subject"]          = subject
+    if template_name:
+        try:
+            from docusign_mcp.docusign_client import DocuSignClient
+            client = DocuSignClient()
+            templates = await client.get_templates(count=20)
+            match = next((t for t in templates if template_name.lower() in (t.get("name") or "").lower()), None)
+            if match:
+                prefill["template_id"] = match.get("templateId", "")
+        except Exception:
+            pass
+    structured: dict = {"type": "form", "entity": "send_envelope"}
+    if prefill:
+        structured["prefill"] = prefill
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="Opening envelope sending form. Fill in the recipient details and click Send.")],
-        structuredContent={"type": "form", "entity": "send_envelope"},
+        content=[types.TextContent(type="text", text="Opening envelope sending form.")],
+        structuredContent=structured,
     )
 
 

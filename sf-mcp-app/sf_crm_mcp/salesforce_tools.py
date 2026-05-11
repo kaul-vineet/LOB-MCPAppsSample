@@ -176,14 +176,8 @@ def _list_summary(entity_label: str, items: list[dict], entity_type: str,
                   cache_hit: bool = False, cached_at: str = "") -> str:
     if not items:
         return f"No {entity_label} found."
-    cols = _get_schema(entity_type).get("columns", [])
-    names = []
-    for item in items[:3]:
-        parts = [str(item.get(c.get("key", c["apiName"]), "")) for c in cols[:2] if c["apiName"] != "Id"]
-        names.append(" / ".join(p for p in parts if p))
-    more = f" (+{len(items) - 3} more)" if len(items) > 3 else ""
-    source = f"from cache ({_time_ago(cached_at)}) — use ↻ in widget to refresh" if cache_hit else "retrieved"
-    return f"{len(items)} {entity_label} {source} — {', '.join(names)}{more}. Widget below ↓"
+    source = f"cached ({_time_ago(cached_at)})" if cache_hit else "live"
+    return f"{len(items)} {entity_label} [{source}]."
 
 
 async def _fetch_leads()         -> list[dict]: return await _fetch_entity("Lead")
@@ -381,13 +375,18 @@ async def sf__get_opportunities(account_id: str = "", name: str = "", stage: str
 
 
 async def sf__create_opportunity(
-    name: str, stage: str, close_date: str, amount: float = 0.0, probability: int = 0,
+    name: str, stage: str, close_date: str, amount: float = 0.0,
+    probability: int = 0, account_name: str = "",
 ) -> types.CallToolResult:
     try:
         sf = get_client()
         data: dict = {"Name": name, "StageName": stage, "CloseDate": close_date}
         if amount:      data["Amount"] = amount
         if probability: data["Probability"] = probability
+        if account_name:
+            acct = await sf.query(f"SELECT Id FROM Account WHERE Name = '{_sq(account_name)}' LIMIT 1")
+            if acct:
+                data["AccountId"] = acct[0]["Id"]
         new_id = await sf.create("Opportunity", data)
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
@@ -889,27 +888,70 @@ async def sf__convert_lead(
     log.info("sf__convert_lead", lead_id=lead_id)
     try:
         sf = get_client()
-        results = await sf.invoke_action(
-            "convertLead",
-            [{"leadId": lead_id, "convertedStatus": converted_status, "doNotCreateOpportunity": not create_opportunity}],
+        # Fetch lead details for conversion
+        lead_records = await sf.query(
+            f"SELECT Id, FirstName, LastName, Company, Email, Phone, Title, "
+            f"LeadSource, AnnualRevenue, NumberOfEmployees "
+            f"FROM Lead WHERE Id = '{_sq(lead_id)}' LIMIT 1"
         )
-        result = results[0] if results else {}
-        account_id = result.get("accountId", "")
-        contact_id = result.get("contactId", "")
-        opp_id     = result.get("opportunityId", "")
+        if not lead_records:
+            return _error_result(f"Lead {lead_id} not found.")
+        lead = lead_records[0]
+
+        company     = lead.get("Company") or "Unknown Company"
+        first_name  = lead.get("FirstName") or ""
+        last_name   = lead.get("LastName") or "Unknown"
+        email       = lead.get("Email") or ""
+        phone       = lead.get("Phone") or ""
+        lead_source = lead.get("LeadSource") or ""
+
+        # 1. Find or create Account by company name
+        acct_records = await sf.query(
+            f"SELECT Id FROM Account WHERE Name = '{_sq(company)}' LIMIT 1"
+        )
+        if acct_records:
+            account_id = acct_records[0]["Id"]
+        else:
+            acct_data: dict = {"Name": company}
+            if lead_source: acct_data["LeadSource"] = lead_source
+            account_id = await sf.create("Account", acct_data)
+
+        # 2. Create Contact linked to Account
+        contact_data: dict = {"LastName": last_name, "AccountId": account_id}
+        if first_name: contact_data["FirstName"] = first_name
+        if email:      contact_data["Email"] = email
+        if phone:      contact_data["Phone"] = phone
+        if lead_source: contact_data["LeadSource"] = lead_source
+        contact_id = await sf.create("Contact", contact_data)
+
+        # 3. Optionally create Opportunity
+        opp_id = ""
+        if create_opportunity:
+            opp_data: dict = {
+                "Name": f"{company} — Converted",
+                "AccountId": account_id,
+                "StageName": "Qualification",
+                "CloseDate": "2025-12-31",
+            }
+            if lead_source: opp_data["LeadSource"] = lead_source
+            opp_id = await sf.create("Opportunity", opp_data)
+
+        # 4. Mark lead as converted (update Status — IsConverted is system-managed)
+        await sf.update("Lead", lead_id, {"Status": converted_status})
+
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
     except SalesforceAPIError as exc:
         return _error_result(f"Failed to convert lead: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error converting lead: {exc}")
+
     _cache_invalidate("leads")
     try: items = await _fetch_leads()
     except Exception: items = []
     cached_at = _cache_set("leads", items)
-    summary = f"Lead converted. Account: {account_id or 'existing'}, Contact: {contact_id or 'existing'}, Opportunity: {opp_id or 'not created'}. Widget below ↓"
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
+        content=[types.TextContent(type="text", text=f"Lead converted. Account: {account_id}, Contact: {contact_id}, Opportunity: {opp_id or 'not created'}.")],
         structuredContent={"type": "leads", "total": len(items), "items": items,
                            "_schema": _get_schema("Lead"), "_cache": {"hit": False, "cached_at": cached_at},
                            "_convertedId": lead_id, "_convert": {"accountId": account_id, "contactId": contact_id, "opportunityId": opp_id}},
@@ -920,10 +962,23 @@ async def sf__get_pipeline_dashboard() -> types.CallToolResult:
     log.info("sf__get_pipeline_dashboard")
     try:
         sf = get_client()
-        records = await sf.query(
+        stage_records = await sf.query(
             "SELECT StageName, COUNT(Id) cnt, SUM(Amount) amount "
             "FROM Opportunity WHERE IsClosed = false "
             "GROUP BY StageName ORDER BY StageName"
+        )
+        won_records = await sf.query(
+            "SELECT SUM(Amount) total FROM Opportunity "
+            "WHERE StageName = 'Closed Won' AND CloseDate = THIS_MONTH"
+        )
+        lost_records = await sf.query(
+            "SELECT SUM(Amount) total FROM Opportunity "
+            "WHERE StageName = 'Closed Lost' AND CloseDate = THIS_MONTH"
+        )
+        top_id_records = await sf.query(
+            "SELECT AccountId, SUM(Amount) amount "
+            "FROM Opportunity WHERE IsClosed = false AND AccountId != null "
+            "GROUP BY AccountId ORDER BY SUM(Amount) DESC LIMIT 5"
         )
     except SalesforceAuthError as exc:
         return _error_result(f"Salesforce authentication failed: {exc}")
@@ -931,15 +986,36 @@ async def sf__get_pipeline_dashboard() -> types.CallToolResult:
         return _error_result(f"Salesforce API error: {exc}")
     except Exception as exc:
         return _error_result(f"Unexpected error fetching pipeline: {exc}")
-    stages = [{"stage": r.get("StageName") or "", "count": r.get("cnt") or 0, "amount": r.get("amount") or 0.0} for r in records]
+
+    # Resolve account names in a second query
+    top_accounts = []
+    if top_id_records:
+        try:
+            acct_ids = [r["AccountId"] for r in top_id_records if r.get("AccountId")]
+            ids_clause = "', '".join(acct_ids)
+            name_records = await sf.query(f"SELECT Id, Name FROM Account WHERE Id IN ('{ids_clause}')")
+            name_map = {r["Id"]: r.get("Name", "") for r in name_records}
+            top_accounts = [
+                {"id": r.get("AccountId") or "", "name": name_map.get(r.get("AccountId"), ""), "amount": r.get("amount") or 0.0}
+                for r in top_id_records
+            ]
+        except Exception:
+            top_accounts = [{"id": r.get("AccountId") or "", "name": "", "amount": r.get("amount") or 0.0} for r in top_id_records]
+
+    stages = [{"stage": r.get("StageName") or "", "count": r.get("cnt") or 0, "amount": r.get("amount") or 0.0} for r in stage_records]
     total_amount = sum(s["amount"] for s in stages)
-    lines = [f"Pipeline dashboard — {len(stages)} stage(s), total ${total_amount:,.0f}:"]
-    for s in stages:
-        lines.append(f"  {s['stage']}: {s['count']} deal(s), ${s['amount']:,.0f}")
-    summary = "\n".join(lines) if stages else "No open opportunities."
+    closed_won  = (won_records[0].get("total")  or 0.0) if won_records  else 0.0
+    closed_lost = (lost_records[0].get("total") or 0.0) if lost_records else 0.0
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=summary)],
-        structuredContent={"type": "sales_dashboard", "total_amount": total_amount, "stages": stages},
+        content=[types.TextContent(type="text", text=f"Pipeline: {len(stages)} stage(s), ${total_amount:,.0f} total.")],
+        structuredContent={
+            "type": "sales_dashboard",
+            "pipeline_by_stage": stages,
+            "closed_won_this_month": closed_won,
+            "closed_lost_this_month": closed_lost,
+            "top_accounts": top_accounts,
+            "total_amount": total_amount,
+        },
     )
 
 
@@ -987,10 +1063,7 @@ async def sf__get_campaigns(campaign_id: str = "", refresh: bool = False) -> typ
     if not items:
         summary = "No campaigns found."
     else:
-        lines = [f"Retrieved {len(items)} campaign(s):"]
-        for c in items:
-            lines.append(f"- {c['name']} | {c['status']} | {c['type']} | leads: {c['num_leads']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} campaign(s) [salesforce]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent={"type": "campaigns", "total": len(items), "items": items,
@@ -1087,23 +1160,22 @@ async def sf__get_pending_approvals() -> types.CallToolResult:
     if not items:
         summary = "No pending approvals."
     else:
-        lines = [f"Retrieved {len(items)} pending approval(s):"]
-        for a in items:
-            lines.append(f"- {a['target_name'] or a['target_id']} | {a['status']}")
-        summary = "\n".join(lines)
+        summary = f"{len(items)} pending approval(s) [salesforce]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
     )
 
 
-async def sf__show_create_form(entity: str, fk_options: dict = None) -> types.CallToolResult:
+async def sf__show_create_form(entity: str, prefill: dict = None, fk_options: dict = None) -> types.CallToolResult:
     structured: dict = {"type": "form", "entity": entity}
+    if prefill:
+        structured["prefill"] = prefill
     if fk_options:
         structured["fkSelections"] = fk_options
     label = entity.replace("_", " ").title()
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text=f"Opening {label} creation form. Fill in the details and click Submit.")],
+        content=[types.TextContent(type="text", text=f"Opening {label} creation form.")],
         structuredContent=structured,
     )
 
@@ -1159,7 +1231,7 @@ _TOOL_SPECS_LIST = [
     {"name": "sf__create_campaign",       "description": "Create a new Salesforce Campaign. Required: name. Optional: status (Planned/Active/Completed/Aborted), type, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD).", "handler": sf__create_campaign},
     {"name": "sf__update_campaign",       "description": "Update a Salesforce Campaign. Required: campaign_id. Optional: name, status, type, start_date, end_date.", "handler": sf__update_campaign},
     {"name": "sf__get_pending_approvals", "description": "Get pending Salesforce approval requests assigned to the current user. Returns pending ProcessInstance workitems requiring action.", "handler": sf__get_pending_approvals},
-    {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign).", "handler": sf__show_create_form},
+    {"name": "sf__show_create_form",      "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form — do NOT call sf__create_lead or other direct create tools. Pass entity name (lead/account/contact/opportunity/case/task/campaign). Pass prefill dict to pre-populate fields (e.g. {\"account_name\": \"GlobalFizz\", \"amount\": \"2000000\", \"stage\": \"Qualification\"}).", "handler": sf__show_create_form},
 ]
 
 PROMPT_SPECS = [

@@ -133,14 +133,7 @@ async def hs__get_emails() -> types.CallToolResult:
         return _error_result(f"Unexpected error fetching emails: {exc}")
 
     structured = {"type": "emails", "total": len(items), "items": items}
-    if not items:
-        summary = "No marketing emails found."
-    else:
-        lines = [f"Retrieved {len(items)} marketing email(s):"]
-        for em in items:
-            s = em.get("stats", {})
-            lines.append(f"- {em['name']} | {em['status']} | Sent: {s.get('sent',0)} | Opened: {s.get('opened',0)} | Clicked: {s.get('clicked',0)}")
-        summary = "\n".join(lines)
+    summary = "No marketing emails found." if not items else f"{len(items)} email(s) [hubspot]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -267,11 +260,8 @@ async def hs__get_contacts(id: str = "") -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch contacts: {exc}")
 
-    lines = [f"Found {len(items)} contact(s):"]
-    for c in items:
-        lines.append(f"- {c['firstname']} {c['lastname']} | {c['email']} | Company: {c['company']} | Stage: {c['lifecyclestage']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(items)} contact(s) [hubspot].")],
         structuredContent={"type": "contacts", "total": len(items), "items": items},
     )
 
@@ -372,11 +362,8 @@ async def hs__get_deals(id: str = "") -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch deals: {exc}")
 
-    lines = [f"Found {len(items)} deal(s):"]
-    for d in items:
-        lines.append(f"- {d['dealname']} | Stage: {d['dealstage']} | Amount: {d['amount']} | Close: {d['closedate']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(items)} deal(s) [hubspot].")],
         structuredContent={"type": "deals", "total": len(items), "items": items},
     )
 
@@ -496,11 +483,8 @@ async def hs__get_companies(id: str = "") -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch companies: {exc}")
 
-    lines = [f"Found {len(items)} company(ies):"]
-    for c in items:
-        lines.append(f"- {c['name']} | {c['domain']} | {c['city']} | {c['industry']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(items)} company(ies) [hubspot].")],
         structuredContent={"type": "companies", "total": len(items), "items": items},
     )
 
@@ -600,11 +584,8 @@ async def hs__get_tickets(id: str = "") -> types.CallToolResult:
     except Exception as exc:
         return _error_result(f"Failed to fetch tickets: {exc}")
 
-    lines = [f"Found {len(items)} ticket(s):"]
-    for t in items:
-        lines.append(f"- {t['subject']} | Status: {t['status']} | Priority: {t['priority']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(items)} ticket(s) [hubspot].")],
         structuredContent={"type": "tickets", "total": len(items), "items": items},
     )
 
@@ -846,6 +827,65 @@ async def hs__get_ticket_notes(ticket_id: str) -> types.CallToolResult:
 
 
 
+async def hs__create_list(list_name: str) -> types.CallToolResult:
+    try:
+        client = get_client()
+        result = await client.create_list(list_name)
+        list_id = str(result.get("listId") or result.get("id") or "")
+        items = await _fetch_lists()
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to create list: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error: {exc}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"List '{list_name}' created (id: {list_id}).")],
+        structuredContent={"type": "lists", "total": len(items), "items": items, "_createdId": list_id},
+    )
+
+
+async def hs__add_company_to_list(company_name: str, list_name: str) -> types.CallToolResult:
+    try:
+        client = get_client()
+
+        # 1. Find company by name
+        companies = await _fetch_companies()
+        company = next((c for c in companies if company_name.lower() in c["name"].lower()), None)
+        if not company:
+            return _error_result(f"No company found matching '{company_name}'.")
+
+        # 2. Get all contact IDs for the company
+        contact_ids = await client.get_associated_ids("companies", company["id"], "contacts")
+        if not contact_ids:
+            return _error_result(f"No contacts found for '{company['name']}'.")
+
+        # 3. Find list by name — create it if it doesn't exist
+        lists = await _fetch_lists()
+        lst = next((l for l in lists if list_name.lower() in l["name"].lower()), None)
+        if not lst:
+            result = await client.create_list(list_name)
+            lst = {"id": str(result.get("listId") or result.get("id") or ""), "name": list_name}
+
+        # 4. Bulk add all contacts in one call
+        await client.add_to_list(lst["id"], [int(i) for i in contact_ids])
+
+        # 5. Return updated list membership
+        items, list_name_resolved = await _fetch_list_contacts(lst["id"])
+    except HubSpotAuthError as exc:
+        return _error_result(f"HubSpot authentication failed: {exc}")
+    except HubSpotAPIError as exc:
+        return _error_result(f"Failed to add contacts to list: {exc}")
+    except Exception as exc:
+        return _error_result(f"Unexpected error: {exc}")
+
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=f"Added {len(contact_ids)} contact(s) from '{company['name']}' to '{list_name_resolved}'.")],
+        structuredContent={"type": "list_contacts", "list_id": lst["id"], "list_name": list_name_resolved, "total": len(items), "items": items},
+    )
+
+
 # ── Prompt handlers ───────────────────────────────────────────────────────────
 
 def show_marketing_prompt() -> list[PromptMessage]:
@@ -879,6 +919,16 @@ _TOOL_SPECS_LIST = [
         "name": "hs__add_to_list",
         "description": "Add a contact to a static list by email. Called by the widget.",
         "handler": hs__add_to_list,
+    },
+    {
+        "name": "hs__create_list",
+        "description": "Create a new static HubSpot contact list by name.",
+        "handler": hs__create_list,
+    },
+    {
+        "name": "hs__add_company_to_list",
+        "description": "Add all contacts from a company to a HubSpot static list in one call. Creates the list if it does not exist. Pass company_name (e.g. 'GlobalFizz') and list_name (e.g. 'Summer Special Discount'). Resolves both by name automatically.",
+        "handler": hs__add_company_to_list,
     },
     {
         "name": "hs__remove_from_list",

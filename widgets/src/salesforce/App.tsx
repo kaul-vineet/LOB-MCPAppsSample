@@ -373,36 +373,57 @@ function AccountsView({ items: initItems, callTool, toast, theme, cacheInfo: ini
                 <TableRow>
                   <TableCell colSpan={7} style={{ padding: 0, background: theme === 'dark' ? '#142a50' : '#f8f9fb' }}>
                     {loadingChildren.has(a.id) ? <div style={{ padding: '12px 28px' }}><Spinner size="tiny" label="Loading…" /></div> : (
-                      <div style={{ padding: '8px 28px 12px', display: 'flex', gap: '24px', overflowX: 'auto' }}>
+                      <div style={{ padding: '10px 16px 14px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {/* Contacts */}
-                        <div style={{ flex: '0 0 220px', minWidth: '220px' }}>
-                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Contacts</div>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                            <tbody>
-                              {(childContacts[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
-                                : (childContacts[a.id] || []).map((c: any) => <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{c.first_name} {c.last_name}</td><td style={D_CELL}>{c.title || '—'}</td><td style={D_CELL}>{c.email || '—'}</td></tr>)}
-                            </tbody>
-                          </table>
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px', paddingBottom: '4px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>👥 Contacts</span>
+                            <span style={{ fontWeight: 400, fontSize: '10px' }}>({(childContacts[a.id] || []).length})</span>
+                          </div>
+                          {(childContacts[a.id] || []).length === 0
+                            ? <div style={{ color: t.textWeak, fontSize: '12px', padding: '2px 0' }}>No contacts</div>
+                            : (childContacts[a.id] || []).map((c: any) => (
+                              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '160px 130px 1fr 110px', gap: '8px', padding: '5px 0', borderBottom: `1px solid ${t.border}`, fontSize: '12px', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 500, color: t.text }}>{c.first_name} {c.last_name}</span>
+                                <span style={{ color: t.textWeak }}>{c.title || '—'}</span>
+                                <span style={{ color: t.brand }}>{c.email || '—'}</span>
+                                <span style={{ color: t.textWeak }}>{c.phone || '—'}</span>
+                              </div>
+                            ))}
                         </div>
                         {/* Opportunities */}
-                        <div style={{ flex: '0 0 260px', minWidth: '260px' }}>
-                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Opportunities</div>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                            <tbody>
-                              {(childOpps[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
-                                : (childOpps[a.id] || []).map((o: any) => <tr key={o.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{o.name}</td><td style={D_CELL}>{o.stage || '—'}</td><td style={{ ...D_CELL, fontWeight: 500 }}>{fmt$(o.amount)}</td></tr>)}
-                            </tbody>
-                          </table>
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px', paddingBottom: '4px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>💰 Opportunities</span>
+                            <span style={{ fontWeight: 400, fontSize: '10px' }}>({(childOpps[a.id] || []).length})</span>
+                          </div>
+                          {(childOpps[a.id] || []).length === 0
+                            ? <div style={{ color: t.textWeak, fontSize: '12px', padding: '2px 0' }}>No opportunities</div>
+                            : (childOpps[a.id] || []).map((o: any) => (
+                              <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 90px 100px', gap: '8px', padding: '5px 0', borderBottom: `1px solid ${t.border}`, fontSize: '12px', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 500, color: t.text }}>{o.name}</span>
+                                <StatusPill status={o.stage || '—'} theme={theme} />
+                                <span style={{ fontWeight: 600, color: t.brand }}>{fmt$(o.amount)}</span>
+                                <span style={{ color: t.textWeak }}>{o.close_date || '—'}</span>
+                              </div>
+                            ))}
                         </div>
                         {/* Cases */}
-                        <div style={{ flex: '0 0 260px', minWidth: '260px' }}>
-                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px' }}>Cases</div>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                            <tbody>
-                              {(childCases[a.id] || []).length === 0 ? <tr><td style={{ color: t.textWeak, padding: '4px 0' }}>None</td></tr>
-                                : (childCases[a.id] || []).map((c: any) => <tr key={c.id} style={{ borderBottom: `1px solid ${t.border}` }}><td style={D_CELL}>{c.subject}</td><td style={D_CELL}><StatusPill status={c.status} theme={theme} /></td><td style={D_CELL}><StatusPill status={c.priority} theme={theme} /></td></tr>)}
-                            </tbody>
-                          </table>
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: t.textWeak, marginBottom: '6px', paddingBottom: '4px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>🎫 Cases</span>
+                            <span style={{ fontWeight: 400, fontSize: '10px' }}>({(childCases[a.id] || []).length})</span>
+                          </div>
+                          {(childCases[a.id] || []).length === 0
+                            ? <div style={{ color: t.textWeak, fontSize: '12px', padding: '2px 0' }}>No cases</div>
+                            : (childCases[a.id] || []).map((c: any) => (
+                              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 80px', gap: '8px', padding: '5px 0', borderBottom: `1px solid ${t.border}`, fontSize: '12px', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 500, color: t.text }}>{c.subject}</span>
+                                <StatusPill status={c.status} theme={theme} />
+                                <StatusPill status={c.priority} theme={theme} />
+                                <span style={{ color: t.textWeak, fontSize: '11px' }}>{c.case_number || c.id?.slice(-6) || '—'}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}
@@ -430,7 +451,7 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [converting, setConverting] = useState<string | null>(null);
+  const [oppFormCompany, setOppFormCompany] = useState<string | null>(null);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [form, setForm] = useState({ first_name: '', last_name: '', company: '', email: '', phone: '', status: '', lead_source: '' });
@@ -461,16 +482,7 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
     finally { setSaving(false); }
   };
 
-  const handleConvert = async (leadId: string, leadName: string) => {
-    setConverting(leadId);
-    try {
-      const res = await callTool('sf__convert_lead', { lead_id: leadId });
-      const conv = res?._convert || {};
-      toast(`✓ ${leadName} converted${conv.accountId ? ' → Account created' : ''}${conv.opportunityId ? ' + Opportunity' : ''}`);
-      if (res?.items) { setLocalItems(res.items); setCacheInfo(res._cache); }
-    } catch (e: any) { toast(e.message || 'Convert failed', 'error'); }
-    finally { setConverting(null); }
-  };
+  const handleConvert = (company: string) => { setOppFormCompany(company); };
 
   useEffect(() => { if (lastSavedId) { const x = setTimeout(() => setLastSavedId(null), 1600); return () => clearTimeout(x); } }, [lastSavedId]);
 
@@ -488,7 +500,16 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
   return (
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="👤" title="Leads" count={localItems.length} brand={t.brand} onNew={openCreate} newLabel="New Lead" theme={theme} cacheInfo={cacheInfo} onRefresh={handleRefresh} refreshing={refreshing} />
-      <Table size="small" style={{ borderCollapse: 'collapse' }}>
+      {oppFormCompany && (
+        <div>
+          <div style={{ padding: '6px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: '8px', background: theme === 'dark' ? '#1a2a3a' : '#f4f6f8' }}>
+            <button onClick={() => setOppFormCompany(null)} style={{ background: 'none', border: 'none', color: t.brand, cursor: 'pointer', fontSize: '12px', fontWeight: 600, padding: 0 }}>← Back to Leads</button>
+            <span style={{ fontSize: '12px', color: t.textWeak }}>· New Opportunity — {oppFormCompany}</span>
+          </div>
+          <FormView entity="opportunity" prefill={{ account_name: oppFormCompany, stage: 'Qualification' }} callTool={callTool} toast={toast} theme={theme} />
+        </div>
+      )}
+      {!oppFormCompany && <Table size="small" style={{ borderCollapse: 'collapse' }}>
         <TableHeader>
           <TableRow style={{ background: t.headerBg }}>
             <TableHeaderCell style={{ ...H_CELL, width: 28, color: t.textWeak }} />
@@ -504,15 +525,15 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
                 <TableCell style={{ ...D_CELL, width: 28 }}><ExpandToggle expanded={expandedLeadId === l.id} onClick={() => setExpandedLeadId(p => p === l.id ? null : l.id)} theme={theme} /></TableCell>
                 <TableCell style={D_CELL}>{l.first_name} {l.last_name}</TableCell>
                 <TableCell style={D_CELL}>{l.company || '—'}</TableCell>
-                <TableCell style={D_CELL}><StatusPill status={l.status} theme={theme} /></TableCell>
+                <TableCell style={{ ...D_CELL, maxWidth: 90 }}><StatusPill status={(l.status || '').split(' - ').pop() || l.status} theme={theme} /></TableCell>
                 <TableCell style={D_CELL}>{l.lead_source || '—'}</TableCell>
                 <TableCell style={D_CELL}>{l.email || '—'}</TableCell>
-                <TableCell style={{ ...D_CELL, width: 100 }}>
+                <TableCell style={{ ...D_CELL, width: 110 }}>
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <button title="Edit" onClick={() => openEdit(l)} className="slds-edit-btn" style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer', color: t.textWeak, fontSize: '14px', padding: 0 }}>✏️</button>
-                    <button title="Convert" onClick={() => handleConvert(l.id, `${l.first_name} ${l.last_name}`)} disabled={converting === l.id}
+                    <button title="Convert to Opportunity" onClick={() => handleConvert(l.company || '')}
                       style={{ height: '28px', padding: '0 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, borderRadius: '4px', background: 'transparent', cursor: 'pointer', color: t.success, fontSize: '11px', fontWeight: 600 }}>
-                      {converting === l.id ? '…' : '⇄ Convert'}
+                      → Opportunity
                     </button>
                   </div>
                 </TableCell>
@@ -540,7 +561,7 @@ function LeadsView({ items: initItems, callTool, toast, theme, cacheInfo: initCa
             </React.Fragment>
           ))}
         </TableBody>
-      </Table>
+      </Table>}
       <SldsFooter theme={theme} />
     </div>
   );
@@ -1127,7 +1148,7 @@ function SalesDashboardView({ data, theme }: { data: SalesDashboardData; theme: 
     <div className={styles.card} style={{ border: `1px solid ${t.border}` }}>
       <ViewHeader icon="📊" title="Sales Dashboard" count={0} brand={t.brand} theme={theme} />
       <div style={{ padding: '16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           {[
             { label: 'Closed Won', value: fmt$(data.closed_won_this_month), color: '#2E844A' },
             { label: 'Closed Lost', value: fmt$(data.closed_lost_this_month), color: '#BA0517' },
@@ -1247,8 +1268,8 @@ const FORM_DEFS: Record<string, { label: string; key: string; required?: boolean
   ],
 };
 
-const FORM_CREATE_TOOL: Record<string, string> = { lead: 'create_lead', account: 'create_account', contact: 'create_contact', opportunity: 'create_opportunity', case: 'create_case', task: 'create_task', campaign: 'create_campaign' };
-const FORM_UPDATE_TOOL: Record<string, string> = { lead: 'update_lead', account: 'update_account', contact: 'update_contact', opportunity: 'update_opportunity', case: 'update_case', task: 'update_task', campaign: 'update_campaign' };
+const FORM_CREATE_TOOL: Record<string, string> = { lead: 'sf__create_lead', account: 'sf__create_account', contact: 'sf__create_contact', opportunity: 'sf__create_opportunity', case: 'sf__create_case', task: 'sf__create_task', campaign: 'sf__create_campaign' };
+const FORM_UPDATE_TOOL: Record<string, string> = { lead: 'sf__update_lead', account: 'sf__update_account', contact: 'sf__update_contact', opportunity: 'sf__update_opportunity', case: 'sf__update_case', task: 'sf__update_task', campaign: 'sf__update_campaign' };
 const FORM_ID_PARAM: Record<string, string>    = { lead: 'lead_id', account: 'account_id', contact: 'contact_id', opportunity: 'opportunity_id', case: 'case_id', task: 'task_id', campaign: 'campaign_id' };
 const FORM_ICONS: Record<string, string> = { lead: '👤', account: '🏢', contact: '👥', opportunity: '💰', case: '🎫', task: '✅', campaign: '📣' };
 

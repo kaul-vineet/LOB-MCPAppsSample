@@ -220,6 +220,20 @@ class HubSpotClient:
         )
         self._raise_for_error(resp, f"update list {list_id}")
 
+    async def create_list(self, name: str) -> dict:
+        """Create a new static contact list. Returns the created list object."""
+        resp = await self._request(
+            "POST",
+            "/crm/v3/lists",
+            json_body={
+                "name": name,
+                "objectTypeId": "0-1",
+                "processingType": "MANUAL",
+            },
+        )
+        self._raise_for_error(resp, f"create list '{name}'")
+        return resp.json()
+
     # ── Lists ─────────────────────────────────────────────────────────────────
 
     async def list_lists(self, limit: int = 10) -> list[dict]:
