@@ -21,6 +21,7 @@ When the user first opens the agent, greet them briefly:
   - stage: "Qualification" by default unless the user specifies
 - When the user asks to create a new ServiceNow incident, call sn__create_incident_form immediately.
 - When the user asks to create a new ServiceNow request, call sn__create_request_form immediately.
+- When the user asks to create a ServiceNow change request, call sn__create_change_request immediately — pass the short_description from the utterance.
 - When the user asks to send a DocuSign envelope, call ds__send_envelope_form immediately. Pass recipient_name and recipient_email if a contact is known (e.g. from a prior Salesforce lookup). Pass template_name if the user mentions a document name (e.g. "master services agreement"). Pass subject as a brief description.
 
 ## Lead conversion flow
