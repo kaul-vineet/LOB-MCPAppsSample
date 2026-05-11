@@ -108,11 +108,11 @@
         },
         {
             "name": "sf__show_create_form",
-            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass the entity name (lead/account/contact/opportunity/case/task/campaign)."
+            "description": "Use this when the user asks to create a new Salesforce lead, account, contact, opportunity, case, task, or campaign. Opens the interactive creation form \u2014 do NOT call sf__create_lead or other direct create tools. Pass entity name (lead/account/contact/opportunity/case/task/campaign). Pass prefill dict to pre-populate fields (e.g. {\"account_name\": \"GlobalFizz\", \"amount\": \"2000000\", \"stage\": \"Qualification\"})."
         },
         {
             "name": "sn__get_incidents",
-            "description": "Get ServiceNow incidents. Pass number for exact lookup \u2192 opens edit form. Pass number + action=\"resolve\" \u2192 opens resolve form with resolution code picklist. Otherwise lists recent incidents."
+            "description": "Retrieve incidents from ServiceNow. Pass 'number' (e.g. INC0010001) to open the edit form for that incident. Pass 'query' to search by text. No params returns the latest 'limit' incidents (default 5)."
         },
         {
             "name": "sn__get_requests",
@@ -160,7 +160,7 @@
         },
         {
             "name": "sn__update_incident",
-            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, state (New, In Progress, On Hold, Resolved, Closed), work_note (appended as internal journal entry)."
+            "description": "Update an existing incident in ServiceNow. Requires sys_id. Editable fields: description, priority, work_note (appended as internal journal entry)."
         },
         {
             "name": "sn__update_request",
@@ -176,7 +176,7 @@
         },
         {
             "name": "sn__resolve_incident",
-            "description": "Resolve a ServiceNow incident. Sets state to Resolved. close_code must be one of the valid SN resolution codes. close_notes defaults to \"Resolved\" if not specified."
+            "description": "Resolve an incident in ServiceNow by setting state to Resolved. Requires close_code and close_notes."
         },
         {
             "name": "sn__create_incident_form",

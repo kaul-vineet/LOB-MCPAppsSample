@@ -2586,24 +2586,14 @@
         },
         {
             "name": "ft__get_airport_departures",
-            "description": "Retrieve flights departing from an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow). Date range must not exceed 1 day.",
+            "description": "Retrieve flights departing from an airport. airport must be an ICAO code (e.g. 'EDDF' for Frankfurt). begin_date and end_date are optional — defaults to today if omitted.",
             "inputSchema": {
                 "properties": {
-                    "airport": {
-                        "type": "string"
-                    },
-                    "begin_date": {
-                        "type": "string"
-                    },
-                    "end_date": {
-                        "type": "string"
-                    }
+                    "airport":     { "type": "string" },
+                    "begin_date":  { "type": "string", "default": "" },
+                    "end_date":    { "type": "string", "default": "" }
                 },
-                "required": [
-                    "airport",
-                    "begin_date",
-                    "end_date"
-                ],
+                "required": ["airport"],
                 "type": "object"
             },
             "title": "Get airport departures",
@@ -2615,24 +2605,14 @@
         },
         {
             "name": "ft__get_airport_arrivals",
-            "description": "Retrieve flights arriving at an airport within a date range. airport must be an ICAO airport code (e.g. 'EGLL' for Heathrow). Date range must not exceed 1 day. Use yesterday's date \u2014 same-day arrival data is not yet available.",
+            "description": "Retrieve flights arriving at an airport. airport must be an ICAO code (e.g. 'EGLL' for Heathrow). begin_date and end_date are optional \u2014 defaults to today if omitted.",
             "inputSchema": {
                 "properties": {
-                    "airport": {
-                        "type": "string"
-                    },
-                    "begin_date": {
-                        "type": "string"
-                    },
-                    "end_date": {
-                        "type": "string"
-                    }
+                    "airport":    { "type": "string" },
+                    "begin_date": { "type": "string", "default": "" },
+                    "end_date":   { "type": "string", "default": "" }
                 },
-                "required": [
-                    "airport",
-                    "begin_date",
-                    "end_date"
-                ],
+                "required": ["airport"],
                 "type": "object"
             },
             "title": "Get airport arrivals",

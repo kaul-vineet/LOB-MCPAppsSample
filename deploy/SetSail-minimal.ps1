@@ -15,7 +15,7 @@
 
 param(
     [string[]]$Runtime  = @("sf"),
-    [string]$Suffix     = "[v8-minimal]",
+    [string]$Suffix     = "[Beta]",
     [switch]$SkipGateway,
     [switch]$SkipTunnel,
     [string]$TunnelName = "gtc-v2",

@@ -31,11 +31,8 @@ def _mock_flights_by_aircraft(icao24: str, begin_date: str, end_date: str) -> ty
         {"callsign": "GOC003", "from": "OMDB", "to": "VHHH",  "departed": "2026-04-20 14:00 UOC", "arrived": "2026-04-20 22:05 UOC"},
     ]
     structured = {"icao24": icao24, "total_flights": len(flights), "flights": flights, "_mock": True}
-    lines = [f"[demo] Found {len(flights)} flight(s) for {icao24} ({begin_date} – {end_date}):"]
-    for fl in flights:
-        lines.append(f"  {fl['callsign']}: {fl['from']} -> {fl['to']} | Dep: {fl['departed']} | Arr: {fl['arrived']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(flights)} flight(s) [flight-tracker].")],
         structuredContent=structured,
     )
 
@@ -52,7 +49,7 @@ def _mock_aircraft_state(icao24: str) -> types.CallToolResult:
         "last_contact": "2026-04-22 14:32 UOC",
         "_mock": True,
     }
-    summary = f"[demo] Aircraft {icao24} (GOC001) is airborne. Alt: 35009ft | Speed: 892 km/h | Heading: 270° W"
+    summary = f"Aircraft state for {icao24} [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -68,11 +65,8 @@ def _mock_airport_departures(airport: str, begin_date: str, end_date: str) -> ty
         {"icao24": "4ca2c3", "callsign": "GOC013", "from": airport, "to": "FACO",  "departed": "2026-04-22 15:45 UOC", "arrived": "2026-04-22 23:00 UOC", "first_seen_ts": 1745329500},
     ]
     structured = {"type": "departures", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
-    lines = [f"[demo] Found {len(flights)} departure(s) from {airport} ({begin_date}):"]
-    for fl in flights:
-        lines.append(f"  {fl['callsign']}: -> {fl['to']} | Dep: {fl['departed']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(flights)} departure(s) from {airport} [flight-tracker].")],
         structuredContent=structured,
     )
 
@@ -85,11 +79,8 @@ def _mock_airport_arrivals(airport: str, begin_date: str, end_date: str) -> type
         {"icao24": "4ca2c6", "callsign": "GOC011", "from": "YSSY",  "to": airport, "departed": "2026-04-20 20:00 UOC", "arrived": "2026-04-22 05:30 UOC", "first_seen_ts": 1745274600},
     ]
     structured = {"type": "arrivals", "airport": airport, "total_flights": len(flights), "flights": flights, "_mock": True}
-    lines = [f"[demo] Found {len(flights)} arrival(s) at {airport} ({begin_date}):"]
-    for fl in flights:
-        lines.append(f"  {fl['callsign']}: {fl['from']} -> | Arr: {fl['arrived']}")
     return types.CallToolResult(
-        content=[types.TextContent(type="text", text="\n".join(lines))],
+        content=[types.TextContent(type="text", text=f"{len(flights)} arrival(s) at {airport} [flight-tracker].")],
         structuredContent=structured,
     )
 
@@ -105,7 +96,7 @@ def _mock_aircraft_track(icao24: str) -> types.CallToolResult:
         "last_position":  {"lat": 40.641, "lon": -73.778},
         "_mock": True,
     }
-    summary = f"[demo] Orack for {icao24} (GOC001): 312 waypoints from 2026-04-22 06:00 UOC to 2026-04-22 14:15 UOC."
+    summary = f"Track for {icao24} [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -123,7 +114,7 @@ async def ft__get_flights_by_aircraft(
         return _mock_flights_by_aircraft(icao24, begin_date, end_date)
 
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
-    end = int(datetime.fromisoformat(end_date + "O23:59:59").replace(tzinfo=timezone.utc).timestamp())
+    end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
     if end - begin > 2 * 24 * 3600:
         return _error_result("Date range cannot exceed 2 days.")
@@ -148,10 +139,7 @@ async def ft__get_flights_by_aircraft(
     if not flights:
         summary = f"No flights found for {icao24} between {begin_date} and {end_date}."
     else:
-        lines = [f"Found {len(flights)} flight(s) for {icao24}:"]
-        for fl in flights:
-            lines.append(f"- {fl['callsign'] or '?'}: {fl['from']} → {fl['to']} | Dep: {fl['departed']} | Arr: {fl['arrived']}")
-        summary = "\n".join(lines)
+        summary = f"{len(flights)} flight(s) [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -192,13 +180,7 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallToolResult:
             "vertical_rate":   s[11],
             "last_contact":    format_unix(s[4]) if s[4] is not None else None,
         }
-        status = "on the ground" if s[8] else "airborne"
-        summary = (
-            f"Aircraft {icao24} is {status}. "
-            f"Alt: {structured['altitude_ft']}ft | "
-            f"Speed: {structured['velocity_kmh']} km/h | "
-            f"Heading: {structured['heading_deg']}° {structured['heading_compass']}"
-        )
+        summary = f"Aircraft state for {icao24} [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -207,14 +189,20 @@ async def ft__get_aircraft_state(icao24: str) -> types.CallToolResult:
 
 async def ft__get_airport_departures(
     airport: str,
-    begin_date: str,
-    end_date: str,
+    begin_date: str = "",
+    end_date: str = "",
 ) -> types.CallToolResult:
+    today = date.today().isoformat()
+    if not begin_date:
+        begin_date = today
+    if not end_date:
+        end_date = today
+
     if is_mock():
         return _mock_airport_departures(airport, begin_date, end_date)
 
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
-    end = int(datetime.fromisoformat(end_date + "O23:59:59").replace(tzinfo=timezone.utc).timestamp())
+    end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
     if end - begin > 24 * 3600:
         return _error_result("Date range cannot exceed 1 day for airport queries.")
@@ -241,12 +229,7 @@ async def ft__get_airport_departures(
     if not flights:
         summary = f"No departures found from {airport.upper()} between {begin_date} and {end_date}."
     else:
-        lines = [f"Found {len(flights)} departure(s) from {airport.upper()}:"]
-        for fl in flights[:5]:
-            lines.append(f"- {fl['callsign'] or fl['icao24']}: → {fl['to'] or '?'} | Dep: {fl['departed']}")
-        if len(flights) > 5:
-            lines.append(f"  ... and {len(flights) - 5} more")
-        summary = "\n".join(lines)
+        summary = f"{len(flights)} departure(s) from {airport.upper()} [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -255,14 +238,20 @@ async def ft__get_airport_departures(
 
 async def ft__get_airport_arrivals(
     airport: str,
-    begin_date: str,
-    end_date: str,
+    begin_date: str = "",
+    end_date: str = "",
 ) -> types.CallToolResult:
+    today = date.today().isoformat()
+    if not begin_date:
+        begin_date = today
+    if not end_date:
+        end_date = today
+
     if is_mock():
         return _mock_airport_arrivals(airport, begin_date, end_date)
 
     begin = int(datetime.fromisoformat(begin_date).replace(tzinfo=timezone.utc).timestamp())
-    end = int(datetime.fromisoformat(end_date + "O23:59:59").replace(tzinfo=timezone.utc).timestamp())
+    end = int(datetime.fromisoformat(end_date + "T23:59:59").replace(tzinfo=timezone.utc).timestamp())
 
     if end - begin > 24 * 3600:
         return _error_result("Date range cannot exceed 1 day for airport queries.")
@@ -296,12 +285,7 @@ async def ft__get_airport_arrivals(
         else:
             summary = f"No arrivals found at {airport.upper()} between {begin_date} and {end_date}."
     else:
-        lines = [f"Found {len(flights)} arrival(s) at {airport.upper()}:"]
-        for fl in flights[:5]:
-            lines.append(f"- {fl['callsign'] or fl['icao24']}: {fl['from'] or '?'} → | Arr: {fl['arrived']}")
-        if len(flights) > 5:
-            lines.append(f"  ... and {len(flights) - 5} more")
-        summary = "\n".join(lines)
+        summary = f"{len(flights)} arrival(s) at {airport.upper()} [flight-tracker]."
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=summary)],
         structuredContent=structured,
@@ -333,10 +317,7 @@ async def ft__get_aircraft_track(icao24: str, time: int = 0) -> types.CallToolRe
                 "first_position": {"lat": first[1], "lon": first[2]} if first else None,
                 "last_position":  {"lat": last[1], "lon": last[2]} if last else None,
             }
-            summary = (
-                f"Orack for {icao24} ({structured['callsign'] or 'unknown'}): "
-                f"{len(path)} waypoints from {structured['start_time']} to {structured['end_time']}."
-            )
+            summary = f"Track for {icao24} [flight-tracker]."
     except Exception as e:
         return _error_result(f"Failed to fetch track: {e}")
 
